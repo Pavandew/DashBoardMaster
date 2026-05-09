@@ -1,0 +1,22 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.MasterDashboard" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    </style>
+
+    <style name="Theme.MasterDashboard" parent="Base.Theme.MasterDashboard" />
+
+
+
+    // For EditText Outline color
+    <style name="Widget.MyTextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+    <item name="boxStrokeColor">@color/mid_dark_app_color</item>
+    <item name="hintTextColor">@color/mid_dark_app_color</item>
+    </style>
+
+    <style name="CircleImage">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+</resources>

@@ -1,0 +1,14 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+
+    <dimen name="login_title_20dp">20dp</dimen>
+    <dimen name="login_sub_title_17dp">17dp</dimen>
+
+    <dimen name="signup_et_height_40dp">40dp</dimen>
+    <dimen name="tv_title_25dp">25dp</dimen>
+
+    <dimen name="padding_20dp">20dp</dimen>
+    <dimen name="dash_card_height_160dp">140dp</dimen>
+</resources>

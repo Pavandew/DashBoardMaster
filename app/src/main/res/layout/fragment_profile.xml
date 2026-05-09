@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/settings_toolbar"
+        layout="@layout/custom_toolbar" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:background="#F7F8FC">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Main Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="2dp"
+                app:strokeColor="#E8EAF2"
+                app:strokeWidth="1dp"
+                android:backgroundTint="@android:color/white">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <!-- Header -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <FrameLayout
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@drawable/bg_card_2">
+
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_person_24dp"
+                                app:tint="#5B3FFF" />
+
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="12dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Profile Settings"
+                                android:textColor="#111111"
+                                android:textStyle="bold"
+                                android:textSize="18sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Update your personal information"
+                                android:textColor="#8B8B97"
+                                android:textSize="13sp"
+                                android:layout_marginTop="2dp" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+
+                        <include
+                            android:id="@+id/profile_FullName"
+                            layout="@layout/item_form_input" />
+
+                        <include
+                            android:id="@+id/profile_Username"
+                            layout="@layout/item_form_input" />
+
+                        <include
+                            android:id="@+id/profile_Email"
+                            layout="@layout/item_form_input" />
+
+                        <include
+                            android:id="@+id/profile_Phone"
+                            layout="@layout/item_form_input" />
+                    </LinearLayout>
+
+
+                    <!-- Profile Image -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Profile Picture"
+                        android:textStyle="bold"
+                        android:textSize="13sp"
+                        android:textColor="#202020"
+                        android:layout_marginTop="18dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/ivProfile"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:src="@drawable/person"
+                            android:scaleType="centerCrop"
+                            android:padding="8dp"/>
+
+                        <Button
+                            android:id="@+id/btnChooseFile"
+                            style="@style/Button.MyApp.Medium"
+                            android:layout_width="wrap_content"
+                            android:layout_height="42dp"
+                            android:layout_marginStart="14dp"
+                            android:text="Choose File"
+                            android:textAllCaps="false"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="No file chosen"
+                            android:textColor="#777777"
+                            android:textSize="12sp"
+                            android:layout_marginStart="12dp"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="JPG, PNG or GIF (Max. 2MB)"
+                        android:textColor="#A0A0A8"
+                        android:textSize="12sp"
+                        android:layout_marginTop="6dp"
+                        android:layout_marginStart="72dp"/>
+
+                    <!-- Button -->
+                    <!--                app:icon="@drawable/ic_save"-->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnUpdate"
+                        style="@style/Button.MyApp.Medium"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end"
+                        android:layout_marginTop="22dp"
+                        android:text="Update Profile"
+                        app:iconPadding="8dp"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

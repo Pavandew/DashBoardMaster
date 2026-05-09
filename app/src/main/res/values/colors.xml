@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="cream">#F2EEEE</color>
+    <color name="brown">#816B30</color>
+
+    <color name="gray">#202124</color>
+
+    <color name="dark_app_color">#075661</color>
+    <color name="light_app_color">#48D4E6</color>
+    <color name="super_light_app_color">#AFE4EB</color>
+    <color name="mid_dark_app_color">#059AAD</color>
+    <color name="mid_app_color">#21C7DC</color>
+    <color name="selected_color">#00BCD4</color>
+    <color name="unselected_color">#595652</color>
+</resources>

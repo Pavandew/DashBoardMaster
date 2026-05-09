@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Color when selected (Purple) -->
+    <item android:color="#5D5FEF" android:state_checked="true" />
+    <!-- Color when NOT selected (Grey) -->
+    <item android:color="#717171" android:state_checked="false" />
+</selector>

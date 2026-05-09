@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/dash_card_height_160dp"
+    android:layout_margin="6dp"
+    android:background="@drawable/bg_card"
+    android:padding="8dp">
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/card_tvTitle"
+        style="@style/TextAppearance.MyApp.Subtitle"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:ellipsize="end"
+        android:text="Total Restaurants"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/imgIcon"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/bg_card_2"
+        android:src="@drawable/ic_restaurant_24dp"
+        app:layout_constraintHorizontal_bias="0.101"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/card_tvTitle" />
+
+    <!-- Count -->
+    <TextView
+        android:id="@+id/card_tvCount"
+        style="@style/TextAppearance.MyApp.CardNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxLines="1"
+        android:text="24"
+        app:layout_constraintBottom_toTopOf="@id/tvSubTitle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/imgIcon"
+        app:layout_constraintTop_toTopOf="@+id/imgIcon" />
+
+    <TextView
+        android:id="@+id/tvSubTitle"
+        style="@style/TextAppearance.MyApp.CardSubTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:gravity="center_horizontal"
+        android:maxLines="1"
+        android:text="All registered restaurants"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imgIcon"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

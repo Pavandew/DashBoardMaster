@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Base TextAppearance style (required by Android) -->
+    <style name="TextAppearance">
+        <item name="android:textColor">@color/black</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+
+    <!-- Base TextAppearance style -->
+    <style name="TextAppearance.MyApp">
+        <item name="android:textColor">@color/black</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+
+    <!-- Main Screen Title -->
+    <style name="TextAppearance.MyApp.Title">
+        <item name="android:textSize">26sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:fontFamily">@font/poppins_bold</item>
+    </style>
+
+    <!-- Toolbar Title -->
+    <style name="TextAppearance.MyApp.ToolbarTitle">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:fontFamily">@font/poppins_semibold</item>
+    </style>
+
+    <!-- Small Title / Card Heading -->
+    <style name="TextAppearance.MyApp.TitleSmall">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+
+    <!-- Subtitle -->
+    <style name="TextAppearance.MyApp.Subtitle">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:fontFamily">@font/poppins_light</item>
+    </style>
+
+    <!-- Dashboard Number -->
+    <style name="TextAppearance.MyApp.CardNumber">
+        <item name="android:textSize">23sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:fontFamily">@font/poppins_bold</item>
+    </style>
+
+    <!-- Card Label -->
+    <style name="TextAppearance.MyApp.CardLabel">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:fontFamily">@font/poppins_medium</item>
+    </style>
+
+    <!-- Card SubTitle -->
+    <style name="TextAppearance.MyApp.CardSubTitle">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">#777777</item>
+        <item name="android:fontFamily">@font/poppins_light</item>
+    </style>
+
+    <!-- Button -->
+    <style name="TextAppearance.MyApp.Button">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:fontFamily">@font/poppins_semibold</item>
+    </style>
+
+    <!-- Base Button Style -->
+    <style name="Button.MyApp" parent="Widget.MaterialComponents.Button">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:fontFamily">@font/poppins_semibold</item>
+        <item name="backgroundTint">#4F2FFF</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="android:minHeight">48dp</item>
+    </style>
+
+    <!-- Small Button -->
+    <style name="Button.MyApp.Small">
+        <item name="android:textSize">12sp</item>
+        <item name="android:minHeight">36dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="cornerRadius">8dp</item>
+    </style>
+
+    <!-- Medium Button (Default) -->
+    <style name="Button.MyApp.Medium">
+        <item name="android:textSize">14sp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+    </style>
+
+    <!-- Large Button -->
+    <style name="Button.MyApp.Large">
+        <item name="android:textSize">16sp</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:paddingStart">24dp</item>
+        <item name="android:paddingEnd">24dp</item>
+        <item name="cornerRadius">16dp</item>
+    </style>
+
+    <!-- Medium Button with Smaller Text (for long button text) -->
+    <style name="Button.MyApp.Medium.Compact">
+        <item name="android:textSize">12sp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+    </style>
+
+
+    <!-- Activity Item Title (Poppins) -->
+    <style name="TextAppearance.MyApp.ActivityTitle">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">#1A1C1E</item>
+        <item name="android:fontFamily">@font/poppins_medium</item>
+    </style>
+
+    <!-- Activity Metadata - For Dates -->
+    <style name="TextAppearance.MyApp.ActivityMeta">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">#1A1C1E</item>
+        <item name="android:fontFamily">@font/poppins_medium</item>
+    </style>
+
+    <!-- Activity Subtext - For Restaurant Names -->
+    <style name="TextAppearance.MyApp.ActivitySubtext">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:fontFamily">@font/poppins_bold</item>
+    </style>
+
+    <!-- Small Captions - For AM/PM timestamps -->
+    <style name="TextAppearance.MyApp.CaptionSmall">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">#717171</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+
+    <!-- Section Title (for "All Restaurants") -->
+    <style name="TextAppearance.MyApp.SectionTitle">
+        <item name="android:textSize">22sp</item>
+        <item name="android:textColor">#111111</item>
+        <item name="android:fontFamily">@font/poppins_bold</item>
+    </style>
+
+    <!-- Section Subtitle -->
+    <style name="TextAppearance.MyApp.SectionSubtitle">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">#7A7F91</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+
+    <!-- Table Header Text -->
+    <style name="TextAppearance.MyApp.TableHeader">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">#5F667A</item>
+        <item name="android:fontFamily">@font/poppins_semibold</item>
+    </style>
+
+    <!-- Search Input Text -->
+    <style name="TextAppearance.MyApp.SearchInput">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+
+    <!-- Empty State Title -->
+    <style name="TextAppearance.MyApp.EmptyStateTitle">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:fontFamily">@font/poppins_bold</item>
+    </style>
+
+    <!-- Table Row ID -->
+    <style name="TextAppearance.MyApp.TableRowId">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">#111111</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+
+    <!-- Table Row Name (Restaurant Name - Bold) -->
+    <style name="TextAppearance.MyApp.TableRowName">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">#111111</item>
+        <item name="android:fontFamily">@font/poppins_semibold</item>
+    </style>
+
+    <!-- Table Row Username -->
+    <style name="TextAppearance.MyApp.TableRowUsername">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">#7A7F91</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+
+    <!-- Table Row Owner -->
+    <style name="TextAppearance.MyApp.TableRowOwner">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">#111111</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+
+    <!-- Table Row Status Badge -->
+    <style name="TextAppearance.MyApp.TableRowStatus">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">#4A69FF</item>
+        <item name="android:fontFamily">@font/poppins_semibold</item>
+    </style>
+
+    <!-- Table Row Date/Created -->
+    <style name="TextAppearance.MyApp.TableRowDate">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">#111111</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+
+</resources>
