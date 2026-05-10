@@ -47,8 +47,7 @@
 
         <include
             android:id="@+id/login_item"
-            layout="@layout/item_sing_up_screen"
-            android:layout_marginTop="18dp"/>
+            layout="@layout/item_sing_up_screen"/>
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
