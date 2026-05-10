@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="12dp">
+
+        <!-- ID -->
+        <TextView
+            android:id="@+id/tvId"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="001"
+            android:gravity="start"
+            android:textAppearance="@style/TextAppearance.MyApp.TableRowId" />
+
+        <!-- Restaurant -->
+        <LinearLayout
+            android:layout_width="180dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvRestaurantName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Spice Villa"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textAppearance="@style/TextAppearance.MyApp.TableRowName" />
+
+            <TextView
+                android:id="@+id/tvUsername"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="spicevilla"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textAppearance="@style/TextAppearance.MyApp.TableRowUsername" />
+        </LinearLayout>
+
+        <!-- Owner -->
+        <TextView
+            android:id="@+id/tvOwner"
+            android:layout_width="140dp"
+            android:layout_height="wrap_content"
+            android:text="Rahul Sharma"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textAppearance="@style/TextAppearance.MyApp.TableRowOwner" />
+
+        <!-- Status -->
+        <LinearLayout
+            android:layout_width="120dp"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Active"
+                android:background="@drawable/bg_card_2"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                android:textAppearance="@style/TextAppearance.MyApp.TableRowStatus" />
+        </LinearLayout>
+
+        <!-- Created -->
+        <TextView
+            android:id="@+id/tvCreated"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:text="25 May 2024"
+            android:textAppearance="@style/TextAppearance.MyApp.TableRowDate" />
+
+        <ImageView
+            android:id="@+id/res_btn_eye"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@drawable/ic_visibility_24dp"/>
+
+
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_alignParentBottom="true"
+        android:background="#ECEEF5"/>
+
+</RelativeLayout>

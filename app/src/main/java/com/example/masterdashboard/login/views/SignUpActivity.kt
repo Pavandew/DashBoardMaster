@@ -1,4 +1,4 @@
-package com.example.masterdashboard.signup
+package com.example.masterdashboard.login.views
 
 import android.content.Intent
 import android.os.Bundle
@@ -9,9 +9,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.databinding.ActivitySignUpBinding
-import com.example.masterdashboard.login.LoginActivity
-import com.example.masterdashboard.otp.OTPVerificationActivity
-import com.example.masterdashboard.signup.viewmodel.SignUpViewModel
+import com.example.masterdashboard.login.uistate.SignUpUiState
+import com.example.masterdashboard.login.viewmodel.SignUpViewModel
 import kotlinx.coroutines.launch
 
 class SignUpActivity : AppCompatActivity() {
