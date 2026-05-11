@@ -1,10 +1,10 @@
-package com.example.masterdashboard.signup.viewmodel
+package com.example.masterdashboard.login.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.masterdashboard.signup.SignUpUiState
-import com.example.masterdashboard.signup.SignUpValidator
-import com.example.masterdashboard.signup.ValidationResult
+import com.example.masterdashboard.login.uistate.SignUpUiState
+import com.example.masterdashboard.login.utils.SignUpValidator
+import com.example.masterdashboard.login.utils.ValidationResult
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -11,4 +11,5 @@
 
     <dimen name="padding_20dp">20dp</dimen>
     <dimen name="dash_card_height_160dp">140dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
 </resources>
