@@ -4,6 +4,8 @@
     <color name="white">#FFFFFFFF</color>
     <color name="cream">#F2EEEE</color>
     <color name="brown">#816B30</color>
+    <color name="green">#49E650</color>
+    <color name="red">#DC2626</color>
 
     <color name="gray">#202124</color>
 
@@ -14,4 +16,12 @@
     <color name="mid_app_color">#21C7DC</color>
     <color name="selected_color">#00BCD4</color>
     <color name="unselected_color">#595652</color>
+    <color name="error_dark_red">#EB1111</color>
+
+    <!--    light colors-->
+    <color name="light_red">#FEE2E2</color>
+    <color name="light_green">#DCFCE7</color>
+    <color name="light_blue">#8897ED</color>
+    <color name="light_purple">#B390F0</color>
+    <color name="light_orange">#F4C785</color>
 </resources>
