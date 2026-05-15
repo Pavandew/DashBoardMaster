@@ -1,83 +1,116 @@
 package com.example.masterdashboard.home.res_lists.views
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
+import com.example.masterdashboard.databinding.FragmentRestaurentListsBinding
+import com.example.masterdashboard.home.HomeActivity
 import com.example.masterdashboard.home.res_lists.adapter.RestaurantListAdapter
 import com.example.masterdashboard.home.res_lists.models.RestaurantData
 
 class RestaurantListsFragment : Fragment() {
 
-    private lateinit var toolbar: Toolbar
-    private lateinit var toolbarTitle: TextView
+    // ViewBinding
+    private var _binding: FragmentRestaurentListsBinding? = null
+    private val binding get() = _binding!!
+
     private lateinit var restaurantListAdapter: RestaurantListAdapter
-    private lateinit var recyclerView: RecyclerView
-    private  var restaurantList = arrayListOf<RestaurantData>()
+
+    private val restaurantList = arrayListOf<RestaurantData>()
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        val view = inflater.inflate(R.layout.fragment_restaurent_lists, container, false)
+    ): View {
 
-        initializeViews(view)
-        setupToolbar(view)
+        _binding = FragmentRestaurentListsBinding.inflate(inflater, container, false)
+
+        setupToolbar()
         loadDummyData()
         setupRecyclerView()
+        clickListeners()
+        setupCardItem()
 
-
-        return view
+        return binding.root
     }
 
-    private fun setupToolbar(view: View) {
+    // Toolbar
+    private fun setupToolbar() {
 
-        toolbar = view.findViewById(R.id.res_list_toolbar)
-        toolbarTitle = view.findViewById(R.id.toolbar_tvTitle)
-        toolbarTitle.setText(R.string.restaurant_list)
-
+        binding.resListToolbar.toolbarTvTitle.setText(
+            R.string.restaurant_list
+        )
     }
 
-    // Initialize the Views
-    private fun initializeViews(view: View) {
-        recyclerView = view.findViewById(R.id.rvRestaurants)
+    private fun clickListeners() {
+        binding.btnCreateNew.setOnClickListener {
+            (activity as HomeActivity).openCreateRestaurant()
+        }
     }
 
-    // Set the RecyclerView
+    private fun setupCardItem() {
+        binding.resListCard1.cardTvTitle.text = "Total Restaurants"
+        binding.resListCard1.cardTvCount.text = "25"
+        binding.resListCard1.cardSubtitle.text = "All Registered"
+
+        binding.resListCard2.cardTvTitle.text = "Active Restaurants"
+        binding.resListCard2.cardTvCount.text = "18"
+        binding.resListCard2.cardSubtitle.text = "Currently Active"
+
+        binding.resListCard3.cardTvTitle.text = "Disabled Restaurants"
+        binding.resListCard3.cardTvCount.text = "0"
+        binding.resListCard3.cardSubtitle.text = "Currently Disabled"
+
+        binding.resListCard4.cardTvTitle.text = "Deleted Restaurants"
+        binding.resListCard4.cardTvCount.text = "6"
+        binding.resListCard4.cardSubtitle.text = "In trash"
+    }
+
+    // RecyclerView Setup
     private fun setupRecyclerView() {
 
-        restaurantListAdapter = RestaurantListAdapter(
-            restaurantData = restaurantList,
-            onClick = { item ->
-                //View Details
-            },
-            onEditClick = { item ->
-                // Edit click
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.home_fragment_container, EditResFragment())
-                    .addToBackStack(null)
-                    .commit()
-            },
+        restaurantListAdapter =
+            RestaurantListAdapter(
 
-            onDeleteClick = { item ->
-                // Delete click
-            }
-        )
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.setHasFixedSize(true)
-        recyclerView.adapter = restaurantListAdapter
+                restaurantData = restaurantList,
+
+                onClick = { item ->
+                    // View details
+                },
+
+                onEditClick = { item ->
+
+                    parentFragmentManager.beginTransaction()
+                        .replace(
+                            R.id.home_fragment_container,
+                            EditResFragment()
+                        )
+                        .addToBackStack(null)
+                        .commit()
+                },
+
+                onDeleteClick = { item ->
+                    // Delete item
+                }
+            )
+
+        binding.rvRestaurants.layoutManager =
+            LinearLayoutManager(requireContext())
+
+        binding.rvRestaurants.setHasFixedSize(true)
+
+        binding.rvRestaurants.adapter =
+            restaurantListAdapter
     }
 
-    // Sample Data for RecyclerView
+    // Dummy Data
     private fun loadDummyData() {
+
         restaurantList.add(
             RestaurantData(
                 1,
@@ -88,6 +121,7 @@ class RestaurantListsFragment : Fragment() {
                 "2024-06-01"
             )
         )
+
         restaurantList.add(
             RestaurantData(
                 2,
@@ -98,7 +132,18 @@ class RestaurantListsFragment : Fragment() {
                 "2024-06-02"
             )
         )
-        restaurantList.add(RestaurantData(3, "KFC", "user3", "Bob Johnson", "Active", "2024-06-03"))
+
+        restaurantList.add(
+            RestaurantData(
+                3,
+                "KFC",
+                "user3",
+                "Bob Johnson",
+                "Active",
+                "2024-06-03"
+            )
+        )
+
         restaurantList.add(
             RestaurantData(
                 4,
@@ -109,6 +154,7 @@ class RestaurantListsFragment : Fragment() {
                 "2024-06-04"
             )
         )
+
         restaurantList.add(
             RestaurantData(
                 5,
@@ -119,5 +165,10 @@ class RestaurantListsFragment : Fragment() {
                 "2024-06-05"
             )
         )
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.home.logs.adapter.LogsAdapter
 import com.example.masterdashboard.home.logs.models.LogData
+import com.example.masterdashboard.home.res_lists.views.EditResFragment
 
 class LogsFragment : Fragment(), LogsAdapter.OnLogClickListener {
 
@@ -23,35 +24,43 @@ class LogsFragment : Fragment(), LogsAdapter.OnLogClickListener {
     private val logsList = ArrayList<LogData>()
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         val view = inflater.inflate(R.layout.fragment_logs, container, false)
 
-        toolbar(view)
-        initRecyclerView(view)
+        setupToolbar(view)
+        setupRecyclerView(view)
         loadDummyLogs()
 
         return view
     }
 
-    private fun toolbar(view: View) {
+    private fun setupToolbar(view: View) {
         toolbar = view.findViewById(R.id.logs_toolbar)
         toolbarTitle = view.findViewById(R.id.toolbar_tvTitle)
         toolbarTitle.text = getString(R.string.activity_logs)
     }
 
-    private fun initRecyclerView(view: View) {
+    private fun setupRecyclerView(view: View) {
+
         recyclerView = view.findViewById(R.id.rvLogs)
 
         logsAdapter = LogsAdapter(logsList, this)
 
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.adapter = logsAdapter
+        recyclerView.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = logsAdapter
+            isNestedScrollingEnabled = false
+            setHasFixedSize(true)
+        }
     }
 
     private fun loadDummyLogs() {
+
+        logsList.clear()
 
         logsList.add(
             LogData(
@@ -101,18 +110,47 @@ class LogsFragment : Fragment(), LogsAdapter.OnLogClickListener {
             )
         )
 
+
+        logsList.add(
+            LogData(
+                2,
+                "Restaurant Added",
+                "Burger King added by admin",
+                "Admin",
+                "Burger King",
+                "09 May 2026",
+                "Active"
+            )
+        )
+
+        logsList.add(
+            LogData(
+                3,
+                "Restaurant Updated",
+                "Pizza Hut details updated",
+                "Admin",
+                "Pizza Hut",
+                "08 May 2026",
+                "Active"
+            )
+        )
+
+        logsList.add(
+            LogData(
+                4,
+                "Restaurant Deleted",
+                "Dominos removed",
+                "Admin",
+                "Dominos",
+                "07 May 2026",
+                "Inactive"
+            )
+        )
+
         logsAdapter.notifyDataSetChanged()
     }
 
     override fun onViewClick(log: LogData) {
         // View click
-    }
-
-    override fun onEditClick(log: LogData) {
-        // Edit click
-    }
-
-    override fun onDeleteClick(log: LogData) {
-        // Delete click
     }
 }

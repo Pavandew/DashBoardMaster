@@ -1,36 +1,109 @@
 package com.example.masterdashboard.home.create_res
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import androidx.appcompat.widget.Toolbar
+import androidx.fragment.app.Fragment
 import com.example.masterdashboard.R
+import com.example.masterdashboard.databinding.FragmentCreateNewResBinding
+import com.google.android.material.textfield.TextInputLayout
 
 class CreateNewResFragment : Fragment() {
 
-    private lateinit var toolbar: Toolbar
-    private lateinit var toolbarTitle: TextView
+    // ViewBinding
+    private var _binding: FragmentCreateNewResBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        val view = inflater.inflate(R.layout.fragment_create_new_res, container, false)
+    ): View {
 
-        toolbar(view)
+        _binding = FragmentCreateNewResBinding.inflate(
+            inflater,
+            container,
+            false
+        )
 
-        return view
+        setupToolbar()
+        setupInputs()
+
+        return binding.root
     }
 
-    private fun toolbar(view: View) {
+    // Toolbar
+    private fun setupToolbar() {
 
-        toolbar = view.findViewById(R.id.new_res_toolbar)
-        toolbarTitle = view.findViewById(R.id.toolbar_tvTitle)
-        toolbarTitle.setText(R.string.create_new_res)
+        binding.newResToolbar.toolbarTvTitle.setText(
+            R.string.create_new_res
+        )
 
+        binding.newResToolbar.toolbarImgMenu.visibility =
+            View.GONE
+    }
+
+    // Input Fields
+    private fun setupInputs() {
+
+        // Restaurant Name
+        binding.fieldResName.tvInputLabel.text = "Restaurant Name *"
+
+        binding.fieldResName.etInput.hint = "Enter restaurant name"
+
+        // Email
+        binding.fieldEmail.tvInputLabel.text = "Email Address *"
+
+        binding.fieldEmail.etInput.hint = "Enter email address"
+
+        binding.fieldEmail.etInput.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+
+        // Owner Name
+        binding.fieldOwner.tvInputLabel.text = "Owner Name *"
+
+        binding.fieldOwner.etInput.hint = "Enter owner name"
+
+        // Password
+        binding.fieldPassword.tvInputLabel.text = "Password *"
+
+        binding.fieldPassword.etInput.hint = "Enter password"
+
+        binding.fieldPassword.etInput.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+
+        binding.fieldPassword.textInputLayout.endIconMode = TextInputLayout.END_ICON_PASSWORD_TOGGLE
+
+        // Phone
+        binding.fieldPhone.tvInputLabel.text = "Phone Number *"
+
+        binding.fieldPhone.etInput.hint = "Enter phone number"
+
+        binding.fieldPhone.etInput.inputType = InputType.TYPE_CLASS_PHONE
+
+        // Confirm Password
+        binding.fieldConfirmPass.tvInputLabel.text = "Confirm Password *"
+
+        binding.fieldConfirmPass.etInput.hint = "Re-enter password"
+
+        binding.fieldConfirmPass.etInput.inputType =
+            InputType.TYPE_CLASS_TEXT or
+                    InputType.TYPE_TEXT_VARIATION_PASSWORD
+
+        binding.fieldConfirmPass.textInputLayout.endIconMode = TextInputLayout.END_ICON_PASSWORD_TOGGLE
+
+        // Username
+        binding.fieldUsername.tvInputLabel.text = "Username *"
+
+        binding.fieldUsername.etInput.hint = "Enter username"
+    }
+
+
+    private fun clickListeners() {
+
+    }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

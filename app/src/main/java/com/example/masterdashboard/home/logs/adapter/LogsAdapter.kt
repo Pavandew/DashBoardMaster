@@ -4,8 +4,10 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
+import com.example.masterdashboard.databinding.ItemLogActivityBinding
 import com.example.masterdashboard.databinding.ItemRestaurantRowBinding
 import com.example.masterdashboard.home.logs.models.LogData
 
@@ -16,12 +18,10 @@ class LogsAdapter(
 
     interface OnLogClickListener {
         fun onViewClick(log: LogData)
-        fun onEditClick(log: LogData)
-        fun onDeleteClick(log: LogData)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LogsViewHolder {
-        val binding = ItemRestaurantRowBinding.inflate(
+        val binding = ItemLogActivityBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
             false
@@ -42,7 +42,7 @@ class LogsAdapter(
     }
 
     inner class LogsViewHolder(
-        private val binding: ItemRestaurantRowBinding
+        private val binding: ItemLogActivityBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: LogData) {
@@ -55,29 +55,32 @@ class LogsAdapter(
 
             if (item.status.equals("Active", ignoreCase = true)) {
                 binding.tvStatus.text = "Active"
-                binding.tvStatus.setTextColor(Color.parseColor("#16A34A"))
+                binding.tvStatus.setTextColor(
+                    ContextCompat.getColor(binding.root.context, R.color.green)
+                )
+
                 binding.tvStatus.backgroundTintList =
-                    ColorStateList.valueOf(Color.parseColor("#DCFCE7"))
+                    ColorStateList.valueOf(
+                        ContextCompat.getColor(binding.root.context, R.color.light_green)
+                    )
                 binding.tvStatus.setBackgroundResource(R.drawable.bg_card_2)
 
             } else {
                 binding.tvStatus.text = "Inactive"
-                binding.tvStatus.setTextColor(Color.parseColor("#DC2626"))
+
+                binding.tvStatus.setTextColor(
+                    ContextCompat.getColor(binding.root.context, R.color.red)
+                )
+
                 binding.tvStatus.backgroundTintList =
-                    ColorStateList.valueOf(Color.parseColor("#FEE2E2"))
+                    ColorStateList.valueOf(
+                        ContextCompat.getColor(binding.root.context, R.color.light_red)
+                    )
+
                 binding.tvStatus.setBackgroundResource(R.drawable.bg_card)
             }
-
             binding.resBtnEye.setOnClickListener {
                 listener.onViewClick(item)
-            }
-
-            binding.resBtnEdit.setOnClickListener {
-                listener.onEditClick(item)
-            }
-
-            binding.resBtnDelete.setOnClickListener {
-                listener.onDeleteClick(item)
             }
         }
     }

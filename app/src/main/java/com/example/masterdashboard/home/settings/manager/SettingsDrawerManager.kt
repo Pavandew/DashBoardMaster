@@ -7,9 +7,10 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.example.masterdashboard.R
 import com.example.masterdashboard.home.HomeActivity
-import com.example.masterdashboard.login.LoginActivity
+import com.example.masterdashboard.login.views.LoginActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.navigation.NavigationView
+import com.google.firebase.auth.FirebaseAuth
 
 class SettingsDrawerManager(
     private val activity: AppCompatActivity,
@@ -97,11 +98,16 @@ class SettingsDrawerManager(
     // -----------------------------------------
     private fun logout() {
 
+        // Clear local session
+        val sharedPref = activity.getSharedPreferences("UserPrefs", AppCompatActivity.MODE_PRIVATE)
+        sharedPref.edit().putBoolean("isLoggedIn", false).apply()
+
+        FirebaseAuth.getInstance().signOut()
+
         val intent = Intent(
             activity,
             LoginActivity::class.java
         ).apply {
-
             flags =
                 Intent.FLAG_ACTIVITY_NEW_TASK or
                         Intent.FLAG_ACTIVITY_CLEAR_TASK

@@ -1,47 +1,205 @@
 package com.example.masterdashboard.home.dashboard
 
+import android.content.res.ColorStateList
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
-import androidx.appcompat.widget.Toolbar
-import com.example.masterdashboard.R
-import com.google.android.material.imageview.ShapeableImageView
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.masterdashboard.databinding.FragmentDashboardBinding
+import com.example.masterdashboard.databinding.ItemDashboardCardBinding
+import com.example.masterdashboard.databinding.ItemQuickActionBinding
+import com.example.masterdashboard.home.HomeActivity
+import com.example.masterdashboard.home.dashboard.model.DashboardCardModel
+import com.example.masterdashboard.home.dashboard.model.QuickActionModel
+import com.example.masterdashboard.home.dashboard.utils.DashboardUiData
 
 class DashboardFragment : Fragment() {
-    private lateinit var toolbar: Toolbar
-    private lateinit var toolbarTitle: TextView
-    private lateinit var toolbarImgMenu: ImageView
-    private lateinit var toolbarImgNot: ImageView
-    private lateinit var toolbarImgProfile: ShapeableImageView
+
+    private var _binding: FragmentDashboardBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModel: DashboardViewModel by viewModels()
+
+    private lateinit var adapter: RecentActivityAdapter
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        val view = inflater.inflate(R.layout.fragment_dashboard, container, false)
+    ): View {
 
-        toolbar(view)
+        _binding =
+            FragmentDashboardBinding.inflate(
+                inflater,
+                container,
+                false
+            )
 
-        return view
+        setupDashboardCards()
+        setupQuickActions()
+        setupRecycler()
+        setupClicks()
+        observeData()
+
+        viewModel.loadData()
+
+        return binding.root
     }
 
-    // set toolbar
-    private fun toolbar(view: View) {
+    // -----------------------------------
+    // Dashboard Cards
+    // -----------------------------------
+    private fun setupDashboardCards() {
 
-        toolbar = view.findViewById(R.id.dashboard_toolbar)
-        toolbarTitle = view.findViewById(R.id.toolbar_tvTitle)
-        toolbarImgMenu = view.findViewById(R.id.toolbar_imgMenu)
-        toolbarImgNot = view.findViewById(R.id.toolbar_imgNotification)
-        toolbarImgProfile = view.findViewById(R.id.toolbar_imgProfile)
+        val cards = DashboardUiData.statsCards
 
-        toolbarTitle.setText(R.string.dashboard)
-        toolbarImgMenu.visibility = View.GONE
-        toolbarImgNot.visibility = View.GONE
+        binding.dashCardTotalRes.setCardStyle(cards[0])
+        binding.dashCardActiveRes.setCardStyle(cards[1])
+        binding.dashCardDisableRes.setCardStyle(cards[2])
+        binding.dashCardTotalAdmin.setCardStyle(cards[3])
+    }
 
+    // -----------------------------------
+    // Quick Action Buttons
+    // -----------------------------------
+    private fun setupQuickActions() {
+
+        val actions = DashboardUiData.quickActions
+
+        binding.dashQuickCardCreteRes.setQuickAction(actions[0]) {
+            (activity as HomeActivity).openCreateRestaurant()
+        }
+
+        binding.dashQuickCardAllRes.setQuickAction(actions[1]) {
+            (activity as HomeActivity).openRestaurantList()
+        }
+
+        binding.dashQuickCardLogs.setQuickAction(actions[2]) {
+            (activity as HomeActivity).openLogs()
+        }
+
+        binding.dashQuickCardSettings.setQuickAction(actions[3]) {
+            (activity as HomeActivity).openProfile()
+        }
+    }
+
+    // -----------------------------------
+    // RecyclerView
+    // -----------------------------------
+    private fun setupRecycler() {
+
+        adapter = RecentActivityAdapter()
+
+        binding.recyclerRecentActivity.layoutManager =
+            LinearLayoutManager(requireContext())
+
+        binding.recyclerRecentActivity.adapter = adapter
+    }
+
+    // -----------------------------------
+    // Click Events
+    // -----------------------------------
+    private fun setupClicks() {
+
+        binding.dashTvViewAll.setOnClickListener {
+            (activity as HomeActivity).openLogs()
+        }
+    }
+
+    // -----------------------------------
+    // Observe Firebase LiveData
+    // -----------------------------------
+    private fun observeData() {
+
+        viewModel.total.observe(viewLifecycleOwner) {
+            binding.dashCardTotalRes.cardTvCount.text =
+                it.toString()
+        }
+
+        viewModel.active.observe(viewLifecycleOwner) {
+            binding.dashCardActiveRes.cardTvCount.text =
+                it.toString()
+        }
+
+        viewModel.disabled.observe(viewLifecycleOwner) {
+            binding.dashCardDisableRes.cardTvCount.text =
+                it.toString()
+        }
+
+        viewModel.admins.observe(viewLifecycleOwner) {
+            binding.dashCardTotalAdmin.cardTvCount.text =
+                it.toString()
+        }
+
+        viewModel.recentLogs.observe(viewLifecycleOwner) {
+            adapter.submitList(it)
+        }
+    }
+
+    // -----------------------------------
+    // Reusable Dashboard Card
+    // -----------------------------------
+    private fun ItemDashboardCardBinding.setCardStyle(
+        item: DashboardCardModel
+    ) {
+
+        val context = root.context
+
+        cardTvTitle.text = item.title
+        cardSubtitle.text = item.subtitle
+
+        cardIcon.setImageResource(item.icon)
+
+        cardIcon.imageTintList =
+            ColorStateList.valueOf(
+                ContextCompat.getColor(
+                    context,
+                    item.iconColor
+                )
+            )
+
+        cardImgBg.backgroundTintList =
+            ColorStateList.valueOf(
+                ContextCompat.getColor(
+                    context,
+                    item.bgColor
+                )
+            )
+    }
+
+    // -----------------------------------
+    // Reusable Quick Action
+    // -----------------------------------
+    private fun ItemQuickActionBinding.setQuickAction(
+        item: QuickActionModel,
+        onClick: () -> Unit
+    ) {
+
+        val context = root.context
+
+        quickActionTitle.text = item.title
+
+        quickActionIcon.setImageResource(item.icon)
+
+        quickActionBackground.backgroundTintList =
+            ColorStateList.valueOf(
+                ContextCompat.getColor(
+                    context,
+                    item.bgColor
+                )
+            )
+
+        quickActionItem.setOnClickListener {
+            onClick()
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

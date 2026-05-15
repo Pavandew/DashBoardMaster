@@ -12,7 +12,7 @@
         android:id="@+id/new_res_toolbar"
         layout="@layout/custom_toolbar"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="65dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -140,59 +140,11 @@
                         android:layout_height="wrap_content"
                         android:textAppearance="@style/TextAppearance.MyApp.CardLabel" />
 
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <!-- Using AutoCompleteTextView for the dropdown seen in the image -->
-                        <AutoCompleteTextView
-                            android:id="@+id/statusDropdown"
-                            android:layout_width="match_parent"
-                            android:layout_height="60dp"
-                            android:text="Active"
-                            android:textAppearance="@style/TextAppearance.MyApp.ActivitySubtext"
-                            android:inputType="none" />
-                    </com.google.android.material.textfield.TextInputLayout>
+                    <include
+                        android:id="@+id/create_new_dropdown"
+                        layout="@layout/item_dropdown_filter"/>
                 </LinearLayout>
             </GridLayout>
-
-<!--            &lt;!&ndash; Info Box &ndash;&gt;-->
-<!--            <LinearLayout-->
-<!--                android:id="@+id/credentialsBox"-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_marginTop="24dp"-->
-<!--                android:background="@drawable/bg_info_blue"-->
-<!--                android:orientation="horizontal"-->
-<!--                android:padding="16dp"-->
-<!--                app:layout_constraintTop_toBottomOf="@id/formGrid">-->
-
-<!--                <ImageView-->
-<!--                    android:layout_width="24dp"-->
-<!--                    android:layout_height="24dp"-->
-<!--                    android:src="@drawable/ic_info"-->
-<!--                    app:tint="#4A69FF" />-->
-
-<!--                <LinearLayout-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:layout_marginStart="12dp"-->
-<!--                    android:orientation="vertical">-->
-<!--                    <TextView-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:text="Login Credentials"-->
-<!--                        android:textAppearance="@style/TextAppearance.MyApp.CardLabel"-->
-<!--                        android:textColor="#4A69FF" />-->
-<!--                    <TextView-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:text="The restaurant can use the above username and password to access their dashboard."-->
-<!--                        android:textAppearance="@style/TextAppearance.MyApp.CardSubTitle"-->
-<!--                        android:textColor="#4A69FF" />-->
-<!--                </LinearLayout>-->
-<!--            </LinearLayout>-->
 
             <!-- Action Buttons -->
             <LinearLayout
