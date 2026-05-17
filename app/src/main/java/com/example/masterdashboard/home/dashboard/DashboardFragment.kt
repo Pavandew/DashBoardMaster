@@ -16,6 +16,7 @@ import com.example.masterdashboard.home.HomeActivity
 import com.example.masterdashboard.home.dashboard.model.DashboardCardModel
 import com.example.masterdashboard.home.dashboard.model.QuickActionModel
 import com.example.masterdashboard.home.dashboard.utils.DashboardUiData
+import com.example.masterdashboard.home.dashboard.viewmodel.DashboardViewModel
 
 class DashboardFragment : Fragment() {
 

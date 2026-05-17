@@ -1,33 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
         android:id="@+id/dashboardFragment"
-        android:title="Dashboard"
+        android:title="@string/nav_dashboard"
         android:icon="@drawable/ic_dashboard_24dp"
         />
 
     <item
         android:id="@+id/createNewResFragment"
-        android:title="Create"
+        android:title="@string/nav_create"
         android:icon="@drawable/ic_add_circle_24dp"
         />
     <item
         android:id="@+id/resListsFragment"
-        android:title="Restaurants"
+        android:title="@string/nav_restaurants"
         android:icon="@drawable/ic_restaurant_24dp"
         />
 
     <item
         android:id="@+id/logFragment"
-        android:title="logs"
+        android:title="@string/nav_logs"
         android:icon="@drawable/ic_logs_24dp"
         />
 
     <item
         android:id="@+id/settingFragment"
-        android:title="Settings"
+        android:title="@string/nav_settings"
         android:icon="@drawable/ic_settings_24dp"
         />
 

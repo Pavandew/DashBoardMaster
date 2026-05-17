@@ -78,54 +78,53 @@ class EditResFragment : Fragment() {
 
     // Form Fields
     private fun setupFields() {
+        
+        // Get restaurant data from Bundle arguments (passed by RestaurantListsFragment)
+        val args = arguments
+
+        if (args == null) {
+            Toast.makeText(requireContext(), "Error loading restaurant data", Toast.LENGTH_SHORT).show()
+            goBack()
+            return
+        }
+
+        // Extract data from Bundle
+        val restaurantName = args.getString("restaurantName", "")
+        val userName = args.getString("userName", "")
+        val ownerName = args.getString("ownerName", "")
 
         // Restaurant Name
         binding.fieldResName.tvInputLabel.text = "Restaurant Name *"
-
         binding.fieldResName.etInput.hint = "Enter restaurant name"
-
-        binding.fieldResName.etInput.setText("Pizza Hut")
+        binding.fieldResName.etInput.setText(restaurantName)
 
         // Username
         binding.fieldUsername.tvInputLabel.text = "Username *"
-
         binding.fieldUsername.etInput.hint = "Enter username"
-
-        binding.fieldUsername.etInput.setText("pizzahut_admin")
+        binding.fieldUsername.etInput.setText(userName)
 
         // Owner Name
         binding.fieldOwnerName.tvInputLabel.text = "Owner Name *"
-
         binding.fieldOwnerName.etInput.hint = "Enter owner name"
-
-        binding.fieldOwnerName.etInput.setText("John Doe")
+        binding.fieldOwnerName.etInput.setText(ownerName)
 
         // Phone
         binding.fieldPhone.tvInputLabel.text = "Phone Number *"
-
         binding.fieldPhone.etInput.hint = "Enter phone number"
-
         binding.fieldPhone.etInput.inputType = InputType.TYPE_CLASS_PHONE
-
-        binding.fieldPhone.etInput.setText("9876543210")
+        binding.fieldPhone.etInput.setText("")  // Set from API if available
 
         // Email
         binding.fieldEmail.tvInputLabel.text = "Email Address *"
-
         binding.fieldEmail.etInput.hint = "Enter email"
-
         binding.fieldEmail.etInput.inputType =
             InputType.TYPE_CLASS_TEXT or
                     InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
-
-        binding.fieldEmail.etInput.setText("pizza@gmail.com"
-        )
+        binding.fieldEmail.etInput.setText("")  // Set from API if available
 
         // New Password
         binding.fieldNewPass.tvInputLabel.text = "New Password"
-
         binding.fieldNewPass.etInput.hint = "Enter new password"
-
         binding.fieldNewPass.etInput.inputType =
             InputType.TYPE_CLASS_TEXT or
                     InputType.TYPE_TEXT_VARIATION_PASSWORD

@@ -220,4 +220,21 @@
         <item name="android:fontFamily">@font/poppins_regular</item>
     </style>
 
+    <style name="CustomBottomNavigation" parent="Widget.MaterialComponents.BottomNavigationView">
+
+        <!-- Reduce text size -->
+        <item name="itemTextAppearanceActive">@style/BottomNavText</item>
+        <item name="itemTextAppearanceInactive">@style/BottomNavText</item>
+
+<!--        &lt;!&ndash; Remove extra top padding &ndash;&gt;-->
+<!--        <item name="itemPaddingTop">2dp</item>-->
+<!--        <item name="itemPaddingBottom">2dp</item>-->
+
+    </style>
+
+    <style name="BottomNavText" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textSize">13sp</item>
+    </style>
+
+
 </resources>

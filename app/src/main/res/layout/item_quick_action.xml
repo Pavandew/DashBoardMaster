@@ -1,33 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="80dp"
-    android:layout_height="105dp"
-    android:padding="3dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="4dp"
+    android:id="@+id/quick_action_item"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:cardCornerRadius="10dp"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="12dp"
         app:cardElevation="2dp"
         app:strokeWidth="0dp"
         app:cardBackgroundColor="@color/white">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:gravity="center"
+            android:paddingVertical="16dp"
+            android:paddingHorizontal="4dp"
             android:orientation="vertical">
 
-            <!-- Icon Container with soft glow/shadow -->
+            <!-- Icon Container -->
             <FrameLayout
-                android:layout_width="45dp"
-                android:layout_height="45dp"
-                android:layout_marginBottom="12dp"
-                android:background="@color/super_light_app_color"
-                android:padding="14dp">
+                android:id="@+id/quick_action_background"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_status_green"
+                android:padding="12dp">
 
                 <ImageView
+                    android:id="@+id/quick_action_icon"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:src="@drawable/ic_person_24dp"
@@ -35,13 +40,14 @@
             </FrameLayout>
 
             <TextView
+                android:id="@+id/quick_action_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/poppins_regular"
                 android:gravity="center"
-                android:text="Create\nRestaurant"
+                android:text="Action"
                 android:textColor="@color/black"
-                android:textSize="10sp" />
+                android:textSize="11sp" />
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
