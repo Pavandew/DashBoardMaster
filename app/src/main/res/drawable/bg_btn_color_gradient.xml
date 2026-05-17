@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#1AFFFFFF"> <!-- White overlay ripple effect when touched -->
+
+    <item>
+        <shape android:shape="rectangle">
+            <!-- Modern Gradient Blend -->
+            <gradient
+                android:startColor="#5A51F2"
+                android:endColor="#1A3EF0"
+                android:angle="45"
+                android:type="linear" />
+
+            <!-- Standardized Professional Corner Radius -->
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+
+</ripple>
