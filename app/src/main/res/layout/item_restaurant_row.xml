@@ -1,119 +1,143 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@android:color/white">
+    android:layout_marginHorizontal="12dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeColor="#F0F1F5"
+    app:strokeWidth="1dp">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="12dp">
+        android:layout_height="wrap_content"
+        android:padding="16dp">
 
-        <!-- ID -->
         <TextView
             android:id="@+id/tvId"
-            android:layout_width="55dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="001"
-            android:gravity="start"
-            android:textAppearance="@style/TextAppearance.MyApp.TableRowId" />
+            android:text="#001"
+            android:textColor="#9CA3AF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Restaurant -->
-        <LinearLayout
-            android:layout_width="180dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tvRestaurantName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Spice Villa"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:textAppearance="@style/TextAppearance.MyApp.TableRowName" />
-
-            <TextView
-                android:id="@+id/tvUsername"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="spicevilla"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:textAppearance="@style/TextAppearance.MyApp.TableRowUsername" />
-        </LinearLayout>
-
-        <!-- Owner -->
         <TextView
-            android:id="@+id/tvOwner"
-            android:layout_width="140dp"
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Rahul Sharma"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:textAppearance="@style/TextAppearance.MyApp.TableRowOwner" />
+            android:background="@drawable/bg_status_active"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
+            android:text="Active"
+            android:textColor="#10B981"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Status -->
+        <TextView
+            android:id="@+id/tvRestaurantName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Spice Villa"
+            android:textColor="#111827"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/tvStatus"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvId" />
+
+        <TextView
+            android:id="@+id/tvUsername"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="spicevilla"
+            android:textColor="#6B7280"
+            android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvRestaurantName" />
+
+        <View
+            android:id="@+id/divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="12dp"
+            android:background="#F3F4F6"
+            app:layout_constraintTop_toBottomOf="@id/tvUsername" />
+
         <LinearLayout
-            android:layout_width="120dp"
-            android:layout_height="wrap_content">
+            android:id="@+id/llMeta"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/llActions"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/divider">
 
             <TextView
-                android:id="@+id/tvStatus"
+                android:id="@+id/tvOwner"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Active"
-                android:background="@drawable/bg_card_2"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="4dp"
-                android:textAppearance="@style/TextAppearance.MyApp.TableRowStatus" />
+                android:text="Owner: Rahul Sharma"
+                android:textColor="#374151"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvCreated"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Joined 25 May 2024"
+                android:textColor="#9CA3AF"
+                android:textSize="12sp" />
         </LinearLayout>
 
-        <!-- Created -->
-        <TextView
-            android:id="@+id/tvCreated"
-            android:layout_width="130dp"
-            android:layout_height="wrap_content"
-            android:text="25 May 2024"
-            android:textAppearance="@style/TextAppearance.MyApp.TableRowDate" />
-
-        <!-- Actions -->
         <LinearLayout
-            android:layout_width="140dp"
+            android:id="@+id/llActions"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:layout_marginTop="10dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/divider">
 
-            <ImageView
+            <ImageButton
                 android:id="@+id/res_btn_eye"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-            android:src="@drawable/ic_visibility_24dp"/>
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_visibility_24dp"
+                app:tint="#4B5563" />
 
-            <ImageView
+            <ImageButton
                 android:id="@+id/res_btn_edit"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_edit_24dp"
-                android:layout_marginStart="8dp" />
+                app:tint="#4F46E5" />
 
-            <ImageView
+            <ImageButton
                 android:id="@+id/res_btn_delete"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_delete_24dp"
-                android:layout_marginStart="8dp"/>
+                app:tint="#EF4444" />
         </LinearLayout>
 
-    </LinearLayout>
-
-    <!-- Divider -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_alignParentBottom="true"
-        android:background="#ECEEF5"/>
-
-</RelativeLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -27,6 +27,7 @@ class HomeActivity : AppCompatActivity() {
     private var currentTag: String? = null
     private var pendingTag: String? = null
 
+
     companion object {
         private const val KEY_CURRENT_TAG = "current_tag"
 
@@ -58,9 +59,7 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    // ------------------------------------------------
     // Bottom Navigation
-    // ------------------------------------------------
     private fun setupBottomNavigation() {
 
         bottomNav.setOnItemSelectedListener { item ->
@@ -80,9 +79,7 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    // ------------------------------------------------
     // Drawer Setup
-    // ------------------------------------------------
     private fun setupDrawer() {
 
         settingsDrawerManager =
@@ -95,12 +92,11 @@ class HomeActivity : AppCompatActivity() {
         settingsDrawerManager.setupDrawerItem()
     }
 
-    // ------------------------------------------------
     // Public Navigation Methods (Use Anywhere)
-    // ------------------------------------------------
     fun openDashboard() = navigateTo(TAG_DASHBOARD)
 
     fun openCreateRestaurant() = navigateTo(TAG_CREATE)
+
 
     fun openRestaurantList() = navigateTo(TAG_RESTAURANTS)
 
@@ -110,9 +106,7 @@ class HomeActivity : AppCompatActivity() {
 
     fun openChangePassword() = navigateTo(TAG_CHANGE_PASSWORD)
 
-    // ------------------------------------------------
     // Single Navigation Entry Point
-    // ------------------------------------------------
     fun navigateTo(tag: String) {
 
         pendingTag = tag
@@ -122,6 +116,7 @@ class HomeActivity : AppCompatActivity() {
             TAG_CREATE -> bottomNav.selectedItemId = R.id.createNewResFragment
             TAG_RESTAURANTS -> bottomNav.selectedItemId = R.id.resListsFragment
             TAG_LOGS -> bottomNav.selectedItemId = R.id.logFragment
+
 
             TAG_PROFILE,
             TAG_CHANGE_PASSWORD -> {
@@ -137,9 +132,7 @@ class HomeActivity : AppCompatActivity() {
         closeDrawer()
     }
 
-    // ------------------------------------------------
     // Main Fragment Loader
-    // ------------------------------------------------
     fun loadFragment(tag: String): Boolean {
 
         if (currentTag == tag) return true
@@ -183,9 +176,7 @@ class HomeActivity : AppCompatActivity() {
         return true
     }
 
-    // ------------------------------------------------
     // Create Fragment
-    // ------------------------------------------------
     private fun createFragment(tag: String): Fragment {
 
         return when (tag) {
@@ -199,9 +190,7 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    // ------------------------------------------------
     // Drawer Control
-    // ------------------------------------------------
     fun openDrawer() {
         binding.drawerLayout.openDrawer(GravityCompat.START)
     }
