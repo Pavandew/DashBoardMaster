@@ -1,4 +1,4 @@
-package com.example.masterdashboard.login.model
+package com.example.masterdashboard.login.models
 
 data class UserModelData(
     val fullName: String = "",
