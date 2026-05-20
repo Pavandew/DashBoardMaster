@@ -14,10 +14,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MasterDashboard">
         <activity
-            android:name=".login.SelectionActivity"
+            android:name=".staff_dash.login.StaffLoginActivity"
             android:exported="false" />
         <activity
-            android:name=".login.views.SplashActivity"
+            android:name=".ActivityVisitorPortal"
+            android:exported="false" />
+        <activity
+            android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,18 +29,18 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".login.views.OTPVerificationActivity"
+            android:name=".master_dash.login.views.OTPVerificationActivity"
             android:exported="false" />
         <activity
-            android:name=".home.HomeActivity"
+            android:name=".master_dash.home.HomeActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustPan" />
         <activity
-            android:name=".login.views.SignUpActivity"
+            android:name=".master_dash.login.views.SignUpActivity"
             android:exported="false" />
         <activity
-            android:name=".login.views.LoginActivity"
-            android:exported="false"></activity>
+            android:name=".master_dash.login.views.LoginActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

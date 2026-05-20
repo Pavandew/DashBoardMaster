@@ -17,4 +17,43 @@
     <dimen name="design_bottom_navigation_margin" tools:override="true">4dp</dimen>
     <dimen name="design_bottom_navigation_height" tools:override="true">54dp</dimen>
     <dimen name="design_bottom_navigation_item_max_width" tools:override="true">96dp</dimen>
+
+    <dimen name="status_bar_height">24dp</dimen>
+
+    <!-- Padding and Margins -->
+    <dimen name="padding_small">8dp</dimen>
+    <dimen name="padding_medium">16dp</dimen>
+    <dimen name="padding_large">20dp</dimen>
+
+    <!-- Border Radius -->
+    <dimen name="corner_radius_small">8dp</dimen>
+    <dimen name="corner_radius_medium">12dp</dimen>
+    <dimen name="corner_radius_large">16dp</dimen>
+    <dimen name="corner_radius_xl">20dp</dimen>
+
+    <!-- Text Sizes -->
+    <dimen name="text_size_small">11sp</dimen>
+    <dimen name="text_size_medium">12sp</dimen>
+    <dimen name="text_size_body">13sp</dimen>
+    <dimen name="text_size_title">16sp</dimen>
+    <dimen name="text_size_heading">32sp</dimen>
+
+    <!-- Icon Sizes -->
+    <dimen name="icon_size_small">16dp</dimen>
+    <dimen name="icon_size_medium">20dp</dimen>
+    <dimen name="icon_size_large">28dp</dimen>
+
+    <!-- Card Dimensions -->
+    <dimen name="card_icon_size">56dp</dimen>
+    <dimen name="card_border_height">80dp</dimen>
+    <dimen name="arrow_button_size">48dp</dimen>
+
+    <!-- Header Icon -->
+    <dimen name="header_icon_size">60dp</dimen>
+    <dimen name="footer_icon_size">40dp</dimen>
+
+    <!-- Elevation -->
+    <dimen name="elevation_low">2dp</dimen>
+    <dimen name="elevation_medium">4dp</dimen>
+    <dimen name="elevation_high">8dp</dimen>
 </resources>
