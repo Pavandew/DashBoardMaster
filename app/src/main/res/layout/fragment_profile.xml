@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    tools:context=".master_dash.home.settings.views.ProfileFragment">
 
     <include
         android:id="@+id/settings_toolbar"
@@ -140,6 +142,8 @@
                             android:layout_width="wrap_content"
                             android:layout_height="42dp"
                             android:layout_marginStart="14dp"
+                            android:background="@drawable/bg_btn_color_gradient"
+                            app:backgroundTint="@null"
                             android:text="Choose File"
                             android:textAllCaps="false"/>
 
@@ -169,6 +173,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end"
+                        android:background="@drawable/bg_btn_color_gradient"
+                        app:backgroundTint="@null"
                         android:layout_marginTop="22dp"
                         android:text="Update Profile"
                         app:iconPadding="8dp"/>

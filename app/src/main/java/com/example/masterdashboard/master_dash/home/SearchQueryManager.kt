@@ -4,23 +4,28 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.widget.EditText
 
-class SearchQueryManager <T> (
+class SearchQueryManager<T>(
     private val searchEditText: EditText,
-    private val originalList: List<T>,
+    private val originalList: List<T>, // Passed reference list pointer
     private val onResultFiltered: (List<T>) -> Unit,
     private val filterRule: (item: T, query: String) -> Boolean
 ) {
 
-    private val textWatcher = object : TextWatcher{
+    // Track the last processed query to prevent redundant layout updates on empty white-spaces
+    private var lastQuery = ""
 
+    private val textWatcher = object : TextWatcher {
         override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
 
         override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
-            filter(s.toString())
+            val query = s?.toString() ?: ""
+            if (query != lastQuery) {
+                lastQuery = query
+                filter(query)
+            }
         }
 
-        override fun afterTextChanged(p0: Editable?) {
-        }
+        override fun afterTextChanged(p0: Editable?) {}
     }
 
     init {
@@ -28,18 +33,22 @@ class SearchQueryManager <T> (
     }
 
     private fun filter(query: String) {
-        val filteredList = if(query.trim().isEmpty()) {
-            originalList
+        val trimmedQuery = query.trim()
+
+        // FIXED: Creating a clean .toList() snapshot copy isolates memory layers
+        // from being modified concurrently by the Fragment lifecycle flow.
+        val filteredList = if (trimmedQuery.isEmpty()) {
+            originalList.toList()
         } else {
             originalList.filter { item ->
-                filterRule(item, query.trim())
+                filterRule(item, trimmedQuery)
             }
         }
 
         onResultFiltered(filteredList)
     }
 
-    // call this inside onDestroyView
+    // Call this inside onDestroyView
     fun removeListener() {
         searchEditText.removeTextChangedListener(textWatcher)
     }

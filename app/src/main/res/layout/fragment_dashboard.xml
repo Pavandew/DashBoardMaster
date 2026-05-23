@@ -5,18 +5,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FC"
-    tools:context=".home.dashboard.DashboardFragment">
+    android:background="@color/white"
+    tools:context=".master_dash.home.dashboard.DashboardFragment">
 
     <!-- Toolbar -->
-    <include
-        android:id="@+id/dashboard_toolbar"
-        layout="@layout/custom_toolbar"
-        android:layout_width="0dp"
-        android:layout_height="64dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+    <include android:id="@+id/dashboard_toolbar"
+        layout="@layout/custom_toolbar" />
+
 
     <!-- Scroll Content -->
     <androidx.core.widget.NestedScrollView
@@ -31,23 +26,23 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingBottom="10dp">
+            <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="10dp"
+                    android:animateLayoutChanges="true"
+                    android:transitionGroup="true">
 
             <!-- Welcome Title -->
             <TextView
                 android:id="@+id/tvWelcome"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="24dp"
-                android:layout_marginEnd="24dp"
-                android:text="Welcome back, Admin 👋"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="18dp"
+                android:layout_marginEnd="18dp"
+                android:text="@string/welcome_back"
                 android:textAppearance="@style/TextAppearance.MyApp.Title"
-                android:textColor="#1A1C24"
-                android:textSize="22sp"
                 android:fontFamily="@font/poppins_semibold"
                 android:maxLines="1"
                 android:ellipsize="end"
@@ -60,12 +55,10 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:layout_marginStart="24dp"
-                android:layout_marginEnd="24dp"
-                android:text="Here's what's happening with your network today."
+                android:layout_marginStart="18dp"
+                android:layout_marginEnd="18dp"
+                android:text="@string/dashboard_subtitle"
                 android:textAppearance="@style/TextAppearance.MyApp.Subtitle"
-                android:textColor="#687182"
-                android:textSize="14sp"
                 android:fontFamily="@font/poppins_regular"
                 app:layout_constraintTop_toBottomOf="@id/tvWelcome"
                 app:layout_constraintStart_toStartOf="parent"
@@ -80,7 +73,7 @@
                 android:layout_width="0dp"
                 android:layout_height="140dp"
                 android:layout_marginTop="14dp"
-                android:layout_marginStart="24dp"
+                android:layout_marginStart="18dp"
                 android:layout_marginEnd="6dp"
                 app:layout_constraintTop_toBottomOf="@id/tvSubTitle"
                 app:layout_constraintStart_toStartOf="parent"
@@ -94,7 +87,7 @@
                 android:layout_height="140dp"
                 android:layout_marginTop="14dp"
                 android:layout_marginStart="6dp"
-                android:layout_marginEnd="24dp"
+                android:layout_marginEnd="18dp"
                 app:layout_constraintTop_toBottomOf="@id/tvSubTitle"
                 app:layout_constraintStart_toEndOf="@id/dash_card_total_res"
                 app:layout_constraintEnd_toEndOf="parent" />
@@ -109,7 +102,7 @@
                 android:layout_width="0dp"
                 android:layout_height="140dp"
                 android:layout_marginTop="12dp"
-                android:layout_marginStart="24dp"
+                android:layout_marginStart="18dp"
                 android:layout_marginEnd="6dp"
                 app:layout_constraintTop_toBottomOf="@id/dash_card_total_res"
                 app:layout_constraintStart_toStartOf="parent"
@@ -123,7 +116,7 @@
                 android:layout_height="140dp"
                 android:layout_marginTop="12dp"
                 android:layout_marginStart="6dp"
-                android:layout_marginEnd="24dp"
+                android:layout_marginEnd="18dp"
                 app:layout_constraintTop_toBottomOf="@id/dash_card_active_res"
                 app:layout_constraintStart_toEndOf="@id/dash_card_disable_res"
                 app:layout_constraintEnd_toEndOf="parent" />
@@ -134,12 +127,16 @@
                 android:id="@+id/actionCard"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24dp"
+                android:layout_marginHorizontal="6dp"
                 android:layout_marginTop="10dp"
                 app:cardBackgroundColor="@android:color/white"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
+                app:cardElevation="6dp"
+                app:cardUseCompatPadding="true"
                 app:strokeWidth="0dp"
+                android:foreground="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
                 app:layout_constraintTop_toBottomOf="@id/dash_card_disable_res"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
@@ -153,7 +150,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Quick Actions"
+                        android:text="@string/quick_actions"
                         android:textColor="#1A1C24"
                         android:textSize="16sp"
                         android:fontFamily="@font/poppins_semibold"/>
@@ -163,7 +160,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         android:orientation="horizontal"
-                        android:weightSum="4">
+                        android:weightSum="4"
+                        android:baselineAligned="false">
 
                         <include
                             android:id="@+id/dash_quick_card_crete_res"
@@ -202,12 +200,13 @@
                 android:id="@+id/recentActivityCard"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24dp"
-                android:layout_marginTop="24dp"
+                android:layout_marginHorizontal="4dp"
                 android:backgroundTint="@android:color/white"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
+                app:cardElevation="6dp"
+                app:cardUseCompatPadding="true"
                 app:strokeWidth="0dp"
+                android:foreground="?attr/selectableItemBackground"
                 app:layout_constraintTop_toBottomOf="@id/actionCard"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -226,7 +225,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Recent Activity"
+                            android:text="@string/recent_activity"
                             android:textColor="#1A1C24"
                             android:textSize="16sp"
                             android:fontFamily="@font/poppins_semibold"
@@ -238,7 +237,7 @@
                             android:id="@+id/dash_tvViewAll"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="View All"
+                            android:text="@string/view_all"
                             android:textColor="#3554FF"
                             android:textSize="14sp"
                             android:fontFamily="@font/poppins_medium"
@@ -257,8 +256,11 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         android:nestedScrollingEnabled="false"
+                        android:layoutAnimation="@anim/layout_fall_down"
+                        android:clipToPadding="false"
+                        android:paddingBottom="8dp"
                         tools:itemCount="3"
-                        tools:listitem="@layout/item_recent_activity"/>
+                        tools:listitem="@layout/item_recent_activity" />
 
                 </LinearLayout>
 

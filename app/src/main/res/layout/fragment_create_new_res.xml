@@ -1,182 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F7F8FC"
-    tools:context=".home.create_res.CreateNewResFragment">
+    tools:context=".master_dash.home.create_res.CreateNewResFragment">
 
-    <!-- FIXED TOOLBAR -->
+    <!-- TOOLBAR -->
     <include
         android:id="@+id/new_res_toolbar"
         layout="@layout/custom_toolbar"
         android:layout_width="0dp"
-        android:layout_height="65dp"
+        android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-    <androidx.core.widget.NestedScrollView
+    <!-- RECYCLER VIEW -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvCreateRestaurant"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:fillViewport="true"
+        android:padding="16dp"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
         app:layout_constraintTop_toBottomOf="@id/new_res_toolbar"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="20dp">
-
-            <!-- Header Card (Icon and Description) -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/headerCard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#F0F0F0"
-                android:backgroundTint="@color/white"
-                app:strokeWidth="1dp"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
-                        android:background="@drawable/bg_card_2"
-                        android:backgroundTint="#F0F4FF"
-                        android:padding="12dp"
-                        android:src="@drawable/ic_restaurant_24dp"
-                        app:tint="#4A69FF" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Create New Restaurant"
-                            android:textAppearance="@style/TextAppearance.MyApp.ToolbarTitle" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Add a new restaurant and generate login credentials"
-                            android:textAppearance="@style/TextAppearance.MyApp.CardSubTitle" />
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Reusable Form Grid -->
-            <GridLayout
-                android:id="@+id/formGrid"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:alignmentMode="alignMargins"
-                android:columnCount="1"
-                app:layout_constraintTop_toBottomOf="@id/headerCard">
-
-                <!-- 1. Restaurant Name -->
-                <include android:id="@+id/fieldResName"
-                    layout="@layout/item_form_input"
-                    android:layout_columnWeight="1" />
-
-                <!-- 2. Email Address -->
-                <include android:id="@+id/fieldEmail"
-                    layout="@layout/item_form_input"
-                    android:layout_columnWeight="1"/>
-
-                <!-- 3. Owner Name -->
-                <include android:id="@+id/fieldOwner"
-                    layout="@layout/item_form_input"
-                    android:layout_columnWeight="1"/>
-
-                <!-- 4. Password -->
-                <include android:id="@+id/fieldPassword"
-                    layout="@layout/item_form_input"
-                    android:layout_columnWeight="1" />
-
-                <!-- 5. Phone Number -->
-                <include android:id="@+id/fieldPhone"
-                    layout="@layout/item_form_input"
-                    android:layout_columnWeight="1"/>
-
-                <!-- 6. Confirm Password -->
-                <include android:id="@+id/fieldConfirmPass"
-                    layout="@layout/item_form_input"
-                    android:layout_columnWeight="1"/>
-
-                <!-- 7. Username -->
-                <include android:id="@+id/fieldUsername"
-                    layout="@layout/item_form_input"
-                    android:layout_columnWeight="1" />
-
-                <!-- 8. Status Dropdown (Manual layout for the Spinner) -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_columnWeight="1"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginStart="8dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:text="Status *"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="@style/TextAppearance.MyApp.CardLabel" />
-
-                    <include
-                        android:id="@+id/create_new_dropdown"
-                        layout="@layout/item_dropdown_filter"/>
-                </LinearLayout>
-            </GridLayout>
-
-            <!-- Action Buttons -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:weightSum="2"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/formGrid">
-
-                <com.google.android.material.button.MaterialButton
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    android:text="Cancel"
-                    android:textAllCaps="false"
-                    android:textColor="#4A69FF"
-                    android:fontFamily="@font/poppins_semibold"
-                    app:cornerRadius="12dp"
-                    app:strokeColor="#4A69FF" />
-
-                <com.google.android.material.button.MaterialButton
-                    style="@style/Button.MyApp.Medium.Compact"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Create Restaurant" />
-            </LinearLayout>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.core.widget.NestedScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
