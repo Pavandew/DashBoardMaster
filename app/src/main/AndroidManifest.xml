@@ -14,6 +14,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MasterDashboard">
         <activity
+            android:name=".staff_dash.home.StaffHomeActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustPan" />
+        <activity
             android:name=".staff_dash.login.StaffLoginActivity"
             android:exported="false" />
         <activity
@@ -32,7 +36,7 @@
             android:name=".master_dash.login.views.OTPVerificationActivity"
             android:exported="false" />
         <activity
-            android:name=".master_dash.home.HomeActivity"
+            android:name=".master_dash.home.MasterHomeActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustPan" />
         <activity
