@@ -42,4 +42,65 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
 
+    <!-- Header Strings -->
+    <string name="visitor">VISITOR</string>
+    <string name="portal">PORTAL</string>
+    <string name="select_login_portal">Select your login portal to continue</string>
+
+    <!-- Master Dashboard -->
+    <string name="master">MASTER</string>
+    <string name="master_dashboard">Master Dashboard</string>
+    <string name="master_desc">Access the master control center and manage all system operations.</string>
+    <string name="manage_restaurants">Manage Restaurants</string>
+    <string name="reports_analytics">Reports &amp; Analytics</string>
+    <string name="system_settings">System Settings</string>
+
+    <!-- Billing Dashboard -->
+    <string name="billing">BILLING</string>
+    <string name="billing_dashboard">Billing Dashboard</string>
+    <string name="billing_desc">Access the billing system to manage orders, payments and invoices.</string>
+    <string name="create_bills">Create Bills</string>
+    <string name="payments">Payments</string>
+    <string name="kot_management">KOT Management</string>
+
+    <!-- Manager Dashboard -->
+    <string name="manager">MANAGER</string>
+    <string name="manager_dashboard">Manager Dashboard</string>
+    <string name="manager_desc">Access manager dashboard to monitor business and staff performance.</string>
+    <string name="sales_reports">Sales Reports</string>
+    <string name="staff_management">Staff Management</string>
+    <string name="inventory_overview">Inventory Overview</string>
+
+    <!-- Waiter Dashboard -->
+    <string name="waiter">WAITER</string>
+    <string name="waiter_dashboard">Waiter Dashboard</string>
+    <string name="waiter_desc">Access waiter system to take orders and send KOT to kitchen.</string>
+    <string name="floor_table">Floor &amp; Table</string>
+    <string name="take_order">Take Order</string>
+    <string name="send_kot">Send KOT</string>
+    <string name="login">LOGIN</string>
+
+    <!-- Footer Strings -->
+    <string name="secure_role_based">Secure &amp; Role Based Access</string>
+    <string name="security_desc">Each portal is secured with role-based access to ensure data security and better management.</string>
+    <string name="need_help">Need Help?</string>
+    <string name="help_desc">If you are not sure which portal to use, please contact your system administrator.</string>
+
+    <!-- Security Badge -->
+    <string name="all_systems_secured">All systems are secured and monitored.</string>
+    <string name="unauthorized_prohibited">Unauthorized access is strictly prohibited.</string>
+
+    <!-- Content Descriptions -->
+    <string name="lock_icon">Lock Icon</string>
+    <string name="security">Security</string>
+    <string name="help">Help</string>
+    <string name="secured">Secured</string>
+
+    <!-- Table Status Strings -->
+    <string name="status_free">Free</string>
+    <string name="status_occupied">Occupied</string>
+    <string name="status_reserved">Reserved</string>
+    <string name="status_billing">Billing</string>
+    <string name="seat_count_format">%d Seats</string>
+    <string name="orders">Orders</string>
 </resources>
