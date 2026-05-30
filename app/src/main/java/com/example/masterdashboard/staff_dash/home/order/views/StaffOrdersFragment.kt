@@ -65,8 +65,10 @@ class StaffOrdersFragment : Fragment() {
         val toolbar = binding.staffOrdersToolbar
         toolbar.tvToolbarTitle.text = getString(R.string.orders)
         toolbar.llSubtitleContainer.visibility = View.GONE
-        toolbar.toolbarImgMenu.setImageResource(R.drawable.ic_menu_24dp)
-        toolbar.toolbarImgMenu.visibility = View.GONE
+        toolbar.toolbarImgMenu.setImageResource(R.drawable.ic_arrow_back_24dp)
+        toolbar.toolbarImgMenu.setOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
     }
 
     private fun setUpRecyclerViews() {
@@ -91,7 +93,7 @@ class StaffOrdersFragment : Fragment() {
             }
 
             parentFragmentManager.beginTransaction()
-                .replace(R.id.staff_home_fragment_container, expansionFragment)
+                .replace(this@StaffOrdersFragment.id, expansionFragment)
                 .addToBackStack(null)
                 .commit()
         }

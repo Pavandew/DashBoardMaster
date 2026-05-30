@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.login.utils
+package com.example.masterdashboard.login.utils
 
 sealed class ValidationResult {
 

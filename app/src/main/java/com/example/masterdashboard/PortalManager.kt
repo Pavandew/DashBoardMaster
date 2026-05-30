@@ -8,8 +8,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.example.masterdashboard.databinding.ItemPortalCardBinding
-import com.example.masterdashboard.master_dash.login.models.PortalFeature
-import com.example.masterdashboard.master_dash.login.models.PortalItem
+import com.example.masterdashboard.login.models.PortalFeature
+import com.example.masterdashboard.login.models.PortalItem
 
 class PortalManager(private val context: Context) {
 

@@ -133,4 +133,10 @@
     <string name="order_details">Order Details</string>
     <string name="items">Items</string>
     <string name="grand_total">Grand Total</string>
+    <string name="order_count_format">%d Orders</string>
+    <string name="summary_new">New</string>
+    <string name="summary_kitchen">Kitchen</string>
+    <string name="summary_ready">Ready</string>
+    <string name="summary_served">Served</string>
+    <string name="summary_cancelled">Cancelled</string>
 </resources>

@@ -173,7 +173,7 @@ class StaffTablesFragment : Fragment() {
         }
 
         parentFragmentManager.beginTransaction().apply {
-            replace(R.id.staff_home_fragment_container, orderTakingFragment, "OrderTakingFragment")
+            replace(this@StaffTablesFragment.id, orderTakingFragment, "OrderTakingFragment")
             addToBackStack("OrderTakingFragment")
             commit()
         }

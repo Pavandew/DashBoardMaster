@@ -87,9 +87,7 @@ class SettingsDrawerManager(
             .show()
     }
 
-    // -----------------------------------------
     // Logout
-    // -----------------------------------------
     private fun logout() {
 
         // Clear local session

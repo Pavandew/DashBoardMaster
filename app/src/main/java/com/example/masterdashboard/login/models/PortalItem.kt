@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.login.models
+package com.example.masterdashboard.login.models
 
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes

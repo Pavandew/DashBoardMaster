@@ -53,7 +53,7 @@ class RestaurantListsFragment : Fragment() {
     private fun setupSearchBar() {
         // Initialize the generic search manager
         searchManager = SearchQueryManager(
-            searchEditText = binding.etSearch,
+            searchEditText = binding.resListSearchbar.etSearch,
             originalList = restaurantList,
             onResultFiltered = { filteredList ->
                 if (::restaurantListAdapter.isInitialized) {

@@ -1,11 +1,13 @@
-package com.example.masterdashboard.master_dash.login.viewmodel
+package com.example.masterdashboard.login.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.masterdashboard.master_dash.login.uistate.SignUpUiState
-import com.example.masterdashboard.master_dash.login.utils.SignUpValidator
-import com.example.masterdashboard.master_dash.login.utils.ValidationResult
+import com.example.masterdashboard.ActivityVisitorPortal
+import com.example.masterdashboard.login.uistate.SignUpUiState
+import com.example.masterdashboard.login.utils.SignUpValidator
+import com.example.masterdashboard.login.utils.ValidationResult
+import com.example.masterdashboard.utils.AppConstants
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +18,9 @@ import kotlinx.coroutines.tasks.await
 class SignUpViewModel : ViewModel() {
 
     private val db = Firebase.firestore
-    private val TAG = "SignUpViewModel"
+    companion object{
+        const val TAG = "SignUpViewModel"
+    }
 
     private val _signUpState =
         MutableStateFlow<SignUpUiState>(SignUpUiState.Idle)
@@ -27,10 +31,13 @@ class SignUpViewModel : ViewModel() {
         fullName: String,
         phone: String,
         password: String,
-        confirmPassword: String
+        confirmPassword: String,
+        role: String,
+        portalType: String
     ) {
         Log.i(TAG, "signUpUser: Attempting to sign up user with phone: $phone")
 
+        // validation
         val result = SignUpValidator.validate(
             fullName,
             phone,
@@ -59,14 +66,17 @@ class SignUpViewModel : ViewModel() {
                         SignUpUiState.Loading
 
                     try {
+                        val formattedPhone = if (phone.startsWith("+91")) phone else "+91$phone"
+                        Log.d(TAG, "signUpUser: Checking existing user with formatted phone: $formattedPhone")
 
-                        val snapshot = db.collection("users")
-                            .whereEqualTo("phone", phone)
+                        // check Existing User
+                        val snapshot = db.collection(AppConstants.COLLECTION_USERS)
+                            .whereEqualTo(AppConstants.FIELD_PHONE, formattedPhone)
                             .get()
                             .await()
 
                         if (!snapshot.isEmpty) {
-                            Log.w(TAG, "signUpUser: Phone $phone is already registered")
+                            Log.w(TAG, "signUpUser: Phone $formattedPhone is already registered")
 
                             _signUpState.value =
                                 SignUpUiState.Error(
@@ -76,11 +86,14 @@ class SignUpViewModel : ViewModel() {
                             return@launch
                         }
 
+                        // Success -> Send OTP
                         Log.i(TAG, "signUpUser: User not found, sending OTP to $phone")
                         _signUpState.value =
                             SignUpUiState.Success(
                                 message = "OTP Sent",
-                                phone = phone
+                                phone = phone,
+                                role = role,
+                                portalType = portalType
                             )
 
                     } catch (e: Exception) {
