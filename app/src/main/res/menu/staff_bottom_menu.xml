@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/staff_dashboardFragment"
+        android:title="@string/nav_dashboard"
+        android:icon="@drawable/ic_dashboard_24dp"
+        />
+
+    <item
+        android:id="@+id/staff_tableFragment"
+        android:title="Table"
+        android:icon="@drawable/ic_table_24dp"
+        />
+    <item
+        android:id="@+id/staff_orderFragment"
+        android:title="Order"
+        android:icon="@drawable/ic_logs_24dp"
+        />
+
+    <item
+        android:id="@+id/staff_logFragment"
+        android:title="Alert"
+        android:icon="@drawable/ic_notifications_24dp"
+        />
+
+    <item
+        android:id="@+id/staff_settingFragment"
+        android:title="Profile"
+        android:icon="@drawable/ic_person_24dp"
+        />
+
+</menu>
