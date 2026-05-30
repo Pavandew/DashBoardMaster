@@ -5,23 +5,32 @@ import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.example.masterdashboard.databinding.ActivityVisitorPortalBinding
-import com.example.masterdashboard.master_dash.login.models.PortalFeature
-import com.example.masterdashboard.master_dash.login.models.PortalItem
-import com.example.masterdashboard.master_dash.login.views.LoginActivity
+import com.example.masterdashboard.login.models.PortalFeature
+import com.example.masterdashboard.login.models.PortalItem
+import com.example.masterdashboard.login.views.LoginActivity
 import com.example.masterdashboard.staff_dash.login.StaffLoginActivity
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.SessionManager
 
 class ActivityVisitorPortal : AppCompatActivity() {
 
+    companion object{
+        private val TAG = "ActivityVisitorPortal"
+    }
+
     private lateinit var binding: ActivityVisitorPortalBinding
     private lateinit var portalManager: PortalManager
+    private lateinit var sessionManager: SessionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         binding = ActivityVisitorPortalBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         portalManager = PortalManager(this)
+        sessionManager = SessionManager(this)
 
         // 1. Setup Title Gradient
         portalManager.applyTextGradient(binding.visitorPortalTitle)
@@ -31,9 +40,10 @@ class ActivityVisitorPortal : AppCompatActivity() {
     }
 
     private fun setupAllPortals() {
-        // 1. Master Portal
+
+        // 1. Multi Restaurant Portal
         val master = PortalItem(
-            "Master Dashboard",
+            "Multi Restaurant",
             "Manage all restaurants and system settings",
             R.drawable.shield,
             R.color.primary_blue,
@@ -43,29 +53,16 @@ class ActivityVisitorPortal : AppCompatActivity() {
                 PortalFeature(R.drawable.ic_settings_24dp, "Settings", R.color.primary_blue)
             )
         ) {
+            sessionManager.setSelectedPortal(AppConstants.PORTAL_MULTI_RESTAURANT)
+
             startActivity(Intent(this, LoginActivity::class.java))
+//            Toast.makeText(this, "Master Portal - Coming Soon!", Toast.LENGTH_SHORT).show()
         }
 
-        // 2. Billing Portal
-        val billing = PortalItem(
-            "Billing Dashboard",
-            "Handle orders, payments and daily billing",
-            R.drawable.biling,
-            R.color.primary_green,
-            listOf(
-                PortalFeature(R.drawable.ic_logs_24dp, "Create bill", R.color.primary_green),
-                PortalFeature(R.drawable.ic_payments_24dp, "Payments", R.color.primary_green),
-                PortalFeature(R.drawable.ic_inventory_24dp, "Inventory", R.color.primary_green)
-            )
-        ) {
-            // No activity currently
-            startActivity(Intent(this, StaffLoginActivity::class.java))
-        }
-
-        // 3. Manager Portal
+        // 2. Restaurant Portal
         val manager = PortalItem(
-            "Manager Dashboard",
-            "View sales reports and manage staff",
+            "Restaurant Portal",
+            "Manage restaurant and staff",
             R.drawable.manager,
             R.color.primary_purple,
             listOf(
@@ -87,11 +84,13 @@ class ActivityVisitorPortal : AppCompatActivity() {
             )
         ) {
             // No activity currently
+            sessionManager.setSelectedPortal(AppConstants.PORTAL_RESTAURANT)
+            startActivity(Intent(this, LoginActivity::class.java))
         }
 
-        // 4. Waiter Portal
+        // 3. Staff Portal
         val waiter = PortalItem(
-            "Waiter Dashboard",
+            "Staff Dashboard",
             "Take orders and manage tables",
             R.drawable.waiter,
             R.color.primary_orange,
@@ -105,13 +104,13 @@ class ActivityVisitorPortal : AppCompatActivity() {
                 PortalFeature(R.drawable.ic_send_24dp, "Send KOT", R.color.primary_orange)
             )
         ) {
-            // No activity currently
-            startActivity(Intent(this, StaffLoginActivity::class.java))
+            sessionManager.setSelectedPortal(AppConstants.PORTAL_STAFF)
+
+            startActivity(Intent(this, LoginActivity::class.java))
         }
 
         // Bind data using the manager
         portalManager.bindCard(binding.cardMaster, master)
-        portalManager.bindCard(binding.cardBilling, billing)
         portalManager.bindCard(binding.cardManager, manager)
         portalManager.bindCard(binding.cardWaiter, waiter)
     }

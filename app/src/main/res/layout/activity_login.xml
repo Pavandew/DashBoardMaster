@@ -6,7 +6,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:background="@drawable/login_background"
     android:padding="20dp"
-    tools:context=".master_dash.login.views.LoginActivity">
+    android:id="@+id/login_screen"
+    tools:context=".login.views.LoginActivity">
 
         <LinearLayout
             android:layout_width="match_parent"

@@ -1,54 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="0dp"
     android:layout_height="wrap_content"
-    android:padding="4dp"
-    android:id="@+id/quick_action_item"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_weight="1"
+    android:layout_margin="3dp"
+    android:orientation="vertical">
 
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardQuickAction"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="2dp"
-        app:strokeWidth="0dp"
-        app:cardBackgroundColor="@color/white">
+        android:layout_height="85dp"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="1.5dp"
+        app:strokeColor="#222634"
+        app:cardBackgroundColor="#12141C">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:gravity="center"
-            android:paddingVertical="16dp"
-            android:paddingHorizontal="4dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="6dp">
 
-            <!-- Icon Container -->
-            <FrameLayout
-                android:id="@+id/quick_action_background"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+            <ImageView
+                android:id="@+id/quick_action_icon"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:layout_marginBottom="8dp"
-                android:background="@drawable/bg_status_green"
-                android:padding="12dp">
-
-                <ImageView
-                    android:id="@+id/quick_action_icon"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:src="@drawable/ic_person_24dp"
-                    app:tint="@color/white" />
-            </FrameLayout>
+                android:src="@drawable/ic_person_24dp"
+                app:tint="@color/accent_purple" />
 
             <TextView
                 android:id="@+id/quick_action_title"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/poppins_regular"
                 android:gravity="center"
-                android:text="Action"
-                android:textColor="@color/black"
-                android:textSize="11sp" />
+                android:text="Add Staff"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:textColor="@color/text_primary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
-</RelativeLayout>
+</LinearLayout>
