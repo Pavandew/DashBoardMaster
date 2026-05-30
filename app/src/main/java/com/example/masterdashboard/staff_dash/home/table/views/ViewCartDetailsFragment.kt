@@ -61,7 +61,7 @@ class ViewCartDetailsFragment : Fragment() {
         val tableId = arguments?.getString("tableId") ?: "Unknown Table"
 
         val toolbar = binding.viewCartToolbar
-        toolbar.tvToolbarTitle.text = "Cart - Table $tableId"
+        toolbar.tvToolbarTitle.text = getString(R.string.cart) + " - Table $tableId"
         toolbar.tvToolbarEndText.visibility = View.VISIBLE
         toolbar.toolbarImgNotification.visibility = View.GONE
 
@@ -132,9 +132,9 @@ class ViewCartDetailsFragment : Fragment() {
                     val gst = subtotal * 0.05
                     val grandTotal = subtotal + gst
 
-                    binding.tvSubtotalPrice.text = "₹ $subtotal"
-                    binding.tvGstPrice.text = "₹ ${String.format("%.2f", gst)}"
-                    binding.tvGrandTotalPrice.text = "₹ ${String.format("%.2f", grandTotal)}"
+                    binding.tvSubtotalPrice.text = getString(R.string.currency_symbol) + " $subtotal"
+                    binding.tvGstPrice.text = getString(R.string.currency_symbol) + " ${String.format("%.2f", gst)}"
+                    binding.tvGrandTotalPrice.text = getString(R.string.currency_symbol) + " ${String.format("%.2f", grandTotal)}"
 
                     if (selectedCartItems.isEmpty()) {
                         Log.d(TAG, "observeCartStateFlow: Cart is empty, navigating back to home screen layouts automatically.")

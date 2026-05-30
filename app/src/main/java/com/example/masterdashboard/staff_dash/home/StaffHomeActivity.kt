@@ -14,9 +14,9 @@ import com.example.masterdashboard.databinding.ActivityStaffHomeBinding
 import com.example.masterdashboard.master_dash.home.settings.views.ChangePasswordFragment
 import com.example.masterdashboard.staff_dash.home.alert.StaffAlertFragment
 import com.example.masterdashboard.staff_dash.home.dashboard.StaffDashboardFragment
-import com.example.masterdashboard.staff_dash.home.order.StaffOrdersFragment
+import com.example.masterdashboard.staff_dash.home.order.views.StaffOrdersFragment
 import com.example.masterdashboard.staff_dash.home.profile.StaffProfileFragment
-import com.example.masterdashboard.staff_dash.home.table.StaffTablesFragment
+import com.example.masterdashboard.staff_dash.home.table.views.StaffTablesFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class StaffHomeActivity : AppCompatActivity() {
@@ -25,11 +25,13 @@ class StaffHomeActivity : AppCompatActivity() {
 
     private var currentTag: String? = null
     private var pendingTag: String? = null
+    private var isBottomNavVisible = true
     private val TAG = "StaffHomeActivity_Debug"
 
 
     companion object {
         private const val KEY_CURRENT_TAG = "current_tag"
+        private const val KEY_BOTTOM_NAV_VISIBLE = "bottom_nav_visible"
 
         const val TAG_DASHBOARD = "dashboard"
         const val TAG_CREATE = "table"
@@ -39,14 +41,16 @@ class StaffHomeActivity : AppCompatActivity() {
         const val TAG_CHANGE_PASSWORD = "change_password"
     }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
+
         binding = ActivityStaffHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        
+
+        // Close drawer by default
+        binding.main.closeDrawer(GravityCompat.START, false)
+
         bottomNav = binding.staffHostBottomNav
 
         setupBottomNavigation()
@@ -58,8 +62,15 @@ class StaffHomeActivity : AppCompatActivity() {
             openDashboard()
         } else {
             currentTag = savedInstanceState.getString(KEY_CURRENT_TAG)
-            Log.d(TAG, "onCreate: Restoring state, currentTag: $currentTag")
+            isBottomNavVisible = savedInstanceState.getBoolean(KEY_BOTTOM_NAV_VISIBLE, true)
+
+            Log.d(
+                TAG,
+                "onCreate: Restoring state, currentTag: $currentTag, bottomNavVisible: $isBottomNavVisible"
+            )
+
             navigateTo(currentTag ?: TAG_DASHBOARD)
+            updateBottomNavVisibility()
         }
     }
 
@@ -171,11 +182,8 @@ class StaffHomeActivity : AppCompatActivity() {
 
         currentTag = tag
 
-        bottomNav.visibility =
-            if (tag == TAG_CHANGE_PASSWORD)
-                View.GONE
-            else
-                View.VISIBLE
+        isBottomNavVisible = (tag != TAG_CHANGE_PASSWORD)
+        updateBottomNavVisibility()
 
         return true
     }
@@ -193,15 +201,6 @@ class StaffHomeActivity : AppCompatActivity() {
         }
     }
 
-    // Drawer Control
-    fun openDrawer() {
-        binding.main.openDrawer(GravityCompat.START)
-    }
-
-    fun closeDrawer() {
-        binding.main.closeDrawer(GravityCompat.START)
-    }
-
     // Back Press
     private var backPressedTime: Long = 0
 
@@ -212,6 +211,9 @@ class StaffHomeActivity : AppCompatActivity() {
                 override fun handleOnBackPressed() {
                     when {
                         binding.main.isDrawerOpen(GravityCompat.START) -> closeDrawer()
+                        supportFragmentManager.backStackEntryCount > 0 -> {
+                            supportFragmentManager.popBackStack()
+                        }
                         currentTag != TAG_DASHBOARD -> openDashboard()
                         else -> {
                             if (backPressedTime + 2000 > System.currentTimeMillis()) {
@@ -231,8 +233,32 @@ class StaffHomeActivity : AppCompatActivity() {
         )
     }
 
+    // Drawer Control
+    fun openDrawer() {
+        binding.main.openDrawer(GravityCompat.START)
+    }
+
+    fun closeDrawer() {
+        binding.main.closeDrawer(GravityCompat.START)
+    }
+
+    fun hideBottomNavigation() {
+        isBottomNavVisible = false
+        updateBottomNavVisibility()
+    }
+
+    fun showBottomNavigation() {
+        isBottomNavVisible = true
+        updateBottomNavVisibility()
+    }
+
+    private fun updateBottomNavVisibility() {
+        binding.staffHostBottomNav.visibility = if (isBottomNavVisible) View.VISIBLE else View.GONE
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putString(KEY_CURRENT_TAG, currentTag)
+        outState.putBoolean(KEY_BOTTOM_NAV_VISIBLE, isBottomNavVisible)
     }
 }

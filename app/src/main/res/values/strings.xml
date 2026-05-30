@@ -103,4 +103,34 @@
     <string name="status_billing">Billing</string>
     <string name="seat_count_format">%d Seats</string>
     <string name="orders">Orders</string>
+
+    <!-- Staff Dash Strings -->
+    <string name="alerts">Alerts</string>
+    <string name="tables">Tables</string>
+    <string name="cart">Cart</string>
+    <string name="accept">Accept</string>
+    <string name="done">Done</string>
+    <string name="search_table_hint">Search table number&#8230;</string>
+    <string name="search_item_hint">Search item&#8230;</string>
+    <string name="order_notes_hint">Write special note&#8230;</string>
+    <string name="order_notes_label">Order Notes (Optional)</string>
+    <string name="view_cart_format">View Cart (%d)</string>
+    <string name="subtotal">Subtotal</string>
+    <string name="gst_label">GST (5%)</string>
+    <string name="total">Total</string>
+    <string name="send_to_kitchen">Send to Kitchen</string>
+    <string name="order_sent">Order Sent!</string>
+    <string name="order_sent_msg">Order has been sent to kitchen</string>
+    <string name="table_number">Table Number</string>
+    <string name="order_id_label">Order ID</string>
+    <string name="total_items">Total Items</string>
+    <string name="total_amount">Total Amount</string>
+    <string name="time_label">Time</string>
+    <string name="view_active_orders">View Active Orders</string>
+    <string name="back_to_tables">Back to Tables</string>
+    <string name="currency_symbol">₹</string>
+    <string name="mark_as_served">Mark as Served</string>
+    <string name="order_details">Order Details</string>
+    <string name="items">Items</string>
+    <string name="grand_total">Grand Total</string>
 </resources>

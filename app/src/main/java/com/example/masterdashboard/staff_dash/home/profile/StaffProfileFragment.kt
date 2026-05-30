@@ -27,9 +27,11 @@ class StaffProfileFragment : Fragment() {
     }
 
     private fun setupToolbar() {
-        binding.staffProfileToolbar.toolbarCenterTvTitle.text = "Profile"
-        binding.staffProfileToolbar.toolbarImgMenu.setOnClickListener {
-            (activity as? StaffHomeActivity)?.openDrawer()
+        val toolbar = binding.staffProfileToolbar
+        toolbar.tvToolbarTitle.text = "Profile"
+        toolbar.llSubtitleContainer.visibility = View.GONE
+        toolbar.toolbarImgMenu.setOnClickListener {
+//            (activity as? StaffHomeActivity)?.openDrawer()
         }
     }
 
