@@ -102,30 +102,34 @@
                         app:cornerRadius="8dp" />
                 </LinearLayout>
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    app:boxCornerRadiusTopStart="12dp"
-                    app:boxCornerRadiusTopEnd="12dp"
-                    app:boxCornerRadiusBottomStart="12dp"
-                    app:boxCornerRadiusBottomEnd="12dp"
-                    app:hintEnabled="false"
-                    app:startIconDrawable="@drawable/ic_search_24dp">
+                <include
+                    android:id="@+id/res_list_searchbar"
+                    layout="@layout/item_search_bar"
+                    />
+<!--                <com.google.android.material.textfield.TextInputLayout-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_marginTop="12dp"-->
+<!--                    app:boxCornerRadiusTopStart="12dp"-->
+<!--                    app:boxCornerRadiusTopEnd="12dp"-->
+<!--                    app:boxCornerRadiusBottomStart="12dp"-->
+<!--                    app:boxCornerRadiusBottomEnd="12dp"-->
+<!--                    app:hintEnabled="false"-->
+<!--                    app:startIconDrawable="@drawable/ic_search_24dp">-->
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etSearch"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:paddingTop="6dp"
-                        android:paddingBottom="6dp"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="12dp"
-                        android:singleLine="true"
-                        android:inputType="text"
-                        style="@style/TextAppearance.MyApp.ActivitySubtext"
-                        android:hint="@string/search_restaurant" />
-                </com.google.android.material.textfield.TextInputLayout>
+<!--                    <com.google.android.material.textfield.TextInputEditText-->
+<!--                        android:id="@+id/etSearch"-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:paddingTop="6dp"-->
+<!--                        android:paddingBottom="6dp"-->
+<!--                        android:paddingStart="12dp"-->
+<!--                        android:paddingEnd="12dp"-->
+<!--                        android:singleLine="true"-->
+<!--                        android:inputType="text"-->
+<!--                        style="@style/TextAppearance.MyApp.ActivitySubtext"-->
+<!--                        android:hint="@string/search_restaurant" />-->
+<!--                </com.google.android.material.textfield.TextInputLayout>-->
 
             </LinearLayout>
 

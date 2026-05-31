@@ -29,6 +29,4 @@
         android:title="@string/nav_settings"
         android:icon="@drawable/ic_settings_24dp"
         />
-
-
 </menu>

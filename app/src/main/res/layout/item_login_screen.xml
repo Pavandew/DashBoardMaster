@@ -56,7 +56,7 @@
             app:hintTextColor="#8A8FA8">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/login_email_et"
+                android:id="@+id/login_Phone_et"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:paddingTop="0dp"
@@ -139,6 +139,7 @@
             android:layout_height="wrap_content"
             android:text="Login"
             app:iconGravity="textStart"
+            app:backgroundTint="@color/purple_gradient_end"
             app:iconPadding="10dp"
             app:iconTint="@android:color/white" />
 
@@ -151,6 +152,7 @@
             android:orientation="horizontal">
 
             <TextView
+                android:id="@+id/login_dont_have_create_acc_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Don't have an account? "

@@ -61,4 +61,60 @@
     <!-- Portal Title Gradient -->
     <color name="portal_title_start">#4facfe</color>
     <color name="portal_title_end">#00f2fe</color>
+    <!-- Status Colors -->
+    <color name="status_free">#178038</color>
+    <color name="status_free_bg">#E8F5E9</color>
+    <color name="status_occupied">#D32F2F</color>
+    <color name="status_occupied_bg">#FFF5F5</color>
+    <color name="status_occupied_label_bg">#FFEBEE</color>
+    <color name="status_reserved">#EF6C00</color>
+    <color name="status_reserved_bg">#FFF3E0</color>
+    <color name="status_billing">#283593</color>
+    <color name="status_billing_bg">#E8EAF6</color>
+
+    <color name="table_id_text">#222222</color>
+    <color name="table_seat_text">#666666</color>
+
+    <!-- Chip Colors -->
+    <color name="chip_selected">#4A3AFF</color>
+    <color name="chip_unselected_text">#555555</color>
+    <color name="chip_border">#EAEAEA</color>
+
+    <!-- Search Bar Colors -->
+    <color name="search_bar_bg">#F1F3F5</color>
+    <color name="search_bar_border">#DDE1E5</color>
+    <color name="search_bar_hint">#8A8A8A</color>
+    <color name="search_bar_text">#333333</color>
+
+    <!-- Alert Dash Colors -->
+    <color name="alert_icon_default_bg">#F2F3F8</color>
+    <color name="alert_title_text">#1A1C1E</color>
+    <color name="alert_message_text">#6C757D</color>
+    <color name="alert_btn_accept_bg">#00B660</color>
+    <color name="alert_btn_done_text">#495057</color>
+    <color name="alert_btn_done_stroke">#CED4DA</color>
+
+    <!-- Order Dash Colors -->
+    <color name="order_table_text">#1A1D20</color>
+    <color name="order_ticket_text">#8A8A8A</color>
+    <color name="order_status_preparing">#F39C12</color>
+    <color name="order_items_text">#555555</color>
+    <color name="order_chevron_tint">#626262</color>
+
+    <!-- Success Screen Colors -->
+    <color name="bg_success_light">#F8F9FA</color>
+
+    <color name="bg_main">#0B0D13</color>
+    <color name="bg_card">#12141C</color>
+
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#8E92A2</color>
+
+    <color name="green_growth">#10B981</color>
+    <color name="red_alert">#EF4444</color>
+
+    <color name="accent_blue">#3B82F6</color>
+    <color name="accent_orange">#F59E0B</color>
+    <color name="accent_pink">#EC4899</color>
+    <color name="accent_purple">#8B5CF6</color>
 </resources>

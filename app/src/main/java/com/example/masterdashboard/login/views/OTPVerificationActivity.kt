@@ -13,7 +13,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.databinding.ActivityOtpverificationBinding
 import com.example.masterdashboard.login.uistate.OtpUiState
 import com.example.masterdashboard.login.viewmodel.OtpViewModel
-import com.example.masterdashboard.manager_dash.home.ManagerHomeActivity
+import com.example.masterdashboard.manager_single_res_dash.home.ManagerHomeActivity
 import com.example.masterdashboard.master_dash.home.MasterHomeActivity
 import com.example.masterdashboard.staff_dash.home.StaffHomeActivity
 import com.example.masterdashboard.utils.AppConstants

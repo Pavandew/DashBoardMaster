@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MasterDashboard">
         <activity
-            android:name=".manager_dash.home.ManagerHomeActivity"
+            android:name=".manager_single_res_dash.home.ManagerHomeActivity"
             android:exported="false" />
         <activity
             android:name=".staff_dash.home.StaffHomeActivity"

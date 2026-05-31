@@ -1,8 +1,9 @@
-package com.example.masterdashboard.master_dash.login.viewmodel
+package com.example.masterdashboard.login.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.masterdashboard.master_dash.login.uistate.LoginUiState
+import com.example.masterdashboard.login.uistate.LoginUiState
+import com.example.masterdashboard.utils.AppConstants
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,9 +14,9 @@ class LoginViewModel: ViewModel() {
 
     private val db = FirebaseFirestore.getInstance()
 
-    private val _loginState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
+    private val _loginState =
+        MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val loginState : StateFlow<LoginUiState> = _loginState
-
 
     fun loginUser(phone: String, password: String) {
 
@@ -31,10 +32,17 @@ class LoginViewModel: ViewModel() {
 
             _loginState.value = LoginUiState.Loading
 
+            val formattedPhone =
+                if(phone.startsWith("+91")) {
+                    phone
+                } else {
+                    "+91$phone"
+                }
+
 
             try {
-                val snapshot = db.collection("users")
-                    .whereEqualTo("phone", "+91$phone")
+                val snapshot = db.collection(AppConstants.COLLECTION_USERS)
+                    .whereEqualTo(AppConstants.FIELD_PHONE, formattedPhone)
                     .get()
                     .await()
 
@@ -49,11 +57,22 @@ class LoginViewModel: ViewModel() {
                 }
 
                 val userDoc = snapshot.documents[0]
-                val storedPassword =
-                    userDoc.getString("passwordHash") ?: ""
+                
+                // Use a more robust way to get values to handle potential type or naming mismatches
+                val storedPassword = userDoc.get(AppConstants.FIELD_PASSWORD_HASH)?.toString() ?: ""
 
-                val isVerified =
-                    userDoc.getBoolean("isVerified") ?: false
+                // Firestore often strips the 'is' prefix from boolean fields (isVerified -> verified)
+                // We check both keys and handle cases where it might be stored as a String
+                val isVerifiedValue = userDoc.get(AppConstants.FIELD_IS_VERIFIED) ?: userDoc.get("verified")
+                val isVerified = when (isVerifiedValue) {
+                    is Boolean -> isVerifiedValue
+                    is String -> isVerifiedValue.toBoolean()
+                    else -> false
+                }
+
+                val uid = userDoc.getString(AppConstants.FIELD_UID) ?: ""
+                val role = userDoc.getString(AppConstants.FIELD_ROLE) ?: ""
+                val portalType = userDoc.getString(AppConstants.FIELD_PORTAL_TYPE) ?: ""
 
                 // step 2 password chek
                 if(storedPassword != password.hashCode().toString()) {
@@ -63,7 +82,7 @@ class LoginViewModel: ViewModel() {
                     return@launch
                 }
 
-                // STEP 3: optional OTP check
+                // STEP 3:  OTP Verification check
                 if (!isVerified) {
                     _loginState.value =
                         LoginUiState.Error(field = "",
@@ -72,7 +91,12 @@ class LoginViewModel: ViewModel() {
                 }
 
                 _loginState.value =
-                    LoginUiState.Success("Login successful")
+                    LoginUiState.Success(
+                        message = "Login successful",
+                        uid = uid,
+                        role = role,
+                        portalType = portalType
+                    )
 
             } catch (e: Exception) {
                 _loginState.value =

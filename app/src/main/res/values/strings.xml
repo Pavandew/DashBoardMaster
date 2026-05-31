@@ -69,6 +69,7 @@
     <string name="manager_desc">Access manager dashboard to monitor business and staff performance.</string>
     <string name="sales_reports">Sales Reports</string>
     <string name="staff_management">Staff Management</string>
+    <string name="add_staff">Add new Staff</string>
     <string name="inventory_overview">Inventory Overview</string>
 
     <!-- Waiter Dashboard -->

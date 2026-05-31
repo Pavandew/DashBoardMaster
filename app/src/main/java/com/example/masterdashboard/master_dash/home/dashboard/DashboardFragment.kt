@@ -183,7 +183,7 @@ class DashboardFragment : Fragment() {
 
         quickActionIcon.setImageResource(item.icon)
 
-        quickActionBackground.backgroundTintList =
+        cardQuickAction.backgroundTintList =
             ColorStateList.valueOf(
                 ContextCompat.getColor(
                     context,
@@ -191,7 +191,7 @@ class DashboardFragment : Fragment() {
                 )
             )
 
-        quickActionItem.setOnClickListener {
+        cardQuickAction.setOnClickListener {
             onClick()
         }
     }

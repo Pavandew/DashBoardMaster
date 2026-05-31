@@ -9,7 +9,7 @@ import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.example.masterdashboard.databinding.ActivitySplashBinding
-import com.example.masterdashboard.manager_dash.home.ManagerHomeActivity
+import com.example.masterdashboard.manager_single_res_dash.home.ManagerHomeActivity
 import com.example.masterdashboard.master_dash.home.MasterHomeActivity
 import com.example.masterdashboard.staff_dash.home.StaffHomeActivity
 import com.example.masterdashboard.utils.AppConstants
