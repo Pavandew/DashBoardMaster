@@ -1,9 +1,10 @@
-package com.example.masterdashboard.master_dash.login.viewmodel
+package com.example.masterdashboard.login.viewmodel
 
 import android.app.Activity
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.example.masterdashboard.master_dash.login.uistate.OtpUiState
+import com.example.masterdashboard.login.models.UserModelData
+import com.example.masterdashboard.login.uistate.OtpUiState
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
@@ -31,13 +32,32 @@ class OtpViewModel : ViewModel() {
     private var tempFullName: String = ""
     private var tempPassword: String = ""
 
+    private var tempRole: String = ""
+
+    private var tempPortal: String = ""
+
     // STEP 1: SEND OTP
-    fun sendOtp(phone: String, activity: Activity, fullName: String, password: String) {
+    fun sendOtp(
+        phone: String,
+        activity: Activity,
+        fullName: String,
+        password: String,
+        role: String,
+        portalType: String
+    ) {
         Log.i(TAG, "sendOtp: Initiating OTP request for phone: $phone")
 
-        tempPhone = phone
+        tempPhone =
+            if(phone.startsWith("+91")) {
+                phone
+            } else {
+                "+91$phone"
+            }
         tempFullName = fullName
         tempPassword = password
+        tempRole = role
+        tempPortal = portalType
+
 
         _otpState.value = OtpUiState.Loading
 
@@ -73,7 +93,7 @@ class OtpViewModel : ViewModel() {
 
         val options =
             PhoneAuthOptions.newBuilder(auth)
-                .setPhoneNumber("+91$phone")
+                .setPhoneNumber(tempPhone)
                 .setTimeout(60L, TimeUnit.SECONDS)
                 .setActivity(activity)
                 .setCallbacks(callbacks)
@@ -123,13 +143,15 @@ class OtpViewModel : ViewModel() {
                         return@addOnCompleteListener
                     }
 
-                    val user = hashMapOf(
-                        "uid" to uid,
-                        "fullName" to tempFullName,
-                        "phone" to "+91$tempPhone",
-                        "passwordHash" to hashPassword(tempPassword),
-                        "isVerified" to true,
-                        "status" to "Active"
+                    val user = UserModelData(
+                        uid = uid,
+                        fullName = tempFullName,
+                        phone = tempPhone,
+                        passwordHash = hashPassword(tempPassword),
+                        role = tempRole,
+                        portalType = tempPortal,
+                        isVerified = true,
+                        status = "Active"
                     )
 
                     Log.d(TAG, "signInWithCredential: Saving user profile to Firestore for UID: $uid")

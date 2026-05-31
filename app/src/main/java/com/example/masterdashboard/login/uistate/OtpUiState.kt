@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.login.uistate
+package com.example.masterdashboard.login.uistate
 
 sealed class OtpUiState {
 

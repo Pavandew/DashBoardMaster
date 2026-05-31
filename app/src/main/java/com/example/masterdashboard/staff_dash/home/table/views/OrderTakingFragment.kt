@@ -91,7 +91,7 @@ class OrderTakingFragment : Fragment() {
 
             // Swap fragment container dynamically using a standard clean backstack replacement operation
             parentFragmentManager.beginTransaction()
-                .replace(R.id.staff_home_fragment_container, cartDetailFragment) // Make sure 'fragment_container' matches your main view id
+                .replace(this@OrderTakingFragment.id, cartDetailFragment) // FIXED: Uses dynamic container ID to support both Staff and Manager activities
                 .addToBackStack(null)
                 .commit()
         }
@@ -182,8 +182,8 @@ class OrderTakingFragment : Fragment() {
                     mutableFoodSearchList.addAll(viewModel.originalFoodList)
 
                     // Update Cart Summary
-                    binding.tvCartCountLabel.text = "View Cart (${state.cartSummary.totalItems})"
-                    binding.tvCartTotalPrice.text = "₹ ${state.cartSummary.totalPrice}"
+                    binding.tvCartCountLabel.text = getString(R.string.view_cart_format, state.cartSummary.totalItems)
+                    binding.tvCartTotalPrice.text = getString(R.string.currency_symbol) + " ${state.cartSummary.totalPrice}"
                     binding.btnViewCart.visibility = if (state.cartSummary.totalItems > 0) View.VISIBLE else View.GONE
                 }
             }

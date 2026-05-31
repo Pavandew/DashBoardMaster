@@ -100,7 +100,7 @@ class ViewCartDetailsFragment : Fragment() {
 
             // Clean transaction routing target verified against your app context
             parentFragmentManager.beginTransaction()
-                .replace(R.id.staff_home_fragment_container, successFragment)
+                .replace(this@ViewCartDetailsFragment.id, successFragment)
                 .addToBackStack(null)
                 .commit()
         }
