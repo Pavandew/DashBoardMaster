@@ -136,7 +136,8 @@ class LoginActivity : AppCompatActivity() {
                             sessionManager.setLogin(
                                 uid = state.uid,
                                 role = state.role,
-                                phone = phone
+                                phone = phone,
+                                name = ""
                             )
 
                             Toast.makeText(
@@ -190,47 +191,25 @@ class LoginActivity : AppCompatActivity() {
     private fun navigateToDashboard(role: String) {
 
         val intent = when (role) {
-
             AppConstants.ROLE_OWNER_MULTI -> {
-
-                Intent(
-                    this,
-                    MasterHomeActivity::class.java
-                )
+                Intent(this, MasterHomeActivity::class.java)
             }
 
             AppConstants.ROLE_OWNER_SINGLE -> {
-
-                Intent(
-                    this,
-                    ManagerHomeActivity::class.java
-                )
+                Intent(this, ManagerHomeActivity::class.java)
             }
 
             AppConstants.ROLE_MANAGER -> {
-
-                Intent(
-                    this,
-                    ManagerHomeActivity::class.java
-                )
+                Intent(this, ManagerHomeActivity::class.java)
             }
 
             AppConstants.ROLE_STAFF -> {
 
-                Intent(
-                    this,
-                    StaffHomeActivity::class.java
-                )
+                Intent(this, StaffHomeActivity::class.java)
             }
 
             else -> {
-
-                Toast.makeText(
-                    this,
-                    "Invalid role: $role",
-                    Toast.LENGTH_SHORT
-                ).show()
-
+                Toast.makeText(this, "Invalid role: $role", Toast.LENGTH_SHORT).show()
                 null
             }
         }

@@ -160,9 +160,10 @@ class OTPVerificationActivity : AppCompatActivity() {
 
                             // Save Login Session
                             sessionManager.setLogin(
-                                uid = "",
+                                uid = state.uid,
                                 role = role,
-                                phone = phone
+                                phone = phone,
+                                name = fullName
                             )
 
                             // Navigate Dashboard

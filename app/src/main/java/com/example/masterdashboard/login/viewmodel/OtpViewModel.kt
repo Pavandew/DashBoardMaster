@@ -160,7 +160,7 @@ class OtpViewModel : ViewModel() {
                         .set(user)
                         .addOnSuccessListener {
                             Log.i(TAG, "signInWithCredential: User profile saved successfully")
-                            _otpState.value = OtpUiState.Verified
+                            _otpState.value = OtpUiState.Verified(uid)
                         }
                         .addOnFailureListener { e ->
                             Log.e(TAG, "signInWithCredential: Failed to save user profile", e)

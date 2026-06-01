@@ -8,7 +8,7 @@ sealed class OtpUiState {
 
     object CodeSent : OtpUiState()
 
-    object Verified : OtpUiState()
+    data class Verified(val uid: String) : OtpUiState()
 
     data class Error(
         val message: String

@@ -67,15 +67,20 @@ class SplashActivity : AppCompatActivity() {
             val isLoggedIn = sessionManager.isLoggedIn()
             val role = sessionManager.getRole()
 
-            Log.d(TAG, "checkLoginState: isLoggedIn=$isLoggedIn, role=$role")
-
+            // 1. Enhanced dynamic session checking logs
             if (isLoggedIn) {
+                // Adjust these key getter helper names ("getUserName", "getPhone") to match your exact SessionManager functions
+                val userName = sessionManager.getUserName() ?: "Unknown Name"
+                val userPhone = sessionManager.getPhone() ?: "Unknown Number"
+
+                Log.d(TAG, "SESSION ACTIVE: User Logged In! [Name: $userName | Phone: $userPhone | Role: $role]")
                 navigateToDashboard(role)
             } else {
-                Log.d(TAG, "Not logged in, navigating to Visitor Portal")
+                Log.w(TAG, "NO SESSION: No user logged in. Redirecting to Visitor Portal.")
                 startActivity(Intent(this, ActivityVisitorPortal::class.java))
                 finish()
             }
+
         }, 1500)
     }
 
@@ -91,7 +96,7 @@ class SplashActivity : AppCompatActivity() {
                 Intent(this, StaffHomeActivity::class.java)
             }
             else -> {
-                Log.w(TAG, "Invalid role found: $role. Redirecting to portal.")
+                Log.w(TAG, "⚠️ INVALID ROLE: Found unexpected role string: '$role'. Redirecting to portal.")
                 Intent(this, ActivityVisitorPortal::class.java)
             }
         }
