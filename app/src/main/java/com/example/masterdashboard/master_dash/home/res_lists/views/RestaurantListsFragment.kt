@@ -1,6 +1,7 @@
 package com.example.masterdashboard.master_dash.home.res_lists.views
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -34,6 +35,7 @@ class RestaurantListsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.i("RestaurantListsFragment", "Navigation: RestaurantListsFragment Opened")
 
         setupToolbar()
         setupCardItems()

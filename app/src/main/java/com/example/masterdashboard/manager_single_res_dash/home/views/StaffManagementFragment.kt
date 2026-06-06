@@ -46,6 +46,7 @@ class StaffManagementFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.i(TAG, "Navigation: StaffManagementFragment Opened")
 
         setupToolbar()
         setupSearchBar()

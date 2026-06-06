@@ -1,6 +1,7 @@
 package com.example.masterdashboard.master_dash.home.settings.views
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -31,6 +32,7 @@ class ProfileFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.i("ProfileFragment", "Navigation: ProfileFragment Opened")
 
         setupToolbar()
         setupFields()

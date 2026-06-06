@@ -1,6 +1,7 @@
 package com.example.masterdashboard.master_dash.home.logs
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,6 +28,7 @@ class LogsFragment : Fragment(), LogsAdapter.OnLogClickListener {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        Log.i("LogsFragment", "Navigation: LogsFragment Opened")
 
         val view = inflater.inflate(R.layout.fragment_logs, container, false)
 

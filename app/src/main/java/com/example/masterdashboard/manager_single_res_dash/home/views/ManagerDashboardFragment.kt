@@ -1,6 +1,7 @@
 package com.example.masterdashboard.manager_single_res_dash.home.views
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,7 +17,7 @@ import com.example.masterdashboard.manager_single_res_dash.home.adapter.DrawerMe
 import com.example.masterdashboard.manager_single_res_dash.home.adapter.ManagerDashboardAdapter
 import com.example.masterdashboard.manager_single_res_dash.home.models.DashboardSummary
 import com.example.masterdashboard.manager_single_res_dash.home.models.DrawerMenuItem
-import com.example.masterdashboard.manager_single_res_dash.home.models.FoodItem
+import com.example.masterdashboard.manager_single_res_dash.home.models.TopSellingFoodItem
 import com.example.masterdashboard.manager_single_res_dash.home.models.StatMetric
 import com.example.masterdashboard.staff_dash.home.order.views.StaffOrdersFragment
 
@@ -36,6 +37,7 @@ class ManagerDashboardFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.i("ManagerDashboardFragment", "Navigation: ManagerDashboardFragment Opened")
         // 1. Initialize central navigation engine helper
         navigationHelper = NavigationHelper(this)
 
@@ -67,9 +69,9 @@ class ManagerDashboardFragment : Fragment() {
         )
 
         val foodItemsList = listOf(
-            FoodItem("1", "Paneer Butter Masala", 120, "₹ 18,240", R.drawable.shield),
-            FoodItem("2", "Veg Biryani", 98, "₹ 14,700", R.drawable.shield),
-            FoodItem("3", "Chili Paneer", 80, "₹ 12,450", R.drawable.shield)
+            TopSellingFoodItem("1", "Paneer Butter Masala", 120, "₹ 18,240", R.drawable.shield),
+            TopSellingFoodItem("2", "Veg Biryani", 98, "₹ 14,700", R.drawable.shield),
+            TopSellingFoodItem("3", "Chili Paneer", 80, "₹ 12,450", R.drawable.shield)
         )
 
         // Wired up Quick Action types mapping to IDs via your navigation helper

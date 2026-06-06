@@ -1,6 +1,7 @@
 package com.example.masterdashboard.master_dash.home.create_res
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -31,6 +32,7 @@ class CreateNewResFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.i("CreateNewResFragment", "Navigation: CreateNewResFragment Opened")
 
         setupToolbar()
         setupRecyclerView()

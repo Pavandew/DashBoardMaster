@@ -42,6 +42,7 @@ class StaffAlertFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.i(TAG, "Navigation: StaffAlertFragment Opened")
         Log.d(TAG, "onViewCreated: Binding data components for Alerts Feed.")
 
         setupToolbarLayout()

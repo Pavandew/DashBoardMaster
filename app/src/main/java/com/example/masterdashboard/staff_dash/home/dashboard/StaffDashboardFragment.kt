@@ -42,6 +42,7 @@ class StaffDashboardFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.i(TAG, "Navigation: StaffDashboardFragment Opened")
         Log.d(TAG, "onViewCreated: Initializing Dashboard layout bindings.")
 
         setupToolbar()

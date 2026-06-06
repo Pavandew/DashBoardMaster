@@ -48,6 +48,7 @@ class StaffOrdersFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.i(TAG, "Navigation: StaffOrdersFragment Opened")
         Log.d(TAG, "onViewCreated: Initializing Orders screen.")
 
         setupToolbar()

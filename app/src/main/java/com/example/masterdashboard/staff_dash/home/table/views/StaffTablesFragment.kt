@@ -54,6 +54,7 @@ class StaffTablesFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.i(TAG, "Navigation: StaffTablesFragment Opened")
 
         setupToolbar()
         setUpRecyclerView()

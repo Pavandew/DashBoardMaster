@@ -55,6 +55,7 @@ class OrderTakingFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.i(TAG, "Navigation: OrderTakingFragment Opened")
         Log.d(TAG, "onViewCreated: Initializing Fragment")
 
         setupToolbarNavigation()

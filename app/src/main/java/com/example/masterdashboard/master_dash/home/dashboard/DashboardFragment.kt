@@ -34,6 +34,7 @@ class DashboardFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        Log.i(TAG, "Navigation: DashboardFragment Opened")
         Log.d(TAG, "onCreateView: UI inflating")
 
         _binding =

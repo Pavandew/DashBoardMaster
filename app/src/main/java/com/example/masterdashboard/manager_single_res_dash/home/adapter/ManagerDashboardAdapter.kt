@@ -15,21 +15,21 @@ import com.example.masterdashboard.databinding.ItemDashboardOverviewBinding
 import com.example.masterdashboard.databinding.ItemDashboardSummaryBinding
 import com.example.masterdashboard.databinding.ItemTopSellingCardsBinding
 import com.example.masterdashboard.manager_single_res_dash.home.models.DashboardSummary
-import com.example.masterdashboard.manager_single_res_dash.home.models.FoodItem
+import com.example.masterdashboard.manager_single_res_dash.home.models.TopSellingFoodItem
 import com.example.masterdashboard.manager_single_res_dash.home.models.StatMetric
 import com.google.android.material.card.MaterialCardView
 
 class ManagerDashboardAdapter (
     private var metricsList: List<StatMetric>,
     private var summaryData: DashboardSummary,
-    private var topSellingItems: List<FoodItem>,
+    private var topSellingItems: List<TopSellingFoodItem>,
     private val onQuickActionClicked: (actionType: QuickActionType) -> Unit
 ): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     fun updateData(
         newMetrics: List<StatMetric>,
         newSummary: DashboardSummary,
-        newTopSelling: List<FoodItem>
+        newTopSelling: List<TopSellingFoodItem>
     ) {
         this.metricsList = newMetrics
         this.summaryData = newSummary
@@ -226,7 +226,7 @@ class ManagerDashboardAdapter (
     class TrendViewHolder(val binding: ItemDahsCardTrendBinding) : RecyclerView.ViewHolder(binding.root)
 
     class TopSellingViewHolder(val binding: ItemTopSellingCardsBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(items: List<FoodItem>) {
+        fun bind(items: List<TopSellingFoodItem>) {
             val itemViews = listOf(
                 binding.topSellingCard1,
                 binding.topSellingCard2,

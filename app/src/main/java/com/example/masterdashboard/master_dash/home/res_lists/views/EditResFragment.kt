@@ -1,6 +1,7 @@
 package com.example.masterdashboard.master_dash.home.res_lists.views
 
 import android.os.Bundle
+import android.util.Log
 import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
@@ -23,6 +24,7 @@ class EditResFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        Log.i("EditResFragment", "Navigation: EditResFragment Opened")
 
         _binding = FragmentEditResBinding.inflate(
             inflater,
