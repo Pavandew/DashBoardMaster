@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "252505058012",
+    "project_id": "masterdashboard-836dd",
+    "storage_bucket": "masterdashboard-836dd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:252505058012:android:7deea90648ac2644372219",
+        "android_client_info": {
+          "package_name": "com.example.masterdashboard"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFYWttGUJFLavZx97zP2YBsFLxEMKTdwM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
