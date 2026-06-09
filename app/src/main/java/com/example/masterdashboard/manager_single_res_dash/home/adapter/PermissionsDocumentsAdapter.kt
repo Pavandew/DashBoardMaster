@@ -3,6 +3,7 @@ package com.example.masterdashboard.manager_single_res_dash.home.adapter
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FormSectionTitleSubtitleBinding
 import com.example.masterdashboard.databinding.ItemFormHeaderBinding
 import com.example.masterdashboard.databinding.RowDocumentItemBinding
@@ -47,11 +48,26 @@ class PermissionsDocumentsAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = items[position]) {
+            is Step2FormItem.Header -> {
+                val h = holder as HeaderViewHolder
+                val context = h.itemView.context
+
+                // Set connector as active
+                h.binding.viewProgressLine.setBackgroundColor(context.getColor(R.color.blue_gradient_end))
+                
+                // Set Step 2 as active
+                h.binding.tvStepTwoCircle.setBackgroundResource(R.drawable.bg_circle_primary)
+                h.binding.tvStepTwoCircle.setTextColor(context.getColor(android.R.color.white))
+                h.binding.tvStepTwoLabel.setTextColor(context.getColor(R.color.blue_gradient_end))
+                h.binding.tvStepTwoLabel.setTypeface(null, android.graphics.Typeface.BOLD)
+            }
+
             is Step2FormItem.SectionTitle -> {
                 val h = holder as SectionViewHolder
                 h.binding.tvSectionTitle.text = item.title
                 h.binding.tvSectionSubtitle.text = item.subtitle
             }
+
             is Step2FormItem.PermissionItem -> {
                 val h = holder as PermissionViewHolder
                 h.binding.apply {
@@ -78,13 +94,12 @@ class PermissionsDocumentsAdapter(
                     btnUploadDoc.setOnClickListener { onUploadClicked(item, position) }
                 }
             }
-            else -> { /* Header view doesn't require dynamic updates */ }
         }
     }
 
     override fun getItemCount(): Int = items.size
 
-    class HeaderViewHolder(binding: ItemFormHeaderBinding) : RecyclerView.ViewHolder(binding.root)
+    class HeaderViewHolder(val binding: ItemFormHeaderBinding) : RecyclerView.ViewHolder(binding.root)
     class SectionViewHolder(val binding: FormSectionTitleSubtitleBinding) : RecyclerView.ViewHolder(binding.root)
     class PermissionViewHolder(val binding: RowPermissionItemBinding) : RecyclerView.ViewHolder(binding.root)
     class DocumentViewHolder(val binding: RowDocumentItemBinding) : RecyclerView.ViewHolder(binding.root)

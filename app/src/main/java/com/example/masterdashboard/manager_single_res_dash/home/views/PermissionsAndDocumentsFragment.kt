@@ -103,7 +103,7 @@ class PermissionsAndDocumentsFragment : Fragment() {
                item.isUploaded = true
                item.fileUri = selectedUri // Cache local access path inside data model references
 
-               Log.d(TAG, "📂 ATTACHMENT REGISTERED: [FieldID: ${item.id} | UriPath: $selectedUri]")
+               Log.d(TAG, "ATTACHMENT REGISTERED: [FieldID: ${item.id} | UriPath: $selectedUri]")
                adapter.notifyItemChanged(position)
            }
         }
@@ -145,10 +145,12 @@ class PermissionsAndDocumentsFragment : Fragment() {
                 sharedViewModel.uiState.collect { state ->
                     when (state) {
                         is FirebaseUiState.Loading -> {
+                            binding.progressBar.visibility = View.VISIBLE
                             binding.btnSubmit.isEnabled = false
                             binding.btnSubmit.text = "Uploading..."
                         }
                         is FirebaseUiState.Success -> {
+                            binding.progressBar.visibility = View.GONE
                             Toast.makeText(requireContext(), "Staff added successfully!", Toast.LENGTH_SHORT).show()
                             sharedViewModel.resetState()
 
@@ -156,12 +158,14 @@ class PermissionsAndDocumentsFragment : Fragment() {
                             parentFragmentManager.popBackStack(AppConstants.BACKSTACK_ADD_STAFF, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
                         }
                         is FirebaseUiState.Error -> {
+                            binding.progressBar.visibility = View.GONE
                             binding.btnSubmit.isEnabled = true
                             binding.btnSubmit.text = "Submit"
                             Toast.makeText(requireContext(), "Error: ${state.message}", Toast.LENGTH_LONG).show()
                             sharedViewModel.resetState()
                         }
                         is FirebaseUiState.Idle -> {
+                            binding.progressBar.visibility = View.GONE
                             binding.btnSubmit.isEnabled = true
                             binding.btnSubmit.text = "Submit"
                         }

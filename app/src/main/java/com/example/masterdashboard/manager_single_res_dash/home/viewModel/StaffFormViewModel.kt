@@ -39,6 +39,10 @@ class StaffFormViewModel(
     private val _phoneState = MutableStateFlow<PhoneCheckState>(PhoneCheckState.Idle)
     val phoneState: StateFlow<PhoneCheckState> = _phoneState.asStateFlow()
     // Step 1 calls this to save details before navigating
+    fun updateStaffData(data: StaffDataModel) {
+        _currentStaffData.value = data
+    }
+
     fun updateStep1Data(
         staffName: String, mobile: String, email: String, gender: String,
         role: String, department: String, joiningData: String, shift: String, salary: String
@@ -133,5 +137,13 @@ class StaffFormViewModel(
 
     fun resetState() {
         _uiState.value = FirebaseUiState.Idle
+    }
+
+    fun clearFormData() {
+        _currentStaffData.value = StaffDataModel()
+        _phoneState.value = PhoneCheckState.Idle
+        _uiState.value = FirebaseUiState.Idle
+
+        Log.d(TAG, "Staff form data cleared")
     }
 }

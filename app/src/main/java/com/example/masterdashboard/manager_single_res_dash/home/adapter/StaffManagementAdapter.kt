@@ -9,7 +9,8 @@ import com.example.masterdashboard.databinding.ItemStaffCardsBinding
 import com.example.masterdashboard.manager_single_res_dash.home.models.StaffDataModel
 
 class StaffManagementAdapter(
-    private var staffList: List<StaffDataModel>
+    private var staffList: List<StaffDataModel>,
+    private val onCardLongClick: (StaffDataModel) -> Unit
 ) : RecyclerView.Adapter<StaffManagementAdapter.StaffViewHolder>() {
 
     // Pass the binding instance to the ViewHolder
@@ -44,6 +45,12 @@ class StaffManagementAdapter(
                 tvStatusBadge.setTextColor(ContextCompat.getColor(context, android.R.color.holo_orange_light))
                 tvStatusBadge.setBackgroundResource(R.drawable.bg_status_inactive)
             }
+            
+            staffCard.setOnLongClickListener {
+                onCardLongClick(staff)
+                true
+            }
+            
         }
     }
 

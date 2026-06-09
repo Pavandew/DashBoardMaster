@@ -7,8 +7,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels // ✅ Added standard single viewmodel scoping ktx import
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -17,12 +19,17 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentStaffManagementBinding
 import com.example.masterdashboard.manager_single_res_dash.home.adapter.StaffManagementAdapter
+import com.example.masterdashboard.manager_single_res_dash.home.models.StaffDataModel
 import com.example.masterdashboard.manager_single_res_dash.home.uistate.StaffListUiState
+import com.example.masterdashboard.manager_single_res_dash.home.viewModel.StaffFormViewModel
 import com.example.masterdashboard.manager_single_res_dash.home.viewModel.StaffManagementViewModel // ✅ Swapped to new ViewModel target location
+import com.example.masterdashboard.master_dash.home.SearchQueryManager
 import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.MenuDialogHelper
 import com.example.masterdashboard.utils.SessionManager
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
+import kotlin.getValue
 
 class StaffManagementFragment : Fragment() {
 
@@ -33,9 +40,14 @@ class StaffManagementFragment : Fragment() {
     private var _binding: FragmentStaffManagementBinding? = null
     private val binding get() = _binding!!
 
-    // ✅ Switch invocation scope over to your single isolated context tracking view model lifecycle container
+    // Switch invocation scope over to your single isolated context tracking view model lifecycle container
     private val viewModel: StaffManagementViewModel by viewModels()
+    private val staffViewModel: StaffFormViewModel by activityViewModels()
     private lateinit var staffAdapter: StaffManagementAdapter
+    private var searchManager: SearchQueryManager<StaffDataModel>? = null
+
+    private val sessionManager by lazy { SessionManager(requireContext()) }
+    private val userRole by lazy { sessionManager.getRole() }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -47,6 +59,13 @@ class StaffManagementFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.i(TAG, "Navigation: StaffManagementFragment Opened")
+
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner
+        ) {
+            staffViewModel.clearFormData()
+            parentFragmentManager.popBackStack()
+        }
 
         setupToolbar()
         setupSearchBar()
@@ -68,22 +87,27 @@ class StaffManagementFragment : Fragment() {
                 viewModel.staffListState.collect { state ->
                     when (state) {
                         is StaffListUiState.Loading -> {
-                            // Optionally turn on layout frame shimmer/progress loading spinners here
+                            binding.progressBar.visibility = View.VISIBLE
+                            binding.rvStaffList.visibility = View.GONE
                         }
                         is StaffListUiState.Success -> {
+                            binding.progressBar.visibility = View.GONE
+                            binding.rvStaffList.visibility = View.VISIBLE
                             Log.d(TAG, "🟢 Live data successfully synchronized. Populating list.")
 
-                            // Map incoming array instances up into adapter constructor models layout views
-                            // Note: If you updated your adapter to accept StaffDataModel, this connects perfectly.
-                            staffAdapter = StaffManagementAdapter(state.list)
-                            binding.rvStaffList.adapter = staffAdapter
+                            val fullList = state.list
+                            staffAdapter.updateData(fullList)
+                            initSearchManager(fullList)
                         }
                         is StaffListUiState.Empty -> {
+                            binding.progressBar.visibility = View.GONE
+                            binding.rvStaffList.visibility = View.VISIBLE
                             Toast.makeText(requireContext(), "No staff profiles found.", Toast.LENGTH_SHORT).show()
-                            staffAdapter = StaffManagementAdapter(emptyList())
-                            binding.rvStaffList.adapter = staffAdapter
+                            staffAdapter.updateData(emptyList())
                         }
                         is StaffListUiState.Error -> {
+                            binding.progressBar.visibility = View.GONE
+                            binding.rvStaffList.visibility = View.VISIBLE
                             Toast.makeText(requireContext(), "Error linking records collection: ${state.message}", Toast.LENGTH_LONG).show()
                         }
                     }
@@ -105,6 +129,7 @@ class StaffManagementFragment : Fragment() {
         toolbar.llSubtitleContainer.visibility = View.GONE
         toolbar.toolbarImgNotification.visibility = View.GONE
         toolbar.toolbarImgMenu.setOnClickListener {
+            staffViewModel.clearFormData()
             parentFragmentManager.popBackStack()
         }
     }
@@ -122,7 +147,12 @@ class StaffManagementFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        staffAdapter = StaffManagementAdapter(emptyList())
+        staffAdapter = StaffManagementAdapter(
+            staffList = emptyList(),
+            onCardLongClick = { staff ->
+                showDeleteConfirmationPopup(staff)
+            }
+        )
         binding.rvStaffList.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = staffAdapter
@@ -139,8 +169,42 @@ class StaffManagementFragment : Fragment() {
         }
     }
 
+    private fun showDeleteConfirmationPopup(staff: StaffDataModel) {
+        val ownerUid = sessionManager.getUid()
+
+        // Clean & Reusable Utility Call!
+        MenuDialogHelper.showDeleteConfirmation(
+            context = requireContext(),
+            title = "Remove Staff Member?",
+            message = "Are you sure you want to permanently remove \"${staff.staffName}\" from the staff list? This action cannot be undone.",
+            onConfirm = {
+                if (ownerUid.isNotEmpty() && staff.id.isNotEmpty()) { 
+                    // Execute the explicit Firebase cloud transaction task
+                    viewModel.deleteStaffMember(ownerUid, staff.id, staff.staffName)
+                    Toast.makeText(requireContext(), "${staff.staffName} removed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+    }
+
+    private fun initSearchManager(fullList: List<StaffDataModel>) {
+        searchManager?.removeListener()
+        searchManager = SearchQueryManager(
+            searchEditText = binding.staffMmSearchBar.etSearch,
+            originalList = fullList,
+            onResultFiltered = { filteredList ->
+                staffAdapter.updateData(filteredList)
+            },
+            filterRule = { staff, query ->
+                staff.staffName.contains(query, ignoreCase = true) ||
+                        staff.role.contains(query, ignoreCase = true)
+            }
+        )
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
+        searchManager?.removeListener()
         _binding = null
     }
 }
