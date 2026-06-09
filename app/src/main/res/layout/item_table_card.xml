@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://tools.android.com/tools"
+    android:id="@+id/cvTableCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/order_card_margin_vertical"
+    app:cardCornerRadius="@dimen/corner_radius_medium"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="@color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="@dimen/table_card_padding">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/ivTableIcon"
+                android:layout_width="@dimen/table_icon_size"
+                android:layout_height="@dimen/table_icon_size"
+                android:src="@android:drawable/ic_menu_gallery"
+                app:tint="@color/status_free" />
+
+            <TextView
+                android:id="@+id/tvTableId"
+                style="@style/TextAppearance.MyApp.TableId"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/margin_tiny"
+                tools:text="T-01" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvSeatCount"
+            style="@style/TextAppearance.MyApp.TableSeats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_small"
+            tools:text="4 Seats" />
+
+        <TextView
+            android:id="@+id/tvTableStatus"
+            style="@style/TextAppearance.MyApp.TableStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_small"
+            android:paddingHorizontal="@dimen/padding_small"
+            android:paddingVertical="@dimen/margin_tiny"
+            tools:background="@drawable/bg_status_free"
+            tools:text="Free"
+            tools:textColor="@color/status_free" />
+
+        <TextView
+            android:id="@+id/tvTablePrice"
+            style="@style/TextAppearance.MyApp.TablePrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_medium"
+            tools:text="₹ 650"
+            tools:visibility="visible" />
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
