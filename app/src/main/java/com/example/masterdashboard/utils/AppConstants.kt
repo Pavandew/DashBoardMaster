@@ -42,6 +42,8 @@ object AppConstants {
     const val COLLECTION_STAFF = "staff"
     const val COLLECTION_MENU_CATEGORIES = "menu_categories"
     const val COLLECTION_FOOD_ITEMS = "menu_food_items"
+    const val COLLECTION_RES_FLOORS = "res_floors"
+    const val COLLECTION_TABLES = "floor_tables"
 
     // UI Strings
     const val TITLE_MENU_MANAGEMENT = "Menu Management"
