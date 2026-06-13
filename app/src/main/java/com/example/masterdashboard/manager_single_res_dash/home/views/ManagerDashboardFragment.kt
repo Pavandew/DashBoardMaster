@@ -105,7 +105,7 @@ class ManagerDashboardFragment : Fragment() {
         val dynamicDrawerOptions = listOf(
             DrawerMenuItem(0, "Dashboard", R.drawable.ic_dashboard_24dp, ManagerDashboardFragment::class.java),
             DrawerMenuItem(1, "Orders", R.drawable.bg_order_notes, StaffOrdersFragment::class.java),
-            DrawerMenuItem(2, "Tables", R.drawable.ic_table_24dp, ManagerDashboardFragment::class.java),
+            DrawerMenuItem(2, "Tables", R.drawable.ic_table_24dp, TableManagementFragment::class.java),
             DrawerMenuItem(3, "Kitchen", R.drawable.bg_order_notes, ManagerDashboardFragment::class.java),
             DrawerMenuItem(4, "Menu Management", R.drawable.biling, MenuManagementFragment::class.java),
             DrawerMenuItem(5, "Staff Management", R.drawable.ic_staffs_24dp, StaffManagementFragment::class.java),
