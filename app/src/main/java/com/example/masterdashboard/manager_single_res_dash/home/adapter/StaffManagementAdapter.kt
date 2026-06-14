@@ -3,15 +3,16 @@ package com.example.masterdashboard.manager_single_res_dash.home.adapter
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemStaffCardsBinding
 import com.example.masterdashboard.manager_single_res_dash.home.models.StaffDataModel
 
 class StaffManagementAdapter(
-    private var staffList: List<StaffDataModel>,
     private val onCardLongClick: (StaffDataModel) -> Unit
-) : RecyclerView.Adapter<StaffManagementAdapter.StaffViewHolder>() {
+) : ListAdapter<StaffDataModel, StaffManagementAdapter.StaffViewHolder>(StaffDiffCallback()) {
 
     // Pass the binding instance to the ViewHolder
     class StaffViewHolder(val binding: ItemStaffCardsBinding) : RecyclerView.ViewHolder(binding.root)
@@ -27,7 +28,7 @@ class StaffManagementAdapter(
     }
 
     override fun onBindViewHolder(holder: StaffViewHolder, position: Int) {
-        val staff = staffList[position]
+        val staff = getItem(position)
         val context = holder.itemView.context
 
         // Direct, type-safe access to your layout views through the binding object
@@ -54,10 +55,18 @@ class StaffManagementAdapter(
         }
     }
 
-    override fun getItemCount(): Int = staffList.size
-
-    fun updateData(newStaffList: List<StaffDataModel>) {
-        this.staffList = newStaffList
-        notifyDataSetChanged()
+    /**
+     * Compatibility method to keep existing logic working while using ListAdapter
+     */
+    fun updateData(newList: List<StaffDataModel>) {
+        submitList(newList)
     }
+}
+
+class StaffDiffCallback : DiffUtil.ItemCallback<StaffDataModel>() {
+    override fun areItemsTheSame(oldItem: StaffDataModel, newItem: StaffDataModel): Boolean =
+        oldItem.id == newItem.id
+
+    override fun areContentsTheSame(oldItem: StaffDataModel, newItem: StaffDataModel): Boolean =
+        oldItem == newItem
 }

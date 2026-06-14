@@ -197,6 +197,17 @@ class MenuItemListFragment : Fragment() {
             message = "Are you sure you want to permanently remove \"${item.itemName}\" from the menu? This action cannot be undone.",
             onConfirm = {
                 if (ownerUid.isNotEmpty() && categoryId.isNotEmpty()) {
+                    // OPTIMISTIC UI FIX: Create a temporary list excluding the deleted item
+                    val currentList = foodItemListAdapter.currentList.toMutableList()
+                    val indexToRemove = currentList.indexOfFirst { it.id == item.id }
+
+                    if (indexToRemove != -1) {
+                        currentList.removeAt(indexToRemove)
+                        Log.d(TAG, "Optimistic UI: Instantly sliding '${item.itemName}' out of active view memory layout.")
+                        // Submit the reduced list immediately so it vanishes from the UI instantly
+                        foodItemListAdapter.submitList(currentList)
+                    }
+
                     // Execute the explicit Firebase cloud transaction task
                     viewModel.deleteMenuFoodItem(ownerUid, categoryId, item.id, item.itemName)
                     Toast.makeText(requireContext(), "${item.itemName} removed", Toast.LENGTH_SHORT).show()

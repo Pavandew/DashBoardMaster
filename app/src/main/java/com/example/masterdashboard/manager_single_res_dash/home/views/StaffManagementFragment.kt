@@ -152,7 +152,6 @@ class StaffManagementFragment : Fragment() {
 
     private fun setupRecyclerView() {
         staffAdapter = StaffManagementAdapter(
-            staffList = emptyList(),
             onCardLongClick = { staff ->
                 showDeleteConfirmationPopup(staff)
             }
@@ -182,7 +181,18 @@ class StaffManagementFragment : Fragment() {
             title = "Remove Staff Member?",
             message = "Are you sure you want to permanently remove \"${staff.staffName}\" from the staff list? This action cannot be undone.",
             onConfirm = {
-                if (ownerUid.isNotEmpty() && staff.id.isNotEmpty()) { 
+                if (ownerUid.isNotEmpty() && staff.id.isNotEmpty()) {
+                    // OPTIMISTIC UI FIX: Create a temporary list excluding the deleted item
+                    val currentList = staffAdapter.currentList.toMutableList()
+                    val indexToRemove = currentList.indexOfFirst { it.id == staff.id }
+
+                    if (indexToRemove != -1) {
+                        currentList.removeAt(indexToRemove)
+                        Log.d(TAG, "Optimistic UI: Instantly sliding '${staff.staffName}' out of active view memory layout.")
+                        // Submit the reduced list immediately so it vanishes from the UI instantly
+                        staffAdapter.submitList(currentList)
+                    }
+
                     // Execute the explicit Firebase cloud transaction task
                     viewModel.deleteStaffMember(ownerUid, staff.id, staff.staffName)
                     Toast.makeText(requireContext(), "${staff.staffName} removed", Toast.LENGTH_SHORT).show()

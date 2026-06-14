@@ -115,37 +115,15 @@ class MenuItemViewModel: ViewModel() {
         foodItemId: String,
         itemName: String
     ) {
-        Log.i(TAG, "Initiating deletion transaction for: '$itemName'")
+        Log.i(TAG, "Initiating deletion request for item: '$itemName'")
 
         viewModelScope.launch {
-            val firestore = FirebaseFirestore.getInstance()
-
-            val categoryDocRef = firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(ownerUid)
-                .collection(AppConstants.COLLECTION_MENU_CATEGORIES)
-                .document(categoryId)
-
-            val foodItemDocRef = categoryDocRef.collection(AppConstants.COLLECTION_FOOD_ITEMS)
-                .document(foodItemId)
-
-            firestore.runTransaction { transaction ->
-                val categorySnapshot = transaction.get(categoryDocRef)
-
-                // read current item count and safely drop it by 1
-                val currentCount = categorySnapshot.getLong("itemCount") ?: 0L
-                val newCount = if(currentCount > 0) currentCount - 1 else 0L
-
-                // delete the targeted food item document
-                transaction.delete(foodItemDocRef)
-
-                // Update parent document's tracker count reduction balance entry
-                transaction.update(categoryDocRef, "itemCount", newCount)
-
-                null
-            }.addOnSuccessListener {
-                Log.i("MenuItemViewModel", "Successfully deleted '$itemName' and updated parent collection count balance.")
-            }.addOnFailureListener { exception ->
-                Log.e("MenuItemViewModel", "Transaction failure during document removal sequence", exception)
+            try {
+                // Delegate transactional database data mutations safely to the repository layer
+                repository.removeFoodItemTransactional(ownerUid, categoryId, foodItemId)
+                Log.i(TAG, "Successfully completed deletion sequence for item: '$itemName'")
+            } catch (exception: Exception) {
+                Log.e(TAG, "Failed to complete deletion sequence for item: '$itemName'. Error: ${exception.message}", exception)
             }
         }
     }

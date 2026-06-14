@@ -214,6 +214,17 @@ private val userRole by lazy{ sessionManager.getRole() }
             title = "Delete Category?",
             message = "Are you sure you want to delete \"${category.name}\"? This will also clear out all dishes under it.",
             onConfirm = {
+                // OPTIMISTIC UI FIX: Create a temporary list excluding the deleted item
+                val currentList = menuAdapter.currentList.toMutableList()
+                val indexToRemove = currentList.indexOfFirst { it.id == category.id }
+
+                if (indexToRemove != -1) {
+                    currentList.removeAt(indexToRemove)
+                    Log.d(TAG, "Optimistic UI: Instantly sliding '${category.name}' out of active view memory layout.")
+                    // Submit the reduced list immediately so it vanishes from the UI instantly
+                    menuAdapter.submitList(currentList)
+                }
+
                 // Trigger your category viewmodel delete function here!
                  viewModel.deleteCategoryItem(ownerUid, category.id, category.name)
 
