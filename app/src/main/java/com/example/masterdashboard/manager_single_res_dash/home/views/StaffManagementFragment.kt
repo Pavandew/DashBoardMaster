@@ -89,10 +89,12 @@ class StaffManagementFragment : Fragment() {
                         is StaffListUiState.Loading -> {
                             binding.progressBar.visibility = View.VISIBLE
                             binding.rvStaffList.visibility = View.GONE
+                            binding.tvEmptyState.visibility = View.GONE
                         }
                         is StaffListUiState.Success -> {
                             binding.progressBar.visibility = View.GONE
                             binding.rvStaffList.visibility = View.VISIBLE
+                            binding.tvEmptyState.visibility = View.GONE
                             Log.d(TAG, "🟢 Live data successfully synchronized. Populating list.")
 
                             val fullList = state.list
@@ -101,13 +103,15 @@ class StaffManagementFragment : Fragment() {
                         }
                         is StaffListUiState.Empty -> {
                             binding.progressBar.visibility = View.GONE
-                            binding.rvStaffList.visibility = View.VISIBLE
+                            binding.rvStaffList.visibility = View.GONE
+                            binding.tvEmptyState.visibility = View.VISIBLE
                             Toast.makeText(requireContext(), "No staff profiles found.", Toast.LENGTH_SHORT).show()
                             staffAdapter.updateData(emptyList())
                         }
                         is StaffListUiState.Error -> {
                             binding.progressBar.visibility = View.GONE
                             binding.rvStaffList.visibility = View.VISIBLE
+                            binding.tvEmptyState.visibility = View.GONE
                             Toast.makeText(requireContext(), "Error linking records collection: ${state.message}", Toast.LENGTH_LONG).show()
                         }
                     }

@@ -141,4 +141,5 @@
     <string name="summary_served">Served</string>
     <string name="summary_cancelled">Cancelled</string>
     <string name="price_format">₹ %s</string>
+    <string name="no_items_added">No item added yet</string>
 </resources>
