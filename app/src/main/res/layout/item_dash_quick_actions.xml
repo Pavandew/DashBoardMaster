@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingVertical="8dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Quick Actions"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:layout_marginBottom="12dp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/quickActionsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="5">
+
+        <include
+            android:id="@+id/actionAddStaff"
+            layout="@layout/item_quick_action"/>
+
+        <include android:id="@+id/actionMenu"
+            layout="@layout/item_quick_action"/>
+
+        <include android:id="@+id/actionFloorTable"
+            layout="@layout/item_quick_action"/>
+
+        <include android:id="@+id/actionOrders"
+            layout="@layout/item_quick_action"/>
+
+        <include android:id="@+id/actionReports"
+            layout="@layout/item_quick_action"/>
+
+    </LinearLayout>
+</LinearLayout>
