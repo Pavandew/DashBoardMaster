@@ -154,6 +154,9 @@ class StaffManagementFragment : Fragment() {
         staffAdapter = StaffManagementAdapter(
             onCardLongClick = { staff ->
                 showDeleteConfirmationPopup(staff)
+            },
+            onCardClick = { staff ->
+                openStaffDetailView(staff)
             }
         )
         binding.rvStaffList.apply {
@@ -163,6 +166,17 @@ class StaffManagementFragment : Fragment() {
         }
     }
 
+    private fun openStaffDetailView(staff: StaffDataModel) {
+        val detailFragment = StaffDetailFragment().apply {
+            arguments = Bundle().apply {
+                putString("STAFF_DOCUMENT_ID", staff.id)
+            }
+        }
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.manager_fragmentContainer, detailFragment)
+            .addToBackStack("staff_detail_view")
+            .commit()
+    }
     private fun setupOnClick() {
         binding.fabAddStaffBtn.setOnClickListener {
             parentFragmentManager.beginTransaction()

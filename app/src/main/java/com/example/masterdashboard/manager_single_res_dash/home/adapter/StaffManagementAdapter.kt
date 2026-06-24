@@ -11,7 +11,8 @@ import com.example.masterdashboard.databinding.ItemStaffCardsBinding
 import com.example.masterdashboard.manager_single_res_dash.home.models.StaffDataModel
 
 class StaffManagementAdapter(
-    private val onCardLongClick: (StaffDataModel) -> Unit
+    private val onCardLongClick: (StaffDataModel) -> Unit,
+    private val onCardClick: (StaffDataModel) -> Unit
 ) : ListAdapter<StaffDataModel, StaffManagementAdapter.StaffViewHolder>(StaffDiffCallback()) {
 
     // Pass the binding instance to the ViewHolder
@@ -33,7 +34,7 @@ class StaffManagementAdapter(
 
         // Direct, type-safe access to your layout views through the binding object
         holder.binding.apply {
-            tvStaffName.text = staff.staffName
+            tvStaffName.text = staff.staffId
             tvStaffRole.text = staff.role
             tvStatusBadge.text = staff.status
             ivStaffAvatar.setImageResource(R.drawable.person)
@@ -46,10 +47,16 @@ class StaffManagementAdapter(
                 tvStatusBadge.setTextColor(ContextCompat.getColor(context, android.R.color.holo_orange_light))
                 tvStatusBadge.setBackgroundResource(R.drawable.bg_status_inactive)
             }
-            
+
+            // FIX 2: Handle regular short-click to transition smoothly into the profile Detail View
+            staffCard.setOnClickListener {
+                onCardClick(staff)
+            }
+
+            // FIX 3: Separate long-click so it cleanly isolates your deletion dialog alert logic
             staffCard.setOnLongClickListener {
                 onCardLongClick(staff)
-                true
+                true // Consumes the touch window callback event cleanly
             }
             
         }
