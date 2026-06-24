@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.order.views.adapter
+package com.example.masterdashboard.staff_dash.waiter_screens.order.views.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -8,8 +8,8 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemActiveOrderCardBinding
-import com.example.masterdashboard.staff_dash.home.order.views.models.ActiveOrderCardData
-import com.example.masterdashboard.staff_dash.home.order.views.models.ActiveOrderStatus
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.ActiveOrderCardData
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.ActiveOrderStatus
 
 class ActiveOrdersAdapter(
     private val onOrderClicked: (ActiveOrderCardData) -> Unit

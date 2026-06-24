@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.order.views.models
+package com.example.masterdashboard.staff_dash.waiter_screens.order.views.models
 
 enum class ActiveOrderStatus {
     PREPARING, READY, SERVED

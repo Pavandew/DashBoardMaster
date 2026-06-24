@@ -1,14 +1,14 @@
-package com.example.masterdashboard.staff_dash.home.order.views.viewModel
+package com.example.masterdashboard.staff_dash.waiter_screens.order.views.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.masterdashboard.staff_dash.home.order.views.repo.ActiveOrdersRepository
-import com.example.masterdashboard.staff_dash.home.order.views.models.ActiveOrderCardData
-import com.example.masterdashboard.staff_dash.home.order.views.models.ActiveOrderStatus
-import com.example.masterdashboard.staff_dash.home.order.views.models.ActiveOrdersUiState
-import com.example.masterdashboard.staff_dash.home.order.views.models.OrderStatusFilterData
-import com.example.masterdashboard.staff_dash.home.table.uistate.ResourceUiState
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.repo.ActiveOrdersRepository
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.ActiveOrderCardData
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.ActiveOrderStatus
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.ActiveOrdersUiState
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.OrderStatusFilterData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn

@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.table.adapter
+package com.example.masterdashboard.staff_dash.waiter_screens.table.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.databinding.ItemMenuFoodBinding
-import com.example.masterdashboard.staff_dash.home.table.models.FoodItemData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.FoodItemData
 
 class FoodMenuAdapter(
     private val onQuantityIncreased: (FoodItemData) -> Unit,

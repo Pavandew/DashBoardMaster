@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.alert
+package com.example.masterdashboard.staff_dash.waiter_screens.alert
 
 import android.view.LayoutInflater
 import android.view.View

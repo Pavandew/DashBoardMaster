@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.table.adapter
+package com.example.masterdashboard.staff_dash.waiter_screens.table.adapter
 
 import android.graphics.Color
 import android.view.LayoutInflater
@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemCardClipsBinding
-import com.example.masterdashboard.staff_dash.home.table.models.TableFilterData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
 
 class FloorChipsAdapter(
     private val onChipClicked: (TableFilterData) -> Unit

@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.alert
+package com.example.masterdashboard.staff_dash.waiter_screens.alert
 
 enum class NotificationType { ACTIONABLE_REQUEST, INFORMATIONAL }
 enum class RequestStatus { PENDING, ACCEPTED, DONE }
