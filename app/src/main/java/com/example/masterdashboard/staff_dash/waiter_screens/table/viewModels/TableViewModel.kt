@@ -1,12 +1,12 @@
-package com.example.masterdashboard.staff_dash.home.table.viewModels
+package com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.masterdashboard.staff_dash.home.table.uistate.ResourceUiState
-import com.example.masterdashboard.staff_dash.home.table.models.TableCardData
-import com.example.masterdashboard.staff_dash.home.table.repo.TableRepository
+import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableCardData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.TableRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

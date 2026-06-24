@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.alert
+package com.example.masterdashboard.staff_dash.waiter_screens.alert
 
 import android.os.Bundle
 import android.util.Log
@@ -14,7 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentStaffAlertBinding
-import com.example.masterdashboard.staff_dash.home.StaffHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
 import kotlinx.coroutines.launch
 
 class StaffAlertFragment : Fragment() {

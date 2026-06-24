@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.dashboard
+package com.example.masterdashboard.staff_dash.waiter_screens.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

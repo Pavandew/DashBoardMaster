@@ -1,9 +1,9 @@
-package com.example.masterdashboard.staff_dash.home.table.repo
+package com.example.masterdashboard.staff_dash.waiter_screens.table.repo
 
 import android.util.Log
-import com.example.masterdashboard.staff_dash.home.table.uistate.ResourceUiState
-import com.example.masterdashboard.staff_dash.home.table.models.TableCardData
-import com.example.masterdashboard.staff_dash.home.table.models.TableStatus
+import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableCardData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow

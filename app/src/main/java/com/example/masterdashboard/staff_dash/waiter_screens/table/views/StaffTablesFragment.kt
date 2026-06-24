@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.table.views
+package com.example.masterdashboard.staff_dash.waiter_screens.table.views
 
 import android.os.Bundle
 import android.util.Log
@@ -15,14 +15,14 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentStaffTablesBinding
 import com.example.masterdashboard.master_dash.home.SearchQueryManager
-import com.example.masterdashboard.staff_dash.home.StaffHomeActivity
-import com.example.masterdashboard.staff_dash.home.table.adapter.FloorChipsAdapter
-import com.example.masterdashboard.staff_dash.home.table.adapter.TableCardsAdapter
-import com.example.masterdashboard.staff_dash.home.table.models.TableCardData
-import com.example.masterdashboard.staff_dash.home.table.models.TableFilterData
-import com.example.masterdashboard.staff_dash.home.table.repo.TableRepository
-import com.example.masterdashboard.staff_dash.home.table.uistate.ResourceUiState
-import com.example.masterdashboard.staff_dash.home.table.viewModels.TableViewModel
+import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FloorChipsAdapter
+import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.TableCardsAdapter
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableCardData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.TableRepository
+import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
+import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.TableViewModel
 import kotlinx.coroutines.launch
 
 class StaffTablesFragment : Fragment() {

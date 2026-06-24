@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.table.views
+package com.example.masterdashboard.staff_dash.waiter_screens.table.views
 
 import android.os.Bundle
 import android.util.Log
@@ -14,9 +14,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentViewCartDetailsBinding
-import com.example.masterdashboard.staff_dash.home.StaffHomeActivity
-import com.example.masterdashboard.staff_dash.home.table.adapter.FoodMenuAdapter
-import com.example.masterdashboard.staff_dash.home.table.viewModels.OrderViewModel
+import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FoodMenuAdapter
+import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderViewModel
 import kotlinx.coroutines.launch
 
 class ViewCartDetailsFragment : Fragment() {
