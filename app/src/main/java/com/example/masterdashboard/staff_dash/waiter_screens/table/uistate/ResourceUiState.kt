@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.table.uistate
+package com.example.masterdashboard.staff_dash.waiter_screens.table.uistate
 
 sealed class ResourceUiState<out T> {
 

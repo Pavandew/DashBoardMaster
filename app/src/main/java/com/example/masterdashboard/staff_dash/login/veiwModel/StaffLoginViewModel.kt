@@ -23,7 +23,7 @@ class StaffLoginViewModel(
 
     fun processStaffLogin(staffId: String, passwordStr: String) {
 
-        // ✅ FIXED: Only trim whitespace spacing. Do NOT force uppercase mapping here.
+        // FIXED: Only trim whitespace spacing. Do NOT force uppercase mapping here.
         // This preserves the exact casing typed by the user to achieve a true literal match.
         val cleanId = staffId.trim()
         val cleanPass = passwordStr.trim()
@@ -63,6 +63,7 @@ class StaffLoginViewModel(
                             restaurantOwnerUid = ownerUid, // Linked root workspace parameters mapping keys (Owner UID)
                             staffDocId = staffProfile.id, // Database Auto-ID for this staff member
                             staffId = staffProfile.staffId, // Alphanumeric Custom ID (e.g. PAVAN9730)
+                            role = staffProfile.role,      // Pass the exact role field string ("Waiter", "Kitchen", "Billing") here
                             permissions = staffProfile.permissions
                         )
                     } else {

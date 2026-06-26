@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.dashboard
+package com.example.masterdashboard.staff_dash.waiter_screens.dashboard
 
 
 data class RecentActivityItem(

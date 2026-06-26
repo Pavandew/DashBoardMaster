@@ -7,15 +7,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.example.masterdashboard.databinding.FragmentStaffProfileBinding
+import com.example.masterdashboard.utils.LogoutManager
 
 class StaffProfileFragment : Fragment() {
 
     private var _binding: FragmentStaffProfileBinding? = null
     private val binding get() = _binding!!
+    private val logoutManager by lazy { LogoutManager(requireContext()) }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentStaffProfileBinding.inflate(inflater, container, false)
         return binding.root
@@ -23,17 +24,17 @@ class StaffProfileFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.i("StaffProfileFragment", "Navigation: StaffProfileFragment Opened")
+
         setupToolbar()
+
+        binding.waiterLogoutBtn.setOnClickListener {
+            logoutManager.showLogoutConfirmation()
+        }
     }
 
     private fun setupToolbar() {
-        val toolbar = binding.staffProfileToolbar
-        toolbar.tvToolbarTitle.text = "Profile"
-        toolbar.llSubtitleContainer.visibility = View.GONE
-        toolbar.toolbarImgMenu.setOnClickListener {
-//            (activity as? StaffHomeActivity)?.openDrawer()
-        }
+        binding.staffProfileToolbar.tvToolbarTitle.text = "Profile"
+        binding.staffProfileToolbar.llSubtitleContainer.visibility = View.GONE
     }
 
     override fun onDestroyView() {
