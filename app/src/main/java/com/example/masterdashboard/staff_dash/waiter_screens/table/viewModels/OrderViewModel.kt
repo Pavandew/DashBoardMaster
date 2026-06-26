@@ -1,13 +1,13 @@
-package com.example.masterdashboard.staff_dash.home.table.viewModels
+package com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.masterdashboard.staff_dash.home.table.models.CartSummaryState
-import com.example.masterdashboard.staff_dash.home.table.models.FoodItemData
-import com.example.masterdashboard.staff_dash.home.table.models.OrderUiState
-import com.example.masterdashboard.staff_dash.home.table.repo.OrderRepository
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.CartSummaryState
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.FoodItemData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.OrderUiState
+import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

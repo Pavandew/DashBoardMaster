@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.table.models
+package com.example.masterdashboard.staff_dash.waiter_screens.table.models
 
 data class OrderUiState(
     val categories: List<MenuCategoryData> = emptyList(),

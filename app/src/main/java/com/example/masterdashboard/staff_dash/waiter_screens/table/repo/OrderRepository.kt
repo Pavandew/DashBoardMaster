@@ -1,8 +1,8 @@
-package com.example.masterdashboard.staff_dash.home.table.repo
+package com.example.masterdashboard.staff_dash.waiter_screens.table.repo
 
 import android.util.Log
-import com.example.masterdashboard.staff_dash.home.table.models.FoodItemData
-import com.example.masterdashboard.staff_dash.home.table.models.MenuCategoryData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.FoodItemData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.MenuCategoryData
 import kotlinx.coroutines.delay
 
 class OrderRepository{

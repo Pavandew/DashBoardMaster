@@ -1,9 +1,9 @@
-package com.example.masterdashboard.staff_dash.home.order.views.repo
+package com.example.masterdashboard.staff_dash.waiter_screens.order.views.repo
 
-import com.example.masterdashboard.staff_dash.home.order.views.models.ActiveOrderStatus
-import com.example.masterdashboard.staff_dash.home.order.views.models.OrderDetailExpansionUiState
-import com.example.masterdashboard.staff_dash.home.order.views.models.OrderExpandedItemData
-import com.example.masterdashboard.staff_dash.home.table.uistate.ResourceUiState
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.ActiveOrderStatus
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.OrderDetailExpansionUiState
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.OrderExpandedItemData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow

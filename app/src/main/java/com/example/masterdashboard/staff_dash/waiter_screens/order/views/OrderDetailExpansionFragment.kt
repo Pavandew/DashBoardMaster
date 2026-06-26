@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.order.views
+package com.example.masterdashboard.staff_dash.waiter_screens.order.views
 
 import android.os.Bundle
 import android.util.Log
@@ -14,11 +14,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentOrderDetailsExpansionBinding
-import com.example.masterdashboard.staff_dash.home.StaffHomeActivity
-import com.example.masterdashboard.staff_dash.home.order.views.adapter.OrderDetailRowAdapter
-import com.example.masterdashboard.staff_dash.home.order.views.models.ActiveOrderStatus
-import com.example.masterdashboard.staff_dash.home.order.views.repo.OrderDetailRepository
-import com.example.masterdashboard.staff_dash.home.order.views.viewModel.OrderDetailViewModel
+import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.adapter.OrderDetailRowAdapter
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.ActiveOrderStatus
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.repo.OrderDetailRepository
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.viewModel.OrderDetailViewModel
 import kotlinx.coroutines.launch
 
 class OrderDetailExpansionFragment : Fragment() {

@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.table.views
+package com.example.masterdashboard.staff_dash.waiter_screens.table.views
 
 import android.os.Bundle
 import android.util.Log
@@ -11,9 +11,8 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.activityViewModels
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentOrderSuccesBinding
-import com.example.masterdashboard.staff_dash.home.StaffHomeActivity
-import com.example.masterdashboard.staff_dash.home.order.views.StaffOrdersFragment
-import com.example.masterdashboard.staff_dash.home.table.viewModels.OrderViewModel
+import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

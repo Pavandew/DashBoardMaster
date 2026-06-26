@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.table.views
+package com.example.masterdashboard.staff_dash.waiter_screens.table.views
 
 import android.os.Bundle
 import android.util.Log
@@ -15,14 +15,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentOrderTakingBinding
 import com.example.masterdashboard.master_dash.home.SearchQueryManager
-import com.example.masterdashboard.staff_dash.home.StaffHomeActivity
-import com.example.masterdashboard.staff_dash.home.table.adapter.FloorChipsAdapter
-import com.example.masterdashboard.staff_dash.home.table.adapter.FoodMenuAdapter
-import com.example.masterdashboard.staff_dash.home.table.models.FoodItemData
-import com.example.masterdashboard.staff_dash.home.table.models.TableFilterData
-import com.example.masterdashboard.staff_dash.home.table.models.TableStatus
-import com.example.masterdashboard.staff_dash.home.table.repo.OrderRepository
-import com.example.masterdashboard.staff_dash.home.table.viewModels.OrderViewModel
+import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FloorChipsAdapter
+import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FoodMenuAdapter
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.FoodItemData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableStatus
+import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderRepository
+import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderViewModel
 import kotlinx.coroutines.launch
 
 class OrderTakingFragment : Fragment() {

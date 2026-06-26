@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.home.order.views.adapter
+package com.example.masterdashboard.staff_dash.waiter_screens.order.views.adapter
 
 
 import android.view.LayoutInflater
@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.databinding.ItemOrderDetailRowBinding
-import com.example.masterdashboard.staff_dash.home.order.views.models.OrderExpandedItemData
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.OrderExpandedItemData
 
 class OrderDetailRowAdapter : ListAdapter<OrderExpandedItemData, OrderDetailRowAdapter.RowViewHolder>(RowDiffCallback()) {
 
