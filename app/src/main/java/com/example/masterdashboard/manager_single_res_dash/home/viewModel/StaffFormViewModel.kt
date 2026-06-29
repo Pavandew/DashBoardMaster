@@ -27,51 +27,48 @@ class StaffFormViewModel(
         private const val TAG = "StaffFormViewModel"
     }
 
-    // Hold the temporary form data across fragments
     private val _currentStaffData = MutableStateFlow(StaffDataModel())
     val currentStaffData: StateFlow<StaffDataModel> = _currentStaffData
 
-    // Hold the firestore submission status
     private val _uiState = MutableStateFlow<FirebaseUiState>(FirebaseUiState.Idle)
     val uiState: StateFlow<FirebaseUiState> = _uiState
 
-    // check phone registered or not
     private val _phoneState = MutableStateFlow<PhoneCheckState>(PhoneCheckState.Idle)
     val phoneState: StateFlow<PhoneCheckState> = _phoneState.asStateFlow()
-    // Step 1 calls this to save details before navigating
+
     fun updateStaffData(data: StaffDataModel) {
         _currentStaffData.value = data
     }
 
+    // ✅ UPDATED: Accepts auto-generated credentials strings payload parameters from Step 1 Fragment
     fun updateStep1Data(
         staffName: String, mobile: String, email: String, gender: String,
-        role: String, department: String, joiningData: String, shift: String, salary: String
+        role: String, department: String, joiningData: String, shift: String, salary: String,
+        staffId: String, password: String
     ) {
-        // Single log for Step 1 cache data
-        Log.d(TAG, "➡STEP 1 CACHED: [Name=$staffName, Mobile=$mobile, Email=$email, Gender=$gender, Role=$role, Dept=$department, JoinDate=$joiningData, Shift=$shift, Salary=$salary]")
+        Log.d(TAG, "➡ STEP 1 CACHED: [Name=$staffName, ID=$staffId, Pass=$password, Mobile=$mobile, Role=$role]")
 
         _currentStaffData.value = _currentStaffData.value.copy(
             staffName = staffName, mobile = mobile, email = email, gender = gender,
-            role = role, department = department, joiningDate = joiningData, shift = shift, salary = salary
+            role = role, department = department, joiningDate = joiningData, shift = shift, salary = salary,
+            staffId = staffId,     // ✅ Saved to shared flow memory block layout references
+            password = password   // ✅ Saved to shared flow memory block layout references
         )
     }
 
-    // Step 2 calls this to append document data and submit directly to firebase
     fun submitFinalStaffData(
         ownerUid: String, documentType: String, documentNumber: String, permission: List<String>
     ) {
+        // Appends step 2 validation criteria selections cleanly over top of step 1 cache boundaries
         val finalData = _currentStaffData.value.copy(
             documentType = documentType,
             documentNumber = documentNumber,
             permissions = permission
         )
 
-        // ... (logging omitted for brevity in targetContent, but I should keep it)
-        // Actually I should include the whole function to be safe or just the signature and call.
-
-
-        // Single formatted log block showing the entire payload going to Firebase
-        Log.d(TAG, "FIREBASE PAYLOAD: {\n" +
+        Log.d(TAG, "FINAL SUBMISSION PAYLOAD INCLUDING ID & PASS: {\n" +
+                "  \"staffId\": \"${finalData.staffId}\",\n" +
+                "  \"password\": \"${finalData.password}\",\n" +
                 "  \"staffName\": \"${finalData.staffName}\",\n" +
                 "  \"mobile\": \"${finalData.mobile}\",\n" +
                 "  \"email\": \"${finalData.email}\",\n" +
@@ -83,7 +80,7 @@ class StaffFormViewModel(
                 "  \"salary\": \"${finalData.salary}\",\n" +
                 "  \"documentType\": \"${finalData.documentType}\",\n" +
                 "  \"documentNumber\": \"${finalData.documentNumber}\",\n" +
-                "  \"permissions\": ${finalData.permissions.associateWith { true }}\n" +
+                "  \"permissions\": ${finalData.permissions}\n" +
                 "}")
 
         viewModelScope.launch {
@@ -94,8 +91,7 @@ class StaffFormViewModel(
                 onSuccess = {
                     Log.d(TAG, "Firebase Upload Success!")
                     _uiState.value = FirebaseUiState.Success
-                    // Optionally reset form data after successful submission
-                    _currentStaffData.value = StaffDataModel()
+                    _currentStaffData.value = StaffDataModel() // Clean state post-success
                 },
                 onFailure = {
                     Log.e(TAG, " Firebase Upload Failed: ${it.message}", it)
@@ -105,14 +101,9 @@ class StaffFormViewModel(
         }
     }
 
-    fun verifyMobileAndProceed(
-        ownerUid: String,
-        mobile: String,
-        onSuccessToProceed: () -> Unit
-    ) {
+    fun verifyMobileAndProceed(ownerUid: String, mobile: String, onSuccessToProceed: () -> Unit) {
         viewModelScope.launch {
             _phoneState.value = PhoneCheckState.Checking
-
             repo.isMobileNumberRegistered(ownerUid, mobile).fold(
                 onSuccess = { isRegistered ->
                     if (isRegistered) {
@@ -120,8 +111,7 @@ class StaffFormViewModel(
                         _phoneState.value = PhoneCheckState.AlreadyRegistered
                     } else {
                         _phoneState.value = PhoneCheckState.Available
-                        // Validation passes completely -> trigger the navigation lambda block directly
-                        onSuccessToProceed()
+                        onSuccessToProceed() // Triggers the navigation blocks setup instantly
                     }
                 },
                 onFailure = {
@@ -131,19 +121,12 @@ class StaffFormViewModel(
         }
     }
 
-    fun resetPhoneState() {
-        _phoneState.value = PhoneCheckState.Idle
-    }
-
-    fun resetState() {
-        _uiState.value = FirebaseUiState.Idle
-    }
-
+    fun resetPhoneState() { _phoneState.value = PhoneCheckState.Idle }
+    fun resetState() { _uiState.value = FirebaseUiState.Idle }
     fun clearFormData() {
         _currentStaffData.value = StaffDataModel()
         _phoneState.value = PhoneCheckState.Idle
         _uiState.value = FirebaseUiState.Idle
-
         Log.d(TAG, "Staff form data cleared")
     }
 }

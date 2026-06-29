@@ -1,7 +1,11 @@
 package com.example.masterdashboard.manager_single_res_dash.home.models
 
+import java.io.Serializable
+
 data class StaffDataModel(
     val id: String = "",
+    val staffId: String = "",       // ✅ Added Custom ID Created by System Form
+    val password: String = "",      // ✅ Added Password for Manager view & Staff Login
     val staffName: String = "",
     val mobile: String = "",
     val email: String = "",
@@ -15,10 +19,12 @@ data class StaffDataModel(
     val permissions: List<String> = emptyList(),
     val documentType: String = "",
     val documentNumber: String = "",
-) {
+): Serializable {
     fun toMap() : Map<String, Any> {
         return mapOf(
             "id" to id,
+            "staffId" to staffId,         // ✅ Synced to database payload
+            "password" to password,       // ✅ Synced to database payload
             "staffName" to staffName,
             "mobile" to mobile,
             "email" to email,

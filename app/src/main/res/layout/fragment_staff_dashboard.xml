@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    tools:context=".staff_dash.home.dashboard.StaffDashboardFragment">
+    tools:context=".staff_dash.waiter_screens.dashboard.StaffDashboardFragment">
 
     <include
         android:id="@+id/staff_dashboard_toolbar"
