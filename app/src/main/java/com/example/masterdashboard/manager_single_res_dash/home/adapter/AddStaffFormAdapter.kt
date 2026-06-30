@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
+import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemFormHeaderBinding
 import com.example.masterdashboard.databinding.ItemFormPersonalBinding
 import com.example.masterdashboard.databinding.ItemFormWorkBinding
@@ -64,8 +65,8 @@ class AddStaffFormAdapter(
 
                 // 1. Set up Roles Spinner
                 val roles = listOf("Waiter", "Chef", "Cashier", "Manager")
-                val rolesAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, roles)
-                rolesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                val rolesAdapter = ArrayAdapter(context, R.layout.item_dropdown_menu_popup, roles)
+                rolesAdapter.setDropDownViewResource(R.layout.item_dropdown_menu_popup)
                 holder.binding.spinnerRole.adapter = rolesAdapter
                 
                 // Pre-fill role if exists
@@ -80,8 +81,8 @@ class AddStaffFormAdapter(
 
                 // 2. Set up Shifts Spinner
                 val shifts = listOf("Morning", "Evening", "Night")
-                val shiftsAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, shifts)
-                shiftsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                val shiftsAdapter = ArrayAdapter(context, R.layout.item_dropdown_menu_popup, shifts)
+                shiftsAdapter.setDropDownViewResource(R.layout.item_dropdown_menu_popup)
                 holder.binding.spinnerRoleShift.adapter = shiftsAdapter
 
                 // Pre-fill shift if exists

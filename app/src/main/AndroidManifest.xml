@@ -9,15 +9,19 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
-
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
     <queries>
         <package android:name="com.google.android.gms" />
         <package android:name="com.android.vending" />
+
         <intent>
             <action android:name="com.google.android.gms.auth.api.signin.SERVICE" />
+        </intent>
+        <intent>
+            <action android:name="com.google.android.gms.identity.service.BIND" />
         </intent>
     </queries>
 
@@ -31,6 +35,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MasterDashboard">
 
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -38,13 +45,14 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_path" /> </provider>
+                android:resource="@xml/file_path" />
+        </provider>
 
         <activity
             android:name=".manager_single_res_dash.home.ManagerHomeActivity"
             android:exported="false" />
         <activity
-            android:name=".staff_dash.home.StaffHomeActivity"
+            android:name=".staff_dash.waiter_screens.StaffHomeActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustPan" />
         <activity
@@ -75,6 +83,14 @@
         <activity
             android:name=".login.views.LoginActivity"
             android:exported="false" />
+        <activity
+            android:name=".staff_dash.billing_screens.BillingHomeActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".staff_dash.kitchen_screens.KitchenHomeActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>

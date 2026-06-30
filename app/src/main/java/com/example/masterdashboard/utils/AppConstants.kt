@@ -10,7 +10,9 @@ object AppConstants {
     const val ROLE_OWNER_MULTI = "owner_multi"
     const val ROLE_OWNER_SINGLE = "owner_single"
     const val ROLE_MANAGER = "manager"
-    const val ROLE_STAFF = "staff"
+    const val ROLE_STAFF = "waiter_staff"
+    const val KEY_STAFF_ID = "key_staff_id"
+    const val KEY_PERMISSIONS = "key_permissions"
 
     // Firestore Collections & Fields
     const val COLLECTION_USERS = "users"

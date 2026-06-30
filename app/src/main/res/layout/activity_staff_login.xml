@@ -92,8 +92,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
                     android:gravity="center_vertical"
-                    android:hint="Enter number"
-                    android:inputType="number"
+                    android:hint="Enter ID"
+                    android:inputType="text"
                     android:paddingTop="0dp"
                     android:paddingBottom="0dp"
                     android:textAllCaps="false" />

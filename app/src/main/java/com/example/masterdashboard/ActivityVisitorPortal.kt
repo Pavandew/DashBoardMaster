@@ -44,7 +44,8 @@ class ActivityVisitorPortal : AppCompatActivity() {
         // 1. Multi Restaurant Portal
         val master = PortalItem(
             "Multi Restaurant",
-            "Manage all restaurants and system settings",
+            subTitle = "Manage Multiple",
+            description = "Manage all restaurants and system settings",
             R.drawable.shield,
             R.color.primary_blue,
             listOf(
@@ -62,7 +63,8 @@ class ActivityVisitorPortal : AppCompatActivity() {
         // 2. Restaurant Portal
         val manager = PortalItem(
             "Restaurant Portal",
-            "Manage restaurant and staff",
+            subTitle = "Owner/Manager",
+            description = "Manage restaurant and staff",
             R.drawable.manager,
             R.color.primary_purple,
             listOf(
@@ -89,9 +91,10 @@ class ActivityVisitorPortal : AppCompatActivity() {
         }
 
         // 3. Staff Portal
-        val waiter = PortalItem(
+        val staff = PortalItem(
             "Staff Dashboard",
-            "Take orders and manage tables",
+            subTitle = "Working Staffs",
+            "Take orders manage tables and Kitchens",
             R.drawable.waiter,
             R.color.primary_orange,
             listOf(
@@ -106,12 +109,12 @@ class ActivityVisitorPortal : AppCompatActivity() {
         ) {
             sessionManager.setSelectedPortal(AppConstants.PORTAL_STAFF)
 
-            startActivity(Intent(this, LoginActivity::class.java))
+            startActivity(Intent(this, StaffLoginActivity::class.java))
         }
 
         // Bind data using the manager
         portalManager.bindCard(binding.cardMaster, master)
         portalManager.bindCard(binding.cardManager, manager)
-        portalManager.bindCard(binding.cardWaiter, waiter)
+        portalManager.bindCard(binding.cardWaiter, staff)
     }
 }

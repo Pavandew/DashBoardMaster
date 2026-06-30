@@ -32,12 +32,11 @@ class AddStaffFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val sharedViewModel: StaffFormViewModel by activityViewModels()
+    private lateinit var formAdapter : AddStaffFormAdapter
     private lateinit var sessionManager: SessionManager
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentAddStaffBinding.inflate(inflater, container, false)
         sessionManager = SessionManager(requireContext())
@@ -47,9 +46,7 @@ class AddStaffFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        requireActivity().onBackPressedDispatcher.addCallback(
-            viewLifecycleOwner
-        ) {
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             parentFragmentManager.popBackStack()
         }
 
@@ -75,37 +72,41 @@ class AddStaffFragment : Fragment() {
             parentFragmentManager.popBackStack()
         }
     }
+
     private fun setupRecyclerView() {
         val currentData = sharedViewModel.currentStaffData.value
-        val formAdapter = AddStaffFormAdapter(currentData) { name, mobile, email, gender, role, department, joiningDate, shift, salary ->
+        formAdapter = AddStaffFormAdapter(currentData) { name, mobile, email, gender, role, department, joiningDate, shift, salary ->
 
-            // 1. Run validation first
+            // 1. Run required fields validations
             if (!isValidInput(name, mobile, email, role, department, joiningDate, shift)) {
                 return@AddStaffFormAdapter
             }
 
-            // 2. Check if mobile number is already registered
+            // 2. Cross-verify mobile data array sets to ensure entries do not already exist
             val ownerUid = sessionManager.getUid()
             sharedViewModel.verifyMobileAndProceed(ownerUid, mobile) {
-                // This block runs only if phone is NOT already registered
-                
-                // Log incoming data only if validation passes
-                Log.d(TAG, "================ STEP 1 VALIDATION PASSED ================")
-                Log.d(TAG, "Full Name    : $name")
-                Log.d(TAG, "Mobile No    : $mobile")
-                Log.d(TAG, "Email        : $email")
-                Log.d(TAG, "Gender       : $gender")
-                Log.d(TAG, "Role         : $role")
-                Log.d(TAG, "Department   : $department")
-                Log.d(TAG, "Joining Date : $joiningDate")
-                Log.d(TAG, "Shift        : $shift")
-                Log.d(TAG, "Salary       : $salary")
-                Log.d(TAG, "======================================================")
 
-                // 3. Save data collected from fields into our shared ViewModel state
-                sharedViewModel.updateStep1Data(name, mobile, email, gender, role, department, joiningDate, shift, salary)
+                // ✅ AUTOMATIC CREDENTIALS GENERATION FORMULA
+                // Remove whitespaces from name input and force uppercase
+                // Safely grab last 4 digits of phone number to guarantee id uniqueness
+                val cleanedName = name.replace("\\s".toRegex(), "").uppercase()
+                val mobileSuffix = if (mobile.length >= 4) mobile.substring(mobile.length - 4) else mobile
 
-                // 4. Navigate over to the step 2 screen fragment layout
+                val generatedStaffId = "${cleanedName}${mobileSuffix}" // Produces e.g: PAVAN9730
+                val generatedPassword = generateRandomPin()           // Produces e.g: 749215 (6-digit numeric login PIN)
+
+                Log.d(TAG, "================ GENERATED CREDENTIALS DEBUG LOG ================")
+                Log.d(TAG, "Custom Account Staff ID : $generatedStaffId")
+                Log.d(TAG, "Custom Password PIN Code: $generatedPassword")
+                Log.d(TAG, "==================================================================")
+
+                // 3. Save personal fields alongside login credentials back to model cache flow states
+                sharedViewModel.updateStep1Data(
+                    name, mobile, email, gender, role, department, joiningDate, shift, salary,
+                    generatedStaffId, generatedPassword
+                )
+
+                // 4. Navigate forward smoothly to Step 2 Layout Fragment Screen
                 parentFragmentManager.beginTransaction()
                     .replace(R.id.manager_fragmentContainer, PermissionsAndDocumentsFragment())
                     .addToBackStack(null)
@@ -116,64 +117,56 @@ class AddStaffFragment : Fragment() {
         binding.rvAddStaffForm.adapter = formAdapter
     }
 
+    // ✅ HELPER: Outputs a random numerical 6-digit pin string structure
+    private fun generateRandomPin(): String {
+        val numbersList = "1234567890"
+        return (1..6)
+            .map { numbersList.random() }
+            .joinToString("")
+    }
+
     private fun setupValidationObservers() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 sharedViewModel.phoneState.collect { state ->
                     when(state) {
-
-                        is PhoneCheckState.Checking -> {
-
-                        }
                         is PhoneCheckState.AlreadyRegistered -> {
                             Toast.makeText(requireContext(), "This mobile number is already registered!", Toast.LENGTH_LONG).show()
-                            sharedViewModel.resetPhoneState() // Clear state to allow corrections
+                            sharedViewModel.resetPhoneState()
                         }
                         is PhoneCheckState.Error -> {
                             Toast.makeText(requireContext(), "Error checking records: ${state.errorMsg}", Toast.LENGTH_SHORT).show()
                             sharedViewModel.resetPhoneState()
                         }
-                        is PhoneCheckState.Available, PhoneCheckState.Idle -> {
-                            // Do nothing
-                        }
+                        else -> { /* No operation */ }
                     }
                 }
             }
         }
     }
 
-    // Extracted clean validation function returning a Boolean status flag
     private fun isValidInput(
         staffName: String, mobile: String, email: String, role: String,
         department: String, joiningDate: String, shift: String
     ): Boolean {
-
-        // 1. Check required fields
         if (staffName.isEmpty() || mobile.isEmpty() || role.isEmpty() ||
             department.isEmpty() || joiningDate.isEmpty() || shift.isEmpty()) {
-
             Toast.makeText(requireContext(), "Please fill all required fields (*)", Toast.LENGTH_SHORT).show()
             return false
         }
-
-        // 2. Check mobile number digits length restriction
         if (mobile.length < 10) {
             Toast.makeText(requireContext(), "Please enter a valid mobile number", Toast.LENGTH_SHORT).show()
             return false
         }
-
-        // 3. Check email format if it's not empty
         if (email.isNotEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             Toast.makeText(requireContext(), "Please enter a valid email address", Toast.LENGTH_SHORT).show()
             return false
         }
-
-        return true // All validation rules passed successfully
+        return true
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-//        sharedViewModel.clearFormData()
         _binding = null
     }
 }

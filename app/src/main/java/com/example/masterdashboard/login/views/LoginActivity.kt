@@ -16,7 +16,7 @@ import com.example.masterdashboard.master_dash.home.MasterHomeActivity
 import com.example.masterdashboard.login.uistate.LoginUiState
 import com.example.masterdashboard.login.viewmodel.LoginViewModel
 import com.example.masterdashboard.manager_single_res_dash.home.ManagerHomeActivity
-import com.example.masterdashboard.staff_dash.home.StaffHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
 import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.launch
