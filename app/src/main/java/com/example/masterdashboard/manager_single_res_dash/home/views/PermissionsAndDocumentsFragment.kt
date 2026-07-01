@@ -21,18 +21,19 @@ import com.example.masterdashboard.manager_single_res_dash.home.models.Step2Form
 import com.example.masterdashboard.utils.DocumentUploadManager
 import com.example.masterdashboard.manager_single_res_dash.home.viewModel.StaffFormViewModel
 import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.SessionManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class PermissionsAndDocumentsFragment : Fragment() {
 
-    companion object{
+    companion object {
         private const val TAG = "PermissionsAndDocumentsFragment"
     }
 
     private var _binding: FragmentPermissionsAndDocumentsBinding? = null
     private val binding get() = _binding!!
 
-    // Uses activityViewModels() to connect directly into the shared state tracking database bundle from Step 1
     private val sharedViewModel: StaffFormViewModel by activityViewModels()
     private lateinit var adapter: PermissionsDocumentsAdapter
     private lateinit var documentUploadManger: DocumentUploadManager
@@ -50,7 +51,6 @@ class PermissionsAndDocumentsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Log.i(TAG, "Navigation: PermissionsAndDocumentsFragment Opened")
 
-        // Initialize the upload manager utility explicitly
         documentUploadManger = DocumentUploadManager(this)
 
         setupToolbar()
@@ -80,7 +80,6 @@ class PermissionsAndDocumentsFragment : Fragment() {
     }
 
     private fun setupFormItemsList() {
-        // Build dataset explicit collection arrays containing structural groupings
         formItems = listOf(
             Step2FormItem.Header,
             Step2FormItem.SectionTitle("Set Permissions", "Choose the access level for this staff member"),
@@ -91,55 +90,68 @@ class PermissionsAndDocumentsFragment : Fragment() {
             Step2FormItem.PermissionItem("billing_access", "Billing & Payments", "Manage bills and payments", R.drawable.person),
 
             Step2FormItem.SectionTitle("Upload Documents", "Upload necessary documents for verification"),
-            Step2FormItem.DocumentItem("aadhar", "Aadhar Card *", "Upload Aadhar Card", R.drawable.person),
-            Step2FormItem.DocumentItem("pan", "PAN Card (Optional)", "Upload PAN Card", R.drawable.person),
+            Step2FormItem.DocumentItem("aadhar", "Identity Verification Document *", "Upload Verification Copy", R.drawable.person),
+            Step2FormItem.DocumentItem("pan", "Tax Card (Optional)", "Upload Identification Copy", R.drawable.person),
             Step2FormItem.DocumentItem("photo", "Photo *", "Upload Profile Photo", R.drawable.person),
             Step2FormItem.DocumentItem("address", "Address Proof (Optional)", "Upload Address Proof", R.drawable.person)
         )
 
         adapter = PermissionsDocumentsAdapter(formItems) { item, position ->
-            // trigger permission, dialog selection sheet, camera capture, or storage picker instantly !
-           documentUploadManger.selectDocument { selectedUri: Uri ->
-               item.isUploaded = true
-               item.fileUri = selectedUri // Cache local access path inside data model references
-
-               Log.d(TAG, "ATTACHMENT REGISTERED: [FieldID: ${item.id} | UriPath: $selectedUri]")
-               adapter.notifyItemChanged(position)
-           }
+            documentUploadManger.selectDocument { selectedUri: Uri ->
+                item.isUploaded = true
+                item.fileUri = selectedUri
+                Log.d(TAG, "ATTACHMENT REGISTERED: [FieldID: ${item.id} | UriPath: $selectedUri]")
+                adapter.notifyItemChanged(position)
+            }
         }
 
         binding.rvPermissionsDocuments.adapter = adapter
     }
 
     private fun handleSubmitAction() {
-        // 1. Extract only checked permission IDs dynamically out of list items
         val selectedPermissions = formItems.filterIsInstance<Step2FormItem.PermissionItem>()
             .filter { it.isChecked }
             .map { it.id }
 
-        // 2. Simple verification rules assertion matching mandatory documents check requirements
-        val aadharDoc = formItems.filterIsInstance<Step2FormItem.DocumentItem>().find { it.id == "aadhar" }
+        val identityDoc = formItems.filterIsInstance<Step2FormItem.DocumentItem>().find { it.id == "aadhar" }
         val photoDoc = formItems.filterIsInstance<Step2FormItem.DocumentItem>().find { it.id == "photo" }
 
-        if (aadharDoc?.isUploaded == false || photoDoc?.isUploaded == false) {
+        if (identityDoc?.isUploaded == false || photoDoc?.isUploaded == false) {
             Toast.makeText(requireContext(), "Please upload all mandatory documents (*)", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // 3. Fire complete combined database submission requests directly downstream
-        val ownerUid = com.example.masterdashboard.utils.SessionManager(requireContext()).getUid()
-        sharedViewModel.submitFinalStaffData(
-            ownerUid = ownerUid,
-            documentType = "National Identity Card Bundle",
-            documentNumber = "VERIFIED_AT_SUBMIT",
-            permission = selectedPermissions
-        )
+        // ✅ PRESENT AUTO-GENERATED LOGIN DETAILS IN CONFIRMATION POPUP
+        val activeCache = sharedViewModel.currentStaffData.value
+        val displayId = activeCache.staffId
+        val displayPassword = activeCache.password
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Confirm Account Registration")
+            .setMessage("Employee Account generation parameters created. Provide these exact credentials to the new staff member so they can authenticate via the Login Panel:\n\n" +
+                    "👤 Staff Login ID: $displayId\n" +
+                    "🔑 Password PIN : $displayPassword\n\n" +
+                    "Make sure to record these settings before clicking finalize.")
+            .setCancelable(false) // Force viewing completely to avoid forgotten passwords
+            .setPositiveButton("Finalize & Register") { dialog, _ ->
+                dialog.dismiss()
+
+                // Fire final cloud upload parameters payload configuration tasks
+                val ownerUid = SessionManager(requireContext()).getUid()
+                sharedViewModel.submitFinalStaffData(
+                    ownerUid = ownerUid,
+                    documentType = "National Identity Card Bundle",
+                    documentNumber = "VERIFIED_AT_SUBMIT",
+                    permission = selectedPermissions
+                )
+            }
+            .setNegativeButton("Go Back") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     private fun setupObservers() {
-
-
-        // High-level safe Coroutines structure observing execution state results
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 sharedViewModel.uiState.collect { state ->
@@ -154,7 +166,6 @@ class PermissionsAndDocumentsFragment : Fragment() {
                             Toast.makeText(requireContext(), "Staff added successfully!", Toast.LENGTH_SHORT).show()
                             sharedViewModel.resetState()
 
-                            // Pop entire backstack sequence safely returning to staff listing screen
                             parentFragmentManager.popBackStack(AppConstants.BACKSTACK_ADD_STAFF, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
                         }
                         is FirebaseUiState.Error -> {

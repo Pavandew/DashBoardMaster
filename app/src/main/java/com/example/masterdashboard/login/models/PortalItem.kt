@@ -11,6 +11,7 @@ data class PortalFeature(
 
 data class PortalItem(
     val title: String,
+    val subTitle: String,
     val description: String,
     @DrawableRes val mainIcon: Int,
     @ColorRes val themeColor: Int,

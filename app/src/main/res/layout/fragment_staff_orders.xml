@@ -26,7 +26,7 @@
         app:layout_constraintTop_toBottomOf="@id/staff_orders_toolbar"
         tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         tools:orientation="horizontal"
-        tools:listitem="@layout/item_card_clips" />
+        tools:listitem="@layout/item_card_chips" />
 
     <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvActiveOrders"

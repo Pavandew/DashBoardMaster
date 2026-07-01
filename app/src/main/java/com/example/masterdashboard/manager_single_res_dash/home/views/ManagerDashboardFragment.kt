@@ -12,20 +12,20 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentManagerDashboardBinding
 import com.example.masterdashboard.manager_single_res_dash.home.ManagerHomeActivity
-import com.example.masterdashboard.manager_single_res_dash.home.utils.NavigationHelper
+import com.example.masterdashboard.manager_single_res_dash.home.utils.DrawerNavigationHelper
 import com.example.masterdashboard.manager_single_res_dash.home.adapter.DrawerMenuAdapter
 import com.example.masterdashboard.manager_single_res_dash.home.adapter.ManagerDashboardAdapter
 import com.example.masterdashboard.manager_single_res_dash.home.models.DashboardSummary
 import com.example.masterdashboard.manager_single_res_dash.home.models.DrawerMenuItem
 import com.example.masterdashboard.manager_single_res_dash.home.models.TopSellingFoodItem
 import com.example.masterdashboard.manager_single_res_dash.home.models.StatMetric
-import com.example.masterdashboard.staff_dash.home.order.views.StaffOrdersFragment
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.StaffOrdersFragment
 
 class ManagerDashboardFragment : Fragment() {
 
     private var _binding: FragmentManagerDashboardBinding? = null
     private val binding get() = _binding!!
-    private lateinit var navigationHelper: NavigationHelper
+    private lateinit var navigationHelper: DrawerNavigationHelper
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -39,7 +39,7 @@ class ManagerDashboardFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Log.i("ManagerDashboardFragment", "Navigation: ManagerDashboardFragment Opened")
         // 1. Initialize central navigation engine helper
-        navigationHelper = NavigationHelper(this)
+        navigationHelper = DrawerNavigationHelper(this)
 
         setupHeaderClickListeners()
         setupDashboardRecyclerView()
@@ -97,7 +97,7 @@ class ManagerDashboardFragment : Fragment() {
 
     /**
      * Finds the side navigation list inside the hosting Activity's layouts,
-     * and sets its adapter to forward selections directly to the NavigationHelper.
+     * and sets its adapter to forward selections directly to the DrawerNavigationHelper.
      */
     private fun setupActivityDrawerRecyclerView() {
         val homeActivity = activity as? ManagerHomeActivity ?: return

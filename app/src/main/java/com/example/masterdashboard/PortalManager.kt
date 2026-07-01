@@ -42,6 +42,7 @@ class PortalManager(private val context: Context) {
         binding.apply {
             portalTvTitleFirst.text = item.title
             portalTvTitleFirst.setTextColor(color)
+            portalTvSubTitle.text = item.subTitle
             portalTvDescription.text = item.description
             portalIvMainIcon.setImageResource(item.mainIcon)
 
