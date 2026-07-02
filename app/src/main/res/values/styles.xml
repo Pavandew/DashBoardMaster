@@ -240,7 +240,8 @@
     </style>
 
     <style name="BottomNavText" parent="TextAppearance.MaterialComponents.Caption">
-        <item name="android:textSize">13sp</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:fontFamily">@font/poppins_medium</item>
     </style>
 
     <style name="ShapeAppearance.MyApp.Squircle" parent="">
