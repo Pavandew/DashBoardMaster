@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="24dp"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="12dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#2C1E4A"
+    app:cardBackgroundColor="#13111C">
+
+    <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <FrameLayout
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_icon_ring_purple">
+
+        <ImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_logout_24dp"
+            app:tint="#6B11F8" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tvLogoutTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="End Active Shift?"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:id="@+id/tvLogoutMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Are you sure you want to exit your active profile terminal? All background sync cycles will encrypt."
+        android:textColor="#9E9EAF"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:layout_marginBottom="24dp"
+        android:lineSpacingMultiplier="1.2"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLogoutCancel"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="Stay Active"
+            android:textColor="#7A7A85"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLogoutConfirm"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Sign Out"
+            android:backgroundTint="#6B11F8"
+            android:textColor="#FFFFFF"
+            app:cornerRadius="14dp"/>
+    </LinearLayout>
+</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
