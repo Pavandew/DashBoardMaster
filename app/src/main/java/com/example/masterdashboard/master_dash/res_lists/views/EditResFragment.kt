@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home.res_lists.views
+package com.example.masterdashboard.master_dash.res_lists.views
 
 import android.os.Bundle
 import android.util.Log

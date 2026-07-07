@@ -1,18 +1,18 @@
-package com.example.masterdashboard.manager_single_res_dash.home.utils
+package com.example.masterdashboard.manager_single_res_dash.utils
 
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.masterdashboard.R
-import com.example.masterdashboard.manager_single_res_dash.home.ManagerHomeActivity
-import com.example.masterdashboard.manager_single_res_dash.home.models.DrawerMenuItem
-import com.example.masterdashboard.manager_single_res_dash.home.views.ManagerDashboardFragment
-import com.example.masterdashboard.manager_single_res_dash.home.views.MenuManagementFragment
-import com.example.masterdashboard.manager_single_res_dash.home.views.StaffManagementFragment
-import com.example.masterdashboard.manager_single_res_dash.home.views.TableManagementFragment
+import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
+import com.example.masterdashboard.manager_single_res_dash.models.DrawerMenuItem
+import com.example.masterdashboard.manager_single_res_dash.views.ManagerDashboardFragment
+import com.example.masterdashboard.manager_single_res_dash.views.MenuManagementFragment
+import com.example.masterdashboard.manager_single_res_dash.views.StaffManagementFragment
+import com.example.masterdashboard.manager_single_res_dash.views.TableManagementFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.order.views.StaffOrdersFragment
-import com.example.masterdashboard.utils.LogoutManager
+import com.example.masterdashboard.login.utils.LogoutManager
 
 class DrawerNavigationHelper(private val fragment: Fragment) {
 

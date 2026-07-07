@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.adapter
+package com.example.masterdashboard.manager_single_res_dash.adapter
 
 import android.graphics.Color
 import android.view.LayoutInflater
@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemDrawerMenuBinding
-import com.example.masterdashboard.manager_single_res_dash.home.models.DrawerMenuItem
+import com.example.masterdashboard.manager_single_res_dash.models.DrawerMenuItem
 
 class DrawerMenuAdapter(
     private val menuItems: List<DrawerMenuItem>,

@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.models
+package com.example.masterdashboard.manager_single_res_dash.models
 
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.FieldValue
