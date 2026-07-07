@@ -1,7 +1,7 @@
-package com.example.masterdashboard.master_dash.home.dashboard.repo
+package com.example.masterdashboard.master_dash.dashboard.repo
 
 import android.util.Log
-import com.example.masterdashboard.master_dash.home.dashboard.model.ActivityLogsModel
+import com.example.masterdashboard.master_dash.dashboard.model.ActivityLogsModel
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 

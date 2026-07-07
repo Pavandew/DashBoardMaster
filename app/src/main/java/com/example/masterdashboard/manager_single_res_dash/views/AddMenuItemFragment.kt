@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.views
+package com.example.masterdashboard.manager_single_res_dash.views
 
 import android.net.Uri
 import android.os.Bundle
@@ -14,9 +14,9 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentAddMenuItemBinding
-import com.example.masterdashboard.manager_single_res_dash.home.viewModel.MenuItemViewModel
-import com.example.masterdashboard.utils.DocumentUploadManager
-import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.manager_single_res_dash.viewModel.MenuItemViewModel
+import com.example.masterdashboard.login.utils.DocumentUploadManager
+import com.example.masterdashboard.login.utils.SessionManager
 
 class AddMenuItemFragment : Fragment() {
     companion object {

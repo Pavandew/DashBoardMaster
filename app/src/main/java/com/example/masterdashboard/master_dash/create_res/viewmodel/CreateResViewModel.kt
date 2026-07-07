@@ -1,8 +1,8 @@
-package com.example.masterdashboard.master_dash.home.create_res.viewmodel
+package com.example.masterdashboard.master_dash.create_res.viewmodel
 
 import android.text.InputType
 import androidx.lifecycle.ViewModel
-import com.example.masterdashboard.master_dash.home.create_res.models.CreateRestaurantItem
+import com.example.masterdashboard.master_dash.create_res.models.CreateRestaurantItem
 
 class CreateRestaurantViewModel : ViewModel() {
 

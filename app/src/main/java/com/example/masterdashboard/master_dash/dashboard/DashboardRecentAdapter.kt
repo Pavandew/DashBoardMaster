@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home.dashboard
+package com.example.masterdashboard.master_dash.dashboard
 
 import android.content.res.ColorStateList
 import android.view.LayoutInflater
@@ -11,10 +11,10 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemRecentActivityBinding
-import com.example.masterdashboard.master_dash.home.dashboard.model.ActivityLogsModel
+import com.example.masterdashboard.master_dash.dashboard.model.ActivityLogsModel
 
 class RecentActivityAdapter :
-    ListAdapter<ActivityLogsModel, RecentActivityAdapter.VH>(Diff()) {
+    androidx.recyclerview.widget.ListAdapter<ActivityLogsModel, RecentActivityAdapter.VH>(Diff()) {
 
     class VH(
         val binding: ItemRecentActivityBinding

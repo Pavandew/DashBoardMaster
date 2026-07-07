@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.utils
+package com.example.masterdashboard.manager_single_res_dash.utils
 
 import android.os.Bundle
 import android.view.LayoutInflater

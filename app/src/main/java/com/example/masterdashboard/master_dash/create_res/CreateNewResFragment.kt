@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home.create_res
+package com.example.masterdashboard.master_dash.create_res
 
 import android.os.Bundle
 import android.util.Log
@@ -10,8 +10,8 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentCreateNewResBinding
-import com.example.masterdashboard.master_dash.home.create_res.adapter.CreateRestaurantAdapter
-import com.example.masterdashboard.master_dash.home.create_res.viewmodel.CreateRestaurantViewModel
+import com.example.masterdashboard.master_dash.create_res.adapter.CreateRestaurantAdapter
+import com.example.masterdashboard.master_dash.create_res.viewmodel.CreateRestaurantViewModel
 
 class CreateNewResFragment : Fragment() {
 

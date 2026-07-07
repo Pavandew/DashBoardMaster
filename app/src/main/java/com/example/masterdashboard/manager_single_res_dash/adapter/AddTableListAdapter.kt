@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.databinding.ItemTableGridCellBinding
-import com.example.masterdashboard.manager_single_res_dash.home.models.TableData
+import com.example.masterdashboard.manager_single_res_dash.models.TableData
 
 class AddTableListAdapter(
     private val onTableClick: (TableData) -> Unit,

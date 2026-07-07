@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home.dashboard.model
+package com.example.masterdashboard.master_dash.dashboard.model
 
 data class DashboardCardModel(
     val title: String,

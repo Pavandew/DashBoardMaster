@@ -49,20 +49,20 @@
         </provider>
 
         <activity
-            android:name=".manager_single_res_dash.home.ManagerHomeActivity"
+            android:name=".manager_single_res_dash.ManagerHomeActivity"
             android:exported="false" />
         <activity
             android:name=".staff_dash.waiter_screens.StaffHomeActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustPan" />
         <activity
-            android:name=".staff_dash.login.StaffLoginActivity"
+            android:name=".login.views.StaffLoginActivity"
             android:exported="false" />
         <activity
-            android:name=".ActivityVisitorPortal"
+            android:name=".login.ActivityVisitorPortal"
             android:exported="false" />
         <activity
-            android:name=".SplashActivity"
+            android:name=".login.SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -74,7 +74,7 @@
             android:name=".login.views.OTPVerificationActivity"
             android:exported="false" />
         <activity
-            android:name=".master_dash.home.MasterHomeActivity"
+            android:name=".master_dash.MasterHomeActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustPan" />
         <activity

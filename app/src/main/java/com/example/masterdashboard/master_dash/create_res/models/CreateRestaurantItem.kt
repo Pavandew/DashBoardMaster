@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home.create_res.models
+package com.example.masterdashboard.master_dash.create_res.models
 
 sealed class CreateRestaurantItem {
 

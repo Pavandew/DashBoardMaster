@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home.dashboard
+package com.example.masterdashboard.master_dash.dashboard
 
 import android.content.res.ColorStateList
 import android.os.Bundle
@@ -13,11 +13,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.databinding.FragmentDashboardBinding
 import com.example.masterdashboard.databinding.ItemDashboardCardBinding
 import com.example.masterdashboard.databinding.ItemQuickActionBinding
-import com.example.masterdashboard.master_dash.home.MasterHomeActivity
-import com.example.masterdashboard.master_dash.home.dashboard.model.DashboardCardModel
-import com.example.masterdashboard.master_dash.home.dashboard.model.QuickActionModel
-import com.example.masterdashboard.master_dash.home.dashboard.utils.DashboardUiData
-import com.example.masterdashboard.master_dash.home.dashboard.viewmodel.DashboardViewModel
+import com.example.masterdashboard.master_dash.MasterHomeActivity
+import com.example.masterdashboard.master_dash.dashboard.model.DashboardCardModel
+import com.example.masterdashboard.master_dash.dashboard.model.QuickActionModel
+import com.example.masterdashboard.master_dash.dashboard.utils.DashboardUiData
+import com.example.masterdashboard.master_dash.dashboard.viewmodel.DashboardViewModel
 
 class DashboardFragment : Fragment() {
 

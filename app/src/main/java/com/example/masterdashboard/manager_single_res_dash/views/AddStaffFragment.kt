@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.views
+package com.example.masterdashboard.manager_single_res_dash.views
 
 import android.os.Bundle
 import android.util.Log
@@ -16,10 +16,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentAddStaffBinding
-import com.example.masterdashboard.manager_single_res_dash.home.adapter.AddStaffFormAdapter
-import com.example.masterdashboard.manager_single_res_dash.home.viewModel.PhoneCheckState
-import com.example.masterdashboard.manager_single_res_dash.home.viewModel.StaffFormViewModel
-import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.manager_single_res_dash.adapter.AddStaffFormAdapter
+import com.example.masterdashboard.manager_single_res_dash.viewModel.PhoneCheckState
+import com.example.masterdashboard.manager_single_res_dash.viewModel.StaffFormViewModel
+import com.example.masterdashboard.login.utils.SessionManager
 import kotlinx.coroutines.launch
 
 class AddStaffFragment : Fragment() {

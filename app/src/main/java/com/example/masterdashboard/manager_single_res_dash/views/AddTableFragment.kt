@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.views
+package com.example.masterdashboard.manager_single_res_dash.views
 
 import android.os.Bundle
 import android.util.Log
@@ -10,12 +10,10 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentAddTableBinding
-import com.example.masterdashboard.manager_single_res_dash.home.viewModel.TableItemListViewModel
-import com.example.masterdashboard.utils.AppConstants
-import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.manager_single_res_dash.viewModel.TableItemListViewModel
+import com.example.masterdashboard.login.utils.SessionManager
 
 class AddTableFragment : Fragment() {
 

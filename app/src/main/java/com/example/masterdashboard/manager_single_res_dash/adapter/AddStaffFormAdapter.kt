@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.adapter
+package com.example.masterdashboard.manager_single_res_dash.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -9,7 +9,7 @@ import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemFormHeaderBinding
 import com.example.masterdashboard.databinding.ItemFormPersonalBinding
 import com.example.masterdashboard.databinding.ItemFormWorkBinding
-import com.example.masterdashboard.manager_single_res_dash.home.models.StaffDataModel
+import com.example.masterdashboard.manager_single_res_dash.models.StaffDataModel
 import com.google.android.material.datepicker.MaterialDatePicker
 import java.text.SimpleDateFormat
 import java.util.Date

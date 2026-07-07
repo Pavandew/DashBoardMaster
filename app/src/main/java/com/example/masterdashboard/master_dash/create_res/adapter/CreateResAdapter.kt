@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home.create_res.adapter
+package com.example.masterdashboard.master_dash.create_res.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -7,7 +7,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.*
-import com.example.masterdashboard.master_dash.home.create_res.models.CreateRestaurantItem
+import com.example.masterdashboard.master_dash.create_res.models.CreateRestaurantItem
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.textfield.TextInputLayout
 
