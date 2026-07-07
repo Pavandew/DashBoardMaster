@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.adapter
+package com.example.masterdashboard.manager_single_res_dash.adapter
 
 import android.util.Log
 import android.view.LayoutInflater
@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemFoodDishBinding // Double check this matches your row layout XML filename
-import com.example.masterdashboard.manager_single_res_dash.home.models.MenuFoodItemsData
+import com.example.masterdashboard.manager_single_res_dash.models.MenuFoodItemsData
 
 class FoodItemListAdapter(
     private val onItemClick: (MenuFoodItemsData) -> Unit,

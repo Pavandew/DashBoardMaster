@@ -1,10 +1,10 @@
-package com.example.masterdashboard.master_dash.home.dashboard.viewmodel
+package com.example.masterdashboard.master_dash.dashboard.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.masterdashboard.master_dash.home.dashboard.model.ActivityLogsModel
-import com.example.masterdashboard.master_dash.home.dashboard.repo.DashboardRepository
+import com.example.masterdashboard.master_dash.dashboard.model.ActivityLogsModel
+import com.example.masterdashboard.master_dash.dashboard.repo.DashboardRepository
 
 class DashboardViewModel : ViewModel() {
 

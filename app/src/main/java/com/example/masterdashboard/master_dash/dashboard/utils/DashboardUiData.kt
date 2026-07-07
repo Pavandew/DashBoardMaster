@@ -1,8 +1,8 @@
-package com.example.masterdashboard.master_dash.home.dashboard.utils
+package com.example.masterdashboard.master_dash.dashboard.utils
 
 import com.example.masterdashboard.R
-import com.example.masterdashboard.master_dash.home.dashboard.model.DashboardCardModel
-import com.example.masterdashboard.master_dash.home.dashboard.model.QuickActionModel
+import com.example.masterdashboard.master_dash.dashboard.model.DashboardCardModel
+import com.example.masterdashboard.master_dash.dashboard.model.QuickActionModel
 
 object DashboardUiData {
 
