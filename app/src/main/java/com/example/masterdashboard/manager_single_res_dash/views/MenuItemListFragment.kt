@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.views
+package com.example.masterdashboard.manager_single_res_dash.views
 
 import android.os.Bundle
 import android.util.Log
@@ -15,14 +15,13 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentMenuItemListBinding
-import com.example.masterdashboard.manager_single_res_dash.home.adapter.FoodItemListAdapter
-import com.example.masterdashboard.manager_single_res_dash.home.models.MenuFoodItemsData
-import com.example.masterdashboard.manager_single_res_dash.home.uistate.MenuItemUiState
-import com.example.masterdashboard.manager_single_res_dash.home.viewModel.MenuItemViewModel
-import com.example.masterdashboard.utils.AppConstants
-import com.example.masterdashboard.utils.MenuDialogHelper
-import com.example.masterdashboard.utils.SessionManager
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.example.masterdashboard.manager_single_res_dash.adapter.FoodItemListAdapter
+import com.example.masterdashboard.manager_single_res_dash.models.MenuFoodItemsData
+import com.example.masterdashboard.manager_single_res_dash.uistate.MenuItemUiState
+import com.example.masterdashboard.manager_single_res_dash.viewModel.MenuItemViewModel
+import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.login.utils.MenuDialogHelper
+import com.example.masterdashboard.login.utils.SessionManager
 import kotlinx.coroutines.launch
 
 class MenuItemListFragment : Fragment() {

@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.adapter
+package com.example.masterdashboard.manager_single_res_dash.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemMenuCategoryBinding
-import com.example.masterdashboard.manager_single_res_dash.home.models.MenuCategory
+import com.example.masterdashboard.manager_single_res_dash.models.MenuCategory
 
 class MenuCategoryAdapter(
     private val onItemClick: (MenuCategory) -> Unit,

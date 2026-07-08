@@ -1,13 +1,12 @@
-package com.example.masterdashboard.master_dash.home.logs.adapter
+package com.example.masterdashboard.master_dash.logs.adapter
 
-import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemLogRowBinding
-import com.example.masterdashboard.master_dash.home.logs.models.LogData
+import com.example.masterdashboard.master_dash.logs.models.LogData
 
 class LogsAdapter(
     private var logsList: List<LogData>,

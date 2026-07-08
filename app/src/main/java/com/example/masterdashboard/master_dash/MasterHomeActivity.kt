@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home
+package com.example.masterdashboard.master_dash
 
 import android.os.Bundle
 import android.util.Log
@@ -10,13 +10,13 @@ import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivityMasterHomeBinding
-import com.example.masterdashboard.master_dash.home.create_res.CreateNewResFragment
-import com.example.masterdashboard.master_dash.home.dashboard.DashboardFragment
-import com.example.masterdashboard.master_dash.home.logs.LogsFragment
-import com.example.masterdashboard.master_dash.home.res_lists.views.RestaurantListsFragment
-import com.example.masterdashboard.master_dash.home.settings.manager.SettingsDrawerManager
-import com.example.masterdashboard.master_dash.home.settings.views.ChangePasswordFragment
-import com.example.masterdashboard.master_dash.home.settings.views.ProfileFragment
+import com.example.masterdashboard.master_dash.create_res.CreateNewResFragment
+import com.example.masterdashboard.master_dash.dashboard.DashboardFragment
+import com.example.masterdashboard.master_dash.logs.LogsFragment
+import com.example.masterdashboard.master_dash.res_lists.views.RestaurantListsFragment
+import com.example.masterdashboard.master_dash.settings.manager.SettingsDrawerManager
+import com.example.masterdashboard.master_dash.settings.views.ChangePasswordFragment
+import com.example.masterdashboard.master_dash.settings.views.ProfileFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MasterHomeActivity : AppCompatActivity() {

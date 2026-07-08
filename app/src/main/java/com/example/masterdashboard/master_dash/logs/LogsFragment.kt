@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home.logs
+package com.example.masterdashboard.master_dash.logs
 
 import android.os.Bundle
 import android.util.Log
@@ -11,8 +11,8 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
-import com.example.masterdashboard.master_dash.home.logs.adapter.LogsAdapter
-import com.example.masterdashboard.master_dash.home.logs.models.LogData
+import com.example.masterdashboard.master_dash.logs.adapter.LogsAdapter
+import com.example.masterdashboard.master_dash.logs.models.LogData
 
 class LogsFragment : Fragment(), LogsAdapter.OnLogClickListener {
 

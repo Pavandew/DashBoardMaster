@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home.logs.models
+package com.example.masterdashboard.master_dash.logs.models
 
 data class LogData(
     val id: Int,

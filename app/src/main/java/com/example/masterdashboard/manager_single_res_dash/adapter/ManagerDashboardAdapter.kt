@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.adapter
+package com.example.masterdashboard.manager_single_res_dash.adapter
 
 import android.content.res.ColorStateList
 import android.view.LayoutInflater
@@ -14,9 +14,9 @@ import com.example.masterdashboard.databinding.ItemDashQuickActionsBinding
 import com.example.masterdashboard.databinding.ItemDashboardOverviewBinding
 import com.example.masterdashboard.databinding.ItemDashboardSummaryBinding
 import com.example.masterdashboard.databinding.ItemTopSellingCardsBinding
-import com.example.masterdashboard.manager_single_res_dash.home.models.DashboardSummary
-import com.example.masterdashboard.manager_single_res_dash.home.models.TopSellingFoodItem
-import com.example.masterdashboard.manager_single_res_dash.home.models.StatMetric
+import com.example.masterdashboard.manager_single_res_dash.models.DashboardSummary
+import com.example.masterdashboard.manager_single_res_dash.models.TopSellingFoodItem
+import com.example.masterdashboard.manager_single_res_dash.models.StatMetric
 import com.google.android.material.card.MaterialCardView
 
 class ManagerDashboardAdapter (

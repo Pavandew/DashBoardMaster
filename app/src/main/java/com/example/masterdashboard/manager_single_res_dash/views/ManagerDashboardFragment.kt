@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.views
+package com.example.masterdashboard.manager_single_res_dash.views
 
 import android.os.Bundle
 import android.util.Log
@@ -11,14 +11,14 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentManagerDashboardBinding
-import com.example.masterdashboard.manager_single_res_dash.home.ManagerHomeActivity
-import com.example.masterdashboard.manager_single_res_dash.home.utils.DrawerNavigationHelper
-import com.example.masterdashboard.manager_single_res_dash.home.adapter.DrawerMenuAdapter
-import com.example.masterdashboard.manager_single_res_dash.home.adapter.ManagerDashboardAdapter
-import com.example.masterdashboard.manager_single_res_dash.home.models.DashboardSummary
-import com.example.masterdashboard.manager_single_res_dash.home.models.DrawerMenuItem
-import com.example.masterdashboard.manager_single_res_dash.home.models.TopSellingFoodItem
-import com.example.masterdashboard.manager_single_res_dash.home.models.StatMetric
+import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
+import com.example.masterdashboard.manager_single_res_dash.utils.DrawerNavigationHelper
+import com.example.masterdashboard.manager_single_res_dash.adapter.DrawerMenuAdapter
+import com.example.masterdashboard.manager_single_res_dash.adapter.ManagerDashboardAdapter
+import com.example.masterdashboard.manager_single_res_dash.models.DashboardSummary
+import com.example.masterdashboard.manager_single_res_dash.models.DrawerMenuItem
+import com.example.masterdashboard.manager_single_res_dash.models.TopSellingFoodItem
+import com.example.masterdashboard.manager_single_res_dash.models.StatMetric
 import com.example.masterdashboard.staff_dash.waiter_screens.order.views.StaffOrdersFragment
 
 class ManagerDashboardFragment : Fragment() {
