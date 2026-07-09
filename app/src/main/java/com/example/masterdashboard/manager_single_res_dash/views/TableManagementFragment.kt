@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.views
+package com.example.masterdashboard.manager_single_res_dash.views
 
 import android.os.Bundle
 import android.util.Log
@@ -15,16 +15,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentTableManagementBinding
-import com.example.masterdashboard.manager_single_res_dash.home.models.FloorDataModel
-import com.example.masterdashboard.manager_single_res_dash.home.uistate.TableUiState
-import com.example.masterdashboard.manager_single_res_dash.home.utils.AddFloorBottomSheet
-import com.example.masterdashboard.manager_single_res_dash.home.viewModel.TableManagementViewModel
+import com.example.masterdashboard.manager_single_res_dash.models.FloorDataModel
+import com.example.masterdashboard.manager_single_res_dash.uistate.TableUiState
+import com.example.masterdashboard.manager_single_res_dash.utils.AddFloorBottomSheet
+import com.example.masterdashboard.manager_single_res_dash.viewModel.TableManagementViewModel
 import com.example.masterdashboard.manager_single_res_dash.table_management.adapter.FloorListAdapter
-import com.example.masterdashboard.utils.AppConstants
-import com.example.masterdashboard.utils.MenuDialogHelper
-import com.example.masterdashboard.utils.SessionManager
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.textfield.TextInputEditText
+import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.login.utils.MenuDialogHelper
+import com.example.masterdashboard.login.utils.SessionManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 

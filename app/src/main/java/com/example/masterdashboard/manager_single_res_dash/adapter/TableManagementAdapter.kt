@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.databinding.ItemFloorsBinding
-import com.example.masterdashboard.manager_single_res_dash.home.models.FloorDataModel
+import com.example.masterdashboard.manager_single_res_dash.models.FloorDataModel
 
 /**
  * Handles rendering the top-level floors layout list.

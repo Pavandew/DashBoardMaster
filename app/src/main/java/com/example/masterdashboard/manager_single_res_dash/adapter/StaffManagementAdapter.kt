@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.adapter
+package com.example.masterdashboard.manager_single_res_dash.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemStaffCardsBinding
-import com.example.masterdashboard.manager_single_res_dash.home.models.StaffDataModel
+import com.example.masterdashboard.manager_single_res_dash.models.StaffDataModel
 
 class StaffManagementAdapter(
     private val onCardLongClick: (StaffDataModel) -> Unit,

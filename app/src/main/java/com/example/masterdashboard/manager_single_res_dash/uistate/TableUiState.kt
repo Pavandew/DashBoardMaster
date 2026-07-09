@@ -1,7 +1,7 @@
-package com.example.masterdashboard.manager_single_res_dash.home.uistate
+package com.example.masterdashboard.manager_single_res_dash.uistate
 
-import com.example.masterdashboard.manager_single_res_dash.home.models.FloorDataModel
-import com.example.masterdashboard.manager_single_res_dash.home.models.TableData
+import com.example.masterdashboard.manager_single_res_dash.models.FloorDataModel
+import com.example.masterdashboard.manager_single_res_dash.models.TableData
 
 sealed interface TableUiState {
     object Loading: TableUiState

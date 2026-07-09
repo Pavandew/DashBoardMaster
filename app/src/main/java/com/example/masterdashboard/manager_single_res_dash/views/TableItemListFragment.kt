@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.views
+package com.example.masterdashboard.manager_single_res_dash.views
 
 import android.os.Bundle
 import android.util.Log
@@ -15,13 +15,13 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentTableItemListBinding
-import com.example.masterdashboard.manager_single_res_dash.home.models.TableData
-import com.example.masterdashboard.manager_single_res_dash.home.uistate.TableItemUiState
-import com.example.masterdashboard.manager_single_res_dash.home.viewModel.TableItemListViewModel
+import com.example.masterdashboard.manager_single_res_dash.models.TableData
+import com.example.masterdashboard.manager_single_res_dash.uistate.TableItemUiState
+import com.example.masterdashboard.manager_single_res_dash.viewModel.TableItemListViewModel
 import com.example.masterdashboard.manager_single_res_dash.table_management.adapter.AddTableListAdapter
-import com.example.masterdashboard.utils.AppConstants
-import com.example.masterdashboard.utils.MenuDialogHelper
-import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.login.utils.MenuDialogHelper
+import com.example.masterdashboard.login.utils.SessionManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 

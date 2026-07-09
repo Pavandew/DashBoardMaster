@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.views
+package com.example.masterdashboard.manager_single_res_dash.views
 
 import android.content.res.ColorStateList
 import android.os.Bundle
@@ -11,22 +11,22 @@ import androidx.activity.addCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels // ✅ Added standard single viewmodel scoping ktx import
+import androidx.fragment.app.viewModels // Added standard single viewmodel scoping ktx import
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentStaffManagementBinding
-import com.example.masterdashboard.manager_single_res_dash.home.adapter.StaffManagementAdapter
-import com.example.masterdashboard.manager_single_res_dash.home.models.StaffDataModel
-import com.example.masterdashboard.manager_single_res_dash.home.uistate.StaffListUiState
-import com.example.masterdashboard.manager_single_res_dash.home.viewModel.StaffFormViewModel
-import com.example.masterdashboard.manager_single_res_dash.home.viewModel.StaffManagementViewModel // ✅ Swapped to new ViewModel target location
-import com.example.masterdashboard.master_dash.home.SearchQueryManager
-import com.example.masterdashboard.utils.AppConstants
-import com.example.masterdashboard.utils.MenuDialogHelper
-import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.manager_single_res_dash.adapter.StaffManagementAdapter
+import com.example.masterdashboard.manager_single_res_dash.models.StaffDataModel
+import com.example.masterdashboard.manager_single_res_dash.uistate.StaffListUiState
+import com.example.masterdashboard.manager_single_res_dash.viewModel.StaffFormViewModel
+import com.example.masterdashboard.manager_single_res_dash.viewModel.StaffManagementViewModel // Swapped to new ViewModel target location
+import com.example.masterdashboard.master_dash.utils.SearchQueryManager
+import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.login.utils.MenuDialogHelper
+import com.example.masterdashboard.login.utils.SessionManager
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
 import kotlin.getValue
