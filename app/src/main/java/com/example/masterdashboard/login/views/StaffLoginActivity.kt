@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.login
+package com.example.masterdashboard.login.views
 
 import android.content.Intent
 import android.os.Bundle
@@ -11,13 +11,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.databinding.ActivityStaffLoginBinding
+import com.example.masterdashboard.login.uistate.StaffLoginUiState
+import com.example.masterdashboard.login.viewmodel.StaffLoginViewModel
 import com.example.masterdashboard.staff_dash.billing_screens.BillingHomeActivity
 import com.example.masterdashboard.staff_dash.kitchen_screens.KitchenHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
-import com.example.masterdashboard.staff_dash.login.uistate.StaffLoginUiState
-import com.example.masterdashboard.staff_dash.login.veiwModel.StaffLoginViewModel
-import com.example.masterdashboard.utils.AppConstants
-import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.login.utils.SessionManager
 import kotlinx.coroutines.launch
 
 class StaffLoginActivity : AppCompatActivity() {

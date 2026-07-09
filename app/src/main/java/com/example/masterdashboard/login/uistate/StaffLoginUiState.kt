@@ -1,5 +1,4 @@
-package com.example.masterdashboard.staff_dash.login.uistate
-
+package com.example.masterdashboard.login.uistate
 
 sealed interface StaffLoginUiState {
     object Idle : StaffLoginUiState

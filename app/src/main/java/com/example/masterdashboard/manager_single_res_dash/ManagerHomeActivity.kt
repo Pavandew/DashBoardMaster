@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home
+package com.example.masterdashboard.manager_single_res_dash
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
@@ -8,7 +8,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivityManagerHomeBinding
-import com.example.masterdashboard.manager_single_res_dash.home.views.ManagerDashboardFragment
+import com.example.masterdashboard.manager_single_res_dash.views.ManagerDashboardFragment
 
 class ManagerHomeActivity : AppCompatActivity() {
 

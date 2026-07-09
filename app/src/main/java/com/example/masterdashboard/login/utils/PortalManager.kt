@@ -1,4 +1,4 @@
-package com.example.masterdashboard
+package com.example.masterdashboard.login.utils
 
 import android.content.Context
 import android.content.res.ColorStateList
@@ -7,6 +7,7 @@ import android.graphics.Shader
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemPortalCardBinding
 import com.example.masterdashboard.login.models.PortalFeature
 import com.example.masterdashboard.login.models.PortalItem

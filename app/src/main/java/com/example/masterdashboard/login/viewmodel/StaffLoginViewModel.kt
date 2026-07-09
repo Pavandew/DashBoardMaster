@@ -1,10 +1,10 @@
-package com.example.masterdashboard.staff_dash.login.veiwModel
+package com.example.masterdashboard.login.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.masterdashboard.staff_dash.login.repo.StaffLoginRepository
-import com.example.masterdashboard.staff_dash.login.uistate.StaffLoginUiState
+import com.example.masterdashboard.login.repo.StaffLoginRepository
+import com.example.masterdashboard.login.uistate.StaffLoginUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
