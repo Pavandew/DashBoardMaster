@@ -1,6 +1,6 @@
-package com.example.masterdashboard.staff_dash.login.repo
+package com.example.masterdashboard.login.repo
 
-import com.example.masterdashboard.manager_single_res_dash.home.models.StaffDataModel
+import com.example.masterdashboard.manager_single_res_dash.models.StaffDataModel
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import android.util.Log

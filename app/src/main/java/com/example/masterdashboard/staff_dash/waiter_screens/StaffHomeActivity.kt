@@ -15,13 +15,13 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivityStaffHomeBinding
-import com.example.masterdashboard.master_dash.home.settings.views.ChangePasswordFragment
+import com.example.masterdashboard.master_dash.settings.views.ChangePasswordFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.alert.StaffAlertFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.dashboard.StaffDashboardFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.order.views.StaffOrdersFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.profile.StaffProfileFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.table.views.StaffTablesFragment
-import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.login.utils.SessionManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class StaffHomeActivity : AppCompatActivity() {

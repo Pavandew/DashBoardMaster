@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.views
+package com.example.masterdashboard.manager_single_res_dash.views
 
 import android.os.Bundle
 import android.util.Log
@@ -11,9 +11,9 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentStaffDetailBinding
-import com.example.masterdashboard.manager_single_res_dash.home.models.StaffDataModel
-import com.example.masterdashboard.utils.AppConstants
-import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.manager_single_res_dash.models.StaffDataModel
+import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.login.utils.SessionManager
 import com.google.firebase.firestore.FirebaseFirestore
 
 class StaffDetailFragment : Fragment() {
