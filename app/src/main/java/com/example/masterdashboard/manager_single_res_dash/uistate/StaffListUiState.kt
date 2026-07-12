@@ -9,3 +9,9 @@ sealed interface StaffListUiState {
     data class Error(val message: String) : StaffListUiState
 
 }
+
+sealed interface StaffDetailUiState {
+    object Loading : StaffDetailUiState
+    data class Success(val staff: StaffDataModel) : StaffDetailUiState
+    data class Error(val message: String) : StaffDetailUiState
+}

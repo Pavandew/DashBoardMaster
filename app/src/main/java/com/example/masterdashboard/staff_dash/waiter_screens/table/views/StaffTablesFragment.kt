@@ -14,7 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentStaffTablesBinding
-import com.example.masterdashboard.master_dash.home.SearchQueryManager
+import com.example.masterdashboard.master_dash.utils.SearchQueryManager
 import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FloorChipsAdapter
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.TableCardsAdapter

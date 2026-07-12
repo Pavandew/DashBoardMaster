@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home.settings.views
+package com.example.masterdashboard.master_dash.settings.views
 
 import android.os.Bundle
 import android.util.Log
@@ -10,7 +10,7 @@ import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import com.example.masterdashboard.R
-import com.example.masterdashboard.master_dash.home.MasterHomeActivity
+import com.example.masterdashboard.master_dash.MasterHomeActivity
 
 class SettingsFragment : Fragment() {
 
