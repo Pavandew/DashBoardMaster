@@ -1,13 +1,12 @@
-package com.example.masterdashboard.manager_single_res_dash.home.viewModel
+package com.example.masterdashboard.manager_single_res_dash.viewModel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.masterdashboard.manager_single_res_dash.home.models.MenuCategory
-import com.example.masterdashboard.manager_single_res_dash.home.repo.MenuManagementRepository
-import com.example.masterdashboard.manager_single_res_dash.home.uistate.MenuItemUiState
-import com.example.masterdashboard.manager_single_res_dash.home.uistate.MenuUiState
-import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.manager_single_res_dash.models.MenuCategory
+import com.example.masterdashboard.manager_single_res_dash.repo.MenuManagementRepository
+import com.example.masterdashboard.manager_single_res_dash.uistate.MenuUiState
+import com.example.masterdashboard.login.utils.AppConstants
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

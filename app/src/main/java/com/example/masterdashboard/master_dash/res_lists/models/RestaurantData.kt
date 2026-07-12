@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home.res_lists.models
+package com.example.masterdashboard.master_dash.res_lists.models
 
 data class RestaurantData(
     val id: Int,

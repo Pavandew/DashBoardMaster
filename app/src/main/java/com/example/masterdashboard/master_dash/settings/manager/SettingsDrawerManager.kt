@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home.settings.manager
+package com.example.masterdashboard.master_dash.settings.manager
 
 import android.content.Intent
 import android.widget.Toast
@@ -6,8 +6,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.example.masterdashboard.R
-import com.example.masterdashboard.master_dash.home.MasterHomeActivity
-import com.example.masterdashboard.ActivityVisitorPortal
+import com.example.masterdashboard.master_dash.MasterHomeActivity
+import com.example.masterdashboard.login.ActivityVisitorPortal
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth

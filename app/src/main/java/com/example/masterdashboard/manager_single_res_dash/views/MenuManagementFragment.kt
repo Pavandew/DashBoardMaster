@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.home.views
+package com.example.masterdashboard.manager_single_res_dash.views
 
 import android.os.Bundle
 import android.util.Log
@@ -15,14 +15,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentMenuManagementBinding
-import com.example.masterdashboard.manager_single_res_dash.home.adapter.MenuCategoryAdapter
-import com.example.masterdashboard.manager_single_res_dash.home.models.MenuCategory
-import com.example.masterdashboard.manager_single_res_dash.home.uistate.MenuUiState
-import com.example.masterdashboard.manager_single_res_dash.home.utils.AddCategoryBottomSheet
-import com.example.masterdashboard.manager_single_res_dash.home.viewModel.MenuManagementViewModel
-import com.example.masterdashboard.utils.AppConstants
-import com.example.masterdashboard.utils.MenuDialogHelper
-import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.manager_single_res_dash.adapter.MenuCategoryAdapter
+import com.example.masterdashboard.manager_single_res_dash.models.MenuCategory
+import com.example.masterdashboard.manager_single_res_dash.uistate.MenuUiState
+import com.example.masterdashboard.manager_single_res_dash.utils.AddCategoryBottomSheet
+import com.example.masterdashboard.manager_single_res_dash.viewModel.MenuManagementViewModel
+import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.login.utils.MenuDialogHelper
+import com.example.masterdashboard.login.utils.SessionManager
 import kotlinx.coroutines.launch
 
 class MenuManagementFragment : Fragment() {

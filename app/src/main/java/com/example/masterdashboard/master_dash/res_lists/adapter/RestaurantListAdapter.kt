@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home.res_lists.adapter
+package com.example.masterdashboard.master_dash.res_lists.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -6,7 +6,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemRestaurantRowBinding
-import com.example.masterdashboard.master_dash.home.res_lists.models.RestaurantData
+import com.example.masterdashboard.master_dash.res_lists.models.RestaurantData
 
 class RestaurantListAdapter(
     private var restaurantData: List<RestaurantData>,

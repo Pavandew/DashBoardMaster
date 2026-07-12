@@ -1,4 +1,4 @@
-package com.example.masterdashboard.utils
+package com.example.masterdashboard.login.utils
 
 import android.content.Context
 import android.content.SharedPreferences

@@ -1,4 +1,4 @@
-package com.example.masterdashboard.master_dash.home.res_lists.views
+package com.example.masterdashboard.master_dash.res_lists.views
 
 import android.os.Bundle
 import android.util.Log
@@ -9,10 +9,10 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentRestaurentListsBinding
-import com.example.masterdashboard.master_dash.home.MasterHomeActivity
-import com.example.masterdashboard.master_dash.home.SearchQueryManager
-import com.example.masterdashboard.master_dash.home.res_lists.adapter.RestaurantListAdapter
-import com.example.masterdashboard.master_dash.home.res_lists.models.RestaurantData
+import com.example.masterdashboard.master_dash.MasterHomeActivity
+import com.example.masterdashboard.master_dash.utils.SearchQueryManager
+import com.example.masterdashboard.master_dash.res_lists.adapter.RestaurantListAdapter
+import com.example.masterdashboard.master_dash.res_lists.models.RestaurantData
 
 class RestaurantListsFragment : Fragment() {
 

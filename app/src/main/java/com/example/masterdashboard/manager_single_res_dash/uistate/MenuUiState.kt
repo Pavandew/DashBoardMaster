@@ -1,7 +1,7 @@
-package com.example.masterdashboard.manager_single_res_dash.home.uistate
+package com.example.masterdashboard.manager_single_res_dash.uistate
 
-import com.example.masterdashboard.manager_single_res_dash.home.models.MenuCategory
-import com.example.masterdashboard.manager_single_res_dash.home.models.MenuFoodItemsData
+import com.example.masterdashboard.manager_single_res_dash.models.MenuCategory
+import com.example.masterdashboard.manager_single_res_dash.models.MenuFoodItemsData
 
 sealed interface MenuUiState {
     object Loading: MenuUiState
