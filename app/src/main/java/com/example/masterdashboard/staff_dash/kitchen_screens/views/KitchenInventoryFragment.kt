@@ -7,13 +7,13 @@ import android.view.View
 import android.view.ViewGroup
 import com.example.masterdashboard.R
 
-class KitchenFragment : Fragment() {
+class KitchenInventoryFragment : Fragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_kitchen, container, false)
+        return inflater.inflate(R.layout.fragment_kitchen_inventory, container, false)
     }
 }
