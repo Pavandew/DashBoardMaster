@@ -12,13 +12,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.databinding.ActivityLoginBinding
-import com.example.masterdashboard.master_dash.home.MasterHomeActivity
+import com.example.masterdashboard.master_dash.MasterHomeActivity
 import com.example.masterdashboard.login.uistate.LoginUiState
 import com.example.masterdashboard.login.viewmodel.LoginViewModel
-import com.example.masterdashboard.manager_single_res_dash.home.ManagerHomeActivity
+import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
-import com.example.masterdashboard.utils.AppConstants
-import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.login.utils.SessionManager
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {

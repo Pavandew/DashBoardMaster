@@ -3,11 +3,10 @@ package com.example.masterdashboard.login.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.masterdashboard.ActivityVisitorPortal
 import com.example.masterdashboard.login.uistate.SignUpUiState
 import com.example.masterdashboard.login.utils.SignUpValidator
 import com.example.masterdashboard.login.utils.ValidationResult
-import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.login.utils.AppConstants
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow

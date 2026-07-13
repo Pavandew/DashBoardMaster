@@ -7,7 +7,7 @@
     android:background="@drawable/login_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".staff_dash.login.StaffLoginActivity">
+    tools:context=".login.views.StaffLoginActivity">
 
 
     <ImageView

@@ -12,8 +12,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.databinding.ActivitySignUpBinding
 import com.example.masterdashboard.login.uistate.SignUpUiState
 import com.example.masterdashboard.login.viewmodel.SignUpViewModel
-import com.example.masterdashboard.utils.AppConstants
-import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.login.utils.SessionManager
 import kotlinx.coroutines.launch
 
 class SignUpActivity : AppCompatActivity() {
