@@ -14,23 +14,22 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import com.example.masterdashboard.R
-import com.example.masterdashboard.databinding.ActivityStaffHomeBinding
+import com.example.masterdashboard.databinding.ActivityWaiterHomeBinding
 import com.example.masterdashboard.master_dash.settings.views.ChangePasswordFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.alert.StaffAlertFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.dashboard.StaffDashboardFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.order.views.StaffOrdersFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.profile.StaffProfileFragment
-import com.example.masterdashboard.staff_dash.waiter_screens.table.views.StaffTablesFragment
+import com.example.masterdashboard.staff_dash.waiter_screens.table.views.WaiterTablesFragment
 import com.example.masterdashboard.login.utils.SessionManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
-class StaffHomeActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityStaffHomeBinding
+class WaiterHomeActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityWaiterHomeBinding
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var sessionManager: SessionManager
 
     private var currentTag: String? = null
-    private var pendingTag: String? = null
     private var isBottomNavVisible = true
     private val TAG = "StaffHomeActivity_Debug"
 
@@ -48,39 +47,27 @@ class StaffHomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // 1. Setup Safe edge-to-edge window configurations
         enableEdgeToEdge()
-
-        binding = ActivityStaffHomeBinding.inflate(layoutInflater)
+        // Add this to fix navigation bar icon colors over white backgrounds
+        androidx.core.view.WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
+        }
+        binding = ActivityWaiterHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 2. Render transparent backgrounds onto system hardware bars
         window.navigationBarColor = Color.TRANSPARENT
         window.statusBarColor = Color.TRANSPARENT
 
-        // Initialize Session Preferences
         sessionManager = SessionManager(this)
+        bottomNav = binding.waiterBottomNavigation
 
-        // 3. EXPLICIT LOGCAT MONITORING LAYER
-        val staffName = sessionManager.getUserName() ?: "Unknown Name"
-        val staffRole = sessionManager.getRole() ?: "Unknown Role"
-        val staffCustomId = sessionManager.getStaffId() ?: "No Stored ID"
+        // Explicit Logging
+        Log.i(TAG, "🚀 ACTIVITY INITIALIZED: WaiterHomeActivity running.")
 
-        Log.i(TAG, "==========================================================")
-        Log.i(TAG, "🚀 ACTIVITY INITIALIZED: StaffHomeActivity is now running.")
-        Log.i(TAG, "👤 ACTIVE STAFF USER: $staffName")
-        Log.i(TAG, "💼 ASSIGNED WORK ROLE: $staffRole")
-        Log.i(TAG, "🆔 UNIQUE SYSTEM ID  : $staffCustomId")
-        Log.i(TAG, "==========================================================")
-
-        // Close drawer components by default
         binding.main.closeDrawer(GravityCompat.START, false)
-        bottomNav = binding.staffHostBottomNav
 
-        // 4. Set up safe view bounds paddings
-        setupWindowInsets()
-
+//        setupWindowInsets()
         setupBottomNavigation()
         setupDrawer()
         setupBackPress()
@@ -95,45 +82,46 @@ class StaffHomeActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Window padding layout compensations for edge-to-edge screens.
-     */
     private fun setupWindowInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { view, windowInsets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { _, windowInsets ->
             val statusBars = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars())
             val navigationBars = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars())
 
-            view.updatePadding(top = statusBars.top)
-            bottomNav.updatePadding(bottom = navigationBars.bottom)
+            // 1. Pad only the top of the container to clear the status bar clock/battery
+            binding.waiterFragmentContainer.updatePadding(top = statusBars.top)
+
+            // 2. Adjust the margin of the card layout so it floats perfectly above the system navigation pill/buttons
+            val cardParams = binding.bottomNavContainer.layoutParams as android.view.ViewGroup.MarginLayoutParams
+            val baseMarginInPx = (8 * resources.displayMetrics.density).toInt()
+
+            cardParams.bottomMargin = baseMarginInPx + navigationBars.bottom
+            binding.bottomNavContainer.layoutParams = cardParams
 
             windowInsets
         }
     }
 
-    // Bottom Navigation
     private fun setupBottomNavigation() {
         bottomNav.setOnItemSelectedListener { item ->
             Log.d(TAG, "BottomNav: Selected ${item.title}")
 
             val tag = when (item.itemId) {
                 R.id.staff_dashboardFragment -> TAG_DASHBOARD
-                R.id.staff_tableFragment -> TAG_CREATE
-                R.id.staff_orderFragment -> TAG_RESTAURANTS
-                R.id.staff_logFragment -> TAG_LOGS
-                R.id.staff_settingFragment -> pendingTag ?: TAG_PROFILE
-                else -> {
-                    Log.w(TAG, "BottomNav: Unknown menu item selected")
-                    return@setOnItemSelectedListener false
+                R.id.staff_tableFragment      -> TAG_CREATE
+                R.id.staff_orderFragment      -> TAG_RESTAURANTS
+                R.id.staff_logFragment        -> TAG_LOGS
+                R.id.staff_settingFragment    -> {
+                    // FIX: Avoid breaking flow if current screen is already deep inside Settings
+                    if (currentTag == TAG_CHANGE_PASSWORD) TAG_CHANGE_PASSWORD else TAG_PROFILE
                 }
+                else -> return@setOnItemSelectedListener false
             }
 
-            pendingTag = null
             loadFragment(tag)
             true
         }
     }
 
-    // Drawer Setup
     private fun setupDrawer() {
         binding.staffNavigationView.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
@@ -141,7 +129,7 @@ class StaffHomeActivity : AppCompatActivity() {
                 R.id.changePassword -> openChangePassword()
                 R.id.logout -> {
                     Toast.makeText(this, "Session terminated.", Toast.LENGTH_SHORT).show()
-                    sessionManager.logout() // Clears security caches entirely
+                    sessionManager.logout()
                     finish()
                 }
             }
@@ -150,7 +138,6 @@ class StaffHomeActivity : AppCompatActivity() {
         }
     }
 
-    // Public Navigation Methods
     fun openDashboard() = navigateTo(TAG_DASHBOARD)
     fun openTables() = navigateTo(TAG_CREATE)
     fun openOrders() = navigateTo(TAG_RESTAURANTS)
@@ -158,59 +145,47 @@ class StaffHomeActivity : AppCompatActivity() {
     fun openProfile() = navigateTo(TAG_PROFILE)
     fun openChangePassword() = navigateTo(TAG_CHANGE_PASSWORD)
 
-    // Single Navigation Entry Point
     fun navigateTo(tag: String) {
-        pendingTag = tag
-
+        // Handle custom navigation cases without tracking intermediate pending variables
         when (tag) {
             TAG_DASHBOARD -> bottomNav.selectedItemId = R.id.staff_dashboardFragment
-            TAG_CREATE -> bottomNav.selectedItemId = R.id.staff_tableFragment
+            TAG_CREATE    -> bottomNav.selectedItemId = R.id.staff_tableFragment
             TAG_RESTAURANTS -> bottomNav.selectedItemId = R.id.staff_orderFragment
-            TAG_LOGS -> bottomNav.selectedItemId = R.id.staff_logFragment
-
-            TAG_PROFILE,
-            TAG_CHANGE_PASSWORD -> {
+            TAG_LOGS      -> bottomNav.selectedItemId = R.id.staff_logFragment
+            TAG_PROFILE, TAG_CHANGE_PASSWORD -> {
                 if (bottomNav.selectedItemId == R.id.staff_settingFragment) {
                     loadFragment(tag)
                 } else {
+                    // This triggers bottomNav listener which defaults to TAG_PROFILE or checks currentTag
                     bottomNav.selectedItemId = R.id.staff_settingFragment
+                    if (tag == TAG_CHANGE_PASSWORD) {
+                        loadFragment(TAG_CHANGE_PASSWORD)
+                    }
                 }
             }
         }
-
         closeDrawer()
     }
 
-    // Main Fragment Loader
     fun loadFragment(tag: String): Boolean {
         if (currentTag == tag) return true
 
         supportFragmentManager.executePendingTransactions()
         val transaction = supportFragmentManager.beginTransaction()
 
-        val currentFragment = currentTag?.let {
-            supportFragmentManager.findFragmentByTag(it)
-        }
-
-        currentFragment?.let {
-            transaction.hide(it)
+        currentTag?.let { oldTag ->
+            supportFragmentManager.findFragmentByTag(oldTag)?.let { transaction.hide(it) }
         }
 
         var targetFragment = supportFragmentManager.findFragmentByTag(tag)
-
         if (targetFragment == null) {
             targetFragment = createFragment(tag)
-            transaction.add(
-                R.id.staff_home_fragment_container,
-                targetFragment,
-                tag
-            )
+            transaction.add(R.id.waiter_fragment_container, targetFragment, tag)
         } else {
             transaction.show(targetFragment)
         }
 
         transaction.commit()
-
         currentTag = tag
 
         isBottomNavVisible = (tag != TAG_CHANGE_PASSWORD)
@@ -219,49 +194,41 @@ class StaffHomeActivity : AppCompatActivity() {
         return true
     }
 
-    // Create Fragment
     private fun createFragment(tag: String): Fragment {
         return when (tag) {
-            TAG_DASHBOARD -> StaffDashboardFragment()
-            TAG_CREATE -> StaffTablesFragment()
-            TAG_RESTAURANTS -> StaffOrdersFragment()
-            TAG_LOGS -> StaffAlertFragment()
-            TAG_PROFILE -> StaffProfileFragment()
+            TAG_DASHBOARD       -> StaffDashboardFragment()
+            TAG_CREATE          -> WaiterTablesFragment()
+            TAG_RESTAURANTS     -> StaffOrdersFragment()
+            TAG_LOGS            -> StaffAlertFragment()
+            TAG_PROFILE         -> StaffProfileFragment()
             TAG_CHANGE_PASSWORD -> ChangePasswordFragment()
-            else -> StaffDashboardFragment()
+            else                -> StaffDashboardFragment()
         }
     }
 
-    // Back Press
     private var backPressedTime: Long = 0
 
     private fun setupBackPress() {
-        onBackPressedDispatcher.addCallback(
-            this,
-            object : OnBackPressedCallback(true) {
-                override fun handleOnBackPressed() {
-                    when {
-                        binding.main.isDrawerOpen(GravityCompat.START) -> closeDrawer()
-                        supportFragmentManager.backStackEntryCount > 0 -> {
-                            supportFragmentManager.popBackStack()
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val handledByChild = supportFragmentManager.primaryNavigationFragment?.childFragmentManager?.popBackStackImmediate() ?: false
+
+                when {
+                    binding.main.isDrawerOpen(GravityCompat.START) -> closeDrawer()
+                    handledByChild -> { /* Child fragment internal backstack consumed press */ }
+                    supportFragmentManager.backStackEntryCount > 0 -> supportFragmentManager.popBackStack()
+                    currentTag != TAG_DASHBOARD -> openDashboard()
+                    else -> {
+                        if (backPressedTime + 2000 > System.currentTimeMillis()) {
+                            finish()
+                        } else {
+                            Toast.makeText(this@WaiterHomeActivity, "Press back again to exit", Toast.LENGTH_SHORT).show()
                         }
-                        currentTag != TAG_DASHBOARD -> openDashboard()
-                        else -> {
-                            if (backPressedTime + 2000 > System.currentTimeMillis()) {
-                                finish()
-                            } else {
-                                Toast.makeText(
-                                    this@StaffHomeActivity,
-                                    "Press back again to exit",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            backPressedTime = System.currentTimeMillis()
-                        }
+                        backPressedTime = System.currentTimeMillis()
                     }
                 }
             }
-        )
+        })
     }
 
     fun openDrawer() { binding.main.openDrawer(GravityCompat.START) }
@@ -270,7 +237,7 @@ class StaffHomeActivity : AppCompatActivity() {
     fun showBottomNavigation() { isBottomNavVisible = true; updateBottomNavVisibility() }
 
     private fun updateBottomNavVisibility() {
-        binding.staffHostBottomNav.visibility = if (isBottomNavVisible) View.VISIBLE else View.GONE
+        binding.waiterBottomNavigation.visibility = if (isBottomNavVisible) View.VISIBLE else View.GONE
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

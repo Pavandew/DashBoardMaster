@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
-import com.example.masterdashboard.databinding.ItemCardClipsBinding
+import com.example.masterdashboard.databinding.ItemCardChipsBinding
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
 
 class FloorChipsAdapter(
@@ -16,7 +16,7 @@ class FloorChipsAdapter(
 ) : ListAdapter<TableFilterData, FloorChipsAdapter.ChipViewHolder>(FloorDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChipViewHolder {
-        val binding = ItemCardClipsBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding = ItemCardChipsBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ChipViewHolder(binding)
     }
 
@@ -25,7 +25,7 @@ class FloorChipsAdapter(
         holder.bind(chip, onChipClicked)
     }
 
-    class ChipViewHolder(val binding: ItemCardClipsBinding) : RecyclerView.ViewHolder(binding.root) {
+    class ChipViewHolder(val binding: ItemCardChipsBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(chip: TableFilterData, onChipClicked: (TableFilterData) -> Unit) {
             binding.tvFloorChip.text = chip.name
             val context = itemView.context

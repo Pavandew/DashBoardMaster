@@ -52,7 +52,7 @@
             android:name=".manager_single_res_dash.ManagerHomeActivity"
             android:exported="false" />
         <activity
-            android:name=".staff_dash.waiter_screens.StaffHomeActivity"
+            android:name=".staff_dash.waiter_screens.WaiterHomeActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustPan" />
         <activity

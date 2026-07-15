@@ -7,8 +7,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivityBillingHomeBinding
-import com.example.masterdashboard.databinding.ActivityKitchenHomeBinding
-import com.example.masterdashboard.utils.LogoutManager
+import com.example.masterdashboard.login.utils.LogoutManager
 
 class BillingHomeActivity : AppCompatActivity() {
 
