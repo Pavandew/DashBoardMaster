@@ -210,7 +210,7 @@ class TableItemListFragment : Fragment() {
     }
 
     /**
-     * Triggers your TableViewModel single table document deletion function.
+     * Triggers your WaiterTableViewModel single table document deletion function.
      */
     private fun showTableDeletePopup(table: TableData) {
         val ownerUid = sessionManager.getUid()

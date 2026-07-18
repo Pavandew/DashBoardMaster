@@ -14,7 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentViewCartDetailsBinding
-import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FoodMenuAdapter
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderViewModel
 import kotlinx.coroutines.launch
@@ -55,7 +55,7 @@ class ViewCartDetailsFragment : Fragment() {
     override fun onStart() {
         super.onStart()
         // Kept inside lifecycle start to guarantee structural coverage across container resizes
-        (activity as? StaffHomeActivity)?.hideBottomNavigation()
+        (activity as? WaiterHomeActivity)?.hideBottomNavigation()
     }
 
     private fun setupToolbar() {
