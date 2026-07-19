@@ -15,7 +15,7 @@ import com.example.masterdashboard.login.uistate.StaffLoginUiState
 import com.example.masterdashboard.login.viewmodel.StaffLoginViewModel
 import com.example.masterdashboard.staff_dash.billing_screens.BillingHomeActivity
 import com.example.masterdashboard.staff_dash.kitchen_screens.KitchenHomeActivity
-import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.login.utils.SessionManager
 import kotlinx.coroutines.launch
 
@@ -126,7 +126,7 @@ class StaffLoginActivity : AppCompatActivity() {
                             val targetActivityClass = when(authenticatedRole.lowercase().trim()) {
                                 "kitchen", "chef" -> KitchenHomeActivity::class.java
                                 "billing", "cashier" -> BillingHomeActivity::class.java
-                                else -> StaffHomeActivity::class.java
+                                else -> WaiterHomeActivity::class.java
                             }
 
                             Log.d(TAG, "Success Auth Routing: Forwarding profile session to ${targetActivityClass.simpleName}")

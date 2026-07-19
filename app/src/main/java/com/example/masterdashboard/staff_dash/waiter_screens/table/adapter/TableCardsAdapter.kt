@@ -32,7 +32,7 @@ class TableCardsAdapter(
     class TableCardViewHolder(val binding: ItemTableCardBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(table: TableCardData, onTableClick: (TableCardData) -> Unit) {
             val context = itemView.context
-            binding.tvTableId.text = table.tableId
+            binding.tvTableName.text = table.tableName
             binding.tvSeatCount.text = context.getString(R.string.seat_count_format, table.totalSeats)
 
             itemView.setOnClickListener {
@@ -55,7 +55,7 @@ class TableCardsAdapter(
                     binding.tvTableStatus.setTextColor(ContextCompat.getColor(context, R.color.status_occupied))
                     binding.ivTableIcon.setColorFilter(ContextCompat.getColor(context, R.color.status_occupied))
                     binding.cvTableCard.setCardBackgroundColor(ContextCompat.getColor(context, R.color.status_occupied_bg))
-                    binding.tvTablePrice.visibility = View.VISIBLE
+                    binding.tvTablePrice.visibility = View.GONE
                     binding.tvTablePrice.text = table.price ?: "—"
                 }
 

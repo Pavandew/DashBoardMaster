@@ -14,7 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentStaffAlertBinding
-import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import kotlinx.coroutines.launch
 
 class StaffAlertFragment : Fragment() {
@@ -55,7 +55,7 @@ class StaffAlertFragment : Fragment() {
     override fun onStart() {
         super.onStart()
         // Unlocks navigation view bar tracking back inside primary structural hubs
-        (activity as? StaffHomeActivity)?.showBottomNavigation()
+        (activity as? WaiterHomeActivity)?.showBottomNavigation()
     }
 
     private fun setupToolbarLayout() {

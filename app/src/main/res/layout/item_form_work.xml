@@ -76,7 +76,9 @@
             <EditText
                 android:id="@+id/etSalary"
                 style="@style/FormEditTextStyle"
-                android:clickable="true" />
+                android:inputType="number"
+                android:imeOptions="actionDone"
+                android:importantForAutofill="no" />
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

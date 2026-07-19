@@ -14,7 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentStaffDashboardBinding
-import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import kotlinx.coroutines.launch
 
 class StaffDashboardFragment : Fragment() {
@@ -55,7 +55,7 @@ class StaffDashboardFragment : Fragment() {
     override fun onStart() {
         super.onStart()
         // Restores bottom navigation views for secondary core layout modules
-        (activity as? StaffHomeActivity)?.showBottomNavigation()
+        (activity as? WaiterHomeActivity)?.showBottomNavigation()
     }
 
     private fun setupToolbar() {
