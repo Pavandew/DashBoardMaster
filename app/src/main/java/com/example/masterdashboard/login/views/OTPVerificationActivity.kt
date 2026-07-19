@@ -15,7 +15,7 @@ import com.example.masterdashboard.login.uistate.OtpUiState
 import com.example.masterdashboard.login.viewmodel.OtpViewModel
 import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
 import com.example.masterdashboard.master_dash.MasterHomeActivity
-import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.login.utils.AppConstants
 import com.example.masterdashboard.login.utils.SessionManager
 import kotlinx.coroutines.launch
@@ -221,7 +221,7 @@ class OTPVerificationActivity : AppCompatActivity() {
 
                 Intent(
                     this,
-                    StaffHomeActivity::class.java
+                    WaiterHomeActivity::class.java
                 )
             }
 
