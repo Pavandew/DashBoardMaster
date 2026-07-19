@@ -1,16 +1,16 @@
 package com.example.masterdashboard.staff_dash.kitchen_screens
 
 import android.os.Bundle
+import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.fragment.app.Fragment
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivityKitchenHomeBinding
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenDashboardFragment
-import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenFragment
+import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenPreparationFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenInventoryFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenOrderFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenProfileFragment
@@ -18,8 +18,16 @@ import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenProfi
 class KitchenHomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityKitchenHomeBinding
-
     private var currentSelectedItem = R.id.kitchen_dashboardFragment
+
+    // Tags to keep track of main base fragments in supportFragmentManager
+    private val tags = object {
+        val DASHBOARD = "dashboard"
+        val ORDER = "order"
+        val KITCHEN = "kitchen"
+        val INVENTORY = "inventory"
+        val PROFILE = "profile"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,93 +36,116 @@ class KitchenHomeActivity : AppCompatActivity() {
         binding = ActivityKitchenHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Default Fragment
+        // Initialize fragments on first boot safely without replacing
         if (savedInstanceState == null) {
-            replaceFragment(KitchenDashboardFragment())
-            binding.kitchenBottomNavigation.selectedItemId = R.id.kitchen_dashboardFragment
+            initializeNavigationFramework()
         }
 
+        // Listener to monitor menu selections
         binding.kitchenBottomNavigation.setOnItemSelectedListener { item ->
-
-            // Prevent reloading same fragment
             if (currentSelectedItem == item.itemId) {
                 return@setOnItemSelectedListener true
             }
 
-            currentSelectedItem = item.itemId
+            val targetTag = when (item.itemId) {
+                R.id.kitchen_dashboardFragment -> tags.DASHBOARD
+                R.id.kitchen_orderFragment -> tags.ORDER
+                R.id.kitchen_Fragment -> tags.KITCHEN
+                R.id.kitchen_inventoryFragment -> tags.INVENTORY
+                R.id.kitchen_profileFragment -> tags.PROFILE
+                else -> null
+            }
 
-            when (item.itemId) {
-
-                R.id.kitchen_dashboardFragment -> {
-                    replaceFragment(KitchenDashboardFragment())
-                    true
-                }
-
-                R.id.kitchen_orderFragment -> {
-                    replaceFragment(KitchenOrderFragment())
-                    true
-                }
-
-                R.id.kitchen_Fragment -> {
-                    replaceFragment(KitchenFragment())
-                    true
-                }
-
-                R.id.kitchen_inventoryFragment -> {
-                    replaceFragment(KitchenInventoryFragment())
-                    true
-                }
-
-                R.id.kitchen_profileFragment -> {
-                    replaceFragment(KitchenProfileFragment())
-                    true
-                }
-
-                else -> false
+            if (targetTag != null) {
+                switchFragmentTo(targetTag)
+                currentSelectedItem = item.itemId
+                true
+            } else {
+                false
             }
         }
 
-        // Edge To Edge
+        // --- NEW: DYNAMIC BACKSTACK MONITOR TO HIDE/SHOW BOTTOM NAV ---
+        supportFragmentManager.addOnBackStackChangedListener {
+            val backStackCount = supportFragmentManager.backStackEntryCount
+            if (backStackCount > 0) {
+                // User is in a deep screen (like detail view). Hide the custom floating menu completely.
+                binding.bottomNavContainer.visibility = View.GONE
+            } else {
+                // User returned to one of the main 5 tabs. Restore bottom navigation visibility immediately.
+                binding.bottomNavContainer.visibility = View.VISIBLE
+            }
+        }
+
+        // Edge To Edge Handler
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { _, insets ->
-
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-
-            binding.kitchenFragmentContainer.setPadding(
-                0,
-                systemBars.top,
-                0,
-                systemBars.bottom
-            )
-
+            binding.kitchenFragmentContainer.setPadding(0, systemBars.top, 0, systemBars.bottom)
             insets
         }
 
-        // Back Press
-        onBackPressedDispatcher.addCallback(this,
-            object : OnBackPressedCallback(true) {
+        // Optimized Back Press Routing
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val backStackCount = supportFragmentManager.backStackEntryCount
 
-                override fun handleOnBackPressed() {
-
-                    if (currentSelectedItem != R.id.kitchen_dashboardFragment) {
-
-                        binding.kitchenBottomNavigation.selectedItemId =
-                            R.id.kitchen_dashboardFragment
-
-                    } else {
-
-                        finish()
-
-                    }
+                if (backStackCount > 0) {
+                    // 1. If there's a detailed screen open, pop it off and return to previous fragment safely
+                    supportFragmentManager.popBackStack()
+                } else if (currentSelectedItem != R.id.kitchen_dashboardFragment) {
+                    // 2. If no backstack exists but user isn't on the Home tab, route them back to the Home tab
+                    binding.kitchenBottomNavigation.selectedItemId = R.id.kitchen_dashboardFragment
+                } else {
+                    // 3. Close the application gracefully
+                    finish()
                 }
-            })
+            }
+        })
     }
 
-    private fun replaceFragment(fragment: Fragment) {
+    /**
+     * Instantiates all fragments once and hides the inactive ones.
+     * This keeps data warm in background memory for instant loading.
+     */
+    private fun initializeNavigationFramework() {
+        val fm = supportFragmentManager
+        val dashboard = fm.findFragmentByTag(tags.DASHBOARD) ?: KitchenDashboardFragment()
+        val order = fm.findFragmentByTag(tags.ORDER) ?: KitchenOrderFragment()
+        val kitchen = fm.findFragmentByTag(tags.KITCHEN) ?: KitchenPreparationFragment()
+        val inventory = fm.findFragmentByTag(tags.INVENTORY) ?: KitchenInventoryFragment()
+        val profile = fm.findFragmentByTag(tags.PROFILE) ?: KitchenProfileFragment()
 
-        supportFragmentManager.beginTransaction()
-            .setReorderingAllowed(true)
-            .setCustomAnimations(0, 0)
-            .replace(R.id.kitchen_fragment_container, fragment)
-            .commit()
+        val transaction = fm.beginTransaction().setReorderingAllowed(true)
+
+        // Add all tabs to layout container if not already existing
+        if (!dashboard.isAdded) transaction.add(R.id.kitchen_fragment_container, dashboard, tags.DASHBOARD)
+        if (!order.isAdded) transaction.add(R.id.kitchen_fragment_container, order, tags.ORDER).hide(order)
+        if (!kitchen.isAdded) transaction.add(R.id.kitchen_fragment_container, kitchen, tags.KITCHEN).hide(kitchen)
+        if (!inventory.isAdded) transaction.add(R.id.kitchen_fragment_container, inventory, tags.INVENTORY).hide(inventory)
+        if (!profile.isAdded) transaction.add(R.id.kitchen_fragment_container, profile, tags.PROFILE).hide(profile)
+
+        transaction.commit()
+    }
+
+    /**
+     * Instantly shows the selected tab fragment and hides all others via memory tags.
+     */
+    private fun switchFragmentTo(targetTag: String) {
+        val fm = supportFragmentManager
+        val transaction = fm.beginTransaction().setReorderingAllowed(true)
+
+        val allTags = listOf(tags.DASHBOARD, tags.ORDER, tags.KITCHEN, tags.INVENTORY, tags.PROFILE)
+
+        for (tag in allTags) {
+            val fragment = fm.findFragmentByTag(tag)
+            if (fragment != null) {
+                if (tag == targetTag) {
+                    transaction.show(fragment)
+                } else {
+                    transaction.hide(fragment)
+                }
+            }
+        }
+        transaction.commit()
     }
 }

@@ -36,9 +36,9 @@ class KitchenOrderDetailsRepository(
                     orderNote = "Deliver everything together. Make sure the burgers have extra cheese slices.",
                     timestamp = Timestamp(Date()),
                     items = listOf(
-                        OrderDetailItem("Crispy Chicken Burger", 2, "No onions"),
-                        OrderDetailItem("Loaded Cheesy Fries", 1, "Extra spicy"),
-                        OrderDetailItem("Classic Cold Coffee", 1, "")
+                        OrderDetailItem("Crispy Chicken Burger", 2, "No onions", 250.0, "Non-Veg"),
+                        OrderDetailItem("Loaded Cheesy Fries", 1, "Extra spicy", 150.0, "Veg"),
+                        OrderDetailItem("Classic Cold Coffee", 1, "", 120.0, "Veg")
                     )
                 )
             }
@@ -50,9 +50,9 @@ class KitchenOrderDetailsRepository(
                     orderNote = "Appetizers first please. Drinks along with the meal.",
                     timestamp = Timestamp(Date()),
                     items = listOf(
-                        OrderDetailItem("Paneer Tikka Combo", 1, "Less spicy"),
-                        OrderDetailItem("Butter Naan", 3, "Apply extra butter"),
-                        OrderDetailItem("Coca Cola Can", 2, "Serve chilled with ice packs")
+                        OrderDetailItem("Paneer Tikka Combo", 1, "Less spicy", 320.0, "Veg"),
+                        OrderDetailItem("Butter Naan", 3, "Apply extra butter", 80.0, "Veg"),
+                        OrderDetailItem("Coca Cola Can", 2, "Serve chilled with ice packs", 50.0, "Veg")
                     )
                 )
             }
@@ -65,9 +65,9 @@ class KitchenOrderDetailsRepository(
                     orderNote = "Customer requested quick service. Pack leftovers safely.",
                     timestamp = Timestamp(Date()),
                     items = listOf(
-                        OrderDetailItem("Veg Hakka Noodles", 2, "Add extra green chilies"),
-                        OrderDetailItem("Manchurian Gravy", 1, ""),
-                        OrderDetailItem("Sweet Corn Soup", 1, "Serve piping hot")
+                        OrderDetailItem("Veg Hakka Noodles", 2, "Add extra green chilies", 200.0, "Veg"),
+                        OrderDetailItem("Manchurian Gravy", 1, "", 180.0, "Veg"),
+                        OrderDetailItem("Sweet Corn Soup", 1, "Serve piping hot", 120.0, "Veg")
                     )
                 )
             }

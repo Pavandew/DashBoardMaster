@@ -9,6 +9,7 @@ data class KitchenOrderDetailData(
     val tableName: String = "",
     val status: String = "New",
     val orderNote: String = "",
+    val orderType: String = "Dine-In", // Added: "Dine-In" or "Takeaway"
     val timestamp: Timestamp? = null,
     val items: List<OrderDetailItem> = emptyList()
 ) : Serializable
@@ -16,5 +17,7 @@ data class KitchenOrderDetailData(
 data class OrderDetailItem(
     val itemName: String = "",
     val quantity: Int = 1,
-    val itemNote: String = ""
+    val itemNote: String = "",
+    val price: Double = 0.0, // Added price property so item.price compiles successfully!
+    val category: String = "Veg"
 ) : Serializable
