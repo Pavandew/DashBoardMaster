@@ -50,7 +50,6 @@ private val userRole by lazy{ sessionManager.getRole() }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.i(TAG, "Navigation: MenuManagementFragment Opened")
         Log.i(TAG, "Navigation: Entered MenuManagementFragment")
 
         setupToolbar()
@@ -86,17 +85,17 @@ private val userRole by lazy{ sessionManager.getRole() }
     private fun setupRecyclerView() {
         menuAdapter = MenuCategoryAdapter(
             onItemClick = { selectedCategory ->
-                Log.d(TAG, "Selected category: ${selectedCategory.name} -> ID: ${selectedCategory.id}")
+                Log.d(TAG, "Selected category: ${selectedCategory.menuCategoryName} -> ID: ${selectedCategory.menuCategoryId}")
 
                 // Create a new instance of FoodItemListFragment and bundle arguments
                 val menuItemListFragment = MenuItemListFragment().apply {
                     arguments = Bundle().apply {
-                        putString("CATEGORY_ID", selectedCategory.id)
-                        putString("CATEGORY_NAME", selectedCategory.name)
+                        putString("CATEGORY_ID", selectedCategory.menuCategoryId)
+                        putString("CATEGORY_NAME", selectedCategory.menuCategoryName)
                     }
                 }
 
-                Log.i(TAG, "Navigation: Transitioning to MenuItemListFragment for Category: ${selectedCategory.name}")
+                Log.i(TAG, "Navigation: Transitioning to MenuItemListFragment for Category: ${selectedCategory.menuCategoryName}")
 
                 // Navigate over to FoodItemListFragment with the data bundle attached
                 parentFragmentManager.beginTransaction()
@@ -212,23 +211,23 @@ private val userRole by lazy{ sessionManager.getRole() }
         MenuDialogHelper.showDeleteConfirmation(
             context = requireContext(),
             title = "Delete Category?",
-            message = "Are you sure you want to delete \"${category.name}\"? This will also clear out all dishes under it.",
+            message = "Are you sure you want to delete \"${category.menuCategoryName}\"? This will also clear out all dishes under it.",
             onConfirm = {
                 // OPTIMISTIC UI FIX: Create a temporary list excluding the deleted item
                 val currentList = menuAdapter.currentList.toMutableList()
-                val indexToRemove = currentList.indexOfFirst { it.id == category.id }
+                val indexToRemove = currentList.indexOfFirst { it.menuCategoryId == category.menuCategoryId }
 
                 if (indexToRemove != -1) {
                     currentList.removeAt(indexToRemove)
-                    Log.d(TAG, "Optimistic UI: Instantly sliding '${category.name}' out of active view memory layout.")
+                    Log.d(TAG, "Optimistic UI: Instantly sliding '${category.menuCategoryName}' out of active view memory layout.")
                     // Submit the reduced list immediately so it vanishes from the UI instantly
                     menuAdapter.submitList(currentList)
                 }
 
                 // Trigger your category viewmodel delete function here!
-                 viewModel.deleteCategoryItem(ownerUid, category.id, category.name)
+                 viewModel.deleteCategoryItem(ownerUid, category.menuCategoryId, category.menuCategoryName)
 
-                Toast.makeText(requireContext(), "Category ${category.name} removed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Category ${category.menuCategoryName} removed", Toast.LENGTH_SHORT).show()
             }
         )
     }

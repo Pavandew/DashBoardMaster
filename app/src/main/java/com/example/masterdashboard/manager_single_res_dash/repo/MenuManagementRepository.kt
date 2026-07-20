@@ -25,7 +25,7 @@ class MenuManagementRepository {
         val query = firestore.collection(AppConstants.COLLECTION_USERS)
             .document(ownerUid)
             .collection(AppConstants.COLLECTION_MENU_CATEGORIES)
-            .orderBy("name", Query.Direction.ASCENDING)
+            .orderBy("menuCategoryName", Query.Direction.ASCENDING)
 
         val listener = query.addSnapshotListener { snapshots, exception ->
             if(exception != null) {

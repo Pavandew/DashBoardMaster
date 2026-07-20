@@ -42,7 +42,7 @@ class MenuManagementViewModel : ViewModel(){
                         _uiState.value = MenuUiState.Empty
                     } else {
                         list.forEach { category ->
-                            Log.v(TAG, "   └─ Category item: [ID: ${category.id} | Name: ${category.name} | Items: ${category.itemCount}]")
+                            Log.v(TAG, "   └─ Category item: [ID: ${category.menuCategoryId} | Name: ${category.menuCategoryName} | Items: ${category.itemCount}]")
                         }
                         _uiState.value = MenuUiState.Success(list)
                     }
@@ -81,8 +81,8 @@ class MenuManagementViewModel : ViewModel(){
 
 
             val newCategory = MenuCategory(
-                id = newDocRef.id,
-                name = categoryName,
+                menuCategoryId = newDocRef.id,
+                menuCategoryName = categoryName,
                 itemCount = 0, // Starts fresh with zero linked food items
                 imageResId = mappedIconAsset
             )
