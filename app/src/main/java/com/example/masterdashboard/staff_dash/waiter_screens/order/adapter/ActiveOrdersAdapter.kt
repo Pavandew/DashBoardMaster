@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.waiter_screens.order.views.adapter
+package com.example.masterdashboard.staff_dash.waiter_screens.order.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -8,8 +8,8 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemActiveOrderCardBinding
-import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.ActiveOrderCardData
-import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.ActiveOrderStatus
+import com.example.masterdashboard.staff_dash.waiter_screens.order.models.ActiveOrderCardData
+import com.example.masterdashboard.staff_dash.waiter_screens.order.models.ActiveOrderStatus
 
 class ActiveOrdersAdapter(
     private val onOrderClicked: (ActiveOrderCardData) -> Unit
@@ -32,10 +32,10 @@ class ActiveOrdersAdapter(
         val binding = holder.binding
         val context = binding.root.context
 
-        binding.tvOrderTableId.text = "Table ${order.tableId}"
+        binding.tvOrderTableId.text = "Table ${order.tableName}"
         binding.tvOrderTicketId.text = order.orderId
         binding.tvOrderTotalItems.text = "${order.totalItems} Items"
-        binding.tvOrderTimestamp.text = "₹ ${order.timestamp}" // Handles explicit price text layout injection matching asset
+        binding.tvOrderTimestamp.text = "₹ ${order.orderTime}" // Handles explicit price text layout injection matching asset
 
         // Dynamic status layout badge configuration matching visual asset guidelines
         when (order.status) {

@@ -1,13 +1,13 @@
-package com.example.masterdashboard.staff_dash.waiter_screens.order.views.viewModel
+package com.example.masterdashboard.staff_dash.waiter_screens.order.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.masterdashboard.staff_dash.waiter_screens.order.views.repo.ActiveOrdersRepository
-import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.ActiveOrderCardData
-import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.ActiveOrderStatus
-import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.ActiveOrdersUiState
-import com.example.masterdashboard.staff_dash.waiter_screens.order.views.models.OrderStatusFilterData
+import com.example.masterdashboard.staff_dash.waiter_screens.order.models.ActiveOrderCardData
+import com.example.masterdashboard.staff_dash.waiter_screens.order.models.ActiveOrderStatus
+import com.example.masterdashboard.staff_dash.waiter_screens.order.models.ActiveOrdersUiState
+import com.example.masterdashboard.staff_dash.waiter_screens.order.models.OrderStatusFilterData
+import com.example.masterdashboard.staff_dash.waiter_screens.order.repo.ActiveOrdersRepository
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,13 +37,17 @@ class ActiveOrdersViewModel(
 
     init {
         updateUiStateFiltersAndOrders()
-        streamActiveOrders()
     }
 
-    fun streamActiveOrders() {
+    fun streamActiveOrders(managerId: String?) {
+        if (managerId.isNullOrEmpty()) {
+            _uiState.update { it.copy(isLoading = false, errorMessage = "Session Error: Invalid Manager ID") }
+            return
+        }
+
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-        repository.fetchLiveActiveOrders().onEach { resourceUiState ->
+        repository.fetchLiveActiveOrders(managerId).onEach { resourceUiState ->
             when(resourceUiState) {
                 is ResourceUiState.Loading -> {
                     _uiState.update { it.copy(isLoading = true) }
@@ -67,12 +71,10 @@ class ActiveOrdersViewModel(
     }
 
     private fun updateUiStateFiltersAndOrders() {
-        // calculate dynamic selection numbers matching your visual assets exactly
         val totalAll = masterOrdersCache.size
-        val totalPreparing = masterOrdersCache.count{ it.status == ActiveOrderStatus.PREPARING }
-        val totalReady = masterOrdersCache.count{ it.status == ActiveOrderStatus.READY }
-        val totalServed = masterOrdersCache.count{ it.status == ActiveOrderStatus.SERVED }
-
+        val totalPreparing = masterOrdersCache.count { it.status == ActiveOrderStatus.PREPARING }
+        val totalReady = masterOrdersCache.count { it.status == ActiveOrderStatus.READY }
+        val totalServed = masterOrdersCache.count { it.status == ActiveOrderStatus.SERVED }
 
         val computedFilters = listOf(
             OrderStatusFilterData("1", "All ($totalAll)", null, currentlySelectedFilterId == "1"),
@@ -96,14 +98,12 @@ class ActiveOrdersViewModel(
             )
         )
 
-        // filter the output list strictly based on the active selection pointer
-        val currentActiveFilterType = computedFilters.firstOrNull{ it.isSelected }?.statusType
+        val currentActiveFilterType = computedFilters.firstOrNull { it.isSelected }?.statusType
 
-        val filteredOrdersList = if(currentActiveFilterType == null) {
+        val filteredOrdersList = if (currentActiveFilterType == null) {
             masterOrdersCache
-        }
-         else {
-             masterOrdersCache.filter { it.status == currentActiveFilterType }
+        } else {
+            masterOrdersCache.filter { it.status == currentActiveFilterType }
         }
 
         _uiState.update {
@@ -115,5 +115,4 @@ class ActiveOrdersViewModel(
             )
         }
     }
-
 }

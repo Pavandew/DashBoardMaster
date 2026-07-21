@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.waiter_screens.order.views.models
+package com.example.masterdashboard.staff_dash.waiter_screens.order.models
 
 enum class ActiveOrderStatus {
     PREPARING, READY, SERVED
@@ -7,9 +7,9 @@ enum class ActiveOrderStatus {
 // Data representation for individual active order cards
 data class ActiveOrderCardData(
     val orderId: String,
-    val tableId: String,
+    val tableName: String,
     val totalItems: Int,
-    val timestamp: String,
+    val orderTime: String,
     val status: ActiveOrderStatus
 )
 
