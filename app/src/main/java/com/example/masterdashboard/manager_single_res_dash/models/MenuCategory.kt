@@ -1,8 +1,8 @@
 package com.example.masterdashboard.manager_single_res_dash.models
 
 data class MenuCategory(
-    val id: String = "",
-    val name: String = "",
+    val menuCategoryId: String = "",
+    val menuCategoryName: String = "",
     val itemCount: Int = 0,
     val imageResId: String = "" // Stores resource name string (e.g., "app_logo")
 ) {
@@ -11,8 +11,8 @@ data class MenuCategory(
      */
     fun toMap(): Map<String, Any> {
         return mapOf(
-            "id" to id,
-            "name" to name,
+            "menuCategoryId" to menuCategoryId,
+            "menuCategoryName" to menuCategoryName,
             "itemCount" to itemCount,
             "imageResId" to imageResId
         )

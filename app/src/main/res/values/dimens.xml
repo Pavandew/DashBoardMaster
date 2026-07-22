@@ -81,7 +81,7 @@
     <!-- Menu Dash Dimensions -->
     <dimen name="food_img_size">70dp</dimen>
     <dimen name="stepper_height">45dp</dimen>
-    <dimen name="stepper_btn_size">38dp</dimen>
+    <dimen name="stepper_btn_size">45dp</dimen>
     <dimen name="margin_xl">30dp</dimen>
     <dimen name="button_height_large">54dp</dimen>
 

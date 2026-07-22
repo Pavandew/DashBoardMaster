@@ -19,7 +19,7 @@ import com.example.masterdashboard.manager_single_res_dash.models.DashboardSumma
 import com.example.masterdashboard.manager_single_res_dash.models.DrawerMenuItem
 import com.example.masterdashboard.manager_single_res_dash.models.TopSellingFoodItem
 import com.example.masterdashboard.manager_single_res_dash.models.StatMetric
-import com.example.masterdashboard.staff_dash.waiter_screens.order.views.StaffOrdersFragment
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.WaiterActiveOrdersFragment
 
 class ManagerDashboardFragment : Fragment() {
 
@@ -104,7 +104,7 @@ class ManagerDashboardFragment : Fragment() {
 
         val dynamicDrawerOptions = listOf(
             DrawerMenuItem(0, "Dashboard", R.drawable.ic_dashboard_24dp, ManagerDashboardFragment::class.java),
-            DrawerMenuItem(1, "Orders", R.drawable.bg_order_notes, StaffOrdersFragment::class.java),
+            DrawerMenuItem(1, "Orders", R.drawable.bg_order_notes, WaiterActiveOrdersFragment::class.java),
             DrawerMenuItem(2, "Tables", R.drawable.ic_table_24dp, TableManagementFragment::class.java),
             DrawerMenuItem(3, "Kitchen", R.drawable.bg_order_notes, ManagerDashboardFragment::class.java),
             DrawerMenuItem(4, "Menu Management", R.drawable.biling, MenuManagementFragment::class.java),

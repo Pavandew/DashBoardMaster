@@ -11,7 +11,7 @@ import com.example.masterdashboard.manager_single_res_dash.views.ManagerDashboar
 import com.example.masterdashboard.manager_single_res_dash.views.MenuManagementFragment
 import com.example.masterdashboard.manager_single_res_dash.views.StaffManagementFragment
 import com.example.masterdashboard.manager_single_res_dash.views.TableManagementFragment
-import com.example.masterdashboard.staff_dash.waiter_screens.order.views.StaffOrdersFragment
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.WaiterActiveOrdersFragment
 import com.example.masterdashboard.login.utils.LogoutManager
 
 class DrawerNavigationHelper(private val fragment: Fragment) {
@@ -62,7 +62,7 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
         // Fallback structural router matching your explicit index IDs sequence setup map fallback
         val destinationFragment: Fragment? = when (item.id) {
             0 -> ManagerDashboardFragment()
-            1 -> StaffOrdersFragment()
+            1 -> WaiterActiveOrdersFragment()
             2 -> TableManagementFragment()
             3 -> null
             4 -> MenuManagementFragment()

@@ -38,7 +38,7 @@ class MenuCategoryAdapter(
         ) {
             val context = itemView.context
 
-            binding.tvCategoryName.text = category.name
+            binding.tvCategoryName.text = category.menuCategoryName
             binding.tvItemCount.text = String.format("%02d items", category.itemCount)
 
             // Dynamic Reflection Identifier Lookup: Converts String keys back to real Drawables safely
@@ -67,7 +67,7 @@ class MenuCategoryAdapter(
 
     companion object DiffCallback : DiffUtil.ItemCallback<MenuCategory>() {
         override fun areItemsTheSame(oldItem: MenuCategory, newItem: MenuCategory): Boolean {
-            return oldItem.id == newItem.id
+            return oldItem.menuCategoryId == newItem.menuCategoryId
         }
 
         override fun areContentsTheSame(oldItem: MenuCategory, newItem: MenuCategory): Boolean {
