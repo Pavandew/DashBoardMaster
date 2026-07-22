@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F8F9FD"
-    tools:context=".master_dash.home.logs.LogsFragment">
+    tools:context=".master_dash.logs.LogsFragment">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"

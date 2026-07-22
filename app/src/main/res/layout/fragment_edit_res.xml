@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F6F8FC"
-    tools:context=".master_dash.home.res_lists.views.EditResFragment">
+    tools:context=".master_dash.res_lists.views.EditResFragment">
 
     <!-- Toolbar -->
     <include

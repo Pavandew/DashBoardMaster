@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F7F8FC"
-    tools:context=".master_dash.home.res_lists.views.RestaurantListsFragment">
+    tools:context=".master_dash.res_lists.views.RestaurantListsFragment">
 
     <include
         android:id="@+id/res_list_toolbar"
