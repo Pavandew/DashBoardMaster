@@ -17,8 +17,8 @@ import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivityWaiterHomeBinding
 import com.example.masterdashboard.master_dash.settings.views.ChangePasswordFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.alert.StaffAlertFragment
-import com.example.masterdashboard.staff_dash.waiter_screens.dashboard.StaffDashboardFragment
-import com.example.masterdashboard.staff_dash.waiter_screens.order.views.StaffOrdersFragment
+import com.example.masterdashboard.staff_dash.waiter_screens.dashboard.WaiterDashboardFragment
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.WaiterActiveOrdersFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.profile.StaffProfileFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.table.views.WaiterTablesFragment
 import com.example.masterdashboard.login.utils.SessionManager
@@ -196,13 +196,13 @@ class WaiterHomeActivity : AppCompatActivity() {
 
     private fun createFragment(tag: String): Fragment {
         return when (tag) {
-            TAG_DASHBOARD       -> StaffDashboardFragment()
+            TAG_DASHBOARD       -> WaiterDashboardFragment()
             TAG_CREATE          -> WaiterTablesFragment()
-            TAG_RESTAURANTS     -> StaffOrdersFragment()
+            TAG_RESTAURANTS     -> WaiterActiveOrdersFragment()
             TAG_LOGS            -> StaffAlertFragment()
             TAG_PROFILE         -> StaffProfileFragment()
             TAG_CHANGE_PASSWORD -> ChangePasswordFragment()
-            else                -> StaffDashboardFragment()
+            else                -> WaiterDashboardFragment()
         }
     }
 
