@@ -13,24 +13,26 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
-import com.example.masterdashboard.databinding.FragmentStaffOrdersBinding
-import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
-import com.example.masterdashboard.staff_dash.waiter_screens.order.views.adapter.ActiveOrdersAdapter
-import com.example.masterdashboard.staff_dash.waiter_screens.order.views.repo.ActiveOrdersRepository
-import com.example.masterdashboard.staff_dash.waiter_screens.order.views.viewModel.ActiveOrdersViewModel
+import com.example.masterdashboard.databinding.FragmentWaiterActiveOrdersBinding
+import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.order.adapter.ActiveOrdersAdapter
+import com.example.masterdashboard.staff_dash.waiter_screens.order.repo.ActiveOrdersRepository
+import com.example.masterdashboard.staff_dash.waiter_screens.order.viewModel.ActiveOrdersViewModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FloorChipsAdapter
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
 import kotlinx.coroutines.launch
 
-class StaffOrdersFragment : Fragment() {
+class WaiterActiveOrdersFragment : Fragment() {
     companion object {
-        private const val TAG = "StaffOrdersFragment"
+        private const val TAG = "WaiterActiveOrdersFragment"
     }
 
-    private var _binding: FragmentStaffOrdersBinding? = null
+    private var _binding: FragmentWaiterActiveOrdersBinding? = null
     private val binding get() = _binding!!
 
-    // Declaring explicit screen viewmodel attached to fragment lifecycle boundaries
+    private val sessionManager by lazy { SessionManager(requireContext()) }
+
     private val viewModel: ActiveOrdersViewModel by viewModels {
         ActiveOrdersViewModel.ActiveOrdersViewModelFactory(ActiveOrdersRepository())
     }
@@ -42,24 +44,34 @@ class StaffOrdersFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentStaffOrdersBinding.inflate(inflater, container, false)
+        _binding = FragmentWaiterActiveOrdersBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.i(TAG, "Navigation: StaffOrdersFragment Opened")
-        Log.d(TAG, "onViewCreated: Initializing Orders screen.")
+        Log.i(TAG, "Navigation: WaiterActiveOrdersFragment Opened")
 
         setupToolbar()
         setUpRecyclerViews()
         observeActiveOrderState()
+
+        val managerId = sessionManager.getUid()
+        Log.d(TAG, "onViewCreated: Triggering streamActiveOrders for Manager ID: $managerId")
+        viewModel.streamActiveOrders(managerId)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // FIX: Executing resetFilterToAll in onResume guarantees the StateFlow collector
+        // is active and will immediately force the UI chip selection back to "All".
+        viewModel.resetFilterToAll()
     }
 
     override fun onStart() {
         super.onStart()
         Log.d(TAG, "onStart: Ensuring bottom navigation is visible for Orders screen.")
-        (activity as? StaffHomeActivity)?.showBottomNavigation()
+        (activity as? WaiterHomeActivity)?.showBottomNavigation()
     }
 
     private fun setupToolbar() {
@@ -73,7 +85,6 @@ class StaffOrdersFragment : Fragment() {
     }
 
     private fun setUpRecyclerViews() {
-        // horizontal filters row setup
         filterAdapter = FloorChipsAdapter { selectedFilter ->
             viewModel.selectFilterCategory(selectedFilter.id)
         }
@@ -83,21 +94,24 @@ class StaffOrdersFragment : Fragment() {
             adapter = filterAdapter
         }
 
-        // vertical Orders List Row Setup
         ordersAdapter = ActiveOrdersAdapter { clickedOrder ->
-            Log.d(TAG, "Order clicked: ${clickedOrder.orderId}")
+            Log.d(TAG, "Order clicked: ID='${clickedOrder.orderId}', Table='${clickedOrder.tableName}', Status='${clickedOrder.status.name}', Time='${clickedOrder.orderTime}'")
 
             val expansionFragment = OrderDetailExpansionFragment().apply {
                 arguments = Bundle().apply {
                     putString("orderId", clickedOrder.orderId)
+                    putString("tableName", clickedOrder.tableName)
+                    putString("orderStatus", clickedOrder.status.name)
+                    putString("orderTime", clickedOrder.orderTime)
                 }
             }
 
             parentFragmentManager.beginTransaction()
-                .replace(this@StaffOrdersFragment.id, expansionFragment)
+                .replace(this@WaiterActiveOrdersFragment.id, expansionFragment)
                 .addToBackStack(null)
                 .commit()
         }
+
         binding.rvActiveOrders.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = ordersAdapter
@@ -109,10 +123,8 @@ class StaffOrdersFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    // Toggle progress bar loader layout visibility fields
-                    binding.pbLoading.visibility = if(state.isLoading) View.VISIBLE else View.GONE
+                    binding.pbLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
 
-                    // map custom filters payload array onto common TableFilterData configurations
                     val processFilterChips = state.filters.map { model ->
                         TableFilterData(
                             id = model.id,
@@ -121,11 +133,8 @@ class StaffOrdersFragment : Fragment() {
                         )
                     }
                     filterAdapter.submitList(processFilterChips)
-
-                    // dispatch the core active tracking rows dataset to adapter instance
                     ordersAdapter.submitList(state.visibleOrders)
 
-                    // fallback defensive processing against downstream connection failures
                     state.errorMessage?.let { error ->
                         Log.e(TAG, "Error loading orders: $error")
                         Toast.makeText(context, error, Toast.LENGTH_SHORT).show()

@@ -1,20 +1,20 @@
-package com.example.masterdashboard.staff_dash.waiter_screens.order.views.models
+package com.example.masterdashboard.staff_dash.waiter_screens.order.models
 
-// individual item row matching your design sheet
 data class OrderExpandedItemData(
-    val id: String,
-    val name: String,
-    val quantity: Int,
-    val unitPrice: Int,
-    val totalPrice: Int
+    val id: String = "",
+    val name: String = "",
+    val quantity: Int = 0,
+    val unitPrice: Int = 0,
+    val totalPrice: Int = 0
 )
 
-// main screen UI state class wrapper
 data class OrderDetailExpansionUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val orderId: String = "",
+    val floorId: String = "",
     val tableId: String = "",
+    val tableName: String = "",
     val status: ActiveOrderStatus = ActiveOrderStatus.PREPARING,
     val timeStamp: String = "",
     val items: List<OrderExpandedItemData> = emptyList(),
