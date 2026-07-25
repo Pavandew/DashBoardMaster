@@ -13,7 +13,7 @@ import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenDashb
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenPreparationFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenInventoryFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenOrderFragment
-import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenProfileFragment
+import com.example.masterdashboard.staff_dash.profile.StaffProfileFragment
 
 class KitchenHomeActivity : AppCompatActivity() {
 
@@ -113,7 +113,7 @@ class KitchenHomeActivity : AppCompatActivity() {
         val order = fm.findFragmentByTag(tags.ORDER) ?: KitchenOrderFragment()
         val kitchen = fm.findFragmentByTag(tags.KITCHEN) ?: KitchenPreparationFragment()
         val inventory = fm.findFragmentByTag(tags.INVENTORY) ?: KitchenInventoryFragment()
-        val profile = fm.findFragmentByTag(tags.PROFILE) ?: KitchenProfileFragment()
+        val profile = fm.findFragmentByTag(tags.PROFILE) ?: StaffProfileFragment()
 
         val transaction = fm.beginTransaction().setReorderingAllowed(true)
 

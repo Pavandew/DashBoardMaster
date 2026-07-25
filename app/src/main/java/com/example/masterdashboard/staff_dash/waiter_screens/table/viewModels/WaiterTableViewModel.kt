@@ -36,53 +36,67 @@ class WaiterTableViewModel(
     val tableState: StateFlow<ResourceUiState<List<TableCardData>>> = _tableState.asStateFlow()
 
     private val _floorState = MutableStateFlow<List<TableFilterData>>(emptyList())
-    val floorState : StateFlow<List<TableFilterData>> = _floorState.asStateFlow()
+    val floorState: StateFlow<List<TableFilterData>> = _floorState.asStateFlow()
 
     var originalTableList: List<TableCardData> = emptyList()
         private set
 
+    // Simplified initial state invocation
     init {
-        Log.d(TAG, "🏗️ [VIEWMODEL] Initializing WaiterTableViewModel instance.")
-        fetchFloors()
-        fetchTables()
+        Log.d(TAG, "🏗️ WaiterTableViewModel Initializing instance.")
     }
 
-    fun fetchFloors() {
-        Log.d(TAG, "🏗️ [VIEWMODEL] Starting fetchFloors() flow collection.")
+    /**
+     * Explicit entry point triggered straight from Fragment's onViewCreated cycle
+     */
+    fun loadDashboardData(managerId: String?) {
+        if (managerId.isNullOrEmpty()) {
+            Log.w(TAG, "loadDashboardData: managerId is null or empty. Aborting data fetch.")
+            _tableState.value = ResourceUiState.Error("Missing session credentials")
+            return
+        }
+
+        Log.d(TAG, "loadDashboardData: Fetching data components for Manager ID: $managerId")
+        fetchFloors(managerId)
+        fetchTables(managerId)
+    }
+
+    private fun fetchFloors(managerId: String) {
         viewModelScope.launch {
-            repository.getFloors()
+            repository.getFloors(managerId)
                 .catch { exception ->
-                    Log.e(TAG, "🏗️ [VIEWMODEL] Catch block intercepted floor pipeline exception: ${exception.message}")
+                    Log.e(TAG, "Error collecting floors: ${exception.message}")
+                    _floorState.value = emptyList()
                 }
                 .collect { floors ->
-                    Log.i(TAG, "🏗️ [VIEWMODEL] Collected floor list update from Repository. Pushing ${floors.size} elements to UI State.")
+                    Log.i(TAG, "Collected floors list update. Elements: ${floors.size}")
                     _floorState.value = floors
                 }
         }
     }
 
-    fun fetchTables() {
-        Log.d(TAG, "🏗️ [VIEWMODEL] Starting fetchTables() flow collection.")
+    private fun fetchTables(managerId: String) {
         viewModelScope.launch {
-            repository.getTables().collect { resourceUiState ->
-                when (resourceUiState) {
-                    is ResourceUiState.Loading -> {
-                        Log.d(TAG, "🏗️ [VIEWMODEL] Table stream state updating: [ResourceUiState.Loading]")
-                        _tableState.value = resourceUiState
-                    }
-
-                    is ResourceUiState.Success<List<TableCardData>> -> {
-                        Log.i(TAG, "🏗️ [VIEWMODEL] Table stream state updating: [ResourceUiState.Success]. Loaded ${resourceUiState.data.size} items.")
-                        originalTableList = resourceUiState.data
-                        _tableState.value = resourceUiState
-                    }
-
-                    is ResourceUiState.Error -> {
-                        Log.e(TAG, "🏗️ [VIEWMODEL] Table stream state updating: [ResourceUiState.Error]. Reason: ${resourceUiState.message}")
-                        _tableState.value = resourceUiState
-                    }
+            repository.getTables(managerId)
+                .catch { exception ->
+                    Log.e(TAG, "Error collecting tables pipeline: ${exception.message}")
+                    _tableState.value = ResourceUiState.Error(exception.message ?: "Unknown fetch error")
                 }
-            }
+                .collect { resourceUiState ->
+                    when (resourceUiState) {
+                        is ResourceUiState.Success -> {
+                            Log.i(TAG, "Tables Success: Loaded ${resourceUiState.data.size} items.")
+                            originalTableList = resourceUiState.data
+                        }
+                        is ResourceUiState.Error -> {
+                            Log.e(TAG, "Tables Error state intercepted: ${resourceUiState.message}")
+                        }
+                        is ResourceUiState.Loading -> {
+                            Log.d(TAG, "Tables stream state updating: [Loading]")
+                        }
+                    }
+                    _tableState.value = resourceUiState
+                }
         }
     }
 }

@@ -19,7 +19,7 @@ import com.example.masterdashboard.master_dash.settings.views.ChangePasswordFrag
 import com.example.masterdashboard.staff_dash.waiter_screens.alert.StaffAlertFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.dashboard.WaiterDashboardFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.order.views.WaiterActiveOrdersFragment
-import com.example.masterdashboard.staff_dash.waiter_screens.profile.StaffProfileFragment
+import com.example.masterdashboard.staff_dash.profile.StaffProfileFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.table.views.WaiterTablesFragment
 import com.example.masterdashboard.login.utils.SessionManager
 import com.google.android.material.bottomnavigation.BottomNavigationView

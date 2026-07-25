@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentWaiterTablesBinding
+import com.example.masterdashboard.login.utils.SessionManager
 import com.example.masterdashboard.master_dash.utils.SearchQueryManager
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FloorChipsAdapter
@@ -33,6 +34,7 @@ class WaiterTablesFragment : Fragment() {
     private var _binding: FragmentWaiterTablesBinding? = null
     private val binding get() = _binding!!
 
+    private val sessionManager by lazy { SessionManager(requireContext()) }
     private val viewModel: WaiterTableViewModel by viewModels {
         WaiterTableViewModel.TableViewModelFactory(WaiterTableRepository())
     }
@@ -47,25 +49,32 @@ class WaiterTablesFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        Log.d(TAG, "📱 [FRAGMENT] onCreateView layout inflation initiated.")
+        Log.d(TAG, "WaiterTablesFragment onCreateView layout inflation initiated.")
         _binding = FragmentWaiterTablesBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.i(TAG, "📱 [FRAGMENT] onViewCreated lifecycle hook reached.")
+        Log.i(TAG, "📱 WaiterTablesFragment onViewCreated lifecycle hook reached.")
+
+        val managerId = sessionManager.getUid()
+        val managerName = sessionManager.getUserName() ?: "Unknown Manager"
+        Log.d(TAG, "WaiterTablesFragment Session Context: [ManagerName: $managerName | ID: $managerId]")
 
         setupToolbar()
         setUpRecyclerView()
         setupSearchEngine()
         observeViewModelData()
         setupFloorChips()
+
+        // FIX: Instead of manual fetch triggers, set the managerId state flow to fire both real-time streams
+        viewModel.loadDashboardData(managerId)
     }
 
     override fun onStart() {
         super.onStart()
-        Log.v(TAG, "📱 [FRAGMENT] onStart lifecycle visibility check triggered.")
+        Log.v(TAG, "📱 WaiterTablesFragment onStart lifecycle visibility check triggered.")
         (activity as? WaiterHomeActivity)?.showBottomNavigation()
     }
 
@@ -78,7 +87,7 @@ class WaiterTablesFragment : Fragment() {
 
     private fun setUpRecyclerView() {
         tableAdapter = TableCardsAdapter { table ->
-            Log.d(TAG, "📱 [FRAGMENT] Card Item selected: Table ${table.tableId}")
+            Log.d(TAG, "📱 WaiterTablesFragment Card Item selected: Table ${table.tableId}")
             navigateToOrderTaking(table)
         }
         binding.rvTableCards.adapter = tableAdapter
@@ -86,7 +95,7 @@ class WaiterTablesFragment : Fragment() {
 
     private fun setupFloorChips() {
         floorAdapter = FloorChipsAdapter { selectedChip ->
-            Log.d(TAG, "📱 [FRAGMENT] Floor chip clicked: Title = '${selectedChip.name}', ID = '${selectedChip.id}'")
+            Log.d(TAG, "📱 WaiterTablesFragment Floor chip clicked: Title = '${selectedChip.name}', ID = '${selectedChip.id}'")
 
             val updatedList = floorAdapter.currentList.map {
                 it.copy(isSelected = it.id == selectedChip.id)
@@ -99,14 +108,14 @@ class WaiterTablesFragment : Fragment() {
 
     private fun filterTablesByFloor(selectedChip: TableFilterData) {
         val masterList = viewModel.originalTableList
-        Log.d(TAG, "📱 [FRAGMENT] Running table dataset filter operation against base list size: ${masterList.size}")
+        Log.d(TAG, "📱 WaiterTablesFragment Running table dataset filter operation against base list size: ${masterList.size}")
 
         val filteredList = if (selectedChip.id == "ALL_FLOORS") {
-            Log.v(TAG, "📱 [FRAGMENT] 'All' filter matching selected. Resetting constraints.")
+            Log.v(TAG, "📱 WaiterTablesFragment 'All' filter matching selected. Resetting constraints.")
             masterList
         } else {
             val res = masterList.filter { it.floorId == selectedChip.id }
-            Log.v(TAG, "📱 [FRAGMENT] Specific constraint matching applied. Found ${res.size} tables matched with Floor ID: '${selectedChip.id}'")
+            Log.v(TAG, "📱 WaiterTablesFragment Specific constraint matching applied. Found ${res.size} tables matched with Floor ID: '${selectedChip.id}'")
             res
         }
 
@@ -116,7 +125,7 @@ class WaiterTablesFragment : Fragment() {
     }
 
     private fun observeViewModelData() {
-        Log.d(TAG, "📱 [FRAGMENT] Hooking up UI flows to coroutine repeatOnLifecycle collectors...")
+        Log.d(TAG, "📱 WaiterTablesFragment Hooking up UI flows to coroutine repeatOnLifecycle collectors...")
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
 
@@ -125,12 +134,12 @@ class WaiterTablesFragment : Fragment() {
                     viewModel.tableState.collect { resource ->
                         when (resource) {
                             is ResourceUiState.Loading -> {
-                                Log.d(TAG, "📱 [FRAGMENT] UI Collector received: [ResourceUiState.Loading] ➔ Displaying ProgressIndicator.")
+                                Log.d(TAG, "📱 WaiterTablesFragment UI Collector received: [ResourceUiState.Loading] ➔ Displaying ProgressIndicator.")
                                 binding.pbLoading.visibility = View.VISIBLE
                                 binding.rvTableCards.visibility = View.GONE
                             }
                             is ResourceUiState.Success -> {
-                                Log.i(TAG, "📱 [FRAGMENT] UI Collector received: [ResourceUiState.Success] ➔ Populating ${resource.data.size} cards to Adapter.")
+                                Log.i(TAG, "📱 WaiterTablesFragment UI Collector received: [ResourceUiState.Success] ➔ Populating ${resource.data.size} cards to Adapter.")
                                 binding.pbLoading.visibility = View.GONE
                                 binding.rvTableCards.visibility = View.VISIBLE
 
@@ -139,7 +148,7 @@ class WaiterTablesFragment : Fragment() {
                                 currentSearchList.addAll(viewModel.originalTableList)
                             }
                             is ResourceUiState.Error -> {
-                                Log.e(TAG, "📱 [FRAGMENT] UI Collector received: [ResourceUiState.Error] ➔ Reason: ${resource.message}")
+                                Log.e(TAG, "📱 WaiterTablesFragment UI Collector received: [ResourceUiState.Error] ➔ Reason: ${resource.message}")
                                 binding.pbLoading.visibility = View.GONE
                                 binding.rvTableCards.visibility = View.VISIBLE
                                 Toast.makeText(context, resource.message, Toast.LENGTH_LONG).show()
@@ -151,7 +160,7 @@ class WaiterTablesFragment : Fragment() {
                 // Collect Live Dynamic Floors
                 launch {
                     viewModel.floorState.collectLatest { dynamicFloors ->
-                        Log.i(TAG, "📱 [FRAGMENT] UI Collector received floor list change event. Submitting ${dynamicFloors.size} elements to Chip Layout.")
+                        Log.i(TAG, "📱 WaiterTablesFragment UI Collector received floor list change event. Submitting ${dynamicFloors.size} elements to Chip Layout.")
                         if (dynamicFloors.isNotEmpty()) {
                             floorAdapter.submitList(dynamicFloors)
                         }
@@ -180,6 +189,8 @@ class WaiterTablesFragment : Fragment() {
         val orderTakingFragment = OrderTakingFragment().apply {
             arguments = Bundle().apply {
                 putString("tableId", table.tableId)
+                putString("tableName", table.tableName)
+                putString("floorId", table.floorId)
                 putInt("totalSeats", table.totalSeats)
                 putString("status", table.status.name)
             }
@@ -192,7 +203,7 @@ class WaiterTablesFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        Log.d(TAG, "📱 [FRAGMENT] onDestroyView triggered. Cleaning up search engine components.")
+        Log.d(TAG, "📱 WaiterTablesFragment onDestroyView triggered. Cleaning up search engine components.")
         searchManager?.removeListener()
         super.onDestroyView()
         _binding = null
