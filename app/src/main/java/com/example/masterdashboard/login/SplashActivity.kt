@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.masterdashboard.databinding.ActivitySplashBinding
 import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
 import com.example.masterdashboard.master_dash.MasterHomeActivity
-import com.example.masterdashboard.staff_dash.billing_screens.BillingHomeActivity
+import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.kitchen_screens.KitchenHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.login.utils.AppConstants
@@ -113,7 +113,7 @@ class SplashActivity : AppCompatActivity() {
             // Match Billing / Cashier roles directly to Checkout activity
             "billing", "cashier" -> {
                 Log.d(TAG, "Routing to Billing Checkout Workspace")
-                Intent(this, BillingHomeActivity::class.java)
+                Intent(this, CashierHomeActivity::class.java)
             }
 
             else -> {

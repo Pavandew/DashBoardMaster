@@ -13,7 +13,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.databinding.ActivityStaffLoginBinding
 import com.example.masterdashboard.login.uistate.StaffLoginUiState
 import com.example.masterdashboard.login.viewmodel.StaffLoginViewModel
-import com.example.masterdashboard.staff_dash.billing_screens.BillingHomeActivity
+import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.kitchen_screens.KitchenHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.login.utils.SessionManager
@@ -125,7 +125,7 @@ class StaffLoginActivity : AppCompatActivity() {
                             // Compares lowercase trimmed role variants to match values like "Waiter", "Kitchen", etc.
                             val targetActivityClass = when(authenticatedRole.lowercase().trim()) {
                                 "kitchen", "chef" -> KitchenHomeActivity::class.java
-                                "billing", "cashier" -> BillingHomeActivity::class.java
+                                "billing", "cashier" -> CashierHomeActivity::class.java
                                 else -> WaiterHomeActivity::class.java
                             }
 

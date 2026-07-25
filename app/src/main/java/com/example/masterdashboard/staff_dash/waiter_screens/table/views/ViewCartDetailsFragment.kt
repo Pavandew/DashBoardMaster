@@ -1,5 +1,6 @@
 package com.example.masterdashboard.staff_dash.waiter_screens.table.views
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -7,20 +8,21 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels // Explicitly scoped to parent Activity lifecycle
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentViewCartDetailsBinding
+import com.example.masterdashboard.login.utils.SessionManager
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
-import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FoodMenuAdapter
-import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderViewModel
+import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.ViewCartDetailAdapter
+import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
+import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
 import kotlinx.coroutines.launch
 
 class ViewCartDetailsFragment : Fragment() {
-
     companion object {
         private const val TAG = "ViewCartDetailsFragment"
     }
@@ -28,11 +30,12 @@ class ViewCartDetailsFragment : Fragment() {
     private var _binding: FragmentViewCartDetailsBinding? = null
     private val binding get() = _binding!!
 
-    // FIXED: Clean initialization without repeating factory parameter logic.
-    // This safely pulls the pre-existing state engine straight from the activity baseline layer.
-    private val viewModel: OrderViewModel by activityViewModels()
+    private val sessionManager by lazy { SessionManager(requireContext()) }
 
-    private lateinit var cartAdapter: FoodMenuAdapter
+    // Safely shares the persistent state machine instance straight from the parent activity layer
+    private val viewModel: OrderTakingViewModel by activityViewModels()
+
+    private lateinit var cartAdapter: ViewCartDetailAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -44,7 +47,10 @@ class ViewCartDetailsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.i(TAG, "Navigation: ViewCartDetailsFragment Opened")
+        Log.i(TAG, "📱 [FRAGMENT] ViewCartDetailsFragment Opened")
+
+        // Informs the shared ViewModel that we are browsing the checkout state to protect variables
+        viewModel.isViewingCart = true
 
         setupToolbar()
         setupClickListener()
@@ -54,15 +60,14 @@ class ViewCartDetailsFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        // Kept inside lifecycle start to guarantee structural coverage across container resizes
         (activity as? WaiterHomeActivity)?.hideBottomNavigation()
     }
 
     private fun setupToolbar() {
-        val tableId = arguments?.getString("tableId") ?: "Unknown Table"
+        val tableName = arguments?.getString("tableName") ?: "Unknown Table"
 
         val toolbar = binding.viewCartToolbar
-        toolbar.tvToolbarTitle.text = getString(R.string.cart) + " - Table $tableId"
+        toolbar.tvToolbarTitle.text = getString(R.string.cart) + " - Table $tableName"
         toolbar.tvToolbarEndText.visibility = View.VISIBLE
         toolbar.toolbarImgNotification.visibility = View.GONE
 
@@ -71,47 +76,32 @@ class ViewCartDetailsFragment : Fragment() {
         }
 
         toolbar.tvToolbarEndText.setOnClickListener {
-            Log.d(TAG, "setupToolbar: Clear Cart clicked for Table $tableId")
+            Log.d(TAG, "📱 [FRAGMENT] Clear Cart clicked for Table $tableName")
             viewModel.clearCart()
+            parentFragmentManager.popBackStack()
         }
     }
 
     private fun setupClickListener() {
         binding.btnSendToKitchen.setOnClickListener {
-            Log.d(TAG, "Send to Kitchen clicked: Dispatching metrics validation workflows.")
-            Toast.makeText(context, "Order sent to kitchen!", Toast.LENGTH_SHORT).show()
+            Log.d(TAG, "📱 [FRAGMENT] Send to Kitchen clicked: Initializing backend upload pipeline.")
 
+            val managerId = sessionManager.getUid()
+            val managerName = sessionManager.getUserName() ?: "Unknown Manager"
             val tableId = arguments?.getString("tableId") ?: "N/A"
-            val currentState = viewModel.uiState.value
+            val floorId = arguments?.getString("floorId") ?: "N/A"
 
-            val selectedCartItems = currentState.menuItems.filter { it.currentQuantity > 0 }
-            val totalCount = selectedCartItems.sumOf { it.currentQuantity }
-            val subtotal = currentState.cartSummary.totalPrice
-            val grandTotal = subtotal + (subtotal * 0.05)
+            val specialNotes = binding.etOrderNotes.text.toString().trim()
+            Log.d(TAG, "📱 [FRAGMENT] Session Context: [ManagerName: $managerName | ID: $managerId]")
+            Log.d(TAG, "📱 [FRAGMENT] Dispatching Path Check: managers/$managerId/floors/$floorId/tables/$tableId")
 
-            val successBundle = Bundle().apply {
-                putString("tableId", tableId)
-                putInt("totalItems", totalCount)
-                putDouble("totalPrice", grandTotal)
-            }
-
-            val successFragment = OrderSuccessFragment().apply {
-                arguments = successBundle
-            }
-
-            // Clean transaction routing target verified against your app context
-            parentFragmentManager.beginTransaction()
-                .replace(this@ViewCartDetailsFragment.id, successFragment)
-                .addToBackStack(null)
-                .commit()
+            // Trigger the remote Firebase write method directly inside our shared state engine
+            viewModel.submitActiveOrderToKitchen(managerId, floorId, tableId, specialNotes)
         }
     }
 
     private fun setupRecyclerView() {
-        cartAdapter = FoodMenuAdapter(
-            onQuantityIncreased = { viewModel.updateItemQuantity(it.id, true) },
-            onQuantityDecreased = { viewModel.updateItemQuantity(it.id, false) }
-        )
+        cartAdapter = ViewCartDetailAdapter()
         binding.rvCartItems.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = cartAdapter
@@ -119,27 +109,73 @@ class ViewCartDetailsFragment : Fragment() {
         }
     }
 
+    @SuppressLint("SetTextI18n", "DefaultLocale")
     private fun observeCartStateFlow() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    val selectedCartItems = state.menuItems.filter { it.currentQuantity > 0 }
 
-                    Log.d(TAG, "observeCartStateFlow: Updating cart with ${selectedCartItems.size} items")
-                    cartAdapter.submitList(selectedCartItems)
+                // Pipeline 1: Track UI layout changes, total calculations, and item listings
+                launch {
+                    viewModel.uiState.collect { state ->
+                        val selectedCartItems = viewModel.originalFoodList.filter { it.currentQuantity > 0 }
 
-                    // Financial Aggregations
-                    val subtotal = state.cartSummary.totalPrice
-                    val gst = subtotal * 0.05
-                    val grandTotal = subtotal + gst
+                        Log.d(TAG, "📱 [FRAGMENT] Updating cart layout view with ${selectedCartItems.size} items")
+                        cartAdapter.submitList(selectedCartItems)
 
-                    binding.tvSubtotalPrice.text = getString(R.string.currency_symbol) + " $subtotal"
-                    binding.tvGstPrice.text = getString(R.string.currency_symbol) + " ${String.format("%.2f", gst)}"
-                    binding.tvGrandTotalPrice.text = getString(R.string.currency_symbol) + " ${String.format("%.2f", grandTotal)}"
+                        val subtotal = state.cartSummary.totalPrice
+                        val gst = subtotal * 0.05
+                        val grandTotal = subtotal + gst
 
-                    if (selectedCartItems.isEmpty()) {
-                        Log.d(TAG, "observeCartStateFlow: Cart is empty, navigating back to home screen layouts automatically.")
-                        parentFragmentManager.popBackStack()
+                        binding.tvSubtotalPrice.text = getString(R.string.currency_symbol) + " $subtotal"
+                        binding.tvGstPrice.text = getString(R.string.currency_symbol) + " ${String.format("%.2f", gst)}"
+                        binding.tvGrandTotalPrice.text = getString(R.string.currency_symbol) + " ${String.format("%.2f", grandTotal)}"
+                    }
+                }
+
+                // Pipeline 2: Track active transactional progress updates coming from Firestore
+                launch {
+                    viewModel.orderUploadStatus.collect { resource ->
+                        when (resource) {
+                            is ResourceUiState.Loading -> {
+                                binding.btnSendToKitchen.isEnabled = false
+                                binding.btnSendToKitchen.text = "Sending Order..."
+                            }
+                            is ResourceUiState.Success -> {
+                                Log.i(TAG, "📱 [FRAGMENT] KOT successfully created. Navigating to Success layout screen.")
+                                Toast.makeText(context, "Order sent to kitchen!", Toast.LENGTH_SHORT).show()
+
+                                val tableName = arguments?.getString("tableName") ?: "N/A"
+                                val tableId = arguments?.getString("tableId") ?: "N/A"
+                                val selectedCartItems = viewModel.originalFoodList.filter { it.currentQuantity > 0 }
+                                val totalCount = selectedCartItems.sumOf { it.currentQuantity }
+                                val subtotal = viewModel.uiState.value.cartSummary.totalPrice
+                                val grandTotal = subtotal + (subtotal * 0.05)
+
+                                val successBundle = Bundle().apply {
+                                    putString("tableId", tableId)
+                                    putString("tableName", tableName)
+                                    putString("orderId", viewModel.lastOrderId)
+                                    putInt("totalItems", totalCount)
+                                    putDouble("totalPrice", grandTotal)
+                                }
+
+                                val successFragment = OrderSuccessFragment().apply {
+                                    arguments = successBundle
+                                }
+                                // Trigger the UI navigation block safely while upload status is SUCCESS
+                                parentFragmentManager.beginTransaction()
+                                    .replace(this@ViewCartDetailsFragment.id, successFragment)
+                                    .addToBackStack(null)
+                                    .commit()
+                            }
+                            is ResourceUiState.Error -> {
+                                binding.btnSendToKitchen.isEnabled = true
+                                binding.btnSendToKitchen.text = "Send to Kitchen"
+                                Toast.makeText(context, "Upload Failed: ${resource.message}", Toast.LENGTH_LONG).show()
+                                viewModel.resetUploadStatus()
+                            }
+                            else -> {}
+                        }
                     }
                 }
             }
