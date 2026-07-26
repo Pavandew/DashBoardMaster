@@ -11,8 +11,8 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.activityViewModels
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentOrderSuccesBinding
-import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
-import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderViewModel
+import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -26,7 +26,7 @@ class OrderSuccessFragment : Fragment() {
     private var _binding: FragmentOrderSuccesBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: OrderViewModel by activityViewModels()
+    private val viewModel: OrderTakingViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -41,7 +41,12 @@ class OrderSuccessFragment : Fragment() {
         Log.i(TAG, "Navigation: OrderSuccessFragment Opened")
         Log.d(TAG, "onViewCreated: Displaying success screen.")
 
-        (activity as? StaffHomeActivity)?.hideBottomNavigation()
+        (activity as? WaiterHomeActivity)?.hideBottomNavigation()
+
+        // NEW: Clear the cart and reset the upload status now that we are safely on the success screen.
+        // This prevents the cart's "auto-pop" logic or "Sending..." states from interfering with navigation.
+        viewModel.clearCart()
+        viewModel.resetUploadStatus()
 
         setupSystemBackPress() // FIXED: Added custom hardware back press interceptor
         populateReceiptForm()
@@ -62,15 +67,15 @@ class OrderSuccessFragment : Fragment() {
     }
 
     private fun populateReceiptForm() {
-        val tableId = arguments?.getString("tableId") ?: "N/A"
+        val tableName = arguments?.getString("tableName") ?: "N/A"
+        val orderId = arguments?.getString("orderId") ?: "#ORD-0000"
         val totalItems = arguments?.getInt("totalItems") ?: 0
         val totalPrice = arguments?.getDouble("totalPrice") ?: 0.0
 
-        val randomOrderId = "#ORD-${(1000..9999).random()}"
         val currentTimestamp = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date())
 
-        binding.tvSuccessTableId.text = "T-$tableId"
-        binding.tvSuccessOrderId.text = randomOrderId
+        binding.tvSuccessTableId.text = "T-$tableName"
+        binding.tvSuccessOrderId.text = orderId
         binding.tvSuccessTotalItems.text = totalItems.toString()
         binding.tvSuccessTotalAmount.text = getString(R.string.currency_symbol) + " ${String.format("%.2f", totalPrice)}"
         binding.tvSuccessTimestamp.text = currentTimestamp
@@ -79,10 +84,12 @@ class OrderSuccessFragment : Fragment() {
     private fun setupNavigationActions() {
         binding.btnViewActiveOrders.setOnClickListener {
             Log.d(TAG, "Navigating to Active Orders screen.")
-            // 1. Clear out the ordering fragment session history
+            // 1. Clear out the shared cart counter state arrays
+            viewModel.clearCart()
+            // 2. Clear out the entire ordering fragment session history
             parentFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-            // 2. Open Orders through the activity to handle bottom nav and currentTag correctly
-            (activity as? StaffHomeActivity)?.openOrders()
+            // 3. Open Orders through the activity to handle bottom nav and currentTag correctly
+            (activity as? WaiterHomeActivity)?.openOrders()
         }
 
         binding.btnBackToTables.setOnClickListener {

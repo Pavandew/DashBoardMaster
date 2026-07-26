@@ -7,36 +7,41 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels // FIXED: Imported activityViewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentOrderTakingBinding
-import com.example.masterdashboard.master_dash.home.SearchQueryManager
-import com.example.masterdashboard.staff_dash.waiter_screens.StaffHomeActivity
+import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.master_dash.utils.SearchQueryManager
+import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FloorChipsAdapter
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FoodMenuAdapter
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.FoodItemData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableStatus
-import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderRepository
-import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderViewModel
+import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderTakingRepository
+import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
 import kotlinx.coroutines.launch
 
 class OrderTakingFragment : Fragment() {
 
     companion object {
-        private const val TAG = "OrderTakingFragment"
+        // Tag unified across order flow components for clear Logcat tracking
+        private const val TAG = "Order_Flow_Debug"
     }
 
     private var _binding: FragmentOrderTakingBinding? = null
     private val binding get() = _binding!!
 
-    // FIXED: Swapped 'by viewModels' for 'by activityViewModels' to share state layers seamlessly
-    private val viewModel: OrderViewModel by activityViewModels {
-        OrderViewModel.OrderViewModelFactory(OrderRepository())
+    // Lazy initialization of the session cache preference utility
+    private val sessionManager by lazy { SessionManager(requireContext()) }
+
+    // Scoped to activityViewModels to seamlessly share cart modifications across workflow screens
+    private val viewModel: OrderTakingViewModel by activityViewModels {
+        OrderTakingViewModel.OrderViewModelFactory(OrderTakingRepository())
     }
 
     private lateinit var categoryAdapter: FloorChipsAdapter
@@ -55,8 +60,21 @@ class OrderTakingFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.i(TAG, "Navigation: OrderTakingFragment Opened")
-        Log.d(TAG, "onViewCreated: Initializing Fragment")
+        Log.i(TAG, "📱 [FRAGMENT] OrderTakingFragment Launched Successfully")
+
+        // Retrieve table context from arguments
+        val tableId = arguments?.getString("tableId") ?: ""
+        val status = arguments?.getString("status") ?: "FREE"
+        val existingDocId = arguments?.getString("existingOrderDocId")
+        val existingOrderId = arguments?.getString("existingOrderId")
+
+        // Initialize or resume the order session
+        viewModel.startOrderSession(tableId, status, existingDocId, existingOrderId)
+
+        // Retrieve the restaurant context key token from the local session cache
+        val managerId = sessionManager.getUid()
+        val managerName = sessionManager.getUserName() ?: "Unknown Manager"
+        Log.d(TAG, "📱 [FRAGMENT] Session Context: [ManagerName: $managerName | ID: $managerId]")
 
         setupToolbarNavigation()
         setupClickListeners()
@@ -64,11 +82,20 @@ class OrderTakingFragment : Fragment() {
         setupRecyclerLayouts()
         setupSearchEngine()
         observeStateFlows()
+
+        // Fetch the fresh real-time menu and category data pipes
+        viewModel.loadMenuData(managerId)
+
+        // If resuming an order, trigger the data merge
+        if (!existingDocId.isNullOrEmpty() && !managerId.isNullOrEmpty()) {
+            val floorId = arguments?.getString("floorId") ?: ""
+            viewModel.resumeOrderSession(managerId, floorId, tableId, existingDocId)
+        }
     }
 
     override fun onStart() {
         super.onStart()
-        (activity as? StaffHomeActivity)?.hideBottomNavigation()
+        (activity as? WaiterHomeActivity)?.hideBottomNavigation()
     }
 
     private fun setupToolbarNavigation() {
@@ -79,39 +106,43 @@ class OrderTakingFragment : Fragment() {
 
     private fun setupClickListeners() {
         binding.btnViewCart.setOnClickListener {
-            Log.d(TAG, "btnViewCart Clicked: Passing operational context to Cart detail screen")
-            val tableId = arguments?.getString("tableId") ?: "N/A"
+            // Set flag in ViewModel to indicate we are moving to Cart
+            viewModel.isViewingCart = true
+
+            val tableName = arguments?.getString("tableName") ?: "N/A"
+            val tableId = arguments?.getString("tableId") ?: ""
+            val floorId = arguments?.getString("floorId") ?: ""
+            val status = arguments?.getString("status") ?: "FREE"
 
             val bundle = Bundle().apply {
                 putString("tableId", tableId)
+                putString("tableName", tableName)
+                putString("floorId", floorId)
+                putString("status", status)
             }
 
             val cartDetailFragment = ViewCartDetailsFragment().apply {
                 arguments = bundle
             }
 
-            // Swap fragment container dynamically using a standard clean backstack replacement operation
             parentFragmentManager.beginTransaction()
-                .replace(this@OrderTakingFragment.id, cartDetailFragment) // FIXED: Uses dynamic container ID to support both Staff and Manager activities
+                .replace(this@OrderTakingFragment.id, cartDetailFragment)
                 .addToBackStack(null)
                 .commit()
         }
     }
 
     private fun setupTableDetailsFromArgs() {
-        val tableId = arguments?.getString("tableId") ?: "N/A"
+        val tableName = arguments?.getString("tableName") ?: "N/A"
         val seats = arguments?.getInt("totalSeats") ?: 0
         val statusName = arguments?.getString("status") ?: "FREE"
 
-        Log.d(TAG, "setupTableDetailsFromArgs: tableId=$tableId, seats=$seats, status=$statusName")
-
         val toolbar = binding.orderTakingToolbar
         toolbar.llSubtitleContainer.visibility = View.VISIBLE
-        toolbar.tvToolbarTitle.text = "Table $tableId"
+        toolbar.tvToolbarTitle.text = "Table - $tableName"
         toolbar.tvToolbarSubtitle.text = "$seats Seats"
 
         val status = try { TableStatus.valueOf(statusName) } catch (e: Exception) { TableStatus.FREE }
-
         toolbar.tvToolbarStatusTag.text = status.name.lowercase().replaceFirstChar { it.uppercase() }
 
         val context = requireContext()
@@ -137,6 +168,7 @@ class OrderTakingFragment : Fragment() {
 
     private fun setupRecyclerLayouts() {
         categoryAdapter = FloorChipsAdapter { selectedCategory ->
+            // Informs the ViewModel to apply the selected category filter to the visible list
             viewModel.selectCategory(selectedCategory.id)
         }
         binding.rvMenuCategories.apply {
@@ -155,34 +187,38 @@ class OrderTakingFragment : Fragment() {
         }
     }
 
+    /**
+     * Observes centralized live UI states streaming down from the Shared ViewModel state flow pipeline layer.
+     */
     private fun observeStateFlows() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    Log.d(TAG, "observeStateFlows: New state received - isLoading=${state.isLoading}")
 
-                    // Handle Loading state
-                    // binding.pbLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+                    // Manage visibility of progress indicators dynamically
+                    binding.pbLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
 
-                    // Handle Error state
                     state.errorMessage?.let {
-                        Log.e(TAG, "observeStateFlows: Error observed: $it")
+                        Log.e(TAG, "📱 [FRAGMENT] Error stream response caught: $it")
                         Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
                     }
 
+                    // Maps core dynamic menu category classes over to horizontal chip views cleanly
                     val categoryChips = state.categories.map {
                         TableFilterData(id = it.id, name = it.name, isSelected = it.isSelected)
                     }
                     categoryAdapter.submitList(categoryChips)
 
-                    // Update Grid items List representation safely
+                    // Refresh food cards inside the visible layout menu list
+                    Log.i(TAG, "📱 [FRAGMENT] Displaying ${state.menuItems.size} food items matching current filter layout.")
                     foodAdapter.submitList(state.menuItems)
 
-                    // Sync the internal search query snapshot collection point directly
+                    // FIX: Sync search engine snapshots directly from the master originalFoodList container
+                    // This guarantees items selected from hidden categories aren't wiped out during search text parsing
                     mutableFoodSearchList.clear()
                     mutableFoodSearchList.addAll(viewModel.originalFoodList)
 
-                    // Update Cart Summary
+                    // Update layout cart footer details visibility conditions
                     binding.tvCartCountLabel.text = getString(R.string.view_cart_format, state.cartSummary.totalItems)
                     binding.tvCartTotalPrice.text = getString(R.string.currency_symbol) + " ${state.cartSummary.totalPrice}"
                     binding.btnViewCart.visibility = if (state.cartSummary.totalItems > 0) View.VISIBLE else View.GONE

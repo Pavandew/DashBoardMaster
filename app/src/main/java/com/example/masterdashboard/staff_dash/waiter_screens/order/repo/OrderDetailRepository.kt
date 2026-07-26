@@ -58,7 +58,8 @@ class OrderDetailRepository {
                             name = item.itemName,
                             quantity = item.quantity,
                             unitPrice = item.price,
-                            totalPrice = if (item.rowTotal > 0) item.rowTotal else item.price * item.quantity
+                            totalPrice = if (item.rowTotal > 0) item.rowTotal else item.price * item.quantity,
+                            orderedQuantity = item.orderedQuantity
                         )
                     }
 
@@ -89,7 +90,9 @@ class OrderDetailRepository {
                         "PREPARING" -> ActiveOrderStatus.PREPARING
                         "READY" -> ActiveOrderStatus.READY
                         "SERVED" -> ActiveOrderStatus.SERVED
-                        else -> ActiveOrderStatus.PREPARING
+                        "BILLING" -> ActiveOrderStatus.BILLING
+                        "PAID" -> ActiveOrderStatus.PAID
+                        else -> ActiveOrderStatus.PENDING
                     }
 
                     val formattedTime = try {
@@ -104,6 +107,7 @@ class OrderDetailRepository {
                         isLoading = false,
                         errorMessage = null,
                         orderId = customDisplayOrderId,
+                        documentId = document.id,
                         floorId = extractedFloorId,
                         tableId = extractedTableId,
                         tableName = tableName,
@@ -135,9 +139,60 @@ class OrderDetailRepository {
         managerId: String,
         floorId: String,
         tableId: String,
-        orderId: String
+        orderDocId: String
+    ): Flow<ResourceUiState<Boolean>> = updateStatus(managerId, floorId, tableId, orderDocId, ActiveOrderStatus.SERVED)
+
+    fun updateOrderStatusToBilling(
+        managerId: String,
+        floorId: String,
+        tableId: String,
+        orderDocId: String
     ): Flow<ResourceUiState<Boolean>> = flow {
-        Log.d(TAG, "📦 [REPO] Updating Order '$orderId' to SERVED...")
+        Log.d(TAG, "📦 [REPO] Updating Order '$orderDocId' and Table '$tableId' to BILLING...")
+        emit(ResourceUiState.Loading)
+
+        try {
+            val batch = firestore.batch()
+
+            // 1. Update Order Status
+            val orderRef = firestore.collection(AppConstants.COLLECTION_USERS)
+                .document(managerId)
+                .collection(AppConstants.COLLECTION_RES_FLOORS)
+                .document(floorId)
+                .collection(AppConstants.COLLECTION_TABLES)
+                .document(tableId)
+                .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                .document(orderDocId)
+            
+            batch.update(orderRef, "orderStatus", ActiveOrderStatus.BILLING.name)
+
+            // 2. Update Table Status to BILLING
+            val tableRef = firestore.collection(AppConstants.COLLECTION_USERS)
+                .document(managerId)
+                .collection(AppConstants.COLLECTION_RES_FLOORS)
+                .document(floorId)
+                .collection(AppConstants.COLLECTION_TABLES)
+                .document(tableId)
+
+            batch.update(tableRef, "status", "BILLING")
+
+            batch.commit().await()
+            Log.i(TAG, "📦 [REPO] Successfully updated Order and Table to BILLING in Firestore.")
+            emit(ResourceUiState.Success(true))
+        } catch (e: Exception) {
+            Log.e(TAG, "📦 [REPO] Failed updating status to BILLING", e)
+            emit(ResourceUiState.Error("Failed to update status: ${e.message}"))
+        }
+    }.flowOn(Dispatchers.IO)
+
+    private fun updateStatus(
+        managerId: String,
+        floorId: String,
+        tableId: String,
+        orderDocId: String,
+        newStatus: ActiveOrderStatus
+    ): Flow<ResourceUiState<Boolean>> = flow {
+        Log.d(TAG, "📦 [REPO] Updating Order '$orderDocId' to ${newStatus.name}...")
         emit(ResourceUiState.Loading)
 
         try {
@@ -148,13 +203,13 @@ class OrderDetailRepository {
                 .collection(AppConstants.COLLECTION_TABLES)
                 .document(tableId)
                 .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
-                .document(orderId)
+                .document(orderDocId)
 
-            orderRef.update("orderStatus", ActiveOrderStatus.SERVED.name).await()
-            Log.i(TAG, "📦 [REPO] Successfully updated order status to SERVED in Firestore.")
+            orderRef.update("orderStatus", newStatus.name).await()
+            Log.i(TAG, "📦 [REPO] Successfully updated order status to ${newStatus.name} in Firestore.")
             emit(ResourceUiState.Success(true))
         } catch (e: Exception) {
-            Log.e(TAG, "📦 [REPO] Failed updating status to SERVED", e)
+            Log.e(TAG, "📦 [REPO] Failed updating status to ${newStatus.name}", e)
             emit(ResourceUiState.Error("Failed to update order status: ${e.message}"))
         }
     }.flowOn(Dispatchers.IO)

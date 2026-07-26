@@ -26,11 +26,22 @@ class OrderDetailRowAdapter : ListAdapter<OrderExpandedItemData, OrderDetailRowA
     override fun onBindViewHolder(holder: RowViewHolder, position: Int) {
         val item = getItem(position)
         val binding = holder.binding
+        val context = binding.root.context
 
         // Bind raw document structural values to text layout targets smoothly
         binding.tvExpandedItemName.text = item.name
         binding.tvExpandedItemQtyPrice.text = "${item.quantity} x ₹${item.unitPrice}"
         binding.tvExpandedItemRowTotal.text = "₹${item.totalPrice}"
+
+        // Show status badge
+        binding.tvItemStatusLabel.visibility = android.view.View.VISIBLE
+        if (item.orderedQuantity > 0) {
+            binding.tvItemStatusLabel.text = "Sent to Kitchen"
+            binding.tvItemStatusLabel.setTextColor(androidx.core.content.ContextCompat.getColor(context, com.example.masterdashboard.R.color.search_bar_hint))
+        } else {
+            binding.tvItemStatusLabel.text = "New / Pending"
+            binding.tvItemStatusLabel.setTextColor(androidx.core.content.ContextCompat.getColor(context, com.example.masterdashboard.R.color.status_occupied))
+        }
     }
 
     // High-performance DiffUtil callback to optimize layout element item changes dynamically

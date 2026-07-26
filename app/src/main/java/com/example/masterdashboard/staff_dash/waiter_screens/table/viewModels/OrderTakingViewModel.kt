@@ -42,6 +42,12 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
     var currentTableId: String? = null
         private set
 
+    var existingOrderDocId: String? = null
+        private set
+
+    var existingOrderId: String? = null
+        private set
+
     // Flag to prevent clearing data when returning from the Cart screen
     var isViewingCart: Boolean = false
 
@@ -56,7 +62,12 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
         Log.d(TAG, "🏗️ [VIEWMODEL] OrderTakingViewModel instance successfully initialized.")
     }
 
-    fun startOrderSession(tableId: String, status: String) {
+    fun startOrderSession(
+        tableId: String,
+        status: String,
+        orderDocId: String? = null,
+        orderId: String? = null
+    ) {
         // If we are returning from the Cart, we do nothing and preserve the current state
         if (isViewingCart) {
             Log.d(TAG, "🏗️ [VIEWMODEL] Returning from Cart. Preserving state for Table: $tableId")
@@ -65,17 +76,67 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
         }
 
         // If it's a new entry from the Tables list, we refresh the session
-        Log.i(TAG, "🏗️ [VIEWMODEL] Starting NEW session from Tables List for Table: $tableId [Status: $status]")
+        Log.i(TAG, "🏗️ [VIEWMODEL] Starting session for Table: $tableId [Status: $status, ExistingDoc: $orderDocId]")
         currentTableId = tableId
+        existingOrderDocId = orderDocId
+        existingOrderId = orderId
 
         if (status.uppercase() == "FREE") {
             Log.d(TAG, "🏗️ [VIEWMODEL] Table is FREE. Clearing local cart quantities.")
             clearCart()
+        } else if (!orderDocId.isNullOrEmpty()) {
+            Log.d(TAG, "🏗️ [VIEWMODEL] Table is $status with existing order. Preparing to load items...")
+            // We'll call a special method to load items after menu data is ready
         } else {
-            Log.d(TAG, "🏗️ [VIEWMODEL] Table is $status. Loading existing order context.")
-            // For now, we clear the cart to ensure no leftover data from other tables, 
-            // but in a real app, you'd call a repository method here to fetch the active order.
             clearCart()
+        }
+    }
+
+    fun resumeOrderSession(
+        managerId: String,
+        floorId: String,
+        tableId: String,
+        orderDocId: String
+    ) {
+        viewModelScope.launch {
+            // Wait for menu items to be loaded before merging
+            var attempts = 0
+            while (originalFoodList.isEmpty() && attempts < 50) {
+                kotlinx.coroutines.delay(100)
+                attempts++
+            }
+
+            val existingOrder = repository.getExistingOrder(managerId, floorId, tableId, orderDocId)
+            if (existingOrder != null) {
+                Log.i(TAG, "🏗️ [VIEWMODEL] Existing order found. Merging ${existingOrder.items.size} items into cart.")
+                
+                // Map existing items to a quantity map for easy lookup
+                val existingQtyMap = existingOrder.items.associate { it.itemId to it.quantity }
+                
+                _uiState.update { state ->
+                    val updatedOriginal = originalFoodList.map { foodItem ->
+                        val existingQty = existingQtyMap[foodItem.id] ?: 0
+                        foodItem.copy(
+                            currentQuantity = existingQty,
+                            previousQuantity = existingQty
+                        )
+                    }
+                    originalFoodList = updatedOriginal
+                    
+                    val selectedCategoryId = state.categories.find { it.isSelected }?.id ?: "ALL_ITEMS"
+                    val filteredMenuItems = if (selectedCategoryId == "ALL_ITEMS") {
+                        updatedOriginal
+                    } else {
+                        updatedOriginal.filter { it.categoryId == selectedCategoryId }
+                    }
+                    
+                    val summary = calculateCartTotalsInternal(updatedOriginal)
+                    state.copy(
+                        menuItems = filteredMenuItems,
+                        cartSummary = summary
+                    )
+                }
+            }
         }
     }
 
@@ -184,17 +245,18 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
                 itemName = item.name,
                 price = item.price,
                 quantity = item.currentQuantity,
-                rowTotal = (item.price * item.currentQuantity)
+                rowTotal = (item.price * item.currentQuantity),
+                orderedQuantity = item.currentQuantity // Marking all as ordered now
             )
         }
 
-        // GENERATE ORDER ID: Storing it now to bridge the Success Fragment and the DB records
-        val formattedOrderId = "#ORD-${(1000..9999).random()}"
-        lastOrderId = formattedOrderId
+        // GENERATE or REUSE ORDER ID
+        val finalOrderId = existingOrderId ?: "#ORD-${(1000..9999).random()}"
+        lastOrderId = finalOrderId
 
         val subtotalValue = uiState.value.cartSummary.totalPrice.toDouble()
         val orderData = OrderDataModel(
-            orderId = formattedOrderId,
+            orderId = finalOrderId,
             items = itemsPayload,
             specialNotes = specialNotes,
             subtotal = subtotalValue,
@@ -204,9 +266,9 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
             timestamp = com.google.firebase.Timestamp.now()
         )
 
-        Log.d(TAG, "🏗️ [VIEWMODEL] Dispatching KOT payload to repository for Table: $tableId")
+        Log.d(TAG, "🏗️ [VIEWMODEL] Dispatching KOT payload to repository for Table: $tableId (ExistingDoc: $existingOrderDocId)")
         viewModelScope.launch {
-            repository.sendOrderToFirebaseKitchen(managerId, floorId, tableId, orderData)
+            repository.sendOrderToFirebaseKitchen(managerId, floorId, tableId, orderData, existingOrderDocId)
                 .catch { exception ->
                     Log.e(TAG, "🏗️ [VIEWMODEL] Error uploading order to kitchen", exception)
                     _orderUploadStatus.value = com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState.Error(exception.message ?: "Unknown upload breakdown")

@@ -4,6 +4,8 @@ import android.util.Log
 import com.example.masterdashboard.login.utils.AppConstants
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.FoodItemData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.MenuCategoryData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.OrderDataModel
+import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.Dispatchers
@@ -11,6 +13,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.tasks.await
 
 class OrderTakingRepository {
 
@@ -153,5 +156,97 @@ class OrderTakingRepository {
             masterCategoriesListener.remove()
             activeListeners.forEach { it.remove() }
         }
+    }.flowOn(Dispatchers.IO)
+
+    /**
+     * Fetches a single order document to resume or add items to it.
+     */
+    suspend fun getExistingOrder(
+        managerId: String,
+        floorId: String,
+        tableId: String,
+        orderDocId: String
+    ): OrderDataModel? {
+        return try {
+            firestore.collection(AppConstants.COLLECTION_USERS)
+                .document(managerId)
+                .collection(AppConstants.COLLECTION_RES_FLOORS)
+                .document(floorId)
+                .collection(AppConstants.COLLECTION_TABLES)
+                .document(tableId)
+                .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                .document(orderDocId)
+                .get()
+                .await()
+                .toObject(OrderDataModel::class.java)
+        } catch (e: Exception) {
+            Log.e(TAG, "📦 [REPO] Error fetching existing order", e)
+            null
+        }
+    }
+
+    /**
+     * Pushes the KOT payload directly inside the EXACT existing table's sub-collection
+     * and updates its status to OCCUPIED atomically using a Write Batch.
+     */
+    fun sendOrderToFirebaseKitchen(
+        managerId: String?,
+        floorId: String?,
+        tableId: String?,
+        orderData: OrderDataModel,
+        existingOrderDocId: String? = null
+    ): Flow<ResourceUiState<Boolean>> = callbackFlow {
+        trySend(ResourceUiState.Loading)
+
+        if (managerId.isNullOrEmpty() || floorId.isNullOrEmpty() || tableId.isNullOrEmpty()) {
+            trySend(ResourceUiState.Error("Missing routing credentials: Cannot place order."))
+            close()
+            return@callbackFlow
+        }
+
+        val batch = firestore.batch()
+
+        // 1. Target the EXACT existing table document path
+        val tableRef = firestore.collection(AppConstants.COLLECTION_USERS)
+            .document(managerId)
+            .collection(AppConstants.COLLECTION_RES_FLOORS)
+            .document(floorId)
+            .collection(AppConstants.COLLECTION_TABLES)
+            .document(tableId)
+
+        // 2. Determine if we are updating an existing order or creating a new one
+        val orderRef = if (!existingOrderDocId.isNullOrEmpty()) {
+            tableRef.collection(AppConstants.COLLECTION_ACTIVE_ORDERS).document(existingOrderDocId)
+        } else {
+            tableRef.collection(AppConstants.COLLECTION_ACTIVE_ORDERS).document()
+        }
+
+        // Stage the order creation/update
+        if (!existingOrderDocId.isNullOrEmpty()) {
+            // For updates, we use update to merge fields. 
+            // Note: In a production app, you might want to use FieldValue.arrayUnion 
+            // for items if you aren't sending the full merged list from the ViewModel.
+            batch.set(orderRef, orderData, com.google.firebase.firestore.SetOptions.merge())
+        } else {
+            batch.set(orderRef, orderData)
+        }
+
+        // 3. Stage the status update on the existing table to lock it as occupied
+        batch.update(tableRef, "status", "OCCUPIED")
+
+        // Commit both operations together safely
+        batch.commit()
+            .addOnSuccessListener {
+                Log.i("Order_Flow_Debug", "📦 [REPO] Order saved/updated successfully for Table $tableId.")
+                trySend(ResourceUiState.Success(true))
+                close()
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Order_Flow_Debug", "📦 [REPO] Failed to write order to path", exception)
+                trySend(ResourceUiState.Error(exception.message ?: "Firestore batch execution failure"))
+                close(exception)
+            }
+
+        awaitClose { }
     }.flowOn(Dispatchers.IO)
 }

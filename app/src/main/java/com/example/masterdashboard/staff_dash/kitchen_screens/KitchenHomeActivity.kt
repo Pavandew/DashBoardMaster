@@ -18,11 +18,10 @@ import com.example.masterdashboard.staff_dash.profile.StaffProfileFragment
 class KitchenHomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityKitchenHomeBinding
-    private var currentSelectedItem = R.id.kitchen_dashboardFragment
+    private var currentSelectedItem = R.id.kitchen_orderFragment
 
     // Tags to keep track of main base fragments in supportFragmentManager
     private val tags = object {
-        val DASHBOARD = "dashboard"
         val ORDER = "order"
         val KITCHEN = "kitchen"
         val INVENTORY = "inventory"
@@ -48,7 +47,6 @@ class KitchenHomeActivity : AppCompatActivity() {
             }
 
             val targetTag = when (item.itemId) {
-                R.id.kitchen_dashboardFragment -> tags.DASHBOARD
                 R.id.kitchen_orderFragment -> tags.ORDER
                 R.id.kitchen_Fragment -> tags.KITCHEN
                 R.id.kitchen_inventoryFragment -> tags.INVENTORY
@@ -92,9 +90,9 @@ class KitchenHomeActivity : AppCompatActivity() {
                 if (backStackCount > 0) {
                     // 1. If there's a detailed screen open, pop it off and return to previous fragment safely
                     supportFragmentManager.popBackStack()
-                } else if (currentSelectedItem != R.id.kitchen_dashboardFragment) {
+                } else if (currentSelectedItem != R.id.kitchen_orderFragment) {
                     // 2. If no backstack exists but user isn't on the Home tab, route them back to the Home tab
-                    binding.kitchenBottomNavigation.selectedItemId = R.id.kitchen_dashboardFragment
+                    binding.kitchenBottomNavigation.selectedItemId = R.id.kitchen_orderFragment
                 } else {
                     // 3. Close the application gracefully
                     finish()
@@ -109,7 +107,6 @@ class KitchenHomeActivity : AppCompatActivity() {
      */
     private fun initializeNavigationFramework() {
         val fm = supportFragmentManager
-        val dashboard = fm.findFragmentByTag(tags.DASHBOARD) ?: KitchenDashboardFragment()
         val order = fm.findFragmentByTag(tags.ORDER) ?: KitchenOrderFragment()
         val kitchen = fm.findFragmentByTag(tags.KITCHEN) ?: KitchenPreparationFragment()
         val inventory = fm.findFragmentByTag(tags.INVENTORY) ?: KitchenInventoryFragment()
@@ -118,7 +115,6 @@ class KitchenHomeActivity : AppCompatActivity() {
         val transaction = fm.beginTransaction().setReorderingAllowed(true)
 
         // Add all tabs to layout container if not already existing
-        if (!dashboard.isAdded) transaction.add(R.id.kitchen_fragment_container, dashboard, tags.DASHBOARD)
         if (!order.isAdded) transaction.add(R.id.kitchen_fragment_container, order, tags.ORDER).hide(order)
         if (!kitchen.isAdded) transaction.add(R.id.kitchen_fragment_container, kitchen, tags.KITCHEN).hide(kitchen)
         if (!inventory.isAdded) transaction.add(R.id.kitchen_fragment_container, inventory, tags.INVENTORY).hide(inventory)
@@ -134,7 +130,7 @@ class KitchenHomeActivity : AppCompatActivity() {
         val fm = supportFragmentManager
         val transaction = fm.beginTransaction().setReorderingAllowed(true)
 
-        val allTags = listOf(tags.DASHBOARD, tags.ORDER, tags.KITCHEN, tags.INVENTORY, tags.PROFILE)
+        val allTags = listOf(tags.ORDER, tags.KITCHEN, tags.INVENTORY, tags.PROFILE)
 
         for (tag in allTags) {
             val fragment = fm.findFragmentByTag(tag)
