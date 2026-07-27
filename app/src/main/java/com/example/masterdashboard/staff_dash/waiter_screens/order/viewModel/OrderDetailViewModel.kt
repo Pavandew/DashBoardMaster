@@ -72,6 +72,7 @@ class OrderDetailViewModel(
                     Log.e(TAG, "🏗️ [VIEWMODEL] Error loading details: ${resource.message}")
                     _uiState.update { it.copy(isLoading = false, errorMessage = resource.message) }
                 }
+                ResourceUiState.Idle -> {}
             }
         }.launchIn(viewModelScope)
     }
@@ -112,6 +113,7 @@ class OrderDetailViewModel(
                 is ResourceUiState.Error -> {
                     _uiState.update { it.copy(isLoading = false, errorMessage = resource.message) }
                 }
+                ResourceUiState.Idle -> {}
             }
         }.launchIn(viewModelScope)
     }

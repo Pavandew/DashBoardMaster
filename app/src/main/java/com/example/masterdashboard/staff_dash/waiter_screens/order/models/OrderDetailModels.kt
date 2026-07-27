@@ -5,13 +5,15 @@ data class OrderExpandedItemData(
     val name: String = "",
     val quantity: Int = 0,
     val unitPrice: Int = 0,
-    val totalPrice: Int = 0
+    val totalPrice: Int = 0,
+    val orderedQuantity: Int = 0 // Existing quantity already sent to kitchen
 )
 
 data class OrderDetailExpansionUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val orderId: String = "",
+    val documentId: String = "",
     val floorId: String = "",
     val tableId: String = "",
     val tableName: String = "",
