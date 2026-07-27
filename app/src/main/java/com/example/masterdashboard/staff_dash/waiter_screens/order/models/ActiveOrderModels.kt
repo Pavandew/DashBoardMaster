@@ -1,16 +1,16 @@
 package com.example.masterdashboard.staff_dash.waiter_screens.order.models
 
 enum class ActiveOrderStatus {
-    PREPARING, READY, SERVED
+    PENDING, PREPARING, READY, SERVED, BILLING, PAID
 }
 
-// Data representation for individual active order cards
+// UI Presentation model for individual active order cards
 data class ActiveOrderCardData(
-    val orderId: String,
-    val tableName: String,
-    val totalItems: Int,
-    val orderTime: String,
-    val status: ActiveOrderStatus
+    val orderId: String = "",
+    val tableName: String = "",
+    val totalItems: Int = 0,
+    val orderTime: String = "",
+    val status: ActiveOrderStatus = ActiveOrderStatus.PREPARING
 )
 
 // Data representation for your reusable top filter chips

@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentViewCartDetailsBinding
 import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.ViewCartDetailAdapter
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
@@ -49,6 +50,13 @@ class ViewCartDetailsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Log.i(TAG, "📱 [FRAGMENT] ViewCartDetailsFragment Opened")
 
+        val userRole = sessionManager.getRole().lowercase().trim()
+        val isCashier = userRole == "billing" || userRole == "cashier"
+
+        if (isCashier) {
+            binding.btnSendToKitchen.text = "Proceed to Payment"
+        }
+
         // Informs the shared ViewModel that we are browsing the checkout state to protect variables
         viewModel.isViewingCart = true
 
@@ -61,6 +69,7 @@ class ViewCartDetailsFragment : Fragment() {
     override fun onStart() {
         super.onStart()
         (activity as? WaiterHomeActivity)?.hideBottomNavigation()
+        (activity as? CashierHomeActivity)?.hideBottomNavigation()
     }
 
     private fun setupToolbar() {
@@ -144,6 +153,9 @@ class ViewCartDetailsFragment : Fragment() {
                                 Log.i(TAG, "📱 [FRAGMENT] KOT successfully created. Navigating to Success layout screen.")
                                 Toast.makeText(context, "Order sent to kitchen!", Toast.LENGTH_SHORT).show()
 
+                                val userRole = sessionManager.getRole().lowercase().trim()
+                                val isCashier = userRole == "billing" || userRole == "cashier"
+
                                 val tableName = arguments?.getString("tableName") ?: "N/A"
                                 val tableId = arguments?.getString("tableId") ?: "N/A"
                                 val selectedCartItems = viewModel.originalFoodList.filter { it.currentQuantity > 0 }
@@ -157,6 +169,7 @@ class ViewCartDetailsFragment : Fragment() {
                                     putString("orderId", viewModel.lastOrderId)
                                     putInt("totalItems", totalCount)
                                     putDouble("totalPrice", grandTotal)
+                                    putBoolean("isCashier", isCashier)
                                 }
 
                                 val successFragment = OrderSuccessFragment().apply {
