@@ -86,16 +86,23 @@ class WaiterHomeActivity : AppCompatActivity() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { _, windowInsets ->
             val statusBars = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars())
             val navigationBars = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            val imeVisible = windowInsets.isVisible(WindowInsetsCompat.Type.ime())
 
             // 1. Pad only the top of the container to clear the status bar clock/battery
             binding.waiterFragmentContainer.updatePadding(top = statusBars.top)
 
-            // 2. Adjust the margin of the card layout so it floats perfectly above the system navigation pill/buttons
+            // 2. Pad BOTTOM of container to clear navigation bar ONLY IF bottom nav is hidden
+            val bottomPadding = if (isBottomNavVisible) 0 else navigationBars.bottom
+            binding.waiterFragmentContainer.updatePadding(bottom = bottomPadding)
+
+            // 3. Adjust the margin of the card layout so it floats perfectly above the system navigation pill/buttons
             val cardParams = binding.bottomNavContainer.layoutParams as android.view.ViewGroup.MarginLayoutParams
             val baseMarginInPx = (8 * resources.displayMetrics.density).toInt()
-
             cardParams.bottomMargin = baseMarginInPx + navigationBars.bottom
             binding.bottomNavContainer.layoutParams = cardParams
+
+            // Automatically hide bottom navigation when keyboard is open
+            binding.bottomNavContainer.visibility = if (imeVisible || !isBottomNavVisible) View.GONE else View.VISIBLE
 
             windowInsets
         }

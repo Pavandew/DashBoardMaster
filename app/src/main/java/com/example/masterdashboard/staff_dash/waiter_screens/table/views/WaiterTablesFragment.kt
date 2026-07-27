@@ -20,9 +20,17 @@ import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.Floor
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.TableCardsAdapter
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableCardData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
+import androidx.fragment.app.activityViewModels
 import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.WaiterTableRepository
-import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
+import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderTakingRepository
+import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.WaiterTableViewModel
+import com.example.masterdashboard.staff_dash.waiter_screens.table.views.OrderTakingFragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import android.widget.EditText
+import com.google.android.material.button.MaterialButton
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableStatus
+import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -35,8 +43,14 @@ class WaiterTablesFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val sessionManager by lazy { SessionManager(requireContext()) }
+    
     private val viewModel: WaiterTableViewModel by viewModels {
         WaiterTableViewModel.TableViewModelFactory(WaiterTableRepository())
+    }
+
+    // Shared ViewModel to store customer info before navigation
+    private val orderTakingViewModel: OrderTakingViewModel by activityViewModels {
+        OrderTakingViewModel.OrderViewModelFactory(OrderTakingRepository())
     }
 
     private lateinit var tableAdapter: TableCardsAdapter
@@ -153,6 +167,7 @@ class WaiterTablesFragment : Fragment() {
                                 binding.rvTableCards.visibility = View.VISIBLE
                                 Toast.makeText(context, resource.message, Toast.LENGTH_LONG).show()
                             }
+                            else -> {}
                         }
                     }
                 }
@@ -186,6 +201,43 @@ class WaiterTablesFragment : Fragment() {
     }
 
     private fun navigateToOrderTaking(table: TableCardData) {
+        if (table.status == TableStatus.FREE) {
+            showCustomerInfoDialog(table)
+        } else {
+            proceedToOrderTaking(table)
+        }
+    }
+
+    private fun showCustomerInfoDialog(table: TableCardData) {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_customer_info, null)
+        val etName = dialogView.findViewById<EditText>(R.id.etDialogCustomerName)
+        val etPhone = dialogView.findViewById<EditText>(R.id.etDialogPhoneNumber)
+        val btnSkip = dialogView.findViewById<MaterialButton>(R.id.btnDialogSkip)
+        val btnConfirm = dialogView.findViewById<MaterialButton>(R.id.btnDialogConfirm)
+
+        val dialog = MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialogTheme)
+            .setView(dialogView)
+            .setCancelable(true)
+            .create()
+
+        btnSkip.setOnClickListener {
+            orderTakingViewModel.setCustomerDetails("", "", "DINE_IN")
+            dialog.dismiss()
+            proceedToOrderTaking(table)
+        }
+
+        btnConfirm.setOnClickListener {
+            val name = etName.text.toString().trim()
+            val phone = etPhone.text.toString().trim()
+            orderTakingViewModel.setCustomerDetails(name, phone, "DINE_IN")
+            dialog.dismiss()
+            proceedToOrderTaking(table)
+        }
+
+        dialog.show()
+    }
+
+    private fun proceedToOrderTaking(table: TableCardData) {
         val orderTakingFragment = OrderTakingFragment().apply {
             arguments = Bundle().apply {
                 putString("tableId", table.tableId)

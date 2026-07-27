@@ -91,9 +91,10 @@ class WaiterTableViewModel(
                         is ResourceUiState.Error -> {
                             Log.e(TAG, "Tables Error state intercepted: ${resourceUiState.message}")
                         }
-                        is ResourceUiState.Loading -> {
+                        ResourceUiState.Loading -> {
                             Log.d(TAG, "Tables stream state updating: [Loading]")
                         }
+                        else -> {}
                     }
                     _tableState.value = resourceUiState
                 }

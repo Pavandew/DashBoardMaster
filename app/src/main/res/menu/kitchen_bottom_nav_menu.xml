@@ -2,12 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/kitchen_dashboardFragment"
-        android:title="@string/nav_dashboard"
-        android:icon="@drawable/ic_dashboard_24dp"
-        />
-
-    <item
         android:id="@+id/kitchen_orderFragment"
         android:title="Orders"
         android:icon="@drawable/ic_order_approve_24dp"
