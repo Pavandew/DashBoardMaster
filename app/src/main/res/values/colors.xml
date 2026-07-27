@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="light_golden">#FFF8DC</color>
+    <color name="light_golden_border">#F0E6B8</color>
     <color name="black">#FF000000</color>
     <color name="de_selected">#424040</color>
     <color name="white">#FFFFFFFF</color>

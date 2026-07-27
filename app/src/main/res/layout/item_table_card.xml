@@ -7,7 +7,7 @@
     android:layout_height="wrap_content"
     android:layout_margin="@dimen/order_card_margin_vertical"
     app:cardCornerRadius="@dimen/corner_radius_medium"
-    app:cardElevation="0dp"
+    app:cardElevation="6dp"
     app:cardBackgroundColor="@color/white">
 
     <LinearLayout
@@ -31,12 +31,12 @@
                 app:tint="@color/status_free" />
 
             <TextView
-                android:id="@+id/tvTableId"
+                android:id="@+id/tvTableName"
                 style="@style/TextAppearance.MyApp.TableId"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/margin_tiny"
-                tools:text="T-01" />
+                android:text="T-01" />
         </LinearLayout>
 
         <TextView
@@ -45,7 +45,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/margin_small"
-            tools:text="4 Seats" />
+            android:text="4 Seats" />
 
         <TextView
             android:id="@+id/tvTableStatus"
@@ -56,7 +56,7 @@
             android:paddingHorizontal="@dimen/padding_small"
             android:paddingVertical="@dimen/margin_tiny"
             tools:background="@drawable/bg_status_free"
-            tools:text="Free"
+            android:text="Free"
             tools:textColor="@color/status_free" />
 
         <TextView
@@ -65,8 +65,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/margin_medium"
-            tools:text="₹ 650"
-            tools:visibility="visible" />
+            android:text="₹ 650"
+            tools:visibility="gone" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

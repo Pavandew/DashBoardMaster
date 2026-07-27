@@ -22,7 +22,7 @@
         android:foreground="?attr/selectableItemBackground">
 
         <TextView
-            android:id="@+id/tvOrderTableId"
+            android:id="@+id/tvOrderTableName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="T-02"
@@ -41,7 +41,7 @@
             android:textColor="@color/order_ticket_text"
             android:textSize="@dimen/text_size_caption"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvOrderTableId" />
+            app:layout_constraintTop_toBottomOf="@id/tvOrderTableName" />
 
         <TextView
             android:id="@+id/tvOrderStatusTag"

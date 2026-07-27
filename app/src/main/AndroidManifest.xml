@@ -84,9 +84,9 @@
             android:name=".login.views.LoginActivity"
             android:exported="false" />
         <activity
-            android:name=".staff_dash.billing_screens.BillingHomeActivity"
+            android:name=".staff_dash.billing_screens.CashierHomeActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustPan" />
         <activity
             android:name=".staff_dash.kitchen_screens.KitchenHomeActivity"
             android:exported="false"

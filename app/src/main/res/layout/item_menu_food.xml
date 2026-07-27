@@ -1,39 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://tools.android.com/tools"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cvMenuFoodCardRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="4dp"
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
     app:cardBackgroundColor="@color/white"
-    app:cardCornerRadius="@dimen/corner_radius_medium"
-    app:cardElevation="0dp">
+    app:cardCornerRadius="14dp"
+    app:cardElevation="0dp"
+    app:strokeColor="#F3F4F6"
+    app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="@dimen/order_card_margin_vertical"
-        android:paddingBottom="@dimen/order_card_margin_vertical"
-        android:paddingEnd="@dimen/margin_medium"
-        android:paddingStart="@dimen/margin_medium">
+        android:padding="8dp">
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/ivFoodImg"
-            android:layout_width="@dimen/food_img_size"
-            android:layout_height="@dimen/food_img_size"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
             android:scaleType="centerCrop"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/vBottomDivider"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.MediumComponent"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium"
             tools:src="@android:drawable/ic_menu_report_image" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/table_card_padding"
-            android:layout_marginEnd="@dimen/margin_medium"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
             android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/vBottomDivider"
             app:layout_constraintEnd_toStartOf="@+id/clQuantityControl"
             app:layout_constraintStart_toEndOf="@id/ivFoodImg"
             app:layout_constraintTop_toTopOf="parent">
@@ -42,86 +48,106 @@
                 android:id="@+id/tvFoodName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Paneer Tikka"
-                android:textColor="@color/table_id_text"
-                android:textSize="@dimen/text_size_title"
-                android:textStyle="bold" />
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#111827"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="Paneer Tikka" />
 
             <TextView
                 android:id="@+id/tvFoodPrice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_tiny"
-                android:text="₹ 199"
-                android:textColor="@color/chip_unselected_text"
-                android:textSize="@dimen/text_size_body" />
+                android:layout_marginTop="2dp"
+                android:textColor="#3554FF"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                tools:text="₹199" />
+
         </LinearLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/clQuantityControl"
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
+            android:layout_height="44dp"
             android:background="@drawable/bg_quantity_stepper"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:paddingHorizontal="6dp"
+            app:layout_constraintBottom_toTopOf="@id/vBottomDivider"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <ImageView
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnOnlyAdd"
-                android:layout_width="45dp"
-                android:layout_height="45dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="8dp"
-                android:src="@drawable/plus_icon"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:minWidth="72dp"
+                android:padding="0dp"
+                android:text="ADD +"
+                android:textColor="#3554FF"
+                android:textSize="14sp"
+                android:textStyle="bold"
                 android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/chip_selected" />
-
-            <ImageView
-                android:id="@+id/btnMinus"
-                android:layout_width="@dimen/stepper_btn_size"
-                android:layout_height="match_parent"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="10dp"
-                android:src="@drawable/minus_icon"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/gray_text" />
-
-            <TextView
-                android:id="@+id/tvQuantityText"
-                android:layout_width="40dp"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="1"
-                android:textColor="@color/table_id_text"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toEndOf="@id/btnMinus"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <ImageView
-                android:id="@+id/btnPlus"
-                android:layout_width="@dimen/stepper_btn_size"
-                android:layout_height="match_parent"
+                android:id="@+id/btnMinus"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:focusable="true"
-                android:src="@drawable/plus_icon"
+                android:padding="4dp"
+                android:src="@drawable/ic_remove_24dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="#374151" />
+
+            <TextView
+                android:id="@+id/tvQuantityText"
+                android:layout_width="34dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="#111827"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/btnMinus"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="1" />
+
+            <ImageView
+                android:id="@+id/btnPlus"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp"
+                android:src="@drawable/ic_add_circle_24dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@id/tvQuantityText"
                 app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/gray_text" />
+                app:tint="#3554FF" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <View
+            android:id="@+id/vBottomDivider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="12dp"
+            android:background="#F3F4F6"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/ivFoodImg" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
-</androidx.cardview.widget.CardView>
+
+</com.google.android.material.card.MaterialCardView>

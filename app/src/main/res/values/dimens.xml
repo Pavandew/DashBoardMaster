@@ -72,7 +72,7 @@
     <dimen name="text_size_large">18sp</dimen>
 
     <!-- Table Dash Dimensions -->
-    <dimen name="search_bar_height">50dp</dimen>
+    <dimen name="search_bar_height">45dp</dimen>
     <dimen name="margin_medium_large">18dp</dimen>
     <dimen name="table_card_padding">14dp</dimen>
     <dimen name="table_icon_size">16dp</dimen>
@@ -82,7 +82,7 @@
     <dimen name="food_img_size">70dp</dimen>
     <dimen name="stepper_height">45dp</dimen>
     <dimen name="stepper_btn_size">45dp</dimen>
-    <dimen name="margin_xl">30dp</dimen>
+    <dimen name="margin_xl">15dp</dimen>
     <dimen name="button_height_large">54dp</dimen>
 
     <!-- Success Screen Dimensions -->

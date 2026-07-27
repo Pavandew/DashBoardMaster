@@ -256,9 +256,50 @@
         android:textColor="@color/white"
         android:textSize="@dimen/text_size_title"
         android:textStyle="bold"
+        android:visibility="gone"
         app:cornerRadius="@dimen/order_card_radius"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/llAfterServedActions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/margin_medium"
+        android:layout_marginBottom="@dimen/margin_xl"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAddMoreItems"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/button_height_large"
+            android:layout_weight="1"
+            android:layout_marginEnd="@dimen/margin_small"
+            android:text="Add Items"
+            android:textAllCaps="false"
+            android:textColor="@color/chip_selected"
+            app:strokeColor="@color/chip_selected"
+            app:strokeWidth="1dp"
+            app:cornerRadius="@dimen/order_card_radius"
+            android:textStyle="bold" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGenerateBill"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/button_height_large"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/margin_small"
+            android:backgroundTint="@color/chip_selected"
+            android:text="Generate Bill"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            app:cornerRadius="@dimen/order_card_radius"
+            android:textStyle="bold" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
