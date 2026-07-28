@@ -47,6 +47,7 @@ object AppConstants {
     const val COLLECTION_RES_FLOORS = "res_floors"
     const val COLLECTION_TABLES = "floor_tables"
     const val COLLECTION_ACTIVE_ORDERS = "active_orders"
+    const val COLLECTION_COMPLETED_ORDERS = "completed_orders"
 
     // UI Strings
     const val TITLE_MENU_MANAGEMENT = "Menu Management"

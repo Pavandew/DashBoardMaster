@@ -130,6 +130,8 @@ class ActiveOrdersRepository {
                             "PREPARING" -> ActiveOrderStatus.PREPARING  // Maps to PREPARING
                             "READY" -> ActiveOrderStatus.READY          // Maps to READY
                             "SERVED" -> ActiveOrderStatus.SERVED        // Maps to SERVED
+                            "BILLING" -> ActiveOrderStatus.BILLING      // Maps to BILLING
+                            "PAID" -> ActiveOrderStatus.PAID            // Maps to PAID
                             else -> ActiveOrderStatus.PENDING           // Safe fallback
                         }
 
