@@ -11,6 +11,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.activityViewModels
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentOrderSuccesBinding
+import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
 import java.text.SimpleDateFormat
@@ -42,6 +43,13 @@ class OrderSuccessFragment : Fragment() {
         Log.d(TAG, "onViewCreated: Displaying success screen.")
 
         (activity as? WaiterHomeActivity)?.hideBottomNavigation()
+        (activity as? CashierHomeActivity)?.hideBottomNavigation()
+
+        val isCashier = arguments?.getBoolean("isCashier") ?: false
+        if (isCashier) {
+            binding.btnViewActiveOrders.text = "View All Bills"
+            binding.btnBackToTables.text = "New Order"
+        }
 
         // NEW: Clear the cart and reset the upload status now that we are safely on the success screen.
         // This prevents the cart's "auto-pop" logic or "Sending..." states from interfering with navigation.
@@ -90,6 +98,7 @@ class OrderSuccessFragment : Fragment() {
             parentFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
             // 3. Open Orders through the activity to handle bottom nav and currentTag correctly
             (activity as? WaiterHomeActivity)?.openOrders()
+            (activity as? CashierHomeActivity)?.openBills()
         }
 
         binding.btnBackToTables.setOnClickListener {

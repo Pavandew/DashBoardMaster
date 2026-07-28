@@ -12,14 +12,19 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentOrderTakingBinding
 import com.example.masterdashboard.login.utils.SessionManager
 import com.example.masterdashboard.master_dash.utils.SearchQueryManager
+import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.views.ItemCustomizationDetailFragment
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.MenuItemDetailData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FloorChipsAdapter
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FoodMenuAdapter
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.FoodItemData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.MenuItemType
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableStatus
 import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderTakingRepository
@@ -29,26 +34,27 @@ import kotlinx.coroutines.launch
 class OrderTakingFragment : Fragment() {
 
     companion object {
-        // Tag unified across order flow components for clear Logcat tracking
         private const val TAG = "Order_Flow_Debug"
     }
 
     private var _binding: FragmentOrderTakingBinding? = null
     private val binding get() = _binding!!
 
-    // Lazy initialization of the session cache preference utility
     private val sessionManager by lazy { SessionManager(requireContext()) }
 
-    // Scoped to activityViewModels to seamlessly share cart modifications across workflow screens
     private val viewModel: OrderTakingViewModel by activityViewModels {
         OrderTakingViewModel.OrderViewModelFactory(OrderTakingRepository())
     }
 
     private lateinit var categoryAdapter: FloorChipsAdapter
+    private lateinit var dietAdapter: FloorChipsAdapter
     private lateinit var foodAdapter: FoodMenuAdapter
 
     private var searchManager: SearchQueryManager<FoodItemData>? = null
     private val mutableFoodSearchList = mutableListOf<FoodItemData>()
+
+    // Flag to prevent recursive scroll calls during programmatic jumps
+    private var isProgrammaticScroll = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -64,12 +70,13 @@ class OrderTakingFragment : Fragment() {
 
         // Retrieve table context from arguments
         val tableId = arguments?.getString("tableId") ?: ""
+        val tableName = arguments?.getString("tableName") ?: "Takeaway"
         val status = arguments?.getString("status") ?: "FREE"
         val existingDocId = arguments?.getString("existingOrderDocId")
         val existingOrderId = arguments?.getString("existingOrderId")
 
-        // Initialize or resume the order session
-        viewModel.startOrderSession(tableId, status, existingDocId, existingOrderId)
+        // Initialize or resume the order session with the Table Name included
+        viewModel.startOrderSession(tableId, tableName, status, existingDocId, existingOrderId)
 
         // Retrieve the restaurant context key token from the local session cache
         val managerId = sessionManager.getUid()
@@ -96,6 +103,7 @@ class OrderTakingFragment : Fragment() {
     override fun onStart() {
         super.onStart()
         (activity as? WaiterHomeActivity)?.hideBottomNavigation()
+        (activity as? CashierHomeActivity)?.hideBottomNavigation()
     }
 
     private fun setupToolbarNavigation() {
@@ -114,11 +122,14 @@ class OrderTakingFragment : Fragment() {
             val floorId = arguments?.getString("floorId") ?: ""
             val status = arguments?.getString("status") ?: "FREE"
 
+            val isCashier = arguments?.getBoolean("isCashier") ?: false
+
             val bundle = Bundle().apply {
                 putString("tableId", tableId)
                 putString("tableName", tableName)
                 putString("floorId", floorId)
                 putString("status", status)
+                putBoolean("isCashier", isCashier) // Forward the flag
             }
 
             val cartDetailFragment = ViewCartDetailsFragment().apply {
@@ -170,20 +181,91 @@ class OrderTakingFragment : Fragment() {
         categoryAdapter = FloorChipsAdapter { selectedCategory ->
             // Informs the ViewModel to apply the selected category filter to the visible list
             viewModel.selectCategory(selectedCategory.id)
+            
+            // Programmatically scroll the menu when a chip is clicked in "All Items" mode
+            if (viewModel.uiState.value.activeFilterId == "ALL_ITEMS") {
+                scrollToCategorySection(selectedCategory.id)
+            }
         }
         binding.rvMenuCategories.apply {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
             adapter = categoryAdapter
+            visibility = View.VISIBLE
+        }
+
+        dietAdapter = FloorChipsAdapter { selectedDiet ->
+            viewModel.selectDietFilter(selectedDiet.id)
+        }
+        binding.rvDietFilters.apply {
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+            adapter = dietAdapter
+            visibility = View.VISIBLE
         }
 
         foodAdapter = FoodMenuAdapter(
             onQuantityIncreased = { viewModel.updateItemQuantity(it.id, true) },
-            onQuantityDecreased = { viewModel.updateItemQuantity(it.id, false) }
+            onQuantityDecreased = { viewModel.updateItemQuantity(it.id, false) },
+            onItemClick = { foodItem ->
+                navigateToItemCustomization(foodItem)
+            }
         )
         binding.rvMenuItems.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = foodAdapter
             setHasFixedSize(true)
+            
+            // Add scroll listener for auto-selecting chips based on visible section
+            addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    // Only sync chips if the user is scrolling manually and we are in "All Items" mode
+                    // Also skip if searching since chips are hidden
+                    if (isProgrammaticScroll || dy == 0 || binding.etSearchItem.text.isNotEmpty()) return
+                    
+                    val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                    val firstVisiblePos = layoutManager.findFirstVisibleItemPosition()
+                    
+                    if (firstVisiblePos == 0) {
+                        // At the very top, select "All" chip
+                        viewModel.syncCategorySelectionFromScroll("ALL_ITEMS")
+                        return
+                    }
+
+                    if (firstVisiblePos != RecyclerView.NO_POSITION && foodAdapter.currentList.isNotEmpty()) {
+                        val item = foodAdapter.currentList.getOrNull(firstVisiblePos)
+                        val categoryId = when (item) {
+                            is MenuItemType.Header -> item.id
+                            is MenuItemType.Food -> item.food.categoryId
+                            null -> null
+                        }
+                        
+                        categoryId?.let { id ->
+                            // Only update visual chip highlights, don't change the filter!
+                            viewModel.syncCategorySelectionFromScroll(id)
+                        }
+                    }
+                }
+
+                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                    if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                        isProgrammaticScroll = false
+                    }
+                }
+            })
+        }
+    }
+
+    private fun scrollToCategorySection(categoryId: String) {
+        if (categoryId == "ALL_ITEMS") {
+            binding.rvMenuItems.smoothScrollToPosition(0)
+            return
+        }
+        
+        val position = foodAdapter.currentList.indexOfFirst { 
+            it is MenuItemType.Header && it.id == categoryId
+        }
+        if (position != -1) {
+            isProgrammaticScroll = true
+            (binding.rvMenuItems.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, 0)
         }
     }
 
@@ -207,18 +289,33 @@ class OrderTakingFragment : Fragment() {
                     val categoryChips = state.categories.map {
                         TableFilterData(id = it.id, name = it.name, isSelected = it.isSelected)
                     }
+                    
+                    Log.d(TAG, "📱 [FRAGMENT] Submitting ${categoryChips.size} chips to adapter")
                     categoryAdapter.submitList(categoryChips)
 
-                    // Refresh food cards inside the visible layout menu list
-                    Log.i(TAG, "📱 [FRAGMENT] Displaying ${state.menuItems.size} food items matching current filter layout.")
-                    foodAdapter.submitList(state.menuItems)
+                    val dietChips = state.dietFilters.map {
+                        TableFilterData(id = it.id, name = it.name, isSelected = it.isSelected)
+                    }
+                    dietAdapter.submitList(dietChips)
 
-                    // FIX: Sync search engine snapshots directly from the master originalFoodList container
-                    // This guarantees items selected from hidden categories aren't wiped out during search text parsing
+                    // Update the master list used for searching
                     mutableFoodSearchList.clear()
                     mutableFoodSearchList.addAll(viewModel.originalFoodList)
 
-                    // Update layout cart footer details visibility conditions
+                    // Update the adapter list
+                    val query = binding.etSearchItem.text.toString().trim()
+                    if (query.isEmpty()) {
+                        Log.i(TAG, "📱 [FRAGMENT] Displaying ${state.displayItems.size} items with headers (Filter: ${state.activeFilterId})")
+                        foodAdapter.submitList(state.displayItems)
+                    } else {
+                        // REFRESH SEARCH RESULTS: Ensure quantity updates (stepper) show up while searching
+                        val filteredList = viewModel.originalFoodList.filter { 
+                            it.name.contains(query, ignoreCase = true) 
+                        }.map { MenuItemType.Food(it) }
+                        Log.d(TAG, "📱 [FRAGMENT] Refreshing search results for '$query' (${filteredList.size} items)")
+                        foodAdapter.submitList(filteredList)
+                    }
+
                     binding.tvCartCountLabel.text = getString(R.string.view_cart_format, state.cartSummary.totalItems)
                     binding.tvCartTotalPrice.text = getString(R.string.currency_symbol) + " ${state.cartSummary.totalPrice}"
                     binding.btnViewCart.visibility = if (state.cartSummary.totalItems > 0) View.VISIBLE else View.GONE
@@ -232,12 +329,46 @@ class OrderTakingFragment : Fragment() {
             searchEditText = binding.etSearchItem,
             originalList = mutableFoodSearchList,
             onResultFiltered = { filteredList ->
-                foodAdapter.submitList(filteredList)
+                val query = binding.etSearchItem.text.toString().trim()
+                val isSearching = query.isNotEmpty()
+
+                // 1. Hide/Show Filter Chips during search
+                binding.rvDietFilters.visibility = if (isSearching) View.GONE else View.VISIBLE
+                binding.rvMenuCategories.visibility = if (isSearching) View.GONE else View.VISIBLE
+
+                // 2. Submit items to adapter
+                if (isSearching) {
+                    // Show a flat list of results without headers during search
+                    val displayList = filteredList.map { MenuItemType.Food(it) }
+                    foodAdapter.submitList(displayList)
+                } else {
+                    // Restore the sectioned list from ViewModel state when search is cleared
+                    foodAdapter.submitList(viewModel.uiState.value.displayItems)
+                }
             },
             filterRule = { foodItem, query ->
                 foodItem.name.contains(query, ignoreCase = true)
             }
         )
+    }
+
+    private fun navigateToItemCustomization(foodItem: FoodItemData) {
+        // PREVENT SESSION RESET: Tell ViewModel we are just navigating, so it doesn't clear the cart
+        viewModel.isViewingCart = true
+
+        val menuItemDetail = MenuItemDetailData(
+            itemId = foodItem.id,
+            itemName = foodItem.name,
+            basePrice = foodItem.price.toDouble(),
+            imageUrl = foodItem.imageUrl
+        )
+
+        val customizationFragment = ItemCustomizationDetailFragment.newInstance(menuItemDetail)
+
+        parentFragmentManager.beginTransaction()
+            .replace(this@OrderTakingFragment.id, customizationFragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     override fun onDestroyView() {

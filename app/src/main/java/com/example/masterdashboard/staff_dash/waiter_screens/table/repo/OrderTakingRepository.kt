@@ -98,6 +98,7 @@ class OrderTakingRepository {
             // Step B: Loop through every category to open up child menu_items listeners
             categoryDocs.forEach { catDoc ->
                 val categoryId = catDoc.id
+                val categoryName = catDoc.getString("menuCategoryName") ?: "Unknown"
 
                 // Explicit nested target path: menu_categories/{categoryId}/menu_items
                 val itemsRef = categoriesRef.document(categoryId).collection(AppConstants.COLLECTION_FOOD_ITEMS)
@@ -128,9 +129,18 @@ class OrderTakingRepository {
                             }
 
                             val imageUrl = doc.getString("imageUrl") ?: ""
+                            val isVeg = doc.getBoolean("isVeg") ?: true
 
                             singleCategoryFoodList.add(
-                                FoodItemData(id = id, name = name, price = price, imageUrl = imageUrl, categoryId = categoryId)
+                                FoodItemData(
+                                    id = id,
+                                    name = name,
+                                    price = price,
+                                    imageUrl = imageUrl,
+                                    categoryId = categoryId,
+                                    categoryName = categoryName,
+                                    isVeg = isVeg
+                                )
                             )
                         } catch (e: Exception) {
                             Log.e(TAG, "📦 [REPO] Failure parsing nested item object doc: ${doc.id}", e)
