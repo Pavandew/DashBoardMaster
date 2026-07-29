@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/cashier_billsFragment"
+        android:title="Bills"
+        android:icon="@drawable/ic_table_24dp"
+        />
+    <item
+        android:id="@+id/cashier_orderFragment"
+        android:title="Order"
+        android:icon="@drawable/ic_logs_24dp"
+        />
+
+    <item
+        android:id="@+id/cashier_logFragment"
+        android:title="Alert"
+        android:icon="@drawable/ic_notifications_24dp"
+        />
+
+    <item
+        android:id="@+id/cashier_settingFragment"
+        android:title="Profile"
+        android:icon="@drawable/ic_person_24dp"
+        />
+
+</menu>
