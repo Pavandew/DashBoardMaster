@@ -1,19 +1,20 @@
-package com.example.masterdashboard.staff_dash.kitchen_screens.views
+package com.example.masterdashboard.staff_dash.billing_screens.views
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import com.example.masterdashboard.R
 
-class KitchenDashboardFragment : Fragment() {
+class CashierDashboardFragment : Fragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_kitchen_dashboard, container, false)
+        return inflater.inflate(R.layout.fragment_cashier_dashboard, container, false)
     }
+
 }
