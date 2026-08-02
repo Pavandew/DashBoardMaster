@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- The ID action_refresh is created here -->
+    <item
+        android:id="@+id/action_refresh"
+        android:icon="@drawable/ic_refresh_24dp"
+        android:title="Refresh"
+        app:showAsAction="ifRoom" />
+
+</menu>
