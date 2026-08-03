@@ -1,7 +1,7 @@
 package com.example.masterdashboard.staff_dash.waiter_screens.table.models
 
 data class OrderUiState(
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true, // Default to true so loader shows immediately
     val errorMessage: String? = null,
     val categories: List<MenuCategoryData> = emptyList(),
     val dietFilters: List<MenuCategoryData> = emptyList(), // Reusing MenuCategoryData for Diet Chips

@@ -99,7 +99,6 @@
             android:id="@+id/toolbar_imgNotification"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@drawable/ic_cart_24dp"
             android:visibility="visible"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
