@@ -188,3 +188,5 @@ class AddStaffFormAdapter(
     class PersonalViewHolder(val binding: ItemFormPersonalBinding) : RecyclerView.ViewHolder(binding.root)
     class WorkViewHolder(val binding: ItemFormWorkBinding) : RecyclerView.ViewHolder(binding.root)
 }
+
+

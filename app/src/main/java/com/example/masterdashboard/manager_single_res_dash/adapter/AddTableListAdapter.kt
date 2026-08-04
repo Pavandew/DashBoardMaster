@@ -95,3 +95,4 @@ class TableDiffCallback : DiffUtil.ItemCallback<TableData>() {
     override fun areContentsTheSame(oldItem: TableData, newItem: TableData): Boolean =
         oldItem == newItem
 }
+
