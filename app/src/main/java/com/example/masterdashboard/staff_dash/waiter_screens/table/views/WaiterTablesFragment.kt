@@ -25,7 +25,6 @@ import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.WaiterTa
 import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderTakingRepository
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.WaiterTableViewModel
-import com.example.masterdashboard.staff_dash.waiter_screens.table.views.OrderTakingFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.widget.EditText
 import com.google.android.material.button.MaterialButton
@@ -188,7 +187,7 @@ class WaiterTablesFragment : Fragment() {
     private fun setupSearchEngine() {
         searchManager?.removeListener()
         searchManager = SearchQueryManager(
-            searchEditText = binding.etSearchTable,
+            searchEditText = binding.searchBar.etSearchOrder,
             originalList = currentSearchList,
             onResultFiltered = { filteredList ->
                 Log.d(TAG, "📱 [SEARCH MANAGER] Filter constraint matched ${filteredList.size} matching table item results.")
@@ -238,7 +237,10 @@ class WaiterTablesFragment : Fragment() {
     }
 
     private fun proceedToOrderTaking(table: TableCardData) {
-        val orderTakingFragment = OrderTakingFragment().apply {
+        // HIDE IMMEDIATELY to prevent flicker during fragment transition
+        (activity as? WaiterHomeActivity)?.hideBottomNavigation()
+
+        val orderTakingFragment = WaiterOrderTakingFragment().apply {
             arguments = Bundle().apply {
                 putString("tableId", table.tableId)
                 putString("tableName", table.tableName)
@@ -248,8 +250,8 @@ class WaiterTablesFragment : Fragment() {
             }
         }
         parentFragmentManager.beginTransaction().apply {
-            replace(this@WaiterTablesFragment.id, orderTakingFragment, "OrderTakingFragment")
-            addToBackStack("OrderTakingFragment")
+            replace(this@WaiterTablesFragment.id, orderTakingFragment, "WaiterOrderTakingFragment")
+            addToBackStack("WaiterOrderTakingFragment")
             commit()
         }
     }

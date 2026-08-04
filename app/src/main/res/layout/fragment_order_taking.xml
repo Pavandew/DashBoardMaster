@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@color/white"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".staff_dash.waiter_screens.table.views.OrderTakingFragment">
+    tools:context=".staff_dash.waiter_screens.table.views.BaseOrderTakingFragment">
 
     <include
         android:id="@+id/order_taking_toolbar"
@@ -14,35 +14,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <LinearLayout
-        android:id="@+id/llSearchBar"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/search_bar_height"
-        android:layout_marginHorizontal="@dimen/margin_large"
-        android:layout_marginTop="4dp"
-        android:background="@drawable/bg_search_bar"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="@dimen/padding_medium"
-        app:layout_constraintTop_toBottomOf="@id/order_taking_toolbar">
-
-        <ImageView
-            android:layout_width="@dimen/icon_size_medium"
-            android:layout_height="@dimen/icon_size_medium"
-            android:src="@android:drawable/ic_menu_search"
-            app:tint="@color/search_bar_hint" />
-
-        <EditText
-            android:id="@+id/etSearchItem"
-            style="@style/TextAppearance.MyApp.SearchInput"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginStart="@dimen/margin_medium"
-            android:background="@null"
-            android:hint="Search item..."
-            android:inputType="text"
-            android:textColorHint="@color/search_bar_hint" />
-    </LinearLayout>
+    <include
+        android:id="@+id/searchBar"
+        layout="@layout/layout_staff_search_bar"
+        android:layout_width="0dp"
+        android:layout_height="54dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="12dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/order_taking_toolbar" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvDietFilters"
@@ -53,7 +34,7 @@
         android:orientation="horizontal"
         android:paddingHorizontal="@dimen/padding_medium"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintTop_toBottomOf="@id/llSearchBar"
+        app:layout_constraintTop_toBottomOf="@id/searchBar"
         tools:listitem="@layout/item_card_chips" />
 
     <androidx.recyclerview.widget.RecyclerView

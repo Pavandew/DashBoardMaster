@@ -11,22 +11,16 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentOrderTakingBinding
 import com.example.masterdashboard.login.utils.SessionManager
 import com.example.masterdashboard.master_dash.utils.SearchQueryManager
-import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
-import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
-import com.example.masterdashboard.staff_dash.waiter_screens.views.ItemCustomizationDetailFragment
+import com.example.masterdashboard.staff_dash.waiter_screens.table.views.ItemCustomizationBottomSheet
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.MenuItemDetailData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FloorChipsAdapter
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FoodMenuAdapter
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.FoodItemData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.MenuItemType
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
-import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableStatus
 import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderTakingRepository
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
 import kotlinx.coroutines.launch
@@ -127,7 +121,7 @@ abstract class BaseOrderTakingFragment : Fragment() {
     }
 
     private fun setupSearchEngine() {
-        searchManager = SearchQueryManager(binding.etSearchItem, mutableFoodSearchList, { filtered ->
+        searchManager = SearchQueryManager(binding.searchBar.etSearchOrder, mutableFoodSearchList, { filtered ->
             foodAdapter.submitList(filtered.map { MenuItemType.Food(it) })
         }, { item, query -> item.name.contains(query, ignoreCase = true) })
     }
@@ -140,9 +134,7 @@ abstract class BaseOrderTakingFragment : Fragment() {
             basePrice = foodItem.price.toDouble(),
             imageUrl = foodItem.imageUrl
         )
-        parentFragmentManager.beginTransaction()
-            .replace(this.id, ItemCustomizationDetailFragment.newInstance(menuItemDetail))
-            .addToBackStack(null).commit()
+        ItemCustomizationBottomSheet.newInstance(menuItemDetail).show(parentFragmentManager, "ItemCustomization")
     }
 
     override fun onDestroyView() {
