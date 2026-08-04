@@ -66,7 +66,8 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
 
     var customerName: String = ""
     var customerPhone: String = ""
-    var orderType: String = "NORMAL"
+    var orderType: String = "DINE_IN"
+    var selectedPaymentMethod: String = ""
 
     init {
         Log.d(TAG, "🏗️ [VIEWMODEL] OrderTakingViewModel instance successfully initialized.")
@@ -86,6 +87,10 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
         customerName = name
         customerPhone = phone
         orderType = type
+    }
+
+    fun setPaymentMethod(method: String) {
+        selectedPaymentMethod = method
     }
 
     fun startOrderSession(
@@ -169,6 +174,7 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
     fun loadMenuData(managerId: String?) {
         if (originalFoodList.isNotEmpty() && _uiState.value.categories.isNotEmpty()) {
             Log.d(TAG, "🏗️ [VIEWMODEL] Menu data already present in cache. Skipping redundant fetch.")
+            _uiState.update { it.copy(isLoading = false) }
             return
         }
 
@@ -313,7 +319,8 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
         managerId: String?,
         floorId: String?,
         tableId: String?,
-        specialNotes: String
+        specialNotes: String,
+        initialStatus: String = "PENDING"
     ) {
         val activeCartItems = originalFoodList.filter { it.currentQuantity > 0 }
         if (activeCartItems.isEmpty()) {
@@ -321,7 +328,7 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
             return
         }
 
-        Log.i(TAG, "🏗️ [VIEWMODEL] Submitting Order for Table: $tableId, Manager: $managerId")
+        Log.i(TAG, "🏗️ [VIEWMODEL] Submitting Order for Table: $tableId, Manager: $managerId, Status: $initialStatus")
 
         val itemsPayload = activeCartItems.map { item ->
             OrderItemModel(
@@ -330,7 +337,7 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
                 price = item.price,
                 quantity = item.currentQuantity,
                 rowTotal = (item.price * item.currentQuantity),
-                orderedQuantity = item.currentQuantity
+                orderedQuantity = item.previousQuantity // Correctly track what was already sent to kitchen
             )
         }
 
@@ -344,12 +351,14 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
             customerName = customerName,
             customerPhone = customerPhone,
             orderType = orderType,
+            paymentMethod = selectedPaymentMethod,
+            restaurantId = managerId ?: "", // Fixed: Now correctly tagged for filtering
             items = itemsPayload,
             specialNotes = specialNotes,
             subtotal = subtotalValue,
             gst = subtotalValue * 0.05,
             grandTotal = subtotalValue * 1.05,
-            orderStatus = "PENDING",
+            orderStatus = initialStatus,
             timestamp = com.google.firebase.Timestamp.now()
         )
 
@@ -405,9 +414,9 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
     }
 
     fun clearCart() {
-        Log.d(TAG, "🏗️ [VIEWMODEL] clearCart() called.")
+        Log.d(TAG, "🏗️ [VIEWMODEL] clearCart() called. Resetting all quantities.")
         _uiState.update { currentState ->
-            val resetOriginal = originalFoodList.map { it.copy(currentQuantity = 0) }
+            val resetOriginal = originalFoodList.map { it.copy(currentQuantity = 0, previousQuantity = 0) }
             originalFoodList = resetOriginal
             val summary = CartSummaryState(0, 0)
             updateDisplayList(currentState, resetOriginal, currentState.activeFilterId, summary)
