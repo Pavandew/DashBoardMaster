@@ -7,9 +7,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivityKitchenHomeBinding
-import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenDashboardFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenPreparationFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenInventoryFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenOrderFragment
@@ -34,6 +34,11 @@ class KitchenHomeActivity : AppCompatActivity() {
 
         binding = ActivityKitchenHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Restore state if available
+        if (savedInstanceState != null) {
+            currentSelectedItem = savedInstanceState.getInt("currentSelectedItem", R.id.kitchen_orderFragment)
+        }
 
         // Initialize fragments on first boot safely without replacing
         if (savedInstanceState == null) {
@@ -63,22 +68,38 @@ class KitchenHomeActivity : AppCompatActivity() {
             }
         }
 
+        // Sync selection on launch (especially if restored)
+        binding.kitchenBottomNavigation.selectedItemId = currentSelectedItem
+
         // --- NEW: DYNAMIC BACKSTACK MONITOR TO HIDE/SHOW BOTTOM NAV ---
         supportFragmentManager.addOnBackStackChangedListener {
-            val backStackCount = supportFragmentManager.backStackEntryCount
-            if (backStackCount > 0) {
-                // User is in a deep screen (like detail view). Hide the custom floating menu completely.
-                binding.bottomNavContainer.visibility = View.GONE
-            } else {
-                // User returned to one of the main 5 tabs. Restore bottom navigation visibility immediately.
-                binding.bottomNavContainer.visibility = View.VISIBLE
-            }
+            // Trigger insets update to refresh visibility based on new backstack count
+            ViewCompat.requestApplyInsets(binding.main)
         }
 
-        // Edge To Edge Handler
+        // Edge To Edge Handler & Keyboard Visibility Monitor
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { _, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            binding.kitchenFragmentContainer.setPadding(0, systemBars.top, 0, systemBars.bottom)
+            val statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            val navigationBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            val backStackCount = supportFragmentManager.backStackEntryCount
+
+            // 1. Pad top of container for status bar
+            binding.kitchenFragmentContainer.setPadding(0, statusBars.top, 0, 0)
+
+            // 2. Hide bottom navigation if keyboard is visible OR if we are in a deep screen (backstack > 0)
+            val shouldHideBottomNav = imeVisible || backStackCount > 0
+            
+            if (shouldHideBottomNav) {
+                binding.bottomNavContainer.visibility = View.GONE
+                // When hidden, ensure container doesn't have extra bottom padding
+                // and its constraints let it fill the bottom area (clearing nav bar)
+                binding.kitchenFragmentContainer.updatePadding(bottom = navigationBars.bottom)
+            } else {
+                binding.bottomNavContainer.visibility = View.VISIBLE
+                binding.kitchenFragmentContainer.updatePadding(bottom = 0)
+            }
+
             insets
         }
 
@@ -115,11 +136,13 @@ class KitchenHomeActivity : AppCompatActivity() {
         val transaction = fm.beginTransaction().setReorderingAllowed(true)
 
         // Add all tabs to layout container if not already existing
-        if (!order.isAdded) transaction.add(R.id.kitchen_fragment_container, order, tags.ORDER).hide(order)
+        if (!order.isAdded) transaction.add(R.id.kitchen_fragment_container, order, tags.ORDER)
         if (!kitchen.isAdded) transaction.add(R.id.kitchen_fragment_container, kitchen, tags.KITCHEN).hide(kitchen)
         if (!inventory.isAdded) transaction.add(R.id.kitchen_fragment_container, inventory, tags.INVENTORY).hide(inventory)
         if (!profile.isAdded) transaction.add(R.id.kitchen_fragment_container, profile, tags.PROFILE).hide(profile)
 
+        // Show the default tab
+        transaction.show(order)
         transaction.commit()
     }
 
@@ -143,5 +166,10 @@ class KitchenHomeActivity : AppCompatActivity() {
             }
         }
         transaction.commit()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt("currentSelectedItem", currentSelectedItem)
     }
 }

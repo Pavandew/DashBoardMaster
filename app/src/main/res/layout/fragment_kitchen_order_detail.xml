@@ -166,22 +166,33 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/card_time_items" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_detail_items_list"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_items_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="12dp"
-        android:clipToPadding="false"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="#E0E0E0"
         app:layout_constraintBottom_toTopOf="@+id/card_master_note"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv1"
-        app:layout_constraintVertical_bias="0.0"
-        tools:listitem="@layout/item_kitchen_preparation_detail_row" />
+        app:layout_constraintTop_toBottomOf="@+id/tv1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_detail_items_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingVertical="4dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_kitchen_detail_row" />
+
+    </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_master_note"
@@ -266,18 +277,6 @@
                 app:cornerRadius="12dp" />
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_finish_ready"
-            android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:text="Finished / Ready to Serve"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:visibility="gone"
-            app:backgroundTint="#6200EE"
-            app:cornerRadius="12dp"
-            tools:visibility="gone" />
     </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

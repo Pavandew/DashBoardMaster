@@ -11,10 +11,13 @@ import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentKitchenOrderDetailBinding
 import com.example.masterdashboard.staff_dash.kitchen_screens.adapter.KitchenDetailItemAdapter
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.KitchenOrderDetailData
+import com.example.masterdashboard.staff_dash.kitchen_screens.model.OrderDetailItem
 import com.example.masterdashboard.staff_dash.kitchen_screens.uistate.KitchenOrderDetailUiState
+import com.example.masterdashboard.staff_dash.kitchen_screens.utils.KitchenRejectionDialogHelper
 import com.example.masterdashboard.staff_dash.kitchen_screens.viewModel.KitchenOrderDetailViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 class KitchenOrderDetailFragment : Fragment(R.layout.fragment_kitchen_order_detail) {
 
@@ -27,35 +30,37 @@ class KitchenOrderDetailFragment : Fragment(R.layout.fragment_kitchen_order_deta
 
     private val viewModel: KitchenOrderDetailViewModel by viewModels()
     private lateinit var detailItemsAdapter: KitchenDetailItemAdapter
-    private var currentOrderId: String = ""
+    private var currentDocPath: String = ""
+    private var currentOrderData: KitchenOrderDetailData? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentKitchenOrderDetailBinding.bind(view)
 
-        // 1. Fetch the FULL shared object passed directly from the previous list fragment
         val initialOrderData = arguments?.getSerializable("ORDER_DATA_KEY") as? KitchenOrderDetailData
 
         if (initialOrderData == null) {
-            Log.e(TAG, "onViewCreated: Aborting view creation because passed shared order data object is missing.")
+            Log.e(TAG, "onViewCreated: Aborting because shared order data object is missing.")
             Toast.makeText(context, "Error: Invalid Order Data", Toast.LENGTH_SHORT).show()
             parentFragmentManager.popBackStack()
             return
         }
 
-        currentOrderId = initialOrderData.orderId
-        Log.i(TAG, "onViewCreated: Shared data extracted successfully. Showing Table: ${initialOrderData.tableName} instantly.")
+        currentDocPath = initialOrderData.docPath
+        currentOrderData = initialOrderData
+        Log.i(TAG, "onViewCreated: Showing Table: ${initialOrderData.tableName} instantly.")
 
         setupRecyclerView()
         setupClickListeners()
         observeUiState()
 
-        // 2. IMMEDIATELY populate the views (Pure white background + black text elements appear with zero loading delay)
+        // Populate initially from the passed object
         populateUi(initialOrderData)
 
-        // 3. Connect real-time Firebase listener to monitor background updates (e.g., if waiter adds more food)
-        Log.d(TAG, "onViewCreated: Connecting background live stream listener to monitor changes on order ID: $currentOrderId")
-        viewModel.loadOrderDetails(currentOrderId)
+        // Connect real-time Firebase listener using the captured docPath
+        if (currentDocPath.isNotEmpty()) {
+            viewModel.loadOrderDetails(currentDocPath)
+        }
     }
 
     private fun setupRecyclerView() {
@@ -63,75 +68,107 @@ class KitchenOrderDetailFragment : Fragment(R.layout.fragment_kitchen_order_deta
         binding.rvDetailItemsList.adapter = detailItemsAdapter
     }
 
-    /**
-     * Binds the white/black light theme layout views instantly to our data fields.
-     */
     private fun populateUi(data: KitchenOrderDetailData) {
+        currentOrderData = data
         binding.tvDetailTitle.text = "Order #${data.orderId.takeLast(4).uppercase()}"
         binding.tvTableNo.text = data.tableName
-        binding.tvItemCount.text = "${data.items.size} Items"
-        binding.tvMasterNoteText.text = data.orderNote.ifEmpty { "No custom instructions note." }
+        
+        binding.tvDineIn1.text = " • ${data.orderType}"
+        
+        val normalizedStatus = data.status.lowercase().trim()
+        Log.d(TAG, "populateUi: status='$normalizedStatus', total items=${data.items.size}")
 
-        // 🔄 STATE MACHINE ADAPTER RECONFIGURATION CONTEXT UPDATE LINK
-//        detailItemsAdapter.updateOrderStatusContext(data.status)
+        // Only show NEW items (Delta) if the ticket is currently in the Order Log (New/Pending/Paid)
+        val itemsToShow = if (normalizedStatus == "new" || normalizedStatus == "pending" || normalizedStatus == "paid") {
+            val filtered = data.items.filter { it.quantity > it.orderedQuantity }
+            Log.d(TAG, "populateUi: New items filter: ${filtered.size} items meet (qty > orderedQty) criteria.")
+            filtered
+        } else {
+            // For Workstation (Preparing), show the full list
+            Log.d(TAG, "populateUi: Workstation mode - showing all ${data.items.size} items.")
+            data.items
+        }
 
-        // Submit the items down to your row list views manifest rows canvas
-        detailItemsAdapter.submitList(data.items)
+        // NEW: If filtered list is empty but original list is not, it means orderedQuantity caught up to quantity.
+        // In such cases, if we are in "New" status, we should show at least the latest item.
+        val finalItems = if (itemsToShow.isEmpty() && data.items.isNotEmpty()) {
+            data.items
+        } else {
+            itemsToShow
+        }
+
+        binding.tvItemCount.text = "${finalItems.size} Items"
+        binding.tvMasterNoteText.text = data.specialNotes.ifEmpty { "No custom instructions note." }
+
+        // Set Relative Time
+        val ts = data.timestamp
+        if (ts != null) {
+            val durationMillis = System.currentTimeMillis() - ts.toDate().time
+            val min = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(durationMillis)
+            val hr = java.util.concurrent.TimeUnit.MILLISECONDS.toHours(durationMillis)
+            val dy = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(durationMillis)
+
+            binding.tvTime.text = when {
+                dy > 0 -> "$dy d ago"
+                hr > 0 -> "$hr h ago"
+                else -> "$min min ago"
+            }
+        } else {
+            binding.tvTime.text = "Just now"
+        }
+
+        detailItemsAdapter.submitList(finalItems)
         updateButtonVisibilities(data.status)
     }
 
     private fun setupClickListeners() {
         binding.btnBack.setOnClickListener {
-            Log.d(TAG, "setupClickListeners: Return to stream operation invoked via click events.")
             parentFragmentManager.popBackStack()
         }
 
         binding.btnAccept.setOnClickListener {
-            Log.i(TAG, "setupClickListeners: Accept clicked. Altering orderId [$currentOrderId] status mapping -> 'Preparing'")
-            viewModel.updateTicketStatus(currentOrderId, "Preparing")
+            viewModel.updateTicketStatus(currentDocPath, "Preparing")
         }
 
         binding.btnReject.setOnClickListener {
-            Log.w(TAG, "setupClickListeners: Reject clicked. Altering orderId [$currentOrderId] status mapping -> 'Rejected'")
-            viewModel.updateTicketStatus(currentOrderId, "Rejected")
-        }
+            currentOrderData?.let { orderData ->
+                val helper = KitchenRejectionDialogHelper(requireContext(), layoutInflater)
+                helper.showRejectionDialog(orderData, object : KitchenRejectionDialogHelper.RejectionListener {
+                    override fun onFullRejection(reason: String) {
+                        viewModel.updateTicketStatus(currentDocPath, "Rejected", reason)
+                    }
 
-        binding.btnFinishReady.setOnClickListener {
-            Log.i(TAG, "setupClickListeners: Finish clicked. Altering orderId [$currentOrderId] status mapping -> 'Ready'")
-            viewModel.updateTicketStatus(currentOrderId, "Ready")
+                    override fun onPartialRejection(remainingItems: List<OrderDetailItem>, reason: String) {
+                        viewModel.rejectSpecificItems(currentDocPath, remainingItems, reason)
+                    }
+                })
+            }
         }
     }
 
+
     private fun observeUiState() {
-        // Track unique document configurations arriving directly out of Firestore databases
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.detailUiState.collectLatest { state ->
                 when (state) {
-                    is KitchenOrderDetailUiState.Loading -> {
-                        // Data is already loaded initially from the bundle object, no skeleton state loading is needed
-                    }
+                    is KitchenOrderDetailUiState.Loading -> {}
                     is KitchenOrderDetailUiState.Success -> {
-                        Log.i(TAG, "observeUiState: Background cloud update received from Firebase for Table: ${state.orderDetails.tableName}")
-                        // Refresh elements if the waiter added items or notes dynamically in the background
                         populateUi(state.orderDetails)
                     }
                     is KitchenOrderDetailUiState.Error -> {
-                        Log.e(TAG, "observeUiState: Target detail document real-time snapshot channel dropped.", state.exception)
+                        Log.e(TAG, "observeUiState: Snapshot error", state.exception)
                     }
                 }
             }
         }
 
-        // Track mutation status results securely to safely manage view exits
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.statusUpdateAction.collectLatest { result ->
                 result?.onSuccess { updatedStatus ->
-                    Log.i(TAG, "observeUiState: Transaction update finalized completely across remote servers. Next status set -> '$updatedStatus'. Popping back out to logs context view.")
                     Toast.makeText(context, "Status updated to: $updatedStatus", Toast.LENGTH_SHORT).show()
                     viewModel.resetStatusActionToken()
                     parentFragmentManager.popBackStack()
                 }?.onFailure { exception ->
-                    Log.e(TAG, "observeUiState: Cloud layout field status write failed for orderId: $currentOrderId", exception)
                     Toast.makeText(context, "Action failed: ${exception.message}", Toast.LENGTH_SHORT).show()
                     viewModel.resetStatusActionToken()
                 }
@@ -140,25 +177,25 @@ class KitchenOrderDetailFragment : Fragment(R.layout.fragment_kitchen_order_deta
     }
 
     private fun updateButtonVisibilities(status: String) {
-        when (status.lowercase()) {
-            "new" -> {
+        val normalizedStatus = status.lowercase().trim()
+        Log.i(TAG, "updateButtonVisibilities: Determining visibility for status: [$normalizedStatus]")
+        
+        when (normalizedStatus) {
+            "new", "pending", "paid" -> {
+                binding.layoutActionFooter.visibility = View.VISIBLE
                 binding.layoutInitialActions.visibility = View.VISIBLE
-                binding.btnFinishReady.visibility = View.GONE
-            }
-            "preparing" -> {
-                binding.layoutInitialActions.visibility = View.GONE
-                binding.btnFinishReady.visibility = View.VISIBLE
+                Log.d(TAG, "updateButtonVisibilities: Displaying [Accept/Reject] for new ticket.")
             }
             else -> {
                 binding.layoutInitialActions.visibility = View.GONE
-                binding.btnFinishReady.visibility = View.GONE
+                binding.layoutActionFooter.visibility = View.GONE
+                Log.w(TAG, "updateButtonVisibilities: Hiding all buttons for finalized status: [$normalizedStatus]")
             }
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        Log.d(TAG, "onDestroyView: Clearing details sheet view elements layer safely.")
         _binding = null
     }
 }

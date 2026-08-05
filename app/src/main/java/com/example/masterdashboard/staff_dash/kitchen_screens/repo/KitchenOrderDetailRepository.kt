@@ -3,13 +3,11 @@ package com.example.masterdashboard.staff_dash.kitchen_screens.repo
 import android.util.Log
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.KitchenOrderDetailData
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.OrderDetailItem
-import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import java.util.Date
 
 class KitchenOrderDetailsRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -20,99 +18,125 @@ class KitchenOrderDetailsRepository(
     }
 
     /**
-     * Emits premium local mock data instantly based on the passed orderId
-     * to check layout thresholds before connecting live remote paths.
+     * Listens to a single order's details in real-time.
+     * Uses manual mapping to ensure data integrity regardless of Firestore value types.
      */
-    fun getLiveOrderDetails(orderId: String): Flow<KitchenOrderDetailData?> = callbackFlow {
-        Log.i(TAG, "getLiveOrderDetails: Intercepting query line. Generating clean light-theme static data for orderId: $orderId")
-
-        // 1. Generate local dummy detail entries to feed your high-contrast text views
-        val staticMockOrder = when {
-            orderId.contains("9841", ignoreCase = true) || orderId.endsWith("9841") -> {
-                KitchenOrderDetailData(
-                    orderId = orderId,
-                    tableName = "Table - 4",
-                    status = "New",
-                    orderNote = "Deliver everything together. Make sure the burgers have extra cheese slices.",
-                    timestamp = Timestamp(Date()),
-                    items = listOf(
-                        OrderDetailItem("Crispy Chicken Burger", 2, "No onions", 250.0, "Non-Veg"),
-                        OrderDetailItem("Loaded Cheesy Fries", 1, "Extra spicy", 150.0, "Veg"),
-                        OrderDetailItem("Classic Cold Coffee", 1, "", 120.0, "Veg")
-                    )
-                )
-            }
-            orderId.contains("8722", ignoreCase = true) || orderId.endsWith("8722") -> {
-                KitchenOrderDetailData(
-                    orderId = orderId,
-                    tableName = "Table - 12",
-                    status = "Preparing",
-                    orderNote = "Appetizers first please. Drinks along with the meal.",
-                    timestamp = Timestamp(Date()),
-                    items = listOf(
-                        OrderDetailItem("Paneer Tikka Combo", 1, "Less spicy", 320.0, "Veg"),
-                        OrderDetailItem("Butter Naan", 3, "Apply extra butter", 80.0, "Veg"),
-                        OrderDetailItem("Coca Cola Can", 2, "Serve chilled with ice packs", 50.0, "Veg")
-                    )
-                )
-            }
-            else -> {
-                // Fallback default catch-all order to keep things compiling smooth for any incoming ID click
-                KitchenOrderDetailData(
-                    orderId = orderId,
-                    tableName = "Table - 10",
-                    status = "New",
-                    orderNote = "Customer requested quick service. Pack leftovers safely.",
-                    timestamp = Timestamp(Date()),
-                    items = listOf(
-                        OrderDetailItem("Veg Hakka Noodles", 2, "Add extra green chilies", 200.0, "Veg"),
-                        OrderDetailItem("Manchurian Gravy", 1, "", 180.0, "Veg"),
-                        OrderDetailItem("Sweet Corn Soup", 1, "Serve piping hot", 120.0, "Veg")
-                    )
-                )
-            }
+    fun getLiveOrderDetails(docPath: String): Flow<KitchenOrderDetailData?> = callbackFlow {
+        if (docPath.isEmpty()) {
+            trySend(null)
+            close()
+            return@callbackFlow
         }
 
-        // 2. Instantly send out the generated static ticket to satisfy your UI flow collector
-        trySend(staticMockOrder)
-
-        /* ⚠️ NOTE FOR WAITER FLOW PRODUCTION INTEGRATION STAGE:
-        Uncomment the live collection stream listener block below and wipe the local block above
-        when you are ready to process live tickets captured from the waiter screens!
-
-        val docRef = firestore.collection("orders").document(orderId)
+        val docRef = firestore.document(docPath)
         val listenerRegistration = docRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
-                Log.e(TAG, "Firestore real-time snapshot transfer failure", error)
+                Log.e(TAG, "Firestore snapshot failure", error)
                 close(error)
                 return@addSnapshotListener
             }
 
-            val orderData = snapshot?.toObject(KitchenOrderDetailData::class.java)?.copy(orderId = snapshot.id)
-            trySend(orderData)
+            if (snapshot != null && snapshot.exists()) {
+                try {
+                    // Manual extraction of top-level fields
+                    val orderType = (snapshot.getString("orderType") ?: snapshot.getString("order_type")) ?: "DINE_IN"
+                    val rawStatus = (snapshot.getString("orderStatus") ?: snapshot.getString("order_status")) ?: "PENDING"
+                    
+                    // Status Mapping for UI
+                    val displayStatus = when {
+                        rawStatus.equals("PENDING", ignoreCase = true) -> "New"
+                        (orderType.contains("TAKE", true) || orderType.contains("DELIVERY", true)) && 
+                                rawStatus.equals("PAID", ignoreCase = true) -> "New"
+                        else -> rawStatus
+                    }
+
+                    // Manual extraction of the items list
+                    val rawItems = snapshot.get("items") as? List<Map<String, Any>>
+                    val itemsList = rawItems?.map { item ->
+                        OrderDetailItem(
+                            itemId = item["itemId"] as? String ?: "",
+                            itemName = (item["itemName"] as? String ?: item["item_name"] as? String) ?: "",
+                            quantity = (item["quantity"] as? Number)?.toInt() ?: 0,
+                            orderedQuantity = (item["orderedQuantity"] as? Number)?.toInt() ?: 0,
+                            readyQuantity = (item["readyQuantity"] as? Number)?.toInt() ?: 0,
+                            itemNote = (item["itemNote"] as? String ?: item["item_note"] as? String) ?: "",
+                            price = (item["price"] as? Number)?.toInt() ?: 0,
+                            rowTotal = (item["rowTotal"] as? Number)?.toInt() ?: 0,
+                            category = item["category"] as? String ?: "Veg"
+                        )
+                    } ?: emptyList()
+
+                    val orderData = KitchenOrderDetailData(
+                        orderId = snapshot.id,
+                        docPath = snapshot.reference.path,
+                        tableName = (snapshot.getString("tableName") ?: snapshot.getString("table_name")) ?: "Counter",
+                        orderStatus = rawStatus,
+                        status = displayStatus,
+                        specialNotes = (snapshot.getString("specialNotes") ?: snapshot.getString("special_notes")) ?: "",
+                        orderType = orderType,
+                        timestamp = snapshot.getTimestamp("timestamp"),
+                        items = itemsList,
+                        customerName = snapshot.getString("customerName") ?: "",
+                        customerPhone = snapshot.getString("customerPhone") ?: "",
+                        subtotal = snapshot.getDouble("subtotal") ?: 0.0,
+                        gst = (snapshot.getDouble("gst") ?: snapshot.getDouble("tax")) ?: 0.0,
+                        grandTotal = snapshot.getDouble("grandTotal") ?: 0.0,
+                        paymentMethod = snapshot.getString("paymentMethod") ?: ""
+                    )
+                    
+                    trySend(orderData)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Manual mapping failed for order details", e)
+                    trySend(null)
+                }
+            } else {
+                trySend(null)
+            }
         }
 
         awaitClose { listenerRegistration.remove() }
-        */
-
-        // Keep block alive for manual text row visibility tests
-        awaitClose { Log.d(TAG, "getLiveOrderDetails: Mock data stream loop channel closed.") }
     }
 
     /**
-     * Simulates updating structural ticket tracking keys locally via Logcat outputs
+     * Updates the status of an order in Firestore.
      */
-    suspend fun updateOrderStatus(orderId: String, newStatus: String) {
-        Log.i(TAG, "updateOrderStatus: Mock cloud write sequence executed. Order [$orderId] fields altered to -> '$newStatus'")
+    suspend fun updateOrderStatus(docPath: String, newStatus: String, reason: String = "") {
+        if (docPath.isEmpty()) return
+        try {
+            val firestoreStatus = if (newStatus.equals("New", ignoreCase = true)) "PENDING" else newStatus
+            val updates = mutableMapOf<String, Any>("orderStatus" to firestoreStatus)
+            if (reason.isNotEmpty()) updates["rejectionReason"] = reason
+            firestore.document(docPath).update(updates).await()
+        } catch (e: Exception) {
+            Log.e(TAG, "updateOrderStatus failure", e)
+            throw e
+        }
+    }
 
-        // Simulating the server write background suspension lag cycle cleanly
-        kotlinx.coroutines.delay(200)
-
-        /* PRODUCTION ENHANCEMENT RUN AT INTEGRATION STAGE:
-        firestore.collection("orders")
-            .document(orderId)
-            .update("status", newStatus)
-            .await()
-        */
+    /**
+     * Updates the order by removing specific items and updating totals.
+     */
+    suspend fun updateOrderWithRejectedItems(
+        docPath: String,
+        updatedItems: List<Map<String, Any>>,
+        newSubtotal: Double,
+        newGst: Double,
+        newGrandTotal: Double,
+        rejectionReason: String
+    ) {
+        if (docPath.isEmpty()) return
+        try {
+            val updates = mapOf(
+                "items" to updatedItems,
+                "subtotal" to newSubtotal,
+                "gst" to newGst,
+                "grandTotal" to newGrandTotal,
+                "rejectionReason" to rejectionReason
+            )
+            firestore.document(docPath).update(updates).await()
+        } catch (e: Exception) {
+            Log.e(TAG, "updateOrderWithRejectedItems failure", e)
+            throw e
+        }
     }
 }
