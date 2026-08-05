@@ -15,3 +15,4 @@ sealed interface StaffDetailUiState {
     data class Success(val staff: StaffDataModel) : StaffDetailUiState
     data class Error(val message: String) : StaffDetailUiState
 }
+
