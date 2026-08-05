@@ -21,6 +21,7 @@ import com.example.masterdashboard.staff_dash.waiter_screens.order.adapter.Order
 import com.example.masterdashboard.staff_dash.waiter_screens.order.models.ActiveOrderStatus
 import com.example.masterdashboard.staff_dash.waiter_screens.order.repo.OrderDetailRepository
 import com.example.masterdashboard.staff_dash.waiter_screens.order.viewModel.OrderDetailViewModel
+import com.example.masterdashboard.staff_dash.waiter_screens.table.views.WaiterOrderTakingFragment
 import kotlinx.coroutines.launch
 
 class OrderDetailExpansionFragment : Fragment() {
@@ -212,7 +213,7 @@ class OrderDetailExpansionFragment : Fragment() {
 
                         // Add More Items Action
                         binding.btnAddMoreItems.setOnClickListener {
-                            Log.d(TAG, "📱 [FRAGMENT] 'Add Items' clicked. Navigating to OrderTakingFragment for Table: ${state.tableName}")
+                            Log.d(TAG, "📱 [FRAGMENT] 'Add Items' clicked. Navigating to WaiterOrderTakingFragment for Table: ${state.tableName}")
                             
                             val bundle = Bundle().apply {
                                 putString("tableId", state.tableId)
@@ -223,7 +224,7 @@ class OrderDetailExpansionFragment : Fragment() {
                                 putString("existingOrderId", state.orderId)
                             }
 
-                            val orderTakingFragment = com.example.masterdashboard.staff_dash.waiter_screens.table.views.OrderTakingFragment().apply {
+                            val orderTakingFragment = WaiterOrderTakingFragment().apply {
                                 arguments = bundle
                             }
 

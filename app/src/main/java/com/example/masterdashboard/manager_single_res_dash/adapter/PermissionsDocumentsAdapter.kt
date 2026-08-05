@@ -8,7 +8,7 @@ import com.example.masterdashboard.databinding.FormSectionTitleSubtitleBinding
 import com.example.masterdashboard.databinding.ItemFormHeaderBinding
 import com.example.masterdashboard.databinding.RowDocumentItemBinding
 import com.example.masterdashboard.databinding.RowPermissionItemBinding
-import com.example.masterdashboard.manager_single_res_dash.models.Step2FormItem
+import com.example.masterdashboard.manager_single_res_dash.form_screen.model.Step2FormItem
 
 class PermissionsDocumentsAdapter(
     private val items: List<Step2FormItem>,
@@ -104,3 +104,4 @@ class PermissionsDocumentsAdapter(
     class PermissionViewHolder(val binding: RowPermissionItemBinding) : RecyclerView.ViewHolder(binding.root)
     class DocumentViewHolder(val binding: RowDocumentItemBinding) : RecyclerView.ViewHolder(binding.root)
 }
+

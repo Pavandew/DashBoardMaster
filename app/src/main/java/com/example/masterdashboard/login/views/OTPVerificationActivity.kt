@@ -14,6 +14,7 @@ import com.example.masterdashboard.databinding.ActivityOtpverificationBinding
 import com.example.masterdashboard.login.uistate.OtpUiState
 import com.example.masterdashboard.login.viewmodel.OtpViewModel
 import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
+import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeActivity
 import com.example.masterdashboard.master_dash.MasterHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.login.utils.AppConstants
@@ -205,7 +206,7 @@ class OTPVerificationActivity : AppCompatActivity() {
 
                 Intent(
                     this,
-                    ManagerHomeActivity::class.java
+                    SingleResOwnerHomeActivity::class.java
                 )
             }
 
