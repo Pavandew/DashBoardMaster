@@ -224,3 +224,4 @@ class TableManagementFragment : Fragment() {
         _binding = null
     }
 }
+

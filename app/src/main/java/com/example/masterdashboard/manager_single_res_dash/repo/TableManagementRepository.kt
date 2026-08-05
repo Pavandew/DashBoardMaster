@@ -203,3 +203,4 @@ class TableManagementRepository {
         Log.i(TAG, "✅ removeTableTransactional completed successfully. Table deleted: $tableId")
     }
 }
+

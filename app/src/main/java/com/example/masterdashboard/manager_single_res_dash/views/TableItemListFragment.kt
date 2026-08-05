@@ -253,3 +253,4 @@ class TableItemListFragment : Fragment() {
         _binding = null
     }
 }
+

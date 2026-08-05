@@ -1,18 +1,21 @@
 package com.example.masterdashboard.staff_dash.kitchen_screens.adapter
 
-
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.masterdashboard.databinding.ItemOrderDetailRowBinding
+import com.example.masterdashboard.databinding.ItemKitchenDetailRowBinding
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.OrderDetailItem
 
+/**
+ * Adapter specifically for the Kitchen Detail screen.
+ * Shows only the Item Name and Quantity, as the chef doesn't need to see prices.
+ */
 class KitchenDetailItemAdapter : ListAdapter<OrderDetailItem, KitchenDetailItemAdapter.ItemViewHolder>(ItemDiffCallback) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
-        val binding = ItemOrderDetailRowBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding = ItemKitchenDetailRowBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ItemViewHolder(binding)
     }
 
@@ -20,26 +23,28 @@ class KitchenDetailItemAdapter : ListAdapter<OrderDetailItem, KitchenDetailItemA
         holder.bind(getItem(position))
     }
 
-    class ItemViewHolder(private val binding: ItemOrderDetailRowBinding) : RecyclerView.ViewHolder(binding.root) {
+    class ItemViewHolder(private val binding: ItemKitchenDetailRowBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: OrderDetailItem) {
-            // 1. Map the clean black item title name
-            binding.tvExpandedItemName.text = item.itemName
-
-            // Mock price value data mapping rule calculations (e.g. ₹199)
-            // Replace with your actual model integer parameters if they are stored in the object manifest!
-            val fallbackUnitPrice = 199
-            val rowTotalPrice = fallbackUnitPrice * item.quantity
-
-            // 2. Map the gray breakdown calculation display layout string: "1 x ₹199"
-            binding.tvExpandedItemQtyPrice.text = "${item.quantity} x ₹$fallbackUnitPrice"
-
-            // 3. Map the final row total sum readout to clean black bold values: "₹199"
-            binding.tvExpandedItemRowTotal.text = "₹$rowTotalPrice"
+            binding.tvItemName.text = item.itemName
+            
+            // Format price as Integer for display (e.g. 200 instead of 200.0)
+            val unitPrice = item.price.toInt()
+            
+            // Show only the "Delta" (New items to be prepared) with price for size context
+            val newQuantity = item.quantity - item.orderedQuantity
+            if (newQuantity > 0) {
+                binding.tvQuantity.text = "$newQuantity x $unitPrice"
+            } else {
+                // If this item was fully prepared before, show total quantity
+                binding.tvQuantity.text = "${item.quantity} x $unitPrice"
+            }
         }
     }
 
     private object ItemDiffCallback : DiffUtil.ItemCallback<OrderDetailItem>() {
-        override fun areItemsTheSame(oldItem: OrderDetailItem, newItem: OrderDetailItem): Boolean = oldItem.itemName == newItem.itemName
-        override fun areContentsTheSame(oldItem: OrderDetailItem, newItem: OrderDetailItem): Boolean = oldItem == newItem
+        override fun areItemsTheSame(oldItem: OrderDetailItem, newItem: OrderDetailItem): Boolean = 
+            oldItem.itemName == newItem.itemName
+        override fun areContentsTheSame(oldItem: OrderDetailItem, newItem: OrderDetailItem): Boolean = 
+            oldItem == newItem
     }
 }

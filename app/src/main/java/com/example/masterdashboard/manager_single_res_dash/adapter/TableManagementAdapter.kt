@@ -64,3 +64,4 @@ class FloorDiffCallback : DiffUtil.ItemCallback<FloorDataModel>() {
     override fun areContentsTheSame(oldItem: FloorDataModel, newItem: FloorDataModel): Boolean =
         oldItem == newItem
 }
+

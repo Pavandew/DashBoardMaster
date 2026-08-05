@@ -24,3 +24,4 @@ sealed interface TableItemUiState {
 
     data class Error(val message: String) : TableItemUiState
 }
+
