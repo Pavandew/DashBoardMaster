@@ -136,3 +136,4 @@ class ManagerDashboardFragment : Fragment() {
         _binding = null
     }
 }
+

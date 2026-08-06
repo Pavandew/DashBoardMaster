@@ -220,3 +220,4 @@ class MenuItemListFragment : Fragment() {
         _binding = null
     }
 }
+
