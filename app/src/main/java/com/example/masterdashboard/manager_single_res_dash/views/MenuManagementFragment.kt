@@ -237,3 +237,4 @@ private val userRole by lazy{ sessionManager.getRole() }
         _binding = null
     }
 }
+

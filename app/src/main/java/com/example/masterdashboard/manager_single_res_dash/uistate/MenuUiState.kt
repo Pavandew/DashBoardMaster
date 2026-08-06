@@ -16,3 +16,4 @@ sealed interface MenuItemUiState {
     object Empty : MenuItemUiState
     data class Error(val message: String) : MenuItemUiState
 }
+
