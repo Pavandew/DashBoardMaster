@@ -9,19 +9,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.databinding.ItemKitchenPreparationDetailRowBinding
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.OrderDetailItem
 
-class KitchenPreparationDetailAdapter :
-    ListAdapter<OrderDetailItem, KitchenPreparationDetailAdapter.PrepItemViewHolder>(PrepItemDiffCallback) {
+class KitchenPreparationDetailAdapter(
+    private val onItemToggled: (OrderDetailItem, Boolean) -> Unit
+) : ListAdapter<OrderDetailItem, KitchenPreparationDetailAdapter.PrepItemViewHolder>(PrepItemDiffCallback) {
 
-    // Variable to track the operational lifecycle phase of the parent ticket container document
     private var orderStatus: String = "New"
 
-    /**
-     * Dynamically updates the adapter status context when the ticket state changes.
-     * This forces the row layouts to show/hide checkboxes instantly with zero page reload lag.
-     */
     fun updateOrderStatusContext(newStatus: String) {
         this.orderStatus = newStatus
-        notifyDataSetChanged() // Refreshes row visibilities immediately
+        notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PrepItemViewHolder {
@@ -41,24 +37,35 @@ class KitchenPreparationDetailAdapter :
 
         fun bind(item: OrderDetailItem) {
             binding.tvExpandedItemName.text = item.itemName
-//            binding.tvExpandedItemRowTotal.text = "${item.quantity} x ₹${item.price.toInt()}"
-
-            // 🔄 STATE MACHINE VISIBILITY LOGIC
-            if (orderStatus.equals("New", ignoreCase = true)) {
-                // Phase 1: Ticket is incoming/unaccepted. Hide checkboxes completely so it looks like a clean summary list.
-                binding.cbItemSelect.visibility = View.GONE
-
-                // Clear out listeners so unaccepted tickets cannot be clicked mistakenly
-                binding.root.setOnClickListener(null)
+            
+            // Show ready status if partially prepared
+            if (item.readyQuantity > 0) {
+                binding.tvExpandedItemRowTotal.text = "${item.readyQuantity}/${item.quantity} Ready"
             } else {
-                // Phase 2: Ticket is Active/InProgress. Expose checkboxes so chefs can tap off dishes on the line.
-                binding.cbItemSelect.visibility = View.VISIBLE
-                binding.cbItemSelect.isChecked = false // Reset indicator box states
+                binding.tvExpandedItemRowTotal.text = "x ${item.quantity}"
+            }
 
-                // Row interaction helper: tapping anywhere on the item row block shifts the check mark status toggles
+            val normalizedStatus = orderStatus.lowercase().trim()
+            
+            // If already fully ready, don't show checkbox
+            if (item.readyQuantity >= item.quantity) {
+                binding.cbItemSelect.visibility = View.INVISIBLE
+                binding.root.setOnClickListener(null)
+            } else if (normalizedStatus == "preparing") {
+                binding.cbItemSelect.visibility = View.VISIBLE
+                binding.cbItemSelect.setOnCheckedChangeListener(null)
+                binding.cbItemSelect.isChecked = false
+                
+                binding.cbItemSelect.setOnCheckedChangeListener { _, isChecked ->
+                    onItemToggled(item, isChecked)
+                }
+
                 binding.root.setOnClickListener {
                     binding.cbItemSelect.isChecked = !binding.cbItemSelect.isChecked
                 }
+            } else {
+                binding.cbItemSelect.visibility = View.GONE
+                binding.root.setOnClickListener(null)
             }
         }
     }

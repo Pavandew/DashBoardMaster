@@ -8,9 +8,10 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.masterdashboard.R
-import com.example.masterdashboard.databinding.FragmentKitchenPreparationDetailBinding // Using your main container layout binding
+import com.example.masterdashboard.databinding.FragmentKitchenPreparationDetailBinding
 import com.example.masterdashboard.staff_dash.kitchen_screens.adapter.KitchenPreparationDetailAdapter
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.KitchenOrderDetailData
+import com.example.masterdashboard.staff_dash.kitchen_screens.model.OrderDetailItem
 import com.example.masterdashboard.staff_dash.kitchen_screens.uistate.KitchenOrderDetailUiState
 import com.example.masterdashboard.staff_dash.kitchen_screens.viewModel.KitchenPreparationDetailViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -28,38 +29,45 @@ class KitchenPreparationDetailFragment : Fragment(R.layout.fragment_kitchen_prep
 
     private val viewModel: KitchenPreparationDetailViewModel by viewModels()
     private lateinit var preparationDetailAdapter: KitchenPreparationDetailAdapter
-    private var currentOrderId: String = ""
+    private var currentDocPath: String = ""
+    
+    // Tracking selected items for partial preparation
+    private val selectedItems = mutableSetOf<OrderDetailItem>()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentKitchenPreparationDetailBinding.bind(view)
 
-        // 1. Unpack full data class instance pushed dynamically from workstations list stream
         val sharedOrderData = arguments?.getSerializable("ORDER_DATA_KEY") as? KitchenOrderDetailData
 
         if (sharedOrderData == null) {
-            Log.e(TAG, "onViewCreated: Aborting because shared workstation order object is missing.")
-            Toast.makeText(context, "Error: Invalid Order Reference Data", Toast.LENGTH_SHORT).show()
+            Log.e(TAG, "onViewCreated: Shared workstation order object is missing.")
+            Toast.makeText(context, "Error: Invalid Order Data", Toast.LENGTH_SHORT).show()
             parentFragmentManager.popBackStack()
             return
         }
 
-        currentOrderId = sharedOrderData.orderId
-        Log.i(TAG, "onViewCreated: Workstation preparation sheet mounted for Order Reference ID: [$currentOrderId]")
+        currentDocPath = sharedOrderData.docPath
+        Log.i(TAG, "onViewCreated: Workstation details for path: [$currentDocPath]")
 
         setupRecyclerView()
         setupClickListeners()
         observeUiState()
 
-        // Populate baseline fields instantly with zero loading delay metrics
-        populateStaticLayoutViews(sharedOrderData)
+        // Populate initially
+        populateUi(sharedOrderData)
 
-        // 2. Attach live data snapshot watcher channels on remote database document path
-        viewModel.loadOrderDetails(currentOrderId)
+        // Attach live listener
+        if (currentDocPath.isNotEmpty()) {
+            viewModel.loadOrderDetails(currentDocPath)
+        }
     }
 
     private fun setupRecyclerView() {
-        preparationDetailAdapter = KitchenPreparationDetailAdapter()
+        preparationDetailAdapter = KitchenPreparationDetailAdapter { item, isChecked ->
+            if (isChecked) selectedItems.add(item) else selectedItems.remove(item)
+            updateButtonLabel()
+        }
         binding.rvDetailItemsList.adapter = preparationDetailAdapter
     }
 
@@ -68,54 +76,115 @@ class KitchenPreparationDetailFragment : Fragment(R.layout.fragment_kitchen_prep
             parentFragmentManager.popBackStack()
         }
 
-        // Tapping this completes preparation, moving the ticket forward to the pick-up counters
         binding.btnFinishReady.setOnClickListener {
-            Log.i(TAG, "setupClickListeners: Mark to serve action invoked for order ID: $currentOrderId")
-            viewModel.finalizeOrderToServe(currentOrderId)
+            if (currentDocPath.isNotEmpty()) {
+                if (selectedItems.isNotEmpty()) {
+                    // Mark selected as ready
+                    viewModel.markItemsAsReady(currentDocPath, selectedItems.toList())
+                    selectedItems.clear()
+                } else {
+                    // Finalize whole order
+                    viewModel.finalizeOrderToServe(currentDocPath)
+                }
+            }
         }
     }
 
-    private fun populateStaticLayoutViews(data: KitchenOrderDetailData) {
+    private fun updateButtonLabel() {
+        if (selectedItems.isNotEmpty()) {
+            binding.btnFinishReady.text = "Mark ${selectedItems.size} Selected as Ready"
+            binding.btnFinishReady.setBackgroundColor(android.graphics.Color.parseColor("#4CAF50")) // Green for partial
+        } else {
+            binding.btnFinishReady.text = "Finished / Ready to Serve"
+            binding.btnFinishReady.setBackgroundColor(android.graphics.Color.parseColor("#6200EE")) // Original Purple
+        }
+    }
+
+    private fun populateUi(data: KitchenOrderDetailData) {
         binding.tvDetailTitle.text = "Order #${data.orderId.takeLast(4).uppercase()}"
         binding.tvTableNo.text = data.tableName.ifEmpty { "Table N/A" }
+        binding.tvDineIn.text = " • ${data.orderType}"
 
-        if (data.timestamp != null) {
-            val durationMillis = System.currentTimeMillis() - data.timestamp.toDate().time
-            val elapsedMinutes = TimeUnit.MILLISECONDS.toMinutes(durationMillis)
-            binding.tvItemCount.text = "Elapsed time: $elapsedMinutes min"
-        } else {
-            binding.tvItemCount.text = "Elapsed time: 0 min"
+        // 1. Dynamic Status Badge Styling
+        val normalizedStatus = data.status.lowercase().trim()
+        binding.tvStatusBadge.text = data.status
+        when (normalizedStatus) {
+            "preparing" -> {
+                binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_status_preparing)
+                binding.tvStatusBadge.setTextColor(android.graphics.Color.parseColor("#92400E"))
+            }
+            "ready" -> {
+                binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_status_ready)
+                binding.tvStatusBadge.setTextColor(android.graphics.Color.parseColor("#15803D"))
+            }
+            "completed" -> {
+                binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_status_active)
+                binding.tvStatusBadge.setTextColor(android.graphics.Color.parseColor("#15803D"))
+            }
+            else -> {
+                binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_status_active)
+                binding.tvStatusBadge.setTextColor(android.graphics.Color.parseColor("#374151"))
+            }
         }
+
+        // 2. Button Visibility: Hide "Ready to Serve" button if status is already "Ready" or "Completed"
+        if (normalizedStatus == "ready" || normalizedStatus == "completed") {
+            binding.btnFinishReady.visibility = View.GONE
+        } else {
+            binding.btnFinishReady.visibility = View.VISIBLE
+        }
+        
+        // Time formatting
+        val ts = data.timestamp
+        if (ts != null) {
+            val durationMillis = System.currentTimeMillis() - ts.toDate().time
+            val min = TimeUnit.MILLISECONDS.toMinutes(durationMillis)
+            val hr = TimeUnit.MILLISECONDS.toHours(durationMillis)
+            val dy = TimeUnit.MILLISECONDS.toDays(durationMillis)
+
+            val timeText = when {
+                dy > 0 -> "$dy d ago"
+                hr > 0 -> "$hr h ago"
+                else -> "$min min ago"
+            }
+            binding.tvItemCount.text = "Elapsed time: $timeText"
+        } else {
+            binding.tvItemCount.text = "Just now"
+        }
+        
+        binding.tvItemToPrepare.text = "Items to Prepare (${data.items.size})"
+        
+        preparationDetailAdapter.updateOrderStatusContext(data.status)
+        preparationDetailAdapter.submitList(data.items)
+        
+        // Reset selection if list changes significantly or refresh happens
+        updateButtonLabel()
     }
 
     private fun observeUiState() {
-        // Collect real-time tab filtered item submanifest rows arrays
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.detailUiState.collectLatest { state ->
                 when (state) {
-                    is KitchenOrderDetailUiState.Loading -> {
-                        // Data is preloaded via argument parameters
-                    }
+                    is KitchenOrderDetailUiState.Loading -> {}
                     is KitchenOrderDetailUiState.Success -> {
-                        Log.i(TAG, "observeUiState: Real-time update list payload pulled. Display items list count: ${state.orderDetails.items.size}")
-                        populateStaticLayoutViews(state.orderDetails)
-                        preparationDetailAdapter.submitList(state.orderDetails.items)
+                        populateUi(state.orderDetails)
                     }
                     is KitchenOrderDetailUiState.Error -> {
-                        Log.e(TAG, "observeUiState: Real-time update extraction channel failed.")
+                        Log.e(TAG, "observeUiState: Update channel failed.")
                     }
                 }
             }
         }
 
-        // Catch database state update mutation transactions results
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.statusUpdateAction.collectLatest { result ->
                 result?.onSuccess { statusState ->
-                    Log.i(TAG, "observeUiState: Database status updated to '$statusState'. Returning back to lines stream view.")
-                    Toast.makeText(context, "Order is Ready! Waiter alert transmitted.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, statusState, Toast.LENGTH_SHORT).show()
                     viewModel.resetStatusActionToken()
-                    parentFragmentManager.popBackStack()
+                    
+                    if (statusState == "Order Ready") {
+                        parentFragmentManager.popBackStack()
+                    }
                 }?.onFailure { exception ->
                     Toast.makeText(context, "Operation failed: ${exception.message}", Toast.LENGTH_SHORT).show()
                     viewModel.resetStatusActionToken()
@@ -126,7 +195,6 @@ class KitchenPreparationDetailFragment : Fragment(R.layout.fragment_kitchen_prep
 
     override fun onDestroyView() {
         super.onDestroyView()
-        Log.d(TAG, "onDestroyView: Cleaning view binder context links layer layout models.")
         _binding = null
     }
 }

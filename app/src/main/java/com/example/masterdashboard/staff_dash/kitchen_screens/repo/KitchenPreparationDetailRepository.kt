@@ -6,10 +6,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.security.Timestamp
-import java.util.Date
 
 class KitchenPreparationDetailRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -19,37 +16,68 @@ class KitchenPreparationDetailRepository(
     }
 
     /**
-     * Streams real-time ticket modifications for a specific document.
+     * Streams real-time ticket modifications for a specific document using its full path.
      */
-    fun listenToOrderDetails(orderId: String): Flow<KitchenOrderDetailData?> = callbackFlow {
-        Log.d(TAG, "listenToOrderDetails: Registering Firestore snapshot channel on document path: orders/$orderId")
+    fun listenToOrderDetails(docPath: String): Flow<KitchenOrderDetailData?> = callbackFlow {
+        if (docPath.isEmpty()) {
+            trySend(null)
+            close()
+            return@callbackFlow
+        }
 
-        val docRef = firestore.collection("orders").document(orderId)
+        Log.d(TAG, "listenToOrderDetails: Registering Firestore snapshot channel on path: $docPath")
+
+        val docRef = firestore.document(docPath)
         val registration = docRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
-                Log.e(TAG, "Firestore snapshot collection dropped for ID: $orderId", error)
+                Log.e(TAG, "Firestore snapshot collection dropped for path: $docPath", error)
                 close(error)
                 return@addSnapshotListener
             }
 
-            val orderData = snapshot?.toObject(KitchenOrderDetailData::class.java)?.copy(orderId = snapshot.id)
-            trySend(orderData)
+            if (snapshot != null && snapshot.exists()) {
+                val orderData = snapshot.toObject(KitchenOrderDetailData::class.java)
+                if (orderData != null) {
+                    orderData.orderId = snapshot.id
+                    orderData.docPath = snapshot.reference.path
+                    
+                    val rawStatus = snapshot.getString("orderStatus") ?: "New"
+                    orderData.status = if (rawStatus.equals("PENDING", true)) "New" else rawStatus
+                    
+                    trySend(orderData)
+                } else {
+                    trySend(null)
+                }
+            } else {
+                trySend(null)
+            }
         }
 
         awaitClose {
-            Log.d(TAG, "listenToOrderDetails: Dismantling stream snapshot channels for ID: $orderId")
+            Log.d(TAG, "listenToOrderDetails: Dismantling stream snapshot channels for path: $docPath")
             registration.remove()
         }
     }
 
     /**
-     * Mutates the order status field to "Ready" once the chef triggers completion.
+     * Updates the order status field to "Ready" once the chef triggers completion.
      */
-    suspend fun updateOrderStatusToReady(orderId: String) {
-        Log.i(TAG, "updateOrderStatusToReady: Commencing server mutation. Setting status field to 'Ready' for orderId: $orderId")
-        firestore.collection("orders")
-            .document(orderId)
-            .update("status", "Ready")
+    suspend fun updateOrderStatusToReady(docPath: String) {
+        if (docPath.isEmpty()) return
+        Log.i(TAG, "updateOrderStatusToReady: Setting status field to 'Ready' for path: $docPath")
+        firestore.document(docPath)
+            .update("orderStatus", "Ready")
+            .await()
+    }
+
+    /**
+     * Updates specific items as ready in Firestore.
+     */
+    suspend fun updateItemsAsReady(docPath: String, updatedItems: List<Map<String, Any>>) {
+        if (docPath.isEmpty()) return
+        Log.i(TAG, "updateItemsAsReady: Updating items at path: $docPath")
+        firestore.document(docPath)
+            .update("items", updatedItems)
             .await()
     }
 }

@@ -1,10 +1,12 @@
 package com.example.masterdashboard.staff_dash.kitchen_screens.adapter
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemKitchenOrderCardBinding
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.KitchenOrderDetailData
 import java.util.concurrent.TimeUnit
@@ -24,17 +26,50 @@ class KitchenWorkstationAdapter(
 
     inner class WorkstationViewHolder(private val binding: ItemKitchenOrderCardBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(order: KitchenOrderDetailData) {
-            // Bind exact view targets matching your layout text item fields
             binding.tvOrderId.text = "#ORD-${order.orderId.takeLast(4).uppercase()}"
             binding.tvStatus.text = order.status
-            binding.tvTable.text = "Table ${order.tableName.ifEmpty { "N/A" }}"
+            
+            // Just use order.tableName directly as it is now pre-formatted by the Repository
+            binding.tvTable.text = order.tableName
+            
             binding.tvItems.text = "${order.items.size} Items"
 
-            // Compute precise operational elapsed runtime duration safely from Firestore Timestamp
-            if (order.timestamp != null) {
-                val durationMillis = System.currentTimeMillis() - order.timestamp.toDate().time
-                val elapsedMinutes = TimeUnit.MILLISECONDS.toMinutes(durationMillis)
-                binding.tvTime.text = "$elapsedMinutes min"
+            // Status Badge Styling (Light Theme)
+            when (order.status.lowercase().trim()) {
+                "preparing" -> {
+                    binding.tvStatus.setBackgroundResource(R.drawable.bg_status_preparing)
+                    binding.tvStatus.setTextColor(Color.parseColor("#92400E")) // Dark Amber
+                }
+                "ready" -> {
+                    binding.tvStatus.setBackgroundResource(R.drawable.bg_status_ready)
+                    binding.tvStatus.setTextColor(Color.parseColor("#15803D")) // Dark Green
+                }
+                "completed" -> {
+                    binding.tvStatus.setBackgroundResource(R.drawable.bg_status_active)
+                    binding.tvStatus.setTextColor(Color.parseColor("#15803D")) // Dark Green
+                }
+                "new", "pending" -> {
+                    binding.tvStatus.setBackgroundResource(R.drawable.bg_status_blue)
+                    binding.tvStatus.setTextColor(Color.parseColor("#0369A1")) // Dark Blue
+                }
+                else -> {
+                    binding.tvStatus.setBackgroundResource(R.drawable.bg_status_active)
+                    binding.tvStatus.setTextColor(Color.parseColor("#374151")) // Dark Gray
+                }
+            }
+
+            val ts = order.timestamp
+            if (ts != null) {
+                val durationMillis = System.currentTimeMillis() - ts.toDate().time
+                val min = TimeUnit.MILLISECONDS.toMinutes(durationMillis)
+                val hr = TimeUnit.MILLISECONDS.toHours(durationMillis)
+                val dy = TimeUnit.MILLISECONDS.toDays(durationMillis)
+
+                binding.tvTime.text = when {
+                    dy > 0 -> "$dy d"
+                    hr > 0 -> "$hr h"
+                    else -> "$min min"
+                }
             } else {
                 binding.tvTime.text = "0 min"
             }
