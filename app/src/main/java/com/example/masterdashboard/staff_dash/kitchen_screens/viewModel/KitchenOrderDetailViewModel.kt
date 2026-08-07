@@ -1,6 +1,5 @@
 package com.example.masterdashboard.staff_dash.kitchen_screens.viewModel
 
-
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -27,53 +26,91 @@ class KitchenOrderDetailViewModel(
     val statusUpdateAction: StateFlow<Result<String>?> = _statusUpdateAction.asStateFlow()
 
     /**
-     * Connects a dedicated real-time listener subscription framework to a specific order snapshot document
+     * Connects a dedicated real-time listener to a specific order document using its full path.
      */
-    fun loadOrderDetails(orderId: String) {
-        Log.i(TAG, "loadOrderDetails: Initializing real-time Firestore stream query link sequence for orderId: $orderId")
+    fun loadOrderDetails(docPath: String) {
+        Log.i(TAG, "loadOrderDetails: Initializing real-time Firestore stream for path: $docPath")
         _detailUiState.value = KitchenOrderDetailUiState.Loading
 
         viewModelScope.launch {
-            repository.getLiveOrderDetails(orderId)
+            repository.getLiveOrderDetails(docPath)
                 .catch { exception ->
-                    Log.e(TAG, "loadOrderDetails: Critical snapshot listener transmission exception caught for orderId: $orderId", exception)
+                    Log.e(TAG, "loadOrderDetails: Error for path: $docPath", exception)
                     _detailUiState.value = KitchenOrderDetailUiState.Error(exception)
                 }
                 .collect { detailedData ->
                     if (detailedData != null) {
-                        Log.d(TAG, "loadOrderDetails: Live update parsed successfully. Table: ${detailedData.tableName}, Status: ${detailedData.status}, Total Items Pack: ${detailedData.items.size}")
                         _detailUiState.value = KitchenOrderDetailUiState.Success(detailedData)
                     } else {
-                        Log.w(TAG, "loadOrderDetails: Query complete but document snapshot data returned null (Order may have been deleted or missing) for orderId: $orderId")
-                        _detailUiState.value = KitchenOrderDetailUiState.Error(Exception("Order ticket not found or deleted."))
+                        _detailUiState.value = KitchenOrderDetailUiState.Error(Exception("Order ticket not found."))
                     }
                 }
         }
     }
 
     /**
-     * Mutation engine handler to change the current operational ticket pipeline step (Accept, Reject, Finish)
+     * Updates the ticket status in Firestore.
      */
-    fun updateTicketStatus(orderId: String, targetStatus: String) {
-        Log.i(TAG, "updateTicketStatus: Request received to alter payload status properties. Target orderId: $orderId, Requested New State: $targetStatus")
+    fun updateTicketStatus(docPath: String, targetStatus: String, reason: String = "") {
+        Log.i(TAG, "updateTicketStatus: Request for path: $docPath, New Status: $targetStatus")
 
         viewModelScope.launch {
             try {
-                repository.updateOrderStatus(orderId, targetStatus)
-                Log.d(TAG, "updateTicketStatus: Cloud data field write complete. Firestore status updated to '$targetStatus' for orderId: $orderId")
+                repository.updateOrderStatus(docPath, targetStatus, reason)
                 _statusUpdateAction.value = Result.success(targetStatus)
             } catch (e: Exception) {
-                Log.e(TAG, "updateTicketStatus: Critical error caught while executing status update collection transaction for orderId: $orderId", e)
+                Log.e(TAG, "updateTicketStatus: Error for path: $docPath", e)
                 _statusUpdateAction.value = Result.failure(e)
             }
         }
     }
 
     /**
-     * Clean out status mutation side-effect tokens to prevent recurring toast messaging events
+     * Rejects specific items from the order and updates Firestore.
      */
+    fun rejectSpecificItems(
+        docPath: String,
+        remainingItems: List<com.example.masterdashboard.staff_dash.kitchen_screens.model.OrderDetailItem>,
+        reason: String
+    ) {
+        viewModelScope.launch {
+            try {
+                // Recalculate totals
+                val newSubtotal = remainingItems.sumOf { it.price.toDouble() * it.quantity }
+                val newGst = newSubtotal * 0.05
+                val newGrandTotal = newSubtotal + newGst
+
+                // Convert items to Map for Firestore
+                val itemsMap = remainingItems.map { item ->
+                    mapOf(
+                        "itemId" to item.itemId,
+                        "itemName" to item.itemName,
+                        "quantity" to item.quantity,
+                        "orderedQuantity" to item.orderedQuantity,
+                        "price" to item.price,
+                        "rowTotal" to (item.price * item.quantity),
+                        "category" to item.category,
+                        "itemNote" to item.itemNote
+                    )
+                }
+
+                repository.updateOrderWithRejectedItems(
+                    docPath,
+                    itemsMap,
+                    newSubtotal,
+                    newGst,
+                    newGrandTotal,
+                    reason
+                )
+
+                _statusUpdateAction.value = Result.success("Items Rejected: $reason")
+            } catch (e: Exception) {
+                _statusUpdateAction.value = Result.failure(e)
+            }
+        }
+    }
+
     fun resetStatusActionToken() {
-        Log.d(TAG, "resetStatusActionToken: Wiping status mutation action channel event token references.")
         _statusUpdateAction.value = null
     }
 }

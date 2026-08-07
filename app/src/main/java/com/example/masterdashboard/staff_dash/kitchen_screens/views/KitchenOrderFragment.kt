@@ -4,15 +4,20 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentKitchenOrderBinding
-import com.example.masterdashboard.staff_dash.kitchen_screens.viewModel.KitchenOrderViewModel
-import com.example.masterdashboard.staff_dash.kitchen_screens.adapter.KitchenFilterChipAdapter
+import com.example.masterdashboard.login.utils.SessionManager
 import com.example.masterdashboard.staff_dash.kitchen_screens.adapter.KitchenOrderStreamAdapter
 import com.example.masterdashboard.staff_dash.kitchen_screens.uistate.KitchenOrderUiState
+import com.example.masterdashboard.staff_dash.kitchen_screens.viewModel.KitchenOrderViewModel
+import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FloorChipsAdapter
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -25,36 +30,67 @@ class KitchenOrderFragment : Fragment(R.layout.fragment_kitchen_order) {
     private var _binding: FragmentKitchenOrderBinding? = null
     private val binding get() = _binding!!
 
+    private val sessionManager by lazy { SessionManager(requireContext()) }
     private val viewModel: KitchenOrderViewModel by viewModels()
     private lateinit var orderAdapter: KitchenOrderStreamAdapter
+    private lateinit var filterAdapter: FloorChipsAdapter
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentKitchenOrderBinding.bind(view)
 
-        Log.i(TAG, "onViewCreated: KitchenOrderFragment screen opened and layout elements initialized successfully.")
+        Log.i(TAG, "onViewCreated: KitchenOrderFragment screen opened.")
 
+        setupToolbar()
         setupChipsRecyclerView()
         setupOrdersRecyclerView()
+        setupSearch()
         observeUiState()
+
+        val managerId = sessionManager.getUid()
+        viewModel.startListeningOrders(managerId)
+        viewModel.setWorkstationContext(false)
+    }
+
+    private fun setupToolbar() {
+        // Optional: If you want menu items (like Sound Toggle or Refresh) on the toolbar
+        binding.toolbarKitchen.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.action_refresh -> {
+                    val managerId = sessionManager.getUid()
+                    viewModel.startListeningOrders(managerId)
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
     private fun setupChipsRecyclerView() {
-        val statusCategories = listOf("All", "New", "Preparing", "Ready", "Completed")
-        val chipAdapter = KitchenFilterChipAdapter(statusCategories) { selectedStatus ->
-            Log.d(TAG, "setupChipsRecyclerView: Chef changed active display layout filter matrix to category: [$selectedStatus]")
-            viewModel.setStatusFilter(selectedStatus)
-        }
-        binding.rvOrderFilterChips.adapter = chipAdapter
-    }
-    private fun setupOrdersRecyclerView() {
-        // orderAdapter should be bound to use List<KitchenOrderDetailData>
-        orderAdapter = KitchenOrderStreamAdapter { clickedOrderData ->
-            Log.i(TAG, "setupOrdersRecyclerView: Passing full object data for Table [${clickedOrderData.tableName}] to next screen.")
+        filterAdapter = FloorChipsAdapter { chip ->
+            Log.d(TAG, "setupChipsRecyclerView: Filter changed to: [${chip.name}]")
+            viewModel.setTypeFilter(chip.name)
 
+            val updatedList = filterAdapter.currentList.map {
+                it.copy(isSelected = it.id == chip.id)
+            }
+            filterAdapter.submitList(updatedList)
+        }
+
+        binding.rvOrderFilterChips.adapter = filterAdapter
+
+        val typeFilters = listOf(
+            TableFilterData("1", "All", true),
+            TableFilterData("2", "Takeaway", false),
+            TableFilterData("3", "Dine In", false)
+        )
+        filterAdapter.submitList(typeFilters)
+    }
+
+    private fun setupOrdersRecyclerView() {
+        orderAdapter = KitchenOrderStreamAdapter { clickedOrderData ->
             val detailFragment = KitchenOrderDetailFragment().apply {
                 arguments = Bundle().apply {
-                    // Pass the whole data class object instantly using putSerializable
                     putSerializable("ORDER_DATA_KEY", clickedOrderData)
                 }
             }
@@ -67,20 +103,38 @@ class KitchenOrderFragment : Fragment(R.layout.fragment_kitchen_order) {
         binding.rvKitchenOrdersStream.adapter = orderAdapter
     }
 
+    private fun setupSearch() {
+        binding.searchBar.etSearchOrder.addTextChangedListener { text ->
+            viewModel.setSearchQuery(text?.toString() ?: "")
+        }
+    }
+
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.uiState.collectLatest { state ->
-                when (state) {
-                    is KitchenOrderUiState.Loading -> {
-                        Log.d(TAG, "observeUiState: Real-time orders stream log collection loading...")
-                    }
-                    is KitchenOrderUiState.Success -> {
-                        Log.i(TAG, "observeUiState: Real-time order log data fetched from Firebase. Total tickets parsed in list stream: ${state.orders.size}")
-                        orderAdapter.submitList(state.orders)
-                    }
-                    is KitchenOrderUiState.Error -> {
-                        Log.e(TAG, "observeUiState: Critical error transmitted directly from Firestore connection flow channel", state.exception)
-                        Toast.makeText(context, "Error: ${state.exception.message}", Toast.LENGTH_LONG).show()
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collectLatest { state ->
+                    when (state) {
+                        is KitchenOrderUiState.Loading -> {
+                            binding.pbKitchenLoading.visibility = View.VISIBLE
+                            binding.toolbarKitchen.subtitle = "Updating tickets..."
+                        }
+                        is KitchenOrderUiState.Success -> {
+                            binding.pbKitchenLoading.visibility = View.GONE
+                            orderAdapter.submitList(state.orders)
+
+                            // Dynamic update of subtitle with live order count
+                            val count = state.orders.size
+                            binding.toolbarKitchen.subtitle = if (count == 0) {
+                                "No active tickets"
+                            } else {
+                                "$count active tickets to prepare"
+                            }
+                        }
+                        is KitchenOrderUiState.Error -> {
+                            binding.pbKitchenLoading.visibility = View.GONE
+                            binding.toolbarKitchen.subtitle = "Error loading orders"
+                            Toast.makeText(context, "Error: ${state.exception.message}", Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
             }
@@ -89,7 +143,6 @@ class KitchenOrderFragment : Fragment(R.layout.fragment_kitchen_order) {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        Log.d(TAG, "onDestroyView: Cleaning layout references to eliminate potential fragment memory leakage leaks.")
         _binding = null
     }
 }
