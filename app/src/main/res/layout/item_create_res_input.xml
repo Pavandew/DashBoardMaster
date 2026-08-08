@@ -5,16 +5,16 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingVertical="8dp"
+    android:paddingVertical="10dp"
     android:paddingHorizontal="4dp">
 
     <TextView
         android:id="@+id/tvLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="6dp"
-        android:text="Restaurant Name *"
-        android:textColor="#374151"
+        android:layout_marginBottom="8dp"
+        android:text="Label *"
+        android:textColor="@color/text_form_primary"
         android:textSize="14sp"
         android:textStyle="bold" />
 
@@ -23,26 +23,37 @@
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:boxStrokeColor="#E5E7EB"
+        app:boxStrokeColor="@color/primary_purple"
         app:boxStrokeWidth="1dp"
-        app:boxCornerRadiusBottomEnd="10dp"
-        app:boxCornerRadiusBottomStart="10dp"
-        app:boxCornerRadiusTopEnd="10dp"
-        app:boxCornerRadiusTopStart="10dp"
+        app:boxCornerRadiusBottomEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusTopStart="12dp"
         app:hintEnabled="false"
-        app:boxBackgroundColor="@android:color/white">
+        app:boxBackgroundColor="@color/white">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter restaurant name"
+            android:hint="Enter details"
             android:inputType="text"
             android:paddingVertical="16dp"
-            android:textColor="#111827"
-            android:textColorHint="#9CA3AF"
+            android:textColor="@android:color/black"
+            android:textColorHint="@color/text_form_secondary"
             android:textSize="15sp" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/tvHelperText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginStart="4dp"
+        android:text="Helper information"
+        android:textColor="@color/text_form_secondary"
+        android:textSize="12sp"
+        android:visibility="gone" />
 
 </LinearLayout>

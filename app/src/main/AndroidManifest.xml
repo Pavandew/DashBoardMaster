@@ -34,10 +34,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MasterDashboard">
-
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -67,6 +67,7 @@
             android:theme="@style/Theme.MasterDashboard">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -89,6 +90,10 @@
             android:windowSoftInputMode="adjustPan" />
         <activity
             android:name=".staff_dash.kitchen_screens.KitchenHomeActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".manager_single_res_dash.SingleResOwnerHomeActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
     </application>

@@ -16,6 +16,7 @@ import com.example.masterdashboard.master_dash.MasterHomeActivity
 import com.example.masterdashboard.login.uistate.LoginUiState
 import com.example.masterdashboard.login.viewmodel.LoginViewModel
 import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
+import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.login.utils.AppConstants
 import com.example.masterdashboard.login.utils.SessionManager
@@ -196,7 +197,7 @@ class LoginActivity : AppCompatActivity() {
             }
 
             AppConstants.ROLE_OWNER_SINGLE -> {
-                Intent(this, ManagerHomeActivity::class.java)
+                Intent(this, SingleResOwnerHomeActivity::class.java)
             }
 
             AppConstants.ROLE_MANAGER -> {

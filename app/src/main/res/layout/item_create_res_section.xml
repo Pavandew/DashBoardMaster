@@ -7,30 +7,51 @@
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:paddingTop="24dp"
-    android:paddingBottom="8dp"
+    android:paddingBottom="12dp"
     android:paddingHorizontal="4dp">
 
-    <TextView
-        android:id="@+id/tvSectionNumber"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
-        android:background="@drawable/bg_section_number"
-        android:gravity="center"
-        android:text="1"
-        android:textColor="@android:color/white"
-        android:textSize="12sp"
-        android:textStyle="bold" />
+    <androidx.cardview.widget.CardView
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        app:cardBackgroundColor="@color/primary_purple"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp">
+        <TextView
+            android:id="@+id/tvSectionNumber"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="1"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </androidx.cardview.widget.CardView>
 
     <TextView
         android:id="@+id/tvSectionTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="14dp"
+        android:text="SECTION TITLE"
+        android:textColor="@color/text_form_primary"
+        android:textAllCaps="true"
+        android:textSize="14sp"
+        android:letterSpacing="0.08"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvOptionalTag"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:text="BASIC DETAILS"
-        android:textColor="#5832E9"
-        android:textAllCaps="true"
-        android:textSize="15sp"
-        android:letterSpacing="0.05"
-        android:textStyle="bold" />
+        android:layout_marginStart="8dp"
+        android:background="@drawable/bg_optional_tag"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
+        android:text="OPTIONAL"
+        android:textColor="#9CA3AF"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
 </LinearLayout>

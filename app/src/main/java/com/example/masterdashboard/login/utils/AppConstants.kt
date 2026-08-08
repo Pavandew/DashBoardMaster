@@ -35,6 +35,8 @@ object AppConstants {
     const val KEY_NAME = "name"
     const val KEY_IS_LOGGED_IN = "is_logged_in"
     const val KEY_RESTAURANT_ID = "restaurant_id"
+    const val KEY_IS_RESTAURANT_SETUP = "is_restaurant_setup"
+    const val KEY_REGISTRATION_DRAFT = "registration_draft"
 
     // Backstack Tags
     const val BACKSTACK_ADD_STAFF = "add_staff_flow"
@@ -45,6 +47,7 @@ object AppConstants {
     const val COLLECTION_MENU_CATEGORIES = "menu_categories"
     const val COLLECTION_FOOD_ITEMS = "menu_food_items"
     const val COLLECTION_RES_FLOORS = "res_floors"
+    const val COLLECTION_RESTAURANTS = "restaurants_details"
     const val COLLECTION_TABLES = "floor_tables"
     const val COLLECTION_ACTIVE_ORDERS = "active_orders"
     const val COLLECTION_COMPLETED_ORDERS = "completed_orders"
