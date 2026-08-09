@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvUploadTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="RESTAURANT LOGO"
+        android:textColor="@color/text_form_primary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textAllCaps="true"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivLogoPreview"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_launcher_background"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:shapeAppearanceOverlay="@style/RoundedSquare"
+            android:background="#F3F4F6"/>
+
+        <View
+            android:id="@+id/viewPlaceholderIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/ic_add_circle_24dp"
+            android:backgroundTint="#9CA3AF"
+            app:layout_constraintStart_toStartOf="@id/ivLogoPreview"
+            app:layout_constraintEnd_toEndOf="@id/ivLogoPreview"
+            app:layout_constraintTop_toTopOf="@id/ivLogoPreview"
+            app:layout_constraintBottom_toBottomOf="@id/ivLogoPreview"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnUpload"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Upload logo"
+            android:textAllCaps="false"
+            android:textColor="@color/primary_purple"
+            app:strokeColor="@color/primary_purple"
+            app:cornerRadius="8dp"
+            app:icon="@drawable/ic_send_24dp"
+            app:layout_constraintStart_toStartOf="@id/ivLogoPreview"
+            app:layout_constraintEnd_toEndOf="@id/ivLogoPreview"
+            app:layout_constraintTop_toBottomOf="@id/ivLogoPreview"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <TextView
+        android:id="@+id/tvUploadHelper"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="PNG or JPG - up to 2 MB - resized automatically."
+        android:textColor="@color/text_form_secondary"
+        android:textSize="12sp" />
+
+</LinearLayout>
