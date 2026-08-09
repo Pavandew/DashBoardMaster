@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.models
+package com.example.masterdashboard.manager_single_res_dash.form_screen.model
 
 import android.net.Uri
 
@@ -28,3 +28,4 @@ sealed class Step2FormItem{
         var fileUri: Uri? = null // Added path caching tracking reference pointer
     ) : Step2FormItem()
 }
+
