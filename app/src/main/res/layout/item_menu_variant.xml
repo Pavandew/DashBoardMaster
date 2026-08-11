@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="4dp"
+    android:gravity="center_vertical">
+
+    <EditText
+        android:id="@+id/etVariantName"
+        style="@style/FormEditTextStyle"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="1.5"
+        android:layout_marginEnd="8dp"
+        android:hint="Size (e.g. Small)" />
+
+    <EditText
+        android:id="@+id/etVariantPrice"
+        style="@style/FormEditTextStyle"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="1"
+        android:layout_marginEnd="8dp"
+        android:hint="Price"
+        android:inputType="number" />
+
+    <ImageView
+        android:id="@+id/btnRemoveVariant"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:padding="4dp"
+        android:src="@android:drawable/ic_menu_delete"
+        android:contentDescription="Remove variant"
+        app:tint="@color/red_alert"
+        xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+</LinearLayout>
