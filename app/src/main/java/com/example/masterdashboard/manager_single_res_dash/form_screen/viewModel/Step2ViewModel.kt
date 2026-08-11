@@ -19,6 +19,25 @@ class Step2ViewModel : ViewModel() {
 
     companion object {
         private const val TAG = "Step2ViewModel"
+        
+        private val INDIAN_STATES = listOf(
+            "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
+            "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", 
+            "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", 
+            "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", 
+            "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+            "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", 
+            "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+        ).sorted()
+
+        private val COUNTRIES = listOf(
+            "India", "United States", "United Kingdom", "United Arab Emirates", 
+            "Canada", "Australia", "Singapore", "Germany", "France"
+        ).sorted()
+
+        private val COUNTRY_CODES = listOf(
+            "+91 (IN)", "+1 (US)", "+44 (UK)", "+971 (AE)", "+61 (AU)", "+65 (SG)", "+1 (CA)", "+49 (DE)"
+        )
     }
 
     private val _uiState = MutableStateFlow<RegistrationUiState>(RegistrationUiState.Idle)
@@ -33,23 +52,83 @@ class Step2ViewModel : ViewModel() {
     fun initFields(data: RegistrationDataModel) {
         try {
             Log.d(TAG, "Initializing fields for Step 2 with current address: ${data.address}")
+            
+            // Logic to split country code from phone number if they exist
+            val (contactCode, contactNum) = splitPhone(data.contactNumber, "+91 (IN)")
+            val (whatsappCode, whatsappNum) = splitPhone(data.whatsappNumber, "+91 (IN)")
+            
+            val selectedCountry = if (data.country.isEmpty()) "India" else data.country
+
             _formFields.value = listOf(
                 FormItem.StepProgress("STEP 2 OF 6", "Address & Contact", "Where you are and how to reach you."),
+                
                 FormItem.SectionHeader("RESTAURANT ADDRESS", sectionNumber = "1"),
-                FormItem.InputField("address", "Address *", "e.g. Marathahalli", InputType.TYPE_CLASS_TEXT, value = data.address),
+                FormItem.InputField("address", "Address *", "e.g. Street, Area, Building", InputType.TYPE_CLASS_TEXT, value = data.address),
                 FormItem.InputField("landmark", "Landmark", "Nearby landmark", InputType.TYPE_CLASS_TEXT, value = data.landmark),
-                FormItem.InputField("pin_code", "PIN code *", "e.g. 560037", InputType.TYPE_CLASS_NUMBER, helperText = "6 digits — we'll fill the rest for you.", value = data.pinCode),
-                FormItem.InputField("city", "City *", "e.g. Banglore", InputType.TYPE_CLASS_TEXT, value = data.city),
-                FormItem.InputField("state", "State *", "e.g. Karnataka", InputType.TYPE_CLASS_TEXT, value = data.state),
-                FormItem.InputField("country", "Country *", "e.g. India", InputType.TYPE_CLASS_TEXT, value = data.country),
+                FormItem.InputField("pin_code", "PIN code *", "6-digit code", InputType.TYPE_CLASS_NUMBER, helperText = "We'll use this for tax calculations.", value = data.pinCode),
+                
+                FormItem.InputField("city", "City *", "e.g. Bangalore", InputType.TYPE_CLASS_TEXT, value = data.city),
+                
+                FormItem.DropdownField(
+                    "state", 
+                    "State *", 
+                    "Select state", 
+                    INDIAN_STATES, 
+                    selectedValue = data.state
+                ),
+                
+                FormItem.DropdownField(
+                    "country", 
+                    "Country *", 
+                    "Select country", 
+                    COUNTRIES, 
+                    selectedValue = selectedCountry
+                ),
+
                 FormItem.SectionHeader("RESTAURANT CONTACT", sectionNumber = "2"),
-                FormItem.InputField("contact_number", "Contact number *", "e.g. 1234567890", InputType.TYPE_CLASS_PHONE, helperText = "Primary number printed on receipts.", value = data.contactNumber),
-                FormItem.InputField("contact_email", "Contact email *", "e.g. abc@gmail.com", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS, value = data.contactEmail),
-                FormItem.InputField("whatsapp", "WhatsApp", "e.g. 98765 43210", InputType.TYPE_CLASS_PHONE, value = data.whatsappNumber),
-                FormItem.InputField("website", "Website", "e.g. https://...", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI, value = data.website)
+                FormItem.PhoneInputField(
+                    "contact_number", 
+                    "Contact number *", 
+                    "00000 00000", 
+                    COUNTRY_CODES,
+                    selectedCode = contactCode,
+                    phoneNumber = contactNum
+                ),
+                FormItem.InputField(
+                    "contact_email", 
+                    "Contact email *", 
+                    "e.g. business@gmail.com", 
+                    InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS, 
+                    value = data.contactEmail
+                ),
+                FormItem.PhoneInputField(
+                    "whatsapp", 
+                    "WhatsApp", 
+                    "00000 00000", 
+                    COUNTRY_CODES,
+                    selectedCode = whatsappCode,
+                    phoneNumber = whatsappNum
+                ),
+                FormItem.InputField(
+                    "website", 
+                    "Website", 
+                    "https://www.your-restaurant.com", 
+                    InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI, 
+                    value = data.website
+                )
             )
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing Step 2 fields", e)
+        }
+    }
+
+    private fun splitPhone(fullNumber: String, defaultCode: String): Pair<String, String> {
+        if (fullNumber.isEmpty()) return Pair(defaultCode, "")
+        val parts = fullNumber.split(" ")
+        return if (parts.size >= 2) {
+            Pair(parts[0], parts.subList(1, parts.size).joinToString(" "))
+        } else {
+            Pair(defaultCode, fullNumber)
         }
     }
 
@@ -63,25 +142,50 @@ class Step2ViewModel : ViewModel() {
             val currentFields = _formFields.value.toMutableList()
 
             currentFields.forEachIndexed { index, item ->
-                if (item is FormItem.InputField) {
-                    val error = when (item.key) {
-                        "address" -> FormValidator.validateNotEmpty(item.value, "Address")
-                        "pin_code" -> FormValidator.validatePinCode(item.value)
-                        "city" -> FormValidator.validateNotEmpty(item.value, "City")
-                        "state" -> FormValidator.validateNotEmpty(item.value, "State")
-                        "country" -> FormValidator.validateNotEmpty(item.value, "Country")
-                        "contact_number" -> FormValidator.validatePhone(item.value)
-                        "contact_email" -> FormValidator.validateEmail(item.value)
-                        else -> null
-                    }
+                when (item) {
+                    is FormItem.InputField -> {
+                        val error = when (item.key) {
+                            "address" -> FormValidator.validateNotEmpty(item.value, "Address")
+                            "pin_code" -> FormValidator.validatePinCode(item.value)
+                            "city" -> FormValidator.validateNotEmpty(item.value, "City")
+                            "contact_email" -> FormValidator.validateEmail(item.value)
+                            else -> null
+                        }
 
-                    if (error != null) {
-                        Log.w(TAG, "Validation failed for key: ${item.key} | Error: $error")
-                        isValid = false
-                        currentFields[index] = item.copy(error = error)
-                    } else {
-                        currentFields[index] = item.copy(error = null)
+                        if (error != null) {
+                            isValid = false
+                            currentFields[index] = item.copy(error = error)
+                        } else {
+                            currentFields[index] = item.copy(error = null)
+                        }
                     }
+                    is FormItem.DropdownField -> {
+                        val error = when (item.key) {
+                            "state" -> FormValidator.validateNotEmpty(item.selectedValue, "State")
+                            "country" -> FormValidator.validateNotEmpty(item.selectedValue, "Country")
+                            else -> null
+                        }
+
+                        if (error != null) {
+                            isValid = false
+                            currentFields[index] = item.copy(error = error)
+                        } else {
+                            currentFields[index] = item.copy(error = null)
+                        }
+                    }
+                    is FormItem.PhoneInputField -> {
+                        val error = if (item.key == "contact_number") {
+                            FormValidator.validatePhone(item.phoneNumber)
+                        } else null
+
+                        if (error != null) {
+                            isValid = false
+                            currentFields[index] = item.copy(error = error)
+                        } else {
+                            currentFields[index] = item.copy(error = null)
+                        }
+                    }
+                    else -> {}
                 }
             }
 
@@ -89,7 +193,7 @@ class Step2ViewModel : ViewModel() {
                 Log.i(TAG, "Step 2 validation successful.")
                 _uiState.value = RegistrationUiState.Success("Step 2 Validated", "")
             } else {
-                Log.e(TAG, "Step 2 validation failed. Red warnings triggered.")
+                Log.e(TAG, "Step 2 validation failed.")
                 _formFields.value = currentFields
                 _uiState.value = RegistrationUiState.Error("Please fix the errors in the form")
             }

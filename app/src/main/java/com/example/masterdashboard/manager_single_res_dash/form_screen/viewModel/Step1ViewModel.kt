@@ -37,14 +37,14 @@ class Step1ViewModel : ViewModel() {
                 FormItem.StepProgress("STEP 1 OF 6", "Owner & Restaurant", "Who runs it and what it's called."),
                 FormItem.InfoCard("The owner is shown on invoices and internal reports — never to customers."),
                 FormItem.SectionHeader("OWNER INFORMATION", sectionNumber = "1"),
-                FormItem.InputField("owner_name", "Owner full name *", "Enter Your Name", InputType.TYPE_CLASS_TEXT, value = data.ownerFullName),
-                FormItem.InputField("owner_email", "Owner email *", "e.g. abc@gmail.com", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS, value = data.ownerEmail),
-                FormItem.InputField("owner_mobile", "Owner mobile *", "e.g. 1234567890", InputType.TYPE_CLASS_PHONE, helperText = "10-digit Indian mobile — used for account recovery.", value = data.ownerMobile),
+                FormItem.InputField("owner_name", "Owner full name *", "e.g. John Doe", InputType.TYPE_CLASS_TEXT, value = data.ownerFullName),
+                FormItem.InputField("owner_email", "Owner email *", "e.g. owner@gmail.com", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS, value = data.ownerEmail),
+                FormItem.InputField("owner_mobile", "Owner mobile *", "e.g. 98765 43210", InputType.TYPE_CLASS_PHONE, helperText = "10-digit mobile — used for account recovery.", value = data.ownerMobile),
                 FormItem.SectionHeader("RESTAURANT INFORMATION", sectionNumber = "2"),
-                FormItem.InputField("res_name", "Restaurant name *", "Enter Your Restaurant Name", InputType.TYPE_CLASS_TEXT, helperText = "Shown to customers everywhere.", value = data.restaurantName),
-                FormItem.InputField("business_type", "Business type *", "Casual Dining", InputType.TYPE_CLASS_TEXT, value = data.businessType),
-                FormItem.InputField("legal_name", "Legal / registered name", "Amber Hospitality Pvt Ltd", InputType.TYPE_CLASS_TEXT, helperText = "As per GST registration.", value = data.legalName),
-                FormItem.InputField("display_name", "Display name (receipts)", "Amber & Oak", InputType.TYPE_CLASS_TEXT, helperText = "Short version printed on bills.", value = data.displayName)
+                FormItem.InputField("res_name", "Restaurant name *", "e.g. The Grand Bistro", InputType.TYPE_CLASS_TEXT, helperText = "Shown to customers everywhere.", value = data.restaurantName),
+                FormItem.InputField("business_type", "Business type *", "e.g. Casual Dining", InputType.TYPE_CLASS_TEXT, value = data.businessType),
+                FormItem.InputField("legal_name", "Legal / registered name", "e.g. ABC Hospitality Pvt Ltd", InputType.TYPE_CLASS_TEXT, helperText = "As per legal documents.", value = data.legalName),
+                FormItem.InputField("display_name", "Display name (receipts)", "e.g. Grand Bistro", InputType.TYPE_CLASS_TEXT, helperText = "Short version printed on bills.", value = data.displayName)
             )
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing Step 1 fields", e)

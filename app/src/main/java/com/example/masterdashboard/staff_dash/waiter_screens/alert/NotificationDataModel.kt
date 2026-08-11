@@ -12,6 +12,8 @@ data class StaffAlertItem(
     val type: NotificationType,
     val status: RequestStatus,
     val isRead: Boolean,
+    val targetRole: String = "",
+    val targetStaffId: String = "",
     val isExpanded: Boolean = false
 )
 
