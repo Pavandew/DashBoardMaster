@@ -15,18 +15,21 @@ class CreateRestaurantViewModel : ViewModel() {
             ),
 
             CreateRestaurantItem.InputField(
+                key = "res_name",
                 label = "Restaurant Name *",
                 hint = "Enter restaurant name",
                 inputType = InputType.TYPE_CLASS_TEXT
             ),
 
             CreateRestaurantItem.InputField(
+                key = "owner_name",
                 label = "Owner Name *",
                 hint = "Enter owner name",
                 inputType = InputType.TYPE_CLASS_TEXT
             ),
 
             CreateRestaurantItem.InputField(
+                key = "email",
                 label = "Email Address *",
                 hint = "Enter email address",
                 inputType = InputType.TYPE_CLASS_TEXT or
@@ -34,18 +37,21 @@ class CreateRestaurantViewModel : ViewModel() {
             ),
 
             CreateRestaurantItem.InputField(
+                key = "phone",
                 label = "Phone Number *",
                 hint = "Enter phone number",
                 inputType = InputType.TYPE_CLASS_PHONE
             ),
 
             CreateRestaurantItem.InputField(
+                key = "username",
                 label = "Username *",
                 hint = "Enter username",
                 inputType = InputType.TYPE_CLASS_TEXT
             ),
 
             CreateRestaurantItem.InputField(
+                key = "password",
                 label = "Password *",
                 hint = "Enter password",
                 inputType = InputType.TYPE_CLASS_TEXT or
@@ -54,6 +60,7 @@ class CreateRestaurantViewModel : ViewModel() {
             ),
 
             CreateRestaurantItem.InputField(
+                key = "confirm_password",
                 label = "Confirm Password *",
                 hint = "Re-enter password",
                 inputType = InputType.TYPE_CLASS_TEXT or

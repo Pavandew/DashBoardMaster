@@ -8,10 +8,12 @@ sealed class CreateRestaurantItem {
     ) : CreateRestaurantItem()
 
     data class InputField(
+        val key: String = "",
         val label: String,
         val hint: String,
         val inputType: Int,
-        val isPassword: Boolean = false
+        val isPassword: Boolean = false,
+        var value: String = ""
     ) : CreateRestaurantItem()
 
     data object LocationSection : CreateRestaurantItem()

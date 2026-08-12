@@ -1,5 +1,7 @@
 package com.example.masterdashboard.master_dash.create_res.adapter
 
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.GridLayout
@@ -12,7 +14,8 @@ import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.textfield.TextInputLayout
 
 class CreateRestaurantAdapter(
-    private val items: List<CreateRestaurantItem>
+    private val items: List<CreateRestaurantItem>,
+    private val onInputChanged: ((String, String) -> Unit)? = null
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -73,16 +76,36 @@ class CreateRestaurantAdapter(
 
     inner class InputViewHolder(private val binding: ItemCreateResInputBinding) :
         RecyclerView.ViewHolder(binding.root) {
+        
+        private var currentWatcher: TextWatcher? = null
+
         fun bind(item: CreateRestaurantItem.InputField) {
             binding.tvLabel.text = item.label
             binding.etInput.hint = item.hint
             binding.etInput.inputType = item.inputType
+            
+            // Remove old watcher to avoid multiple callbacks
+            currentWatcher?.let { binding.etInput.removeTextChangedListener(it) }
+            
+            // Set current value
+            binding.etInput.setText(item.value)
 
             binding.textInputLayout.endIconMode = if (item.isPassword) {
                 TextInputLayout.END_ICON_PASSWORD_TOGGLE
             } else {
                 TextInputLayout.END_ICON_NONE
             }
+            
+            // Add new watcher
+            currentWatcher = object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    item.value = s.toString()
+                    onInputChanged?.invoke(item.key, s.toString())
+                }
+                override fun afterTextChanged(s: Editable?) {}
+            }
+            binding.etInput.addTextChangedListener(currentWatcher)
         }
     }
 

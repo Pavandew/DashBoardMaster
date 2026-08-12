@@ -65,6 +65,7 @@
     <color name="portal_title_end">#00f2fe</color>
     <!-- Status Colors -->
     <color name="status_free">#178038</color>
+    <color name="status_paid">#065921</color>
     <color name="status_free_bg">#E8F5E9</color>
     <color name="status_occupied">#D32F2F</color>
     <color name="status_occupied_bg">#FFF5F5</color>
@@ -107,10 +108,13 @@
     <color name="bg_success_light">#F8F9FA</color>
 
     <color name="bg_main">#0B0D13</color>
+    <color name="bg_form_light">#F8F9FD</color>
     <color name="bg_card">#1C1E28</color>
 
     <color name="text_primary">#FFFFFF</color>
+    <color name="text_form_primary">#111827</color>
     <color name="text_secondary">#8E92A2</color>
+    <color name="text_form_secondary">#6B7280</color>
 
     <color name="green_growth">#10B981</color>
     <color name="red_alert">#EF4444</color>
