@@ -1,9 +1,11 @@
-package com.example.masterdashboard.login.utils
+package com.example.masterdashboard.utils
 
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
+import com.example.masterdashboard.manager_single_res_dash.form_screen.model.RegistrationDataModel
+import com.google.gson.Gson
 import org.json.JSONArray
 
 class SessionManager(context: Context) {
@@ -38,9 +40,10 @@ class SessionManager(context: Context) {
         role: String,
         phone: String,
         name: String,
-        staffId: String = "" // ✅ FIXED: Default argument prevents compilation issues in other files
+        staffId: String = "",
+        staffDocId: String = ""
     ) {
-        Log.d(TAG, "setLogin: uid=$uid, role=$role, phone=$phone, name=$name, staffId=$staffId")
+        Log.d(TAG, "setLogin: uid=$uid, role=$role, phone=$phone, name=$name, staffId=$staffId, staffDocId=$staffDocId")
         prefs.edit {
             putBoolean(AppConstants.KEY_IS_LOGGED_IN, true)
                 .putString(AppConstants.KEY_UID, uid)
@@ -48,9 +51,11 @@ class SessionManager(context: Context) {
                 .putString(AppConstants.KEY_PHONE, phone)
                 .putString(AppConstants.KEY_NAME, name)
 
-            // Only write the staff ID if it's actually provided from the login pipeline
             if (staffId.isNotEmpty()) {
                 putString(AppConstants.KEY_STAFF_ID, staffId)
+            }
+            if (staffDocId.isNotEmpty()) {
+                putString(AppConstants.KEY_STAFF_DOC_ID, staffDocId)
             }
         }
     }
@@ -96,6 +101,17 @@ class SessionManager(context: Context) {
         return staffId
     }
 
+    fun saveStaffDocId(staffDocId: String) {
+        Log.d(TAG, "saveStaffDocId: $staffDocId")
+        prefs.edit { putString(AppConstants.KEY_STAFF_DOC_ID, staffDocId) }
+    }
+
+    fun getStaffDocId(): String {
+        val id = prefs.getString(AppConstants.KEY_STAFF_DOC_ID, "") ?: ""
+        Log.d(TAG, "getStaffDocId: $id")
+        return id
+    }
+
     // Added to resolve SplashActivity log compilation mapping requirements
     fun getUserName(): String? {
         val name = prefs.getString(AppConstants.KEY_NAME, null)
@@ -108,6 +124,52 @@ class SessionManager(context: Context) {
         val phone = prefs.getString(AppConstants.KEY_PHONE, null)
         Log.d(TAG, "getPhone: $phone")
         return phone
+    }
+
+    fun saveRestaurantId(restaurantId: String) {
+        Log.d(TAG, "saveRestaurantId: $restaurantId")
+        prefs.edit { putString(AppConstants.KEY_RESTAURANT_ID, restaurantId) }
+    }
+
+    fun getRestaurantId(): String {
+        val id = prefs.getString(AppConstants.KEY_RESTAURANT_ID, "") ?: ""
+        Log.d(TAG, "getRestaurantId: $id")
+        return id
+    }
+
+    // 🏗️ RESTAURANT SETUP CONTROL
+    fun setRestaurantSetup(isSetup: Boolean) {
+        Log.i(TAG, "setRestaurantSetup: Updating status to $isSetup")
+        prefs.edit { putBoolean(AppConstants.KEY_IS_RESTAURANT_SETUP, isSetup) }
+    }
+
+    fun isRestaurantSetup(): Boolean {
+        val isSetup = prefs.getBoolean(AppConstants.KEY_IS_RESTAURANT_SETUP, false)
+        Log.d(TAG, "isRestaurantSetup: $isSetup")
+        return isSetup
+    }
+
+    // 📝 REGISTRATION DRAFT PERSISTENCE
+    fun saveRegistrationDraft(data: RegistrationDataModel) {
+        val json = Gson().toJson(data)
+        Log.d(TAG, "saveRegistrationDraft: Data cached locally")
+        prefs.edit { putString(AppConstants.KEY_REGISTRATION_DRAFT, json) }
+    }
+
+    fun getRegistrationDraft(): RegistrationDataModel? {
+        val json = prefs.getString(AppConstants.KEY_REGISTRATION_DRAFT, null)
+        return if (json != null) {
+            Log.d(TAG, "getRegistrationDraft: Draft found and restored")
+            Gson().fromJson(json, RegistrationDataModel::class.java)
+        } else {
+            Log.d(TAG, "getRegistrationDraft: No local draft found")
+            null
+        }
+    }
+
+    fun clearRegistrationDraft() {
+        Log.d(TAG, "clearRegistrationDraft: Local cache cleared")
+        prefs.edit { remove(AppConstants.KEY_REGISTRATION_DRAFT) }
     }
 
     // 🛡️ NEW: DYNAMIC PERMISSIONS ARRAY LIST CACHE CONTROL LOGIC
@@ -161,7 +223,9 @@ class SessionManager(context: Context) {
             remove(AppConstants.KEY_UID)
             remove(AppConstants.KEY_ROLE)
             remove(AppConstants.KEY_PHONE)
-            remove(AppConstants.KEY_NAME) // Clear name on logout
+            remove(AppConstants.KEY_NAME)
+            remove(AppConstants.KEY_IS_RESTAURANT_SETUP)
+            remove(AppConstants.KEY_RESTAURANT_ID)
         }
     }
 }

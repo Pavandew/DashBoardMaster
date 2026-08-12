@@ -1,4 +1,4 @@
-package com.example.masterdashboard.login.utils
+package com.example.masterdashboard.utils
 
 import android.content.Context
 import com.google.android.material.dialog.MaterialAlertDialogBuilder

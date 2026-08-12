@@ -1,4 +1,4 @@
-package com.example.masterdashboard.login.utils
+package com.example.masterdashboard.utils
 
 object AppConstants {
     // Portal Types
