@@ -20,6 +20,8 @@ import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeAct
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.login.utils.AppConstants
 import com.example.masterdashboard.login.utils.SessionManager
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
@@ -138,8 +140,18 @@ class LoginActivity : AppCompatActivity() {
                                 uid = state.uid,
                                 role = state.role,
                                 phone = phone,
-                                name = ""
+                                name = state.fullName
                             )
+                            
+                            // NEW: Save setup status and ID from Firestore into local session
+                            Log.i(TAG, "Setup Status Received: ${state.isRestaurantSetup}, ID: ${state.restaurantId}")
+                            sessionManager.setRestaurantSetup(state.isRestaurantSetup)
+                            if (state.restaurantId.isNotEmpty()) {
+                                sessionManager.saveRestaurantId(state.restaurantId)
+                            }
+
+                            // NEW: Save FCM token to Firestore on login
+                            saveFcmToken(state.uid)
 
                             Toast.makeText(
                                 this@LoginActivity,
@@ -148,7 +160,7 @@ class LoginActivity : AppCompatActivity() {
                             ).show()
 
                             // Open Dashboard Based On Role
-                            navigateToDashboard(state.role)
+                            navigateToDashboard(state.role, state.isRestaurantSetup)
                         }
 
                         is LoginUiState.Error -> {
@@ -189,7 +201,7 @@ class LoginActivity : AppCompatActivity() {
             else -> false
         }
     }
-    private fun navigateToDashboard(role: String) {
+    private fun navigateToDashboard(role: String, isSetup: Boolean) {
 
         val intent = when (role) {
             AppConstants.ROLE_OWNER_MULTI -> {
@@ -197,7 +209,11 @@ class LoginActivity : AppCompatActivity() {
             }
 
             AppConstants.ROLE_OWNER_SINGLE -> {
-                Intent(this, SingleResOwnerHomeActivity::class.java)
+                if (isSetup) {
+                    Intent(this, ManagerHomeActivity::class.java)
+                } else {
+                    Intent(this, SingleResOwnerHomeActivity::class.java)
+                }
             }
 
             AppConstants.ROLE_MANAGER -> {
@@ -218,6 +234,29 @@ class LoginActivity : AppCompatActivity() {
         intent?.let {
             startActivity(it)
             finish()
+        }
+    }
+
+    private fun saveFcmToken(uid: String) {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w(TAG, "Fetching FCM registration token failed", task.exception)
+                return@addOnCompleteListener
+            }
+
+            val token = task.result
+            Log.d(TAG, "FCM Token: $token")
+
+            // Update token in Firestore
+            val db = FirebaseFirestore.getInstance()
+            db.collection(AppConstants.COLLECTION_USERS).document(uid)
+                .update(AppConstants.FIELD_FCM_TOKEN, token)
+                .addOnSuccessListener {
+                    Log.d(TAG, "FCM token saved successfully for user: $uid")
+                }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Error saving FCM token", e)
+                }
         }
     }
 

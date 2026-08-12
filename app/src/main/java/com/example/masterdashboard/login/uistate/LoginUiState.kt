@@ -10,7 +10,10 @@ sealed class LoginUiState{
         val message: String,
         val uid: String,
         val role: String,
-        val portalType: String
+        val portalType: String,
+        val isRestaurantSetup: Boolean = false,
+        val restaurantId: String = "",
+        val fullName: String = ""
     ): LoginUiState()
 
     data class Error(

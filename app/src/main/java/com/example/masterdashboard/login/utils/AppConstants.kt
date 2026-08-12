@@ -12,6 +12,7 @@ object AppConstants {
     const val ROLE_MANAGER = "manager"
     const val ROLE_STAFF = "waiter_staff"
     const val KEY_STAFF_ID = "key_staff_id"
+    const val KEY_STAFF_DOC_ID = "key_staff_doc_id"
     const val KEY_PERMISSIONS = "key_permissions"
 
     // Firestore Collections & Fields
@@ -22,6 +23,9 @@ object AppConstants {
     const val FIELD_UID = "uid"
     const val FIELD_ROLE = "role"
     const val FIELD_PORTAL_TYPE = "portalType"
+    const val FIELD_FCM_TOKEN = "fcmToken"
+    const val FIELD_IS_SETUP_COMPLETE = "isSetupComplete"
+    const val FIELD_RESTAURANT_ID = "restaurantId"
 
     // Others
     const val PHONE_PREFIX_INDIA = "+91"

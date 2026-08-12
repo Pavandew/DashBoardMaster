@@ -1,5 +1,6 @@
 package com.example.masterdashboard.login.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.masterdashboard.login.uistate.LoginUiState
@@ -73,6 +74,16 @@ class LoginViewModel: ViewModel() {
                 val uid = userDoc.getString(AppConstants.FIELD_UID) ?: ""
                 val role = userDoc.getString(AppConstants.FIELD_ROLE) ?: ""
                 val portalType = userDoc.getString(AppConstants.FIELD_PORTAL_TYPE) ?: ""
+                val fullName = userDoc.getString("fullName") ?: ""
+                
+                // DEBUG: Log all document fields to verify setup status
+                Log.d("LoginVM", "User document fields: ${userDoc.data}")
+
+                // NEW: Fetch restaurant setup status and ID
+                val isSetupComplete = userDoc.getBoolean(AppConstants.FIELD_IS_SETUP_COMPLETE) ?: false
+                val restaurantId = userDoc.getString(AppConstants.FIELD_RESTAURANT_ID) ?: ""
+                
+                Log.i("LoginVM", "Restaurant Setup Status: $isSetupComplete, ID: $restaurantId")
 
                 // step 2 password chek
                 if(storedPassword != password.hashCode().toString()) {
@@ -95,7 +106,10 @@ class LoginViewModel: ViewModel() {
                         message = "Login successful",
                         uid = uid,
                         role = role,
-                        portalType = portalType
+                        portalType = portalType,
+                        isRestaurantSetup = isSetupComplete,
+                        restaurantId = restaurantId,
+                        fullName = fullName
                     )
 
             } catch (e: Exception) {

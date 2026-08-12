@@ -69,13 +69,18 @@ abstract class BaseOrderTakingFragment : Fragment() {
         val tableId = arguments?.getString("tableId") ?: ""
         val tableName = arguments?.getString("tableName") ?: "Order"
         val status = arguments?.getString("status") ?: "FREE"
-        viewModel.startOrderSession(tableId, tableName, status)
+        val existingDocId = arguments?.getString("existingOrderDocId")
+        val existingOrderId = arguments?.getString("existingOrderId")
+        
+        viewModel.startOrderSession(tableId, tableName, status, existingDocId, existingOrderId)
 
         if (!managerId.isNullOrEmpty()) {
-            val existingDocId = arguments?.getString("existingOrderDocId")
+            val floorId = arguments?.getString("floorId") ?: ""
             if (!existingDocId.isNullOrEmpty()) {
-                val floorId = arguments?.getString("floorId") ?: ""
                 viewModel.resumeOrderSession(managerId, floorId, tableId, existingDocId)
+            } else if (status.uppercase() != "FREE") {
+                // Table is occupied but we don't have the Order ID. Fetch it automatically.
+                viewModel.findAndResumeOrderSession(managerId, floorId, tableId)
             }
         }
     }
@@ -132,7 +137,9 @@ abstract class BaseOrderTakingFragment : Fragment() {
             itemId = foodItem.id,
             itemName = foodItem.name,
             basePrice = foodItem.price.toDouble(),
-            imageUrl = foodItem.imageUrl
+            imageUrl = foodItem.imageUrl,
+            hasVariants = foodItem.hasVariants,
+            variants = foodItem.variantsList
         )
         ItemCustomizationBottomSheet.newInstance(menuItemDetail).show(parentFragmentManager, "ItemCustomization")
     }
