@@ -20,6 +20,11 @@
         <item name="cornerSize">50%</item>
     </style>
 
+    <style name="RoundedSquare">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
+    </style>
+
     <style name="FormEditTextStyle">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">48dp</item>

@@ -25,11 +25,12 @@ class WaiterViewCartDetailsFragment : BaseViewCartFragment() {
         binding.btnSendToKitchen.text = "Send to Kitchen"
         binding.btnSendToKitchen.setOnClickListener {
             val managerId = sessionManager.getUid()
+            val waiterId = sessionManager.getStaffDocId() // Get current waiter ID
             val tableId = arguments?.getString("tableId") ?: "N/A"
             val floorId = arguments?.getString("floorId") ?: "N/A"
             val notes = binding.etOrderNotes.text.toString().trim()
 
-            viewModel.submitActiveOrderToKitchen(managerId, floorId, tableId, notes)
+            viewModel.submitActiveOrderToKitchen(managerId, floorId, tableId, notes, waiterId = waiterId)
         }
 
         observeUploadStatus()

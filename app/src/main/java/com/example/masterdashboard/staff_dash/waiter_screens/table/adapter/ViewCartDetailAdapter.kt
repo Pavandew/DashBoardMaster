@@ -21,7 +21,8 @@ class ViewCartDetailAdapter : ListAdapter<FoodItemData, ViewCartDetailAdapter.Ca
 
     class CartViewHolder(private val binding: ItemOrderDetailRowBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: FoodItemData) {
-            binding.tvExpandedItemName.text = item.name
+            val displayName = if (item.variantName.isNotEmpty()) "${item.name} (${item.variantName})" else item.name
+            binding.tvExpandedItemName.text = displayName
 
             // Format example output string layout cleanly: "2 x ₹199"
             binding.tvExpandedItemQtyPrice.text = "${item.currentQuantity} x ₹${item.price}"

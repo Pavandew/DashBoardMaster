@@ -16,15 +16,18 @@ import androidx.fragment.app.Fragment
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivityWaiterHomeBinding
 import com.example.masterdashboard.master_dash.settings.views.ChangePasswordFragment
-import com.example.masterdashboard.staff_dash.waiter_screens.alert.StaffAlertFragment
+import com.example.masterdashboard.staff_dash.waiter_screens.alert.StaffNotificationFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.dashboard.WaiterDashboardFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.order.views.WaiterActiveOrdersFragment
 import com.example.masterdashboard.staff_dash.profile.StaffProfileFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.table.views.WaiterTablesFragment
 import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.notifications.NotificationPermissionHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class WaiterHomeActivity : AppCompatActivity() {
+
+    private lateinit var permissionHelper: NotificationPermissionHelper
     private lateinit var binding: ActivityWaiterHomeBinding
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var sessionManager: SessionManager
@@ -56,6 +59,8 @@ class WaiterHomeActivity : AppCompatActivity() {
         binding = ActivityWaiterHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        permissionHelper = NotificationPermissionHelper(this)
+
         window.navigationBarColor = Color.TRANSPARENT
         window.statusBarColor = Color.TRANSPARENT
 
@@ -80,6 +85,8 @@ class WaiterHomeActivity : AppCompatActivity() {
             navigateTo(currentTag ?: TAG_DASHBOARD)
             updateBottomNavVisibility()
         }
+
+        permissionHelper.askNotificationPermission()
     }
 
     private fun setupWindowInsets() {
@@ -206,7 +213,7 @@ class WaiterHomeActivity : AppCompatActivity() {
             TAG_DASHBOARD       -> WaiterDashboardFragment()
             TAG_CREATE          -> WaiterTablesFragment()
             TAG_RESTAURANTS     -> WaiterActiveOrdersFragment()
-            TAG_LOGS            -> StaffAlertFragment()
+            TAG_LOGS            -> StaffNotificationFragment()
             TAG_PROFILE         -> StaffProfileFragment()
             TAG_CHANGE_PASSWORD -> ChangePasswordFragment()
             else                -> WaiterDashboardFragment()
