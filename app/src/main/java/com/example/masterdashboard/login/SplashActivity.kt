@@ -14,8 +14,10 @@ import com.example.masterdashboard.master_dash.MasterHomeActivity
 import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.kitchen_screens.KitchenHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
-import com.example.masterdashboard.login.utils.AppConstants
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeActivity
+import kotlin.jvm.java
 
 class SplashActivity : AppCompatActivity() {
 
@@ -89,17 +91,24 @@ class SplashActivity : AppCompatActivity() {
                 finish()
             }
 
-        }, 1500)
+        }, 800)
     }
     private fun navigateToDashboard(role: String) {
         // Normalizing the role string eliminates bugs caused by case mismatch (e.g., "Waiter" vs "waiter")
         val cleanRole = role.lowercase().trim()
 
-        val intent = when (cleanRole) {
+        val nextIntent = when (cleanRole) {
             AppConstants.ROLE_OWNER_MULTI -> {
                 Intent(this, MasterHomeActivity::class.java)
             }
-            AppConstants.ROLE_OWNER_SINGLE, AppConstants.ROLE_MANAGER -> {
+            AppConstants.ROLE_OWNER_SINGLE -> {
+                if (sessionManager.isRestaurantSetup()) {
+                    Intent(this, ManagerHomeActivity::class.java)
+                } else {
+                    Intent(this, SingleResOwnerHomeActivity::class.java)
+                }
+            }
+            AppConstants.ROLE_MANAGER -> {
                 Intent(this, ManagerHomeActivity::class.java)
             }
 
@@ -126,7 +135,11 @@ class SplashActivity : AppCompatActivity() {
                 Intent(this, ActivityVisitorPortal::class.java)
             }
         }
-        startActivity(intent)
+
+        // Pass any extras (like orderId from a notification) forward to the next screen
+        intent.extras?.let { nextIntent.putExtras(it) }
+
+        startActivity(nextIntent)
         finish()
     }
 }

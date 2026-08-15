@@ -27,57 +27,57 @@ object SignUpValidator {
             // Full name
             name.isBlank() ->
                 ValidationResult.Error(
-                    field = "fullName",
+                    field = AppConstants.FIELD_FULL_NAME,
                     message = "Enter full name"
                 )
 
             name.length < 3 ->
                 ValidationResult.Error(
-                    field = "fullName",
+                    field = AppConstants.FIELD_FULL_NAME,
                     message = "Name must be at least 3 characters"
                 )
 
             !name.matches(Regex("^[a-zA-Z ]+$")) ->
                 ValidationResult.Error(
-                    field = "fullName",
+                    field = AppConstants.FIELD_FULL_NAME,
                     message = "Only letters allowed"
                 )
 
-            // Phone
+            // Mobile
             mobile.isBlank() ->
                 ValidationResult.Error(
-                    field = "phone",
-                    message = "Enter phone number"
+                    field = AppConstants.FIELD_MOBILE,
+                    message = "Enter mobile number"
                 )
 
             !mobile.matches(Regex("^[0-9]{10}$")) ->
                 ValidationResult.Error(
-                    field = "phone",
-                    message = "Enter valid 10-digit phone number"
+                    field = AppConstants.FIELD_MOBILE,
+                    message = "Enter valid 10-digit mobile number"
                 )
 
             // Password
             password.isBlank() ->
                 ValidationResult.Error(
-                    field = "password",
+                    field = AppConstants.FIELD_PASSWORD,
                     message = "Enter password"
                 )
 
             password.length < 8 ->
                 ValidationResult.Error(
-                    field = "password",
+                    field = AppConstants.FIELD_PASSWORD,
                     message = "Password must be at least 8 characters"
                 )
 
             !password.matches(Regex(".*[A-Za-z].*")) ->
                 ValidationResult.Error(
-                    field = "password",
+                    field = AppConstants.FIELD_PASSWORD,
                     message = "Password must contain a letter"
                 )
 
             !password.matches(Regex(".*\\d.*")) ->
                 ValidationResult.Error(
-                    field = "password",
+                    field = AppConstants.FIELD_PASSWORD,
                     message = "Password must contain a number"
                 )
 

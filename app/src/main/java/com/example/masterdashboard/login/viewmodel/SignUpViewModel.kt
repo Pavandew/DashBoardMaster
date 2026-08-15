@@ -4,9 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.masterdashboard.login.uistate.SignUpUiState
-import com.example.masterdashboard.login.utils.SignUpValidator
-import com.example.masterdashboard.login.utils.ValidationResult
-import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.utils.SignUpValidator
+import com.example.masterdashboard.utils.ValidationResult
+import com.example.masterdashboard.utils.AppConstants
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,19 +68,26 @@ class SignUpViewModel : ViewModel() {
                         val formattedPhone = if (phone.startsWith("+91")) phone else "+91$phone"
                         Log.d(TAG, "signUpUser: Checking existing user with formatted phone: $formattedPhone")
 
-                        // check Existing User
-                        val snapshot = db.collection(AppConstants.COLLECTION_USERS)
-                            .whereEqualTo(AppConstants.FIELD_PHONE, formattedPhone)
+                        // check Existing User - check both 'mobile' and 'phone' fields
+                        var snapshot = db.collection(AppConstants.COLLECTION_USERS)
+                            .whereEqualTo(AppConstants.FIELD_MOBILE, formattedPhone)
                             .get()
                             .await()
 
+                        if (snapshot.isEmpty) {
+                            snapshot = db.collection(AppConstants.COLLECTION_USERS)
+                                .whereEqualTo("phone", formattedPhone)
+                                .get()
+                                .await()
+                        }
+
                         if (!snapshot.isEmpty) {
-                            Log.w(TAG, "signUpUser: Phone $formattedPhone is already registered")
+                            Log.w(TAG, "signUpUser: Phone/Mobile $formattedPhone is already registered")
 
                             _signUpState.value =
                                 SignUpUiState.Error(
-                                    "phone",
-                                    "Phone already registered"
+                                    AppConstants.FIELD_MOBILE,
+                                    "Mobile already registered"
                                 )
                             return@launch
                         }
