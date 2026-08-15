@@ -14,7 +14,7 @@ object FormValidator {
     }
 
     fun validatePhone(phone: String): String? {
-        if (phone.trim().isEmpty()) return "Phone number is required"
+        if (phone.trim().isEmpty()) return "Mobile number is required"
         val phonePattern = "^[6-9]\\d{9}$"
         return if (!phone.matches(Regex(phonePattern))) "Invalid 10-digit mobile number" else null
     }

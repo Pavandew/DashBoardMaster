@@ -38,17 +38,17 @@ class SessionManager(context: Context) {
     fun setLogin(
         uid: String,
         role: String,
-        phone: String,
+        mobile: String,
         name: String,
         staffId: String = "",
         staffDocId: String = ""
     ) {
-        Log.d(TAG, "setLogin: uid=$uid, role=$role, phone=$phone, name=$name, staffId=$staffId, staffDocId=$staffDocId")
+        Log.d(TAG, "setLogin: uid=$uid, role=$role, mobile=$mobile, name=$name, staffId=$staffId, staffDocId=$staffDocId")
         prefs.edit {
             putBoolean(AppConstants.KEY_IS_LOGGED_IN, true)
                 .putString(AppConstants.KEY_UID, uid)
                 .putString(AppConstants.KEY_ROLE, role)
-                .putString(AppConstants.KEY_PHONE, phone)
+                .putString(AppConstants.KEY_MOBILE, mobile)
                 .putString(AppConstants.KEY_NAME, name)
 
             if (staffId.isNotEmpty()) {
@@ -121,9 +121,9 @@ class SessionManager(context: Context) {
 
     // Added to resolve SplashActivity log compilation mapping requirements
     fun getPhone(): String? {
-        val phone = prefs.getString(AppConstants.KEY_PHONE, null)
-        Log.d(TAG, "getPhone: $phone")
-        return phone
+        val mobile = prefs.getString(AppConstants.KEY_MOBILE, null)
+        Log.d(TAG, "getMobile: $mobile")
+        return mobile
     }
 
     fun saveRestaurantId(restaurantId: String) {
@@ -222,7 +222,7 @@ class SessionManager(context: Context) {
             remove(AppConstants.KEY_IS_LOGGED_IN)
             remove(AppConstants.KEY_UID)
             remove(AppConstants.KEY_ROLE)
-            remove(AppConstants.KEY_PHONE)
+            remove(AppConstants.KEY_MOBILE)
             remove(AppConstants.KEY_NAME)
             remove(AppConstants.KEY_IS_RESTAURANT_SETUP)
             remove(AppConstants.KEY_RESTAURANT_ID)
