@@ -14,7 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentFormStep6Binding
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
 import com.example.masterdashboard.manager_single_res_dash.form_screen.adapter.FormAdapter
 import com.example.masterdashboard.manager_single_res_dash.form_screen.uiState.RegistrationUiState

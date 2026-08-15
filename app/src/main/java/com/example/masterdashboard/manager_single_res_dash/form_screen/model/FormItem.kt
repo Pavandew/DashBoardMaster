@@ -39,7 +39,8 @@ sealed class FormItem {
         val label: String,
         val hint: String,
         val options: List<String>,
-        var selectedValue: String = ""
+        var selectedValue: String = "",
+        var error: String? = null
     ) : FormItem()
 
     data class UploadField(
@@ -59,6 +60,16 @@ sealed class FormItem {
         val title: String,
         val details: List<Pair<String, String>>,
         val onEditClick: () -> Unit
+    ) : FormItem()
+
+    data class PhoneInputField(
+        val key: String,
+        val label: String,
+        val hint: String,
+        val codes: List<String>,
+        var selectedCode: String = "+91",
+        var phoneNumber: String = "",
+        var error: String? = null
     ) : FormItem()
 
     data class InputField(

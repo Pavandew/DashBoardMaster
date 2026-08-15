@@ -34,6 +34,7 @@ class FormAdapter(
         private const val TYPE_UPLOAD = 7
         private const val TYPE_REVIEW_HEADER = 8
         private const val TYPE_REVIEW_CARD = 9
+        private const val TYPE_PHONE = 10
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -47,6 +48,7 @@ class FormAdapter(
             is FormItem.UploadField -> TYPE_UPLOAD
             is FormItem.ReviewHeader -> TYPE_REVIEW_HEADER
             is FormItem.ReviewCard -> TYPE_REVIEW_CARD
+            is FormItem.PhoneInputField -> TYPE_PHONE
             is FormItem.InputField -> TYPE_INPUT
         }
     }
@@ -63,6 +65,7 @@ class FormAdapter(
             TYPE_UPLOAD -> UploadViewHolder(ItemFormUploadBinding.inflate(inflater, parent, false))
             TYPE_REVIEW_HEADER -> ReviewHeaderViewHolder(ItemFormReviewHeaderBinding.inflate(inflater, parent, false))
             TYPE_REVIEW_CARD -> ReviewCardViewHolder(ItemFormReviewCardBinding.inflate(inflater, parent, false))
+            TYPE_PHONE -> PhoneViewHolder(ItemFormPhoneBinding.inflate(inflater, parent, false))
             else -> InputViewHolder(ItemCreateResInputBinding.inflate(inflater, parent, false))
         }
     }
@@ -79,6 +82,7 @@ class FormAdapter(
             is UploadViewHolder -> holder.bind(item as FormItem.UploadField)
             is ReviewHeaderViewHolder -> holder.bind(item as FormItem.ReviewHeader)
             is ReviewCardViewHolder -> holder.bind(item as FormItem.ReviewCard)
+            is PhoneViewHolder -> holder.bind(item as FormItem.PhoneInputField)
             is InputViewHolder -> holder.bind(item as FormItem.InputField, position)
         }
     }
@@ -91,6 +95,46 @@ class FormAdapter(
             binding.tvResName.text = item.name
             binding.tvResType.text = item.type
             binding.tvStatusMessage.text = item.status
+        }
+    }
+
+    inner class PhoneViewHolder(private val binding: ItemFormPhoneBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        private var currentWatcher: TextWatcher? = null
+
+        fun bind(item: FormItem.PhoneInputField) {
+            binding.tvLabel.text = item.label
+            binding.codeAutoComplete.setText(item.selectedCode, false)
+            
+            val codeAdapter = ArrayAdapter(itemView.context, android.R.layout.simple_dropdown_item_1line, item.codes)
+            binding.codeAutoComplete.setAdapter(codeAdapter)
+
+            binding.codeAutoComplete.setOnItemClickListener { _, _, position, _ ->
+                val selected = item.codes[position]
+                item.selectedCode = selected
+                onInputChanged(item.key, "$selected ${item.phoneNumber}")
+            }
+
+            currentWatcher?.let { binding.etPhoneNumber.removeTextChangedListener(it) }
+            binding.etPhoneNumber.setText(item.phoneNumber)
+
+            binding.numberLayout.error = item.error
+            binding.numberLayout.isErrorEnabled = item.error != null
+
+            currentWatcher = object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    item.phoneNumber = s.toString()
+                    if (item.error != null) {
+                        item.error = null
+                        binding.numberLayout.error = null
+                    }
+                    onInputChanged(item.key, "${item.selectedCode} $s")
+                }
+                override fun afterTextChanged(s: Editable?) {}
+            }
+            binding.etPhoneNumber.addTextChangedListener(currentWatcher)
         }
     }
 
@@ -165,12 +209,24 @@ class FormAdapter(
             binding.tvLabel.text = item.label
             binding.autoCompleteTextView.setText(item.selectedValue, false)
             
+            // Show error if exists
+            binding.textInputLayout.error = item.error
+            binding.textInputLayout.isErrorEnabled = item.error != null
+
             val adapter = ArrayAdapter(itemView.context, android.R.layout.simple_dropdown_item_1line, item.options)
             binding.autoCompleteTextView.setAdapter(adapter)
             
             binding.autoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
                 val selected = item.options[position]
                 item.selectedValue = selected
+                
+                // Clear error on selection
+                if (item.error != null) {
+                    item.error = null
+                    binding.textInputLayout.error = null
+                    binding.textInputLayout.isErrorEnabled = false
+                }
+
                 onInputChanged(item.key, selected)
             }
         }
