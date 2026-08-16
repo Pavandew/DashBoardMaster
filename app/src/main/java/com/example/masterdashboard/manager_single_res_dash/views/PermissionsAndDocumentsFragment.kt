@@ -18,10 +18,10 @@ import com.example.masterdashboard.databinding.FragmentPermissionsAndDocumentsBi
 import com.example.masterdashboard.manager_single_res_dash.uistate.FirebaseUiState
 import com.example.masterdashboard.manager_single_res_dash.adapter.PermissionsDocumentsAdapter
 import com.example.masterdashboard.manager_single_res_dash.form_screen.model.Step2FormItem
-import com.example.masterdashboard.login.utils.DocumentUploadManager
+import com.example.masterdashboard.utils.DocumentUploadManager
 import com.example.masterdashboard.manager_single_res_dash.viewModel.StaffFormViewModel
-import com.example.masterdashboard.login.utils.AppConstants
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.SessionManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
@@ -121,22 +121,11 @@ class PermissionsAndDocumentsFragment : Fragment() {
             return
         }
 
-        // ✅ PRESENT AUTO-GENERATED LOGIN DETAILS IN CONFIRMATION POPUP
-        val activeCache = sharedViewModel.currentStaffData.value
-        val displayId = activeCache.staffId
-        val displayPassword = activeCache.password
-
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Confirm Account Registration")
-            .setMessage("Employee Account generation parameters created. Provide these exact credentials to the new staff member so they can authenticate via the Login Panel:\n\n" +
-                    "👤 Staff Login ID: $displayId\n" +
-                    "🔑 Password PIN : $displayPassword\n\n" +
-                    "Make sure to record these settings before clicking finalize.")
-            .setCancelable(false) // Force viewing completely to avoid forgotten passwords
-            .setPositiveButton("Finalize & Register") { dialog, _ ->
+            .setTitle("Register Staff?")
+            .setMessage("Are you sure you want to register this staff member? Account credentials will be generated automatically upon confirmation.")
+            .setPositiveButton("Yes, Register") { dialog, _ ->
                 dialog.dismiss()
-
-                // Fire final cloud upload parameters payload configuration tasks
                 val ownerUid = SessionManager(requireContext()).getUid()
                 sharedViewModel.submitFinalStaffData(
                     ownerUid = ownerUid,
@@ -145,8 +134,22 @@ class PermissionsAndDocumentsFragment : Fragment() {
                     permission = selectedPermissions
                 )
             }
-            .setNegativeButton("Go Back") { dialog, _ ->
+            .setNegativeButton("Review Again", null)
+            .show()
+    }
+
+    private fun showSuccessDialog(staffId: String, pass: String) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Registration Successful!")
+            .setMessage("Staff account created successfully. Please share these login credentials with the employee:\n\n" +
+                    "👤 Staff Login ID: $staffId\n" +
+                    "🔑 Password PIN : $pass\n\n" +
+                    "Make sure they save these details securely.")
+            .setCancelable(false)
+            .setPositiveButton("Done") { dialog, _ ->
                 dialog.dismiss()
+                sharedViewModel.clearFormData()
+                parentFragmentManager.popBackStack(AppConstants.BACKSTACK_ADD_STAFF, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
             }
             .show()
     }
@@ -163,10 +166,9 @@ class PermissionsAndDocumentsFragment : Fragment() {
                         }
                         is FirebaseUiState.Success -> {
                             binding.progressBar.visibility = View.GONE
-                            Toast.makeText(requireContext(), "Staff added successfully!", Toast.LENGTH_SHORT).show()
+                            val finalData = sharedViewModel.currentStaffData.value
+                            showSuccessDialog(finalData.staffId, finalData.password)
                             sharedViewModel.resetState()
-
-                            parentFragmentManager.popBackStack(AppConstants.BACKSTACK_ADD_STAFF, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
                         }
                         is FirebaseUiState.Error -> {
                             binding.progressBar.visibility = View.GONE

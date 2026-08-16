@@ -17,8 +17,8 @@ import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
 import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeActivity
 import com.example.masterdashboard.master_dash.MasterHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
-import com.example.masterdashboard.login.utils.AppConstants
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.launch
 
 class OTPVerificationActivity : AppCompatActivity() {
@@ -51,7 +51,7 @@ class OTPVerificationActivity : AppCompatActivity() {
 
         // Get Intent Data
         phone =
-            intent.getStringExtra("phone") ?: ""
+            intent.getStringExtra(AppConstants.KEY_MOBILE) ?: ""
 
         fullName =
             intent.getStringExtra("fullName") ?: ""
@@ -163,7 +163,7 @@ class OTPVerificationActivity : AppCompatActivity() {
                             sessionManager.setLogin(
                                 uid = state.uid,
                                 role = role,
-                                phone = phone,
+                                mobile = phone,
                                 name = fullName
                             )
 

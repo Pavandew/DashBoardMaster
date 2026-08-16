@@ -146,7 +146,7 @@ class OtpViewModel : ViewModel() {
                     val user = UserModelData(
                         uid = uid,
                         fullName = tempFullName,
-                        phone = tempPhone,
+                        mobile = tempPhone,
                         passwordHash = hashPassword(tempPassword),
                         role = tempRole,
                         portalType = tempPortal,
