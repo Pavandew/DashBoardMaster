@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.masterdashboard.login.repo.StaffLoginRepository
 import com.example.masterdashboard.login.uistate.StaffLoginUiState
+import com.example.masterdashboard.manager_single_res_dash.models.StaffDataModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -64,6 +65,7 @@ class StaffLoginViewModel(
                             staffDocId = staffProfile.id, // Database Auto-ID for this staff member
                             staffId = staffProfile.staffId, // Alphanumeric Custom ID (e.g. PAVAN9730)
                             role = staffProfile.role,      // Pass the exact role field string ("Waiter", "Kitchen", "Billing") here
+                            mobile = staffProfile.mobile,
                             permissions = staffProfile.permissions
                         )
                     } else {
@@ -81,5 +83,61 @@ class StaffLoginViewModel(
 
     fun resetStateToIdle() {
         _loginState.value = StaffLoginUiState.Idle
+    }
+
+    fun findStaffProfileForReset(staffId: String) {
+        val cleanId = staffId.trim()
+        if (cleanId.isEmpty()) {
+            _loginState.value = StaffLoginUiState.ValidationError("Enter Staff ID")
+            return
+        }
+
+        _loginState.value = StaffLoginUiState.Loading
+        viewModelScope.launch {
+            repository.findStaffProfileById(cleanId).fold(
+                onSuccess = { (staffProfile, ownerUid) ->
+                    handleProfileFound(staffProfile, ownerUid)
+                },
+                onFailure = {
+                    _loginState.value = StaffLoginUiState.AuthError("Staff ID not found.")
+                }
+            )
+        }
+    }
+
+    fun findStaffByPhoneForReset(phone: String) {
+        val cleanPhone = phone.trim()
+        if (cleanPhone.isEmpty()) {
+            _loginState.value = StaffLoginUiState.ValidationError("Enter Mobile Number")
+            return
+        }
+
+        _loginState.value = StaffLoginUiState.Loading
+        viewModelScope.launch {
+            repository.findStaffProfileByPhone(cleanPhone).fold(
+                onSuccess = { (staffProfile, ownerUid) ->
+                    handleProfileFound(staffProfile, ownerUid)
+                },
+                onFailure = {
+                    _loginState.value = StaffLoginUiState.AuthError("Mobile number not registered.")
+                }
+            )
+        }
+    }
+
+    private fun handleProfileFound(staffProfile: StaffDataModel, ownerUid: String) {
+        if (staffProfile.mobile.isEmpty()) {
+            _loginState.value = StaffLoginUiState.AuthError("No mobile number linked to this account.")
+        } else {
+            _loginState.value = StaffLoginUiState.Success(
+                staffName = staffProfile.staffName,
+                restaurantOwnerUid = ownerUid,
+                staffDocId = staffProfile.id,
+                staffId = staffProfile.staffId,
+                role = staffProfile.role,
+                mobile = staffProfile.mobile,
+                permissions = staffProfile.permissions
+            )
+        }
     }
 }

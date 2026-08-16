@@ -9,6 +9,7 @@ sealed interface StaffLoginUiState {
         val staffDocId: String,
         val staffId: String,
         val role: String,
+        val mobile: String,
         val permissions: List<String>
     ) : StaffLoginUiState
     data class ValidationError(val message: String) : StaffLoginUiState

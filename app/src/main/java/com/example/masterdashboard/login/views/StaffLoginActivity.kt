@@ -6,17 +6,22 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.databinding.ActivityStaffLoginBinding
+import com.example.masterdashboard.databinding.DialogForgotPasswordStaffBinding
 import com.example.masterdashboard.login.uistate.StaffLoginUiState
 import com.example.masterdashboard.login.viewmodel.StaffLoginViewModel
 import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.kitchen_screens.KitchenHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.SessionManager
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
 
 class StaffLoginActivity : AppCompatActivity() {
@@ -25,15 +30,14 @@ class StaffLoginActivity : AppCompatActivity() {
     }
 
     private lateinit var binding: ActivityStaffLoginBinding
-    // Instantiate ViewModels using standard delegation property extensions cleanly
     private val viewModel: StaffLoginViewModel by viewModels()
     private val sessionManager by lazy { SessionManager(this) }
+    private var isForgotFlow = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate: Staff Login Activity Initialized")
 
-        // 1. Setup Edge-to-Edge and Inflate Binding
         enableEdgeToEdge()
         binding = ActivityStaffLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -44,19 +48,39 @@ class StaffLoginActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         binding.staffLoginBtn.setOnClickListener {
-            val enteredId = binding.staffEtInput.text.toString()
-            val enteredPass = binding.staffPasswordEt.text.toString()
+            val enteredId = binding.staffEtInput.text.toString().trim()
+            val enteredPass = binding.staffPasswordEt.text.toString().trim()
 
-            // Reset validation markings before processing next validation cycle
             binding.textInputLayout.error = null
             binding.textInputLayout2.error = null
 
+            isForgotFlow = false
             viewModel.processStaffLogin(enteredId, enteredPass)
         }
 
         binding.staffForgotPass.setOnClickListener {
-            Toast.makeText(this, "Please contact your Restaurant Manager to look up credentials.", Toast.LENGTH_LONG).show()
+            showForgotPasswordDialog()
         }
+    }
+
+    private fun showForgotPasswordDialog() {
+        val dialogBinding = DialogForgotPasswordStaffBinding.inflate(layoutInflater)
+
+        AlertDialog.Builder(this)
+            .setTitle("Forgot Password")
+            .setMessage("Enter your registered mobile number to reset your password.")
+            .setView(dialogBinding.root)
+            .setPositiveButton("Verify Mobile") { _, _ ->
+                val mobileInput = dialogBinding.etStaffId.text.toString().trim()
+                if (mobileInput.isNotEmpty()) {
+                    isForgotFlow = true
+                    viewModel.findStaffByPhoneForReset(mobileInput)
+                } else {
+                    Toast.makeText(this, "Please enter mobile number", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun observeLoginUiPipeline() {
@@ -97,41 +121,39 @@ class StaffLoginActivity : AppCompatActivity() {
                             }
                         }
 
-                        // Inside your observeLoginUiPipeline() state collector matching logic:
                         is StaffLoginUiState.Success -> {
+                            if (isForgotFlow) {
+                                isForgotFlow = false
+                                openResetPasswordFragment(state)
+                                return@collect
+                            }
+                            
                             Log.i(TAG, "Navigation Verified: Appending sub-collection parameters to local Session Cache.")
 
-                            // 1. Read the explicit string role parsed out of the Firestore Document
                             val authenticatedRole = state.role
-                            Log.d(TAG, "Authenticated Role: $authenticatedRole")
-
-                            // PERSIST LOGIN STATUS SO LOGINS SURVIVE CLOSING THE APP
-                            // 2. Fire your complete setLogin method to switch the KEY_IS_LOGGED_IN boolean to true
                             sessionManager.setLogin(
-                                uid = state.restaurantOwnerUid, // Parent Restaurant ID context
-                                role = authenticatedRole, // Staff profile lock boundary
-                                phone = "",                      // Leave blank or pass profile mobile string if available
-                                name = state.staffName,          // Cache staff display name string
-                                staffId = state.staffId
+                                uid = state.restaurantOwnerUid,
+                                role = authenticatedRole,
+                                mobile = state.mobile,
+                                name = state.staffName,
+                                staffId = state.staffId,
+                                staffDocId = state.staffDocId
                             )
 
-                            // 3. Cache your remaining multi-tenant worker session variables
                             sessionManager.saveStaffId(state.staffId)
+                            sessionManager.saveStaffDocId(state.staffDocId)
                             sessionManager.savePermissions(state.permissions)
+
+                            saveFcmToken(state.restaurantOwnerUid, state.staffDocId)
 
                             Toast.makeText(this@StaffLoginActivity, "Welcome, ${state.staffName}!", Toast.LENGTH_SHORT).show()
 
-                            // 4. DYNAMIC ACTIVITY REDIRECTION ROUTER MATRIX
-                            // Compares lowercase trimmed role variants to match values like "Waiter", "Kitchen", etc.
                             val targetActivityClass = when(authenticatedRole.lowercase().trim()) {
                                 "kitchen", "chef" -> KitchenHomeActivity::class.java
                                 "billing", "cashier" -> CashierHomeActivity::class.java
                                 else -> WaiterHomeActivity::class.java
                             }
 
-                            Log.d(TAG, "Success Auth Routing: Forwarding profile session to ${targetActivityClass.simpleName}")
-
-                            // Route cleanly to the functional shift tracking hub dashboard activity space
                             val intent = Intent(this@StaffLoginActivity, targetActivityClass).apply {
                                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                             }
@@ -141,6 +163,34 @@ class StaffLoginActivity : AppCompatActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun openResetPasswordFragment(state: StaffLoginUiState.Success) {
+        val fragment = ChangePasswordFragment.newInstance(
+            phone = state.mobile,
+            ownerUid = state.restaurantOwnerUid,
+            staffDocId = state.staffDocId,
+            role = state.role
+        )
+        
+        supportFragmentManager.beginTransaction()
+            .replace(android.R.id.content, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun saveFcmToken(ownerUid: String, staffDocId: String) {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) return@addOnCompleteListener
+
+            val token = task.result ?: return@addOnCompleteListener
+            val db = FirebaseFirestore.getInstance()
+            db.collection(AppConstants.COLLECTION_USERS)
+                .document(ownerUid)
+                .collection(AppConstants.COLLECTION_STAFF)
+                .document(staffDocId)
+                .update(AppConstants.FIELD_FCM_TOKEN, token)
         }
     }
 }
