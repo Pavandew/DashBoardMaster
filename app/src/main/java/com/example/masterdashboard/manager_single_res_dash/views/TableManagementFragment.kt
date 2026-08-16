@@ -20,9 +20,9 @@ import com.example.masterdashboard.manager_single_res_dash.uistate.TableUiState
 import com.example.masterdashboard.manager_single_res_dash.utils.AddFloorBottomSheet
 import com.example.masterdashboard.manager_single_res_dash.viewModel.TableManagementViewModel
 import com.example.masterdashboard.manager_single_res_dash.table_management.adapter.FloorListAdapter
-import com.example.masterdashboard.login.utils.AppConstants
-import com.example.masterdashboard.login.utils.MenuDialogHelper
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.MenuDialogHelper
+import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 

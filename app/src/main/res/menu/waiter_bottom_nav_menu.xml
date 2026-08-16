@@ -2,12 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/staff_dashboardFragment"
-        android:title="@string/nav_dashboard"
-        android:icon="@drawable/ic_dashboard_24dp"
-        />
-
-    <item
         android:id="@+id/staff_tableFragment"
         android:title="Table"
         android:icon="@drawable/ic_table_24dp"
@@ -25,7 +19,7 @@
         />
 
     <item
-        android:id="@+id/staff_settingFragment"
+        android:id="@+id/staff_profileFragment"
         android:title="Profile"
         android:icon="@drawable/ic_person_24dp"
         />

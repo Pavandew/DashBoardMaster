@@ -129,6 +129,10 @@
     <string name="time_label">Time</string>
     <string name="view_active_orders">View Active Orders</string>
     <string name="back_to_tables">Back to Tables</string>
+    <string name="pay_later">Pay Later</string>
+    <string name="view_all_bills">View All Bills</string>
+    <string name="new_order">New Order</string>
+    <string name="table_id_format">T-%s</string>
     <string name="currency_symbol">₹</string>
     <string name="mark_as_served">Mark as Served</string>
     <string name="order_details">Order Details</string>

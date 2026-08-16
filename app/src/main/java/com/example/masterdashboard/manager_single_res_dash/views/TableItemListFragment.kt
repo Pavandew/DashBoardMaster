@@ -19,9 +19,9 @@ import com.example.masterdashboard.manager_single_res_dash.models.TableData
 import com.example.masterdashboard.manager_single_res_dash.uistate.TableItemUiState
 import com.example.masterdashboard.manager_single_res_dash.viewModel.TableItemListViewModel
 import com.example.masterdashboard.manager_single_res_dash.table_management.adapter.AddTableListAdapter
-import com.example.masterdashboard.login.utils.AppConstants
-import com.example.masterdashboard.login.utils.MenuDialogHelper
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.MenuDialogHelper
+import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
