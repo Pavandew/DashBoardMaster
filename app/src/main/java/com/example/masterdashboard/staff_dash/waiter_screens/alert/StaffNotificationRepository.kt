@@ -1,6 +1,6 @@
 package com.example.masterdashboard.staff_dash.waiter_screens.alert
 
-import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.utils.AppConstants
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose

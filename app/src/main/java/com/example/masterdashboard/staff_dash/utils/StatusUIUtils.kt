@@ -164,4 +164,18 @@ object StatusUIUtils {
         textView.setTextColor(ContextCompat.getColor(context, colorRes))
         textView.background = null // Remove any background bubble for items
     }
+
+    /**
+     * Centralized color provider for Table status UI.
+     * Returns a Pair of (Background Color String, Text Color String)
+     */
+    fun getTableStatusColors(status: String): Pair<String, String> {
+        return when (status.uppercase().trim()) {
+            "AVAILABLE", "FREE" -> "#112B1B" to "#4CAF50"  // Dark Green BG, Light Green Text
+            "OCCUPIED" -> "#3E2006" to "#FF9800"          // Dark Orange BG, Light Orange Text
+            "RESERVED" -> "#2C123D" to "#BA68C8"          // Dark Purple BG, Light Purple Text
+            "BILLING" -> "#0D2339" to "#2196F3"           // Dark Blue BG, Light Blue Text
+            else -> "#321111" to "#E57373"                // Dark Red BG, Light Red Text
+        }
+    }
 }

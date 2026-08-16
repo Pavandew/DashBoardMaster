@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentWaiterNotificationBinding
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.launch
 
 class StaffNotificationFragment : Fragment() {

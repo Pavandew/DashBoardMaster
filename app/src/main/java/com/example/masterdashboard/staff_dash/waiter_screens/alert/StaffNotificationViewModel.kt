@@ -3,7 +3,7 @@ package com.example.masterdashboard.staff_dash.waiter_screens.alert
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -1,17 +1,19 @@
 package com.example.masterdashboard.notifications
 
 import android.util.Log
-import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.utils.AppConstants
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 object AppNotificationHelper {
     private const val TAG = "AppNotificationHelper"
 
     /**
-     * Saves notification to Firestore central history
+     * Saves notification to Firestore central history.
+     * This ensures staff can see alerts in their history list even if they were logged out.
      */
-    private fun saveToHistory(
+    private suspend fun saveToHistory(
         managerId: String,
         title: String,
         message: String,
@@ -20,10 +22,12 @@ object AppNotificationHelper {
         targetStaffId: String = "",
         tableName: String = ""
     ) {
+        if (managerId.isEmpty()) return
+
         val notificationData = mapOf(
             "title" to title,
             "message" to message,
-            "type" to type, 
+            "type" to type,
             "targetRole" to targetRole,
             "targetStaffId" to targetStaffId,
             "tableName" to tableName,
@@ -32,12 +36,16 @@ object AppNotificationHelper {
             "status" to "PENDING"
         )
 
-        FirebaseFirestore.getInstance().collection(AppConstants.COLLECTION_USERS)
-            .document(managerId)
-            .collection("notifications")
-            .add(notificationData)
-            .addOnSuccessListener { Log.d(TAG, "Notification saved to history") }
-            .addOnFailureListener { e -> Log.e(TAG, "Failed to save notification history", e) }
+        try {
+            FirebaseFirestore.getInstance().collection(AppConstants.COLLECTION_USERS)
+                .document(managerId)
+                .collection("notifications")
+                .add(notificationData)
+                .await()
+            Log.d(TAG, "✅ Notification history record created for: $targetRole")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error saving notification history", e)
+        }
     }
 
     /**
@@ -52,55 +60,55 @@ object AppNotificationHelper {
         val title = "New Order: Table $tableName"
         val body = "A new order (#${orderId.takeLast(4)}) has been sent to the kitchen."
 
-        // 1. Save to History (Always do this)
+        // 1. Save to History (Always happens)
         saveToHistory(managerId, title, body, "ACTIONABLE_REQUEST", "kitchen", tableName = tableName)
 
-        // 2. Send Push Notification (Only if tokens exist)
-        if (chefTokens.isEmpty()) {
-            Log.w(TAG, "notifyKitchenOfNewOrder: No chef tokens found. Push notification skipped, but history saved.")
-            return
-        }
-
-        Log.i(TAG, "🔔 Notifying Kitchen: Table $tableName, Order $orderId")
-        
-        FcmNotificationSender.sendNotification(
-            targetTokens = chefTokens,
-            title = title,
-            body = body,
-            data = mapOf(
-                "orderId" to orderId,
-                "tableName" to tableName,
-                "type" to "NEW_ORDER"
+        // 2. Send Push Notification (Only if chefs are online)
+        if (chefTokens.isNotEmpty()) {
+            Log.i(TAG, "🔔 Sending Push Alert to Kitchen staff")
+            FcmNotificationSender.sendNotification(
+                targetTokens = chefTokens,
+                title = title,
+                body = body,
+                data = mapOf(
+                    "orderId" to orderId,
+                    "tableName" to tableName,
+                    "type" to "NEW_ORDER"
+                )
             )
-        )
+        }
     }
 
     /**
      * Sends a notification to the waiter when their order is ready.
      */
     suspend fun notifyWaiterOrderReady(
-        waiterToken: String,
+        waiterToken: String?,
         tableName: String,
         orderId: String,
         managerId: String, 
         waiterId: String   
     ) {
-        Log.i(TAG, "🔔 Notifying Waiter: Table $tableName, Order $orderId")
         val title = "Order Ready!"
         val body = "Order for Table $tableName is ready for pick-up"
 
-        FcmNotificationSender.sendNotification(
-            targetTokens = listOf(waiterToken),
-            title = title,
-            body = body,
-            data = mapOf(
-                "orderId" to orderId,
-                "tableName" to tableName,
-                "type" to "ORDER_READY"
-            )
-        )
+        // 1. Save to History (Always happens)
+        saveToHistory(managerId, title, body, "INFORMATIONAL", "waiter", waiterId, tableName)
 
-        saveToHistory(managerId, title, body, "ORDER_READY", "waiter", waiterId, tableName)
+        // 2. Send Push Notification (Only if waiter is online)
+        if (!waiterToken.isNullOrEmpty()) {
+            Log.i(TAG, "🔔 Sending Push Alert to Waiter: $waiterId")
+            FcmNotificationSender.sendNotification(
+                targetTokens = listOf(waiterToken),
+                title = title,
+                body = body,
+                data = mapOf(
+                    "orderId" to orderId,
+                    "tableName" to tableName,
+                    "type" to "ORDER_READY"
+                )
+            )
+        }
     }
 
     /**
@@ -115,26 +123,22 @@ object AppNotificationHelper {
         val title = "Bill Requested: Table $tableName"
         val body = "A bill has been requested for Table $tableName."
 
-        // 1. Save to History
+        // 1. Save to History (Always happens)
         saveToHistory(managerId, title, body, "ACTIONABLE_REQUEST", "billing", tableName = tableName)
 
-        // 2. Send Push Notification
-        if (cashierTokens.isEmpty()) {
-            Log.w(TAG, "notifyCashierOfBillRequest: No cashier tokens found. Push notification skipped.")
-            return
-        }
-
-        Log.i(TAG, "🔔 Notifying Cashier: Table $tableName, Order $orderId")
-        
-        FcmNotificationSender.sendNotification(
-            targetTokens = cashierTokens,
-            title = title,
-            body = body,
-            data = mapOf(
-                "orderId" to orderId,
-                "tableName" to tableName,
-                "type" to "BILL_REQUESTED"
+        // 2. Send Push Notification (Only if cashiers are online)
+        if (cashierTokens.isNotEmpty()) {
+            Log.i(TAG, "🔔 Sending Push Alert to Billing staff")
+            FcmNotificationSender.sendNotification(
+                targetTokens = cashierTokens,
+                title = title,
+                body = body,
+                data = mapOf(
+                    "orderId" to orderId,
+                    "tableName" to tableName,
+                    "type" to "BILL_REQUESTED"
+                )
             )
-        )
+        }
     }
 }
