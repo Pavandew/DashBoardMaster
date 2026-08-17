@@ -15,13 +15,12 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentCashierBillingBinding
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.staff_dash.billing_screens.adapter.CashierBillingAdapter
 import com.example.masterdashboard.staff_dash.billing_screens.model.CashierBillingOrderModel
 import com.example.masterdashboard.staff_dash.billing_screens.uiState.CashierBillingUiState
 import com.example.masterdashboard.staff_dash.billing_screens.viewmodel.CashierBillingViewModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FloorChipsAdapter
-import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
 import kotlinx.coroutines.launch
 
 class CashierBillingFragment : Fragment() {
@@ -87,21 +86,19 @@ class CashierBillingFragment : Fragment() {
         }
 
         filterAdapter = FloorChipsAdapter { chip ->
-            Log.d(TAG, "Filter chip clicked: ${chip.name}")
-            viewModel.setFilter(chip.name)
+            // Extract the original name from label "Name (Count)"
+            val originalName = if (chip.name.contains(" (")) {
+                chip.name.substringBefore(" (").trim()
+            } else {
+                chip.name
+            }
+            Log.d(TAG, "Filter chip clicked: $originalName")
+            viewModel.setFilter(originalName)
         }
         binding.rvCashierFilterChips.apply {
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = filterAdapter
         }
-
-        val filters = listOf(
-            TableFilterData("1", "All", true),
-            TableFilterData("2", "Pending Bill", false),
-            TableFilterData("3", "Take Away", false),
-            TableFilterData("4", "Paid Bills", false)
-        )
-        filterAdapter.submitList(filters)
     }
 
     private fun setupSearch() {
@@ -122,14 +119,12 @@ class CashierBillingFragment : Fragment() {
                             binding.pbBillingLoading.visibility = View.VISIBLE
                         }
                         is CashierBillingUiState.Success -> {
-                            Log.i(TAG, "UI State -> Success: Received ${state.orders.size} orders")
+                            Log.d(TAG, "UI State -> Success: Received ${state.orders.size} orders")
                             binding.pbBillingLoading.visibility = View.GONE
                             ordersAdapter.submitList(state.orders)
+                            filterAdapter.submitList(state.filters)
                             
-                            val updatedFilters = filterAdapter.currentList.map {
-                                it.copy(isSelected = it.name == state.selectedFilter)
-                            }
-                            filterAdapter.submitList(updatedFilters)
+                            // Removed automatic smoothScrollToPosition to prevent "All" chip from being pushed away
                         }
                         is CashierBillingUiState.Error -> {
                             Log.e(TAG, "UI State -> Error: ${state.message}")

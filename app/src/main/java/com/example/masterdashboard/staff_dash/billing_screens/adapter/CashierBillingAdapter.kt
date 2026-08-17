@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemCashierOrderCardBinding
 import com.example.masterdashboard.staff_dash.billing_screens.model.CashierBillingOrderModel
+import com.example.masterdashboard.staff_dash.utils.StatusUIUtils
 
 class CashierBillingAdapter(
     private val onGenerateBillClicked: (CashierBillingOrderModel) -> Unit,
@@ -34,6 +35,7 @@ class CashierBillingAdapter(
             onGenerateBillClicked: (CashierBillingOrderModel) -> Unit,
             onConfirmHandoverClicked: (CashierBillingOrderModel) -> Unit
         ) {
+            val context = itemView.context
             binding.tvTableNumber.text = item.tableName
             binding.tvOrderId.text = "• ${item.orderId}"
             binding.tvGrandTotal.text = "₹${String.format("%.2f", item.grandTotal)}"
@@ -42,43 +44,43 @@ class CashierBillingAdapter(
             val type = item.orderType.uppercase()
             val isCounterOrder = type == "TAKE_AWAY" || type == "DELIVERY"
             
+            // Apply Status UI using centralized utility
+            StatusUIUtils.applyStatusUI(context, binding.tvBillingStatus, status)
+
+            // Overwrite specific logic for Cashier screen (Buttons and sub-labels)
             when {
                 status == "COMPLETED" -> {
-                    binding.tvBillingStatus.text = "HANDED OVER"
-                    binding.tvBillingStatus.setBackgroundResource(R.drawable.bg_status_green)
-                    binding.tvBillingStatus.setTextColor(androidx.core.content.ContextCompat.getColor(itemView.context, R.color.dark_green))
                     binding.btnGenerateBill.visibility = android.view.View.GONE
                 }
-                status == "PAID" && isCounterOrder -> {
-                    // For Takeaway/Delivery that is PAID but not yet handed over
+                isCounterOrder && status == "PAID" -> {
                     binding.tvBillingStatus.text = "PAID - PENDING PICKUP"
-                    binding.tvBillingStatus.setBackgroundResource(R.drawable.bg_status_ready)
-                    binding.tvBillingStatus.setTextColor(androidx.core.content.ContextCompat.getColor(itemView.context, R.color.dark_green))
-                    
                     binding.btnGenerateBill.visibility = android.view.View.VISIBLE
                     binding.btnGenerateBill.text = "Confirm Hand Over"
                     binding.btnGenerateBill.setOnClickListener { onConfirmHandoverClicked(item) }
                 }
-                status == "PAID" -> {
-                    // Table order that is PAID
-                    binding.tvBillingStatus.text = "PAID"
-                    binding.tvBillingStatus.setBackgroundResource(R.drawable.bg_status_green)
-                    binding.tvBillingStatus.setTextColor(androidx.core.content.ContextCompat.getColor(itemView.context, R.color.dark_green))
-                    binding.btnGenerateBill.visibility = android.view.View.GONE
-                }
-                status == "BILLING" -> {
-                    binding.tvBillingStatus.text = "READY FOR BILL"
-                    binding.tvBillingStatus.setBackgroundResource(R.drawable.bg_status_amber)
-                    binding.tvBillingStatus.setTextColor(android.graphics.Color.parseColor("#C2410C"))
+                isCounterOrder && (status == "PENDING" || status == "PREPARING" || status == "READY") -> {
+                    binding.tvBillingStatus.text = "COUNTER - UNPAID"
                     binding.btnGenerateBill.visibility = android.view.View.VISIBLE
                     binding.btnGenerateBill.text = "Collect Payment"
                     binding.btnGenerateBill.setOnClickListener { onGenerateBillClicked(item) }
                 }
+                status == "PAID" -> {
+                    binding.btnGenerateBill.visibility = android.view.View.GONE
+                }
+                status == "BILLING" -> {
+                    binding.tvBillingStatus.text = "BILL REQUESTED"
+                    binding.btnGenerateBill.visibility = android.view.View.VISIBLE
+                    binding.btnGenerateBill.text = "Collect Payment"
+                    binding.btnGenerateBill.setOnClickListener { onGenerateBillClicked(item) }
+                }
+                status == "SERVED" -> {
+                    binding.tvBillingStatus.text = "EATING / SERVED"
+                    binding.btnGenerateBill.visibility = android.view.View.VISIBLE
+                    binding.btnGenerateBill.text = "Generate Bill"
+                    binding.btnGenerateBill.setOnClickListener { onGenerateBillClicked(item) }
+                }
                 else -> {
-                    // Standard "SERVED" Table Order or unpaid counter order
-                    binding.tvBillingStatus.text = if (isCounterOrder) status.replace("_", " ") else "RUNNING BILL"
-                    binding.tvBillingStatus.setBackgroundResource(R.drawable.bg_status_blue)
-                    binding.tvBillingStatus.setTextColor(androidx.core.content.ContextCompat.getColor(itemView.context, R.color.primary_blue))
+                    if (!isCounterOrder) binding.tvBillingStatus.text = "RUNNING BILL"
                     binding.btnGenerateBill.visibility = android.view.View.VISIBLE
                     binding.btnGenerateBill.text = "Generate Bill"
                     binding.btnGenerateBill.setOnClickListener { onGenerateBillClicked(item) }

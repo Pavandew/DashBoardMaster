@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.masterdashboard.staff_dash.billing_screens.model.CashierBillingOrderModel
 import com.example.masterdashboard.staff_dash.billing_screens.repo.CashierBillingRepository
 import com.example.masterdashboard.staff_dash.billing_screens.uiState.CashierBillingUiState
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,10 +29,23 @@ class CashierBillingViewModel(
     private var rawOrdersList: List<CashierBillingOrderModel> = emptyList()
     private var currentFilter: String = "All"
     private var currentSearchQuery: String = ""
+    private var isListening = false
+
+    init {
+        applyFilters() // Emit initial state with zero counts
+    }
 
     fun startListeningOrders(managerId: String) {
+        if (managerId.isEmpty()) return
+        
+        // Prevent restart if already listening
+        if (isListening) {
+            Log.d(TAG, "Already listening to billing stream. Skipping restart.")
+            return
+        }
+
         viewModelScope.launch {
-            _uiState.value = CashierBillingUiState.Loading
+            isListening = true
             repository.streamBillingOrders(managerId)
                 .catch { e ->
                     Log.e(TAG, "Error in orders flow stream", e)
@@ -55,64 +69,66 @@ class CashierBillingViewModel(
     }
 
     private fun applyFilters() {
-        // 1. Initial Data Source: rawOrdersList contains everything from this manager's path
-        var filtered = rawOrdersList
+        // 1. Initial Data Source
+        val relevantOrders = rawOrdersList.filter { order ->
+            val status = order.orderStatus.uppercase()
+            val type = order.orderType.uppercase()
 
-        // 2. Filter by Chip selection
+            if (type == "TAKE_AWAY" || type == "DELIVERY") {
+                status != "COMPLETED"
+            } else {
+                // Show SERVED (eating/done) and BILLING (ready to pay)
+                status == "SERVED" || status == "BILLING" || status == "PAID" || status == "COMPLETED"
+            }
+        }
+
+        // Calculate counts for chips
+        val countAll = relevantOrders.count { it.orderStatus.uppercase() != "COMPLETED" }
+        val countPending = relevantOrders.count { 
+            val s = it.orderStatus.uppercase()
+            val t = it.orderType.uppercase()
+            if (t == "TAKE_AWAY" || t == "DELIVERY") s != "PAID" && s != "COMPLETED"
+            else s == "SERVED" || s == "BILLING"
+        }
+        val countTakeAway = relevantOrders.count { 
+            (it.orderType == "TAKE_AWAY" || it.orderType == "DELIVERY") && it.orderStatus.uppercase() == "PAID"
+        }
+        val countPaid = relevantOrders.count { 
+            it.orderStatus.uppercase() == "PAID" || it.orderStatus.uppercase() == "COMPLETED"
+        }
+
+        // Ensure these are ALWAYS created even if relevantOrders is empty
+        val computedFilters = listOf(
+            TableFilterData("1", "All ($countAll)", currentFilter == "All"),
+            TableFilterData("2", "Pending Bill ($countPending)", currentFilter == "Pending Bill"),
+            TableFilterData("3", "Take Away ($countTakeAway)", currentFilter == "Take Away"),
+            TableFilterData("4", "Paid Bills ($countPaid)", currentFilter == "Paid Bills")
+        )
+
+        var filtered = relevantOrders
         if (currentFilter != "All") {
             filtered = when (currentFilter) {
-                "Pending Bill" -> {
-                    // Show orders that are NOT yet PAID
-                    filtered.filter { 
-                        val status = it.orderStatus.uppercase()
-                        status != "PAID" && status != "COMPLETED"
-                    }
+                "Pending Bill" -> filtered.filter { 
+                    val s = it.orderStatus.uppercase()
+                    if (it.orderType == "TAKE_AWAY" || it.orderType == "DELIVERY") s != "PAID" && s != "COMPLETED"
+                    else s == "SERVED" || s == "BILLING"
                 }
-                "Take Away" -> {
-                    // Specifically show Counter orders that are PAID but not yet Handed Over
-                    filtered.filter { 
-                        val status = it.orderStatus.uppercase()
-                        val type = it.orderType.uppercase()
-                        val isCounter = type == "TAKE_AWAY" || type == "DELIVERY"
-                        isCounter && status == "PAID"
-                    }
-                }
-                "Paid Bills" -> {
-                    // Show PAID table bills and COMPLETED counter bills
-                    filtered.filter { 
-                        val status = it.orderStatus.uppercase()
-                        val type = it.orderType.uppercase()
-                        val isDineIn = type == "DINE_IN" || type.isEmpty()
-                        (isDineIn && status == "PAID") || status == "COMPLETED"
-                    }
-                }
+                "Take Away" -> filtered.filter { it.orderStatus.uppercase() == "PAID" && (it.orderType == "TAKE_AWAY" || it.orderType == "DELIVERY") }
+                "Paid Bills" -> filtered.filter { it.orderStatus.uppercase() == "PAID" || it.orderStatus.uppercase() == "COMPLETED" }
                 else -> filtered
             }
         } else {
-            // "All" filter: Show everything currently in progress or recently settled.
-            // We only hide 'COMPLETED' (Handed over) from the 'All' view to keep it from getting cluttered.
-            filtered = filtered.filter {
-                it.orderStatus.uppercase() != "COMPLETED"
-            }
+            filtered = filtered.filter { it.orderStatus.uppercase() != "COMPLETED" }
         }
 
-        // 3. Sort logic: Prioritize "BILLING" requested orders at the top, then newest timestamp
-        filtered = filtered.sortedWith(compareByDescending<CashierBillingOrderModel> { 
-            it.orderStatus.uppercase() == "BILLING" 
-        }.thenByDescending { it.timestamp })
+        filtered = filtered.sortedWith(compareByDescending<CashierBillingOrderModel> { it.orderStatus.uppercase() == "BILLING" }.thenByDescending { it.timestamp })
 
-        // 4. Filter by Search Query (Table Name or Order ID)
         if (currentSearchQuery.isNotEmpty()) {
-            filtered = filtered.filter {
-                it.tableName.contains(currentSearchQuery, ignoreCase = true) ||
-                        it.orderId.contains(currentSearchQuery, ignoreCase = true)
-            }
+            filtered = filtered.filter { it.tableName.contains(currentSearchQuery, true) || it.orderId.contains(currentSearchQuery, true) }
         }
 
-        _uiState.value = CashierBillingUiState.Success(
-            orders = filtered,
-            selectedFilter = currentFilter
-        )
+        // Send Success state immediately so chips show up even with 0 orders
+        _uiState.value = CashierBillingUiState.Success(orders = filtered, selectedFilter = currentFilter, filters = computedFilters)
     }
 
     /**
