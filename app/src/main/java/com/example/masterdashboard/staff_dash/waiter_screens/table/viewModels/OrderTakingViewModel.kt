@@ -4,472 +4,375 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.masterdashboard.staff_dash.waiter_screens.table.models.CartSummaryState
-import com.example.masterdashboard.staff_dash.waiter_screens.table.models.FoodItemData
-import com.example.masterdashboard.staff_dash.waiter_screens.table.models.MenuCategoryData
-import com.example.masterdashboard.staff_dash.waiter_screens.table.models.MenuItemType
-import com.example.masterdashboard.staff_dash.waiter_screens.table.models.OrderDataModel
-import com.example.masterdashboard.staff_dash.waiter_screens.table.models.OrderItemModel
-import com.example.masterdashboard.staff_dash.waiter_screens.table.models.OrderUiState
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.*
 import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderTakingRepository
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
+import com.example.masterdashboard.notifications.AppNotificationHelper
+import com.example.masterdashboard.utils.AppConstants
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Shared ViewModel managing the order creation and modification lifecycle.
+ * Shared ViewModel managing the active order session and cart contents.
+ * Scoped to Activity to persist data across ordering fragments.
  */
 class OrderTakingViewModel(private val repository: OrderTakingRepository) : ViewModel() {
 
     companion object {
-        private const val TAG = "Order_Flow_Debug"
+        private const val TAG = "OrderTakingVM"
     }
 
+    /**
+     * Factory to instantiate the ViewModel with required repository.
+     */
     class OrderViewModelFactory(private val repository: OrderTakingRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(OrderTakingViewModel::class.java)) {
-                @Suppress("UNCHECKED_CAST") return OrderTakingViewModel(repository) as T
+            return when {
+                modelClass.isAssignableFrom(OrderTakingViewModel::class.java) -> {
+                    Log.d(TAG, "Factory: Creating OrderTakingViewModel")
+                    OrderTakingViewModel(repository) as T
+                }
+                modelClass.isAssignableFrom(OrderMenuViewModel::class.java) -> {
+                    Log.d(TAG, "Factory: Creating OrderMenuViewModel")
+                    OrderMenuViewModel(repository) as T
+                }
+                else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
             }
-            throw IllegalArgumentException("Unknown ViewModel configuration")
         }
     }
 
-    private val _uiState = MutableStateFlow(OrderUiState())
-    val uiState: StateFlow<OrderUiState> = _uiState.asStateFlow()
+    // --- State Observables ---
+
+    private val _cartSummary = MutableStateFlow(CartSummaryState(0, 0))
+    /**
+     * Observable summary of the cart (total items, total price).
+     */
+    val cartSummary: StateFlow<CartSummaryState> = _cartSummary.asStateFlow()
 
     private val _orderUploadStatus = MutableStateFlow<ResourceUiState<Boolean>?>(null)
+    /**
+     * Tracks the status of the order submission to Firestore.
+     */
     val orderUploadStatus: StateFlow<ResourceUiState<Boolean>?> = _orderUploadStatus.asStateFlow()
 
+    private val _originalFoodList = MutableStateFlow<List<FoodItemData>>(emptyList())
+    /**
+     * The master list of menu items combined with their local quantities (acting as the cart source).
+     */
+    val originalFoodList: StateFlow<List<FoodItemData>> = _originalFoodList.asStateFlow()
+
+    private val _categories = MutableStateFlow<List<MenuCategoryData>>(emptyList())
+    /**
+     * Observable list of menu categories for the current restaurant.
+     */
+    val categories: StateFlow<List<MenuCategoryData>> = _categories.asStateFlow()
+
+    // --- Session Meta Data ---
     var currentTableId: String? = null
-        private set
-
     var currentTableName: String = ""
-        private set
-
     var existingOrderDocId: String? = null
-        private set
-
     var existingOrderId: String? = null
-        private set
-
     var isViewingCart: Boolean = false
-
-    var originalFoodList: List<FoodItemData> = emptyList()
-        private set
-
     var lastOrderId: String? = null
-        private set
-
     var customerName: String = ""
     var customerPhone: String = ""
     var orderType: String = "DINE_IN"
     var selectedPaymentMethod: String = ""
 
-    init {
-        Log.d(TAG, "🏗️ [VIEWMODEL] OrderTakingViewModel instance successfully initialized.")
-        initializeDietFilters()
+    // --- Data Loading ---
+
+    /**
+     * Loads categories and items from Firestore. 
+     * Since this ViewModel is activity-scoped, this data stays "warm" across fragments.
+     */
+    fun loadCatalog(managerId: String?) {
+        if (managerId.isNullOrEmpty()) return
+        
+        // If already loading or loaded, don't restart unless necessary
+        if (_categories.value.isNotEmpty() && _originalFoodList.value.isNotEmpty()) {
+            Log.d(TAG, "Catalog: Already loaded and active.")
+            return
+        }
+
+        Log.i(TAG, "Catalog: Fetching menu from Firestore for manager: $managerId")
+        
+        // 1. Fetch Categories
+        viewModelScope.launch {
+            repository.getMenuCategories(managerId).collect { 
+                Log.d(TAG, "Catalog: Received ${it.size} categories.")
+                _categories.value = it 
+            }
+        }
+
+        // 2. Fetch Food Items
+        viewModelScope.launch {
+            repository.getFoodMenu(managerId).collect { items ->
+                Log.d(TAG, "Catalog: Received ${items.size} items.")
+                syncMenuCatalog(items)
+            }
+        }
     }
 
-    private fun initializeDietFilters() {
-        val filters = listOf(
-            MenuCategoryData("ALL", "All", true),
-            MenuCategoryData("VEG", "Veg", false),
-            MenuCategoryData("NON-VEG", "Non-Veg", false)
-        )
-        _uiState.update { it.copy(dietFilters = filters) }
-    }
+    // --- Session Management ---
 
-    fun setCustomerDetails(name: String, phone: String, type: String) {
-        customerName = name
-        customerPhone = phone
-        orderType = type
-    }
-
-    fun setPaymentMethod(method: String) {
-        selectedPaymentMethod = method
-    }
-
-    fun startOrderSession(
-        tableId: String,
-        tableName: String,
-        status: String,
-        orderDocId: String? = null,
-        orderId: String? = null
-    ) {
-        if (isViewingCart) {
-            Log.d(TAG, "🏗️ [VIEWMODEL] Returning from Cart. Preserving state for Table: $tableId")
+    /**
+     * Prepares the shared session for a specific table.
+     */
+    fun startOrderSession(tableId: String, tableName: String, status: String, orderDocId: String? = null, orderId: String? = null) {
+        Log.i(TAG, "Session: Starting for Table $tableName ($tableId). Status: $status, DocId: $orderDocId")
+        
+        // Prevent clearing if we are just returning to the same active session
+        if (isViewingCart && currentTableId == tableId && existingOrderDocId == orderDocId) {
+            Log.d(TAG, "Session: Returning to active session. State preserved.")
             isViewingCart = false
             return
         }
 
-        Log.i(TAG, "🏗️ [VIEWMODEL] startOrderSession() -> Table: $tableId ($tableName), Status: $status, ExistingDoc: $orderDocId")
         currentTableId = tableId
         currentTableName = tableName
         existingOrderDocId = orderDocId
         existingOrderId = orderId
+        isViewingCart = false
 
-        if (status.uppercase() == "FREE") {
-            Log.d(TAG, "🏗️ [VIEWMODEL] Table is FREE. Clearing local cart quantities.")
-            clearCart()
-        } else if (!orderDocId.isNullOrEmpty()) {
-            Log.d(TAG, "🏗️ [VIEWMODEL] Table is $status with existing order. Awaiting data merge...")
-        } else {
+        // If table is free, clear any leftovers from previous Activity runs
+        if (status.uppercase() == "FREE" || orderDocId.isNullOrEmpty()) {
+            Log.d(TAG, "Session: Fresh table. Clearing local quantities.")
             clearCart()
         }
     }
 
-    fun resumeOrderSession(
-        managerId: String,
-        floorId: String,
-        tableId: String,
-        orderDocId: String
-    ) {
+    /**
+     * Attempts to find an existing active order for the current table in Firestore.
+     */
+    fun findAndResumeOrderSession(managerId: String, floorId: String, tableId: String) {
         viewModelScope.launch {
-            Log.d(TAG, "🏗️ [VIEWMODEL] resumeOrderSession() triggered. Waiting for menu items to load...")
+            Log.d(TAG, "Session: Searching Firestore for existing order on $tableId")
+            val result = repository.getActiveOrderForTable(managerId, floorId, tableId)
+            if (result != null) {
+                val (docId, order) = result
+                Log.i(TAG, "Session: Found existing order ${order.orderId}. Resuming...")
+                existingOrderDocId = docId
+                existingOrderId = if (order.orderId.isBlank() || order.orderId == docId) null else order.orderId
+                resumeOrderSession(managerId, floorId, tableId, docId)
+            }
+        }
+    }
+
+    /**
+     * Fetches details of an existing order and populates the local cart quantities.
+     */
+    fun resumeOrderSession(managerId: String, floorId: String, tableId: String, orderDocId: String) {
+        viewModelScope.launch {
+            Log.d(TAG, "Session: Resuming order from DocId: $orderDocId")
+            // Wait for menu items to be loaded
             var attempts = 0
-            while (originalFoodList.isEmpty() && attempts < 50) {
-                kotlinx.coroutines.delay(100)
+            while (_originalFoodList.value.isEmpty() && attempts < 50) {
+                delay(100)
                 attempts++
             }
 
-            if (originalFoodList.isEmpty()) {
-                Log.e(TAG, "🏗️ [VIEWMODEL] resumeOrderSession failed: originalFoodList is still empty after delay.")
-                return@launch
-            }
-
-            Log.d(TAG, "🏗️ [VIEWMODEL] Fetching existing order document from Firestore: $orderDocId")
             val existingOrder = repository.getExistingOrder(managerId, floorId, tableId, orderDocId)
             if (existingOrder != null) {
-                Log.i(TAG, "🏗️ [VIEWMODEL] Existing order data received. Merging ${existingOrder.items.size} items and customer details.")
-                
+                Log.i(TAG, "Session: Merging Firestore order data into local state.")
                 customerName = existingOrder.customerName
                 customerPhone = existingOrder.customerPhone
                 orderType = existingOrder.orderType
                 currentTableName = existingOrder.tableName.ifEmpty { currentTableName }
                 
-                val existingQtyMap = existingOrder.items.associate { it.itemId to it.quantity }
-                
-                _uiState.update { state ->
-                    val updatedOriginal = originalFoodList.map { foodItem ->
-                        val existingQty = existingQtyMap[foodItem.id] ?: 0
-                        foodItem.copy(
-                            currentQuantity = existingQty,
-                            previousQuantity = existingQty
+                val existingItemsMap = existingOrder.items.associateBy { it.itemId }
+                _originalFoodList.value = _originalFoodList.value.map { item ->
+                    val existing = existingItemsMap[item.id]
+                    if (existing != null) {
+                        // Sync quantities, status, variant AND the actual price from the existing order
+                        item.copy(
+                            currentQuantity = existing.quantity, 
+                            previousQuantity = existing.quantity, 
+                            itemStatus = existing.itemStatus, 
+                            variantName = existing.variantName,
+                            price = existing.price
                         )
+                    } else {
+                        item.copy(currentQuantity = 0, previousQuantity = 0, itemStatus = AppConstants.STATUS_PENDING)
                     }
-                    originalFoodList = updatedOriginal
-                    val summary = calculateCartTotalsInternal(updatedOriginal)
-                    updateDisplayList(state, updatedOriginal, state.activeFilterId, summary)
                 }
+                updateTotals()
             } else {
-                Log.e(TAG, "🏗️ [VIEWMODEL] Failed to fetch existing order: Document not found or error occurred.")
+                Log.e(TAG, "Session: Failed to fetch existing order document.")
             }
         }
     }
 
-    fun loadMenuData(managerId: String?) {
-        if (originalFoodList.isNotEmpty() && _uiState.value.categories.isNotEmpty()) {
-            Log.d(TAG, "🏗️ [VIEWMODEL] Menu data already present in cache. Skipping redundant fetch.")
-            _uiState.update { it.copy(isLoading = false) }
-            return
-        }
+    // --- Cart Actions ---
 
-        if (managerId.isNullOrEmpty()) {
-            Log.e(TAG, "🏗️ [VIEWMODEL] loadMenuData: Manager ID is null or empty.")
-            _uiState.update { it.copy(errorMessage = "Session mismatch error", isLoading = false) }
-            return
-        }
-
-        Log.i(TAG, "🏗️ [VIEWMODEL] loadMenuData() started for ID: $managerId")
-        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-
-        // 1. Fetch Menu Categories
-        viewModelScope.launch {
-            repository.getMenuCategories(managerId)
-                .catch { e ->
-                    Log.e(TAG, "🏗️ [VIEWMODEL] Category stream error", e)
-                    _uiState.update { it.copy(errorMessage = e.message, isLoading = false) }
-                }
-                .collect { dynamicCategories ->
-                    Log.d(TAG, "🏗️ [VIEWMODEL] Received ${dynamicCategories.size} menu categories.")
-                    _uiState.update { state ->
-                        val updatedCategories = dynamicCategories.map { incoming ->
-                            // Maintain existing visual selection
-                            val existingMatch = state.categories.find { it.id == incoming.id }
-                            if (existingMatch != null) incoming.copy(isSelected = existingMatch.isSelected) else incoming
-                        }
-                        
-                        val summary = calculateCartTotalsInternal(originalFoodList)
-                        
-                        // CRITICAL: Return the new state with updated categories and grouped display items
-                        updateDisplayList(state.copy(categories = updatedCategories), originalFoodList, state.activeFilterId, summary)
-                    }
-                }
-        }
-
-        // 2. Fetch Nested Menu Food Items
-        viewModelScope.launch {
-            repository.getFoodMenu(managerId)
-                .catch { e ->
-                    Log.e(TAG, "🏗️ [VIEWMODEL] Food menu stream error", e)
-                    _uiState.update { it.copy(errorMessage = e.message, isLoading = false) }
-                }
-                .collect { dynamicFoodItems ->
-                    Log.d(TAG, "🏗️ [VIEWMODEL] Received menu update: ${dynamicFoodItems.size} items total.")
-                    
-                    val quantityMap = originalFoodList.associateBy({ it.id }, { it.currentQuantity })
-                    val updatedList = dynamicFoodItems.map { newItem ->
-                        newItem.copy(currentQuantity = quantityMap[newItem.id] ?: 0)
-                    }.toMutableList()
-                    
-                    val incomingIds = dynamicFoodItems.map { it.id }.toSet()
-                    val preservedItems = originalFoodList.filter { it.id !in incomingIds }
-                    updatedList.addAll(preservedItems)
-
-                    originalFoodList = updatedList
-                    val summary = calculateCartTotalsInternal(updatedList)
-
-                    _uiState.update { state ->
-                        updateDisplayList(state, updatedList, state.activeFilterId, summary)
-                    }
-                }
-        }
-    }
-
-    private fun updateDisplayList(
-        state: OrderUiState,
-        fullList: List<FoodItemData>,
-        activeFilterId: String,
-        summary: CartSummaryState
-    ): OrderUiState {
-        val activeDietFilter = state.activeDietFilter
-        Log.d(TAG, "🏗️ [VIEWMODEL] updateDisplayList() -> Active Filter: $activeFilterId, Diet: $activeDietFilter")
+    /**
+     * Syncs the session's master list with the latest Firestore menu catalog.
+     * Crucial: This preserves existing local quantities while adding new items from newly loaded categories.
+     */
+    fun syncMenuCatalog(list: List<FoodItemData>) {
+        if (list.isEmpty()) return
         
-        // 1. Apply Diet Filter first
-        val dietFilteredList = when (activeDietFilter) {
-            "VEG" -> fullList.filter { it.isVeg }
-            "NON-VEG" -> fullList.filter { !it.isVeg }
-            else -> fullList
-        }
-
-        // 2. Apply Category Filter
-        val filteredMenuItems = if (activeFilterId == "ALL_ITEMS") {
-            dietFilteredList
+        Log.v(TAG, "Cart: Syncing catalog. New list size: ${list.size}")
+        
+        if (_originalFoodList.value.isEmpty()) {
+            Log.d(TAG, "Cart: Initializing master list with ${list.size} items.")
+            _originalFoodList.value = list
         } else {
-            dietFilteredList.filter { it.categoryId == activeFilterId }
-        }
-
-        val displayItems = mutableListOf<MenuItemType>()
-        if (activeFilterId == "ALL_ITEMS") {
-            val grouped = dietFilteredList.groupBy { it.categoryId }
-            val actualCategories = state.categories.filter { it.id != "ALL_ITEMS" }
-            
-            actualCategories.forEach { category ->
-                val itemsInCategory = grouped[category.id]
-                if (!itemsInCategory.isNullOrEmpty()) {
-                    displayItems.add(MenuItemType.Header(category.id, category.name))
-                    itemsInCategory.forEach { displayItems.add(MenuItemType.Food(it)) }
-                }
+            // Map new catalog items while injecting our current local state (quantities, variants, and CUSTOM prices)
+            val cartMap = _originalFoodList.value.associateBy({ it.id }, { it })
+            val syncedList = list.map { newItem ->
+                val local = cartMap[newItem.id]
+                if (local != null) {
+                    // Preserve local state if item was already modified in cart
+                    newItem.copy(
+                        currentQuantity = local.currentQuantity, 
+                        variantName = local.variantName,
+                        price = local.price // CRITICAL: Preserve the price selected by user for this session
+                    )
+                } else newItem
             }
             
-            if (displayItems.isEmpty() && dietFilteredList.isNotEmpty()) {
-                Log.w(TAG, "🏗️ [VIEWMODEL] updateDisplayList: No categories matched food items yet. Fallback grouping.")
-                grouped.forEach { (catId, items) ->
-                    displayItems.add(MenuItemType.Header(catId, "Section"))
-                    items.forEach { displayItems.add(MenuItemType.Food(it)) }
-                }
-            }
-        } else {
-            val categoryName = state.categories.find { it.id == activeFilterId }?.name ?: "Items"
-            displayItems.add(MenuItemType.Header(activeFilterId, categoryName))
-            filteredMenuItems.forEach { displayItems.add(MenuItemType.Food(it)) }
+            // Safety Check: Also preserve items that might be in cart but somehow missing from the passed list
+            val incomingIds = list.map { it.id }.toSet()
+            val missingFromIncoming = _originalFoodList.value.filter { it.id !in incomingIds }
+            
+            _originalFoodList.value = syncedList + missingFromIncoming
         }
-
-        return state.copy(
-            categories = state.categories,
-            activeFilterId = activeFilterId,
-            menuItems = filteredMenuItems,
-            displayItems = displayItems,
-            cartSummary = summary,
-            isLoading = false
-        )
+        updateTotals()
     }
 
-    fun selectDietFilter(dietId: String) {
-        Log.d(TAG, "🏗️ [VIEWMODEL] selectDietFilter() clicked -> $dietId")
-        _uiState.update { currentState ->
-            val updatedDietFilters = currentState.dietFilters.map {
-                it.copy(isSelected = it.id == dietId)
-            }
-            val summary = calculateCartTotalsInternal(originalFoodList)
-            updateDisplayList(
-                currentState.copy(dietFilters = updatedDietFilters, activeDietFilter = dietId),
-                originalFoodList,
-                currentState.activeFilterId,
-                summary
-            )
+    /**
+     * Increments or decrements an item's quantity.
+     */
+    fun updateItemQuantity(foodId: String, increase: Boolean) {
+        Log.v(TAG, "Cart: Updating quantity for $foodId. Increase: $increase")
+        _originalFoodList.value = _originalFoodList.value.map { item ->
+            if (item.id == foodId) {
+                val newQty = if (increase) item.currentQuantity + 1 else maxOf(0, item.currentQuantity - 1)
+                item.copy(currentQuantity = newQty)
+            } else item
         }
+        updateTotals()
     }
 
-    fun submitActiveOrderToKitchen(
-        managerId: String?,
-        floorId: String?,
-        tableId: String?,
-        specialNotes: String,
-        initialStatus: String = "PENDING"
-    ) {
-        val activeCartItems = originalFoodList.filter { it.currentQuantity > 0 }
-        if (activeCartItems.isEmpty()) {
-            Log.w(TAG, "🏗️ [VIEWMODEL] submitActiveOrderToKitchen: Cart is empty.")
+    /**
+     * Updates an item with specific variants and addons from the customization UI.
+     */
+    fun setItemCustomization(foodId: String, quantity: Int, variant: String, addons: List<String>, variantPrice: Int? = null) {
+        Log.d(TAG, "Cart: Applying customization for $foodId. Qty: $quantity, Variant: $variant")
+        _originalFoodList.value = _originalFoodList.value.map { item ->
+            if (item.id == foodId) {
+                item.copy(
+                    currentQuantity = quantity, 
+                    variantName = variant, 
+                    selectedAddons = addons, 
+                    price = variantPrice ?: item.price
+                )
+            } else item
+        }
+        updateTotals()
+    }
+
+    /**
+     * Resets all quantities to zero.
+     */
+    fun clearCart() {
+        Log.i(TAG, "Cart: Resetting all item quantities to zero.")
+        _originalFoodList.value = _originalFoodList.value.map { it.copy(currentQuantity = 0, previousQuantity = 0) }
+        updateTotals()
+    }
+
+    /**
+     * Recalculates total quantity and grand price for the cart summary.
+     */
+    private fun updateTotals() {
+        val active = _originalFoodList.value.filter { it.currentQuantity > 0 }
+        val totalQty = active.sumOf { it.currentQuantity }
+        val totalPrice = active.sumOf { it.price * it.currentQuantity }
+        Log.v(TAG, "Totals: Items: $totalQty, Value: ₹$totalPrice")
+        _cartSummary.value = CartSummaryState(totalQty, totalPrice)
+    }
+
+    // --- Order Submission ---
+
+    /**
+     * Finalizes the cart and pushes it to Firestore.
+     */
+    fun submitActiveOrderToKitchen(managerId: String?, floorId: String?, tableId: String?, notes: String, initialStatus: String = "PENDING", waiterId: String = "") {
+        val activeItems = _originalFoodList.value.filter { it.currentQuantity > 0 }
+        if (activeItems.isEmpty()) {
+            Log.w(TAG, "Submission: Blocked. Cart is empty.")
             return
         }
 
-        Log.i(TAG, "🏗️ [VIEWMODEL] Submitting Order for Table: $tableId, Manager: $managerId, Status: $initialStatus")
+        Log.i(TAG, "Submission: Placing order for $currentTableName. Target Status: $initialStatus")
 
-        val itemsPayload = activeCartItems.map { item ->
-            OrderItemModel(
-                itemId = item.id,
-                itemName = item.name,
-                price = item.price,
-                quantity = item.currentQuantity,
-                rowTotal = (item.price * item.currentQuantity),
-                orderedQuantity = item.previousQuantity // Correctly track what was already sent to kitchen
-            )
+        val payload = activeItems.map { 
+            OrderItemModel(it.id, it.name, it.variantName, it.price, it.currentQuantity, it.price * it.currentQuantity, it.previousQuantity, it.itemStatus) 
         }
-
+        
         val finalOrderId = existingOrderId ?: "#ORD-${(1000..9999).random()}"
         lastOrderId = finalOrderId
 
-        val subtotalValue = uiState.value.cartSummary.totalPrice.toDouble()
+        val subtotal = _cartSummary.value.totalPrice.toDouble()
         val orderData = OrderDataModel(
-            orderId = finalOrderId,
-            tableName = currentTableName,
-            customerName = customerName,
-            customerPhone = customerPhone,
-            orderType = orderType,
-            paymentMethod = selectedPaymentMethod,
-            restaurantId = managerId ?: "", // Fixed: Now correctly tagged for filtering
-            items = itemsPayload,
-            specialNotes = specialNotes,
-            subtotal = subtotalValue,
-            gst = subtotalValue * 0.05,
-            grandTotal = subtotalValue * 1.05,
-            orderStatus = initialStatus,
-            timestamp = com.google.firebase.Timestamp.now()
+            orderId = finalOrderId, 
+            tableName = currentTableName, 
+            customerName = customerName, 
+            customerPhone = customerPhone, 
+            orderType = orderType, 
+            items = payload, 
+            specialNotes = notes, 
+            subtotal = subtotal, 
+            gst = subtotal * 0.05, 
+            grandTotal = subtotal * 1.05, 
+            orderStatus = initialStatus, 
+            paymentMethod = selectedPaymentMethod, 
+            restaurantId = managerId ?: "", 
+            waiterId = waiterId
         )
 
         viewModelScope.launch {
-            Log.d(TAG, "🏗️ [VIEWMODEL] Calling repository to save order: $finalOrderId")
+            Log.d(TAG, "Submission: Uploading to Firebase path...")
             repository.sendOrderToFirebaseKitchen(managerId, floorId, tableId, orderData, existingOrderDocId)
-                .catch { e ->
-                    Log.e(TAG, "🏗️ [VIEWMODEL] Order submission failed", e)
-                    _orderUploadStatus.value = ResourceUiState.Error(e.message ?: "Unknown upload error")
+                .catch { e -> 
+                    Log.e(TAG, "Submission: Firestore error", e)
+                    _orderUploadStatus.value = ResourceUiState.Error(e.message ?: "Firestore failure") 
                 }
                 .collect { status ->
-                    _orderUploadStatus.value = status
+                    // Map results for UI observation
+                    val uiStatus = when(status) {
+                        is ResourceUiState.Success -> ResourceUiState.Success(true)
+                        is ResourceUiState.Error -> ResourceUiState.Error(status.message)
+                        is ResourceUiState.Loading -> ResourceUiState.Loading
+                        else -> ResourceUiState.Idle
+                    }
+                    _orderUploadStatus.value = uiStatus
+                    
+                    if (status is ResourceUiState.Success && managerId != null) {
+                        Log.i(TAG, "Submission: Successful. Saved at: ${status.data}")
+                        // Mark currently sent quantities as "previous" to avoid re-notifying chef for same count
+                        _originalFoodList.value = _originalFoodList.value.map { it.copy(previousQuantity = it.currentQuantity) }
+                        notifyChef(managerId, currentTableName, finalOrderId, waiterId, status.data)
+                    }
                 }
         }
     }
 
-    fun resetUploadStatus() {
-        _orderUploadStatus.value = null
-    }
-
-    fun updateItemQuantity(foodId: String, increase: Boolean) {
-        Log.d(TAG, "🏗️ [VIEWMODEL] updateItemQuantity() -> ID: $foodId, Increase: $increase")
-        _uiState.update { currentState ->
-            val updatedOriginal = originalFoodList.map { item ->
-                if (item.id == foodId) {
-                    val newQty = if (increase) item.currentQuantity + 1 else maxOf(0, item.currentQuantity - 1)
-                    item.copy(currentQuantity = newQty)
-                } else item
-            }
-            originalFoodList = updatedOriginal
-
-            val summary = calculateCartTotalsInternal(updatedOriginal)
-            updateDisplayList(currentState, updatedOriginal, currentState.activeFilterId, summary)
-        }
-    }
-
     /**
-     * Sets an absolute quantity for a food item (used by customization screens).
+     * Triggers notifications and logs history for the kitchen staff.
      */
-    fun setItemQuantity(foodId: String, quantity: Int) {
-        Log.d(TAG, "🏗️ [VIEWMODEL] setItemQuantity() -> ID: $foodId, Qty: $quantity")
-        _uiState.update { currentState ->
-            val updatedOriginal = originalFoodList.map { item ->
-                if (item.id == foodId) {
-                    item.copy(currentQuantity = quantity)
-                } else item
-            }
-            originalFoodList = updatedOriginal
-
-            val summary = calculateCartTotalsInternal(updatedOriginal)
-            updateDisplayList(currentState, updatedOriginal, currentState.activeFilterId, summary)
-        }
+    private suspend fun notifyChef(managerId: String, tableName: String, orderId: String, waiterId: String, docPath: String) {
+        Log.d(TAG, "Notification: Fetching chef tokens for restaurant: $managerId")
+        val tokens = repository.getChefTokens(managerId)
+        AppNotificationHelper.notifyKitchenOfNewOrder(tokens, tableName, orderId, managerId, waiterId, docPath)
     }
 
-    fun clearCart() {
-        Log.d(TAG, "🏗️ [VIEWMODEL] clearCart() called. Resetting all quantities.")
-        _uiState.update { currentState ->
-            val resetOriginal = originalFoodList.map { it.copy(currentQuantity = 0, previousQuantity = 0) }
-            originalFoodList = resetOriginal
-            val summary = CartSummaryState(0, 0)
-            updateDisplayList(currentState, resetOriginal, currentState.activeFilterId, summary)
-        }
-    }
-
-    /**
-     * Triggered when a user CLICKS a category chip. 
-     * Updates both the active filter (data) and visual selection (UI).
-     */
-    fun selectCategory(categoryId: String) {
-        Log.d(TAG, "🏗️ [VIEWMODEL] selectCategory() clicked -> $categoryId")
-        _uiState.update { currentState ->
-            val updatedCategories = currentState.categories.map {
-                it.copy(isSelected = it.id == categoryId)
-            }
-            val summary = calculateCartTotalsInternal(originalFoodList)
-            updateDisplayList(
-                currentState.copy(categories = updatedCategories, activeFilterId = categoryId), 
-                originalFoodList, 
-                categoryId, 
-                summary
-            )
-        }
-    }
-
-    /**
-     * Triggered automatically during SCROLLING.
-     * Updates ONLY the visual visual selection (chip highlight) without changing the filter.
-     */
-    fun syncCategorySelectionFromScroll(categoryId: String) {
-        _uiState.update { currentState ->
-            // ONLY sync chip highlights if we are currently in "ALL_ITEMS" mode
-            if (currentState.activeFilterId != "ALL_ITEMS") return@update currentState
-
-            val currentVisualSelected = currentState.categories.find { it.isSelected }?.id
-            if (currentVisualSelected != categoryId) {
-                Log.d(TAG, "🏗️ [VIEWMODEL] syncCategorySelectionFromScroll() -> Highlighting chip: $categoryId")
-                val updatedCategories = currentState.categories.map {
-                    it.copy(isSelected = it.id == categoryId)
-                }
-                // Return new state with updated categories but SAME activeFilterId and SAME displayItems
-                currentState.copy(categories = updatedCategories)
-            } else {
-                currentState
-            }
-        }
-    }
-
-    private fun calculateCartTotalsInternal(items: List<FoodItemData>): CartSummaryState {
-        val activeSelections = items.filter { it.currentQuantity > 0 }
-        val count = activeSelections.sumOf { it.currentQuantity }
-        val total = activeSelections.sumOf { it.price * it.currentQuantity }
-        return CartSummaryState(count, total)
-    }
+    // --- Helper Utilities ---
+    fun setCustomerDetails(name: String, phone: String, type: String) { customerName = name; customerPhone = phone; orderType = type }
+    fun setPaymentMethod(method: String) { selectedPaymentMethod = method }
+    fun resetUploadStatus() { _orderUploadStatus.value = null }
 }

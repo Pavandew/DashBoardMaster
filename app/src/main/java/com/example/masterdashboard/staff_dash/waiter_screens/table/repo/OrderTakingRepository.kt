@@ -1,11 +1,12 @@
 package com.example.masterdashboard.staff_dash.waiter_screens.table.repo
 
 import android.util.Log
-import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.FoodItemData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.MenuCategoryData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.OrderDataModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
+import com.example.masterdashboard.manager_single_res_dash.models.ItemVariant
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.Dispatchers
@@ -49,7 +50,7 @@ class OrderTakingRepository {
 
             snapshots?.documents?.forEach { doc ->
                 val id = doc.id
-                val name = doc.getString("menuCategoryName") ?: "Unnamed Category"
+                val name = doc.getString(AppConstants.FIELD_CATEGORY_NAME) ?: "Unnamed Category"
 
                 if (name.lowercase() != "all") {
                     categoryList.add(MenuCategoryData(id = id, name = name, isSelected = false))
@@ -98,7 +99,7 @@ class OrderTakingRepository {
             // Step B: Loop through every category to open up child menu_items listeners
             categoryDocs.forEach { catDoc ->
                 val categoryId = catDoc.id
-                val categoryName = catDoc.getString("menuCategoryName") ?: "Unknown"
+                val categoryName = catDoc.getString(AppConstants.FIELD_CATEGORY_NAME) ?: "Unknown"
 
                 // Explicit nested target path: menu_categories/{categoryId}/menu_items
                 val itemsRef = categoriesRef.document(categoryId).collection(AppConstants.COLLECTION_FOOD_ITEMS)
@@ -114,10 +115,10 @@ class OrderTakingRepository {
                     itemSnapshots?.documents?.forEach { doc ->
                         try {
                             val id = doc.id
-                            val name = doc.getString("itemName") ?: "Unnamed Dish"
+                            val name = doc.getString(AppConstants.FIELD_ITEM_NAME) ?: "Unnamed Dish"
 
                             // Price may be stored as a Number or a String in Firestore. Handle both cases.
-                            val rawPrice = doc.get("price")
+                            val rawPrice = doc.get(AppConstants.FIELD_ITEM_PRICE)
                             val price = when (rawPrice) {
                                 is Number -> rawPrice.toInt()
                                 is String -> {
@@ -128,18 +129,38 @@ class OrderTakingRepository {
                                 else -> 0
                             }
 
-                            val imageUrl = doc.getString("imageUrl") ?: ""
-                            val isVeg = doc.getBoolean("isVeg") ?: true
+                            val imageUrl = doc.getString(AppConstants.FIELD_ITEM_IMAGE) ?: ""
+                            val isVeg = doc.getBoolean(AppConstants.FIELD_IS_VEG) ?: true
+                            val hasVariants = doc.getBoolean(AppConstants.FIELD_HAS_VARIANTS) ?: false
+                            
+                            // Map variants if they exist
+                            val rawVariants = doc.get(AppConstants.FIELD_VARIANTS) as? List<Map<String, Any>>
+                            val variantsList = rawVariants?.map { vMap ->
+                                ItemVariant(
+                                    variantName = vMap[AppConstants.FIELD_VARIANT_NAME] as? String ?: "",
+                                    price = (vMap[AppConstants.FIELD_ITEM_PRICE]?.toString()?.toDoubleOrNull() ?: 0.0)
+                                )
+                            } ?: emptyList()
+
+                            // FIX: If the item has variants but the base price is 0, 
+                            // use the minimum variant price as the default display price.
+                            val finalPrice = if (hasVariants && price == 0 && variantsList.isNotEmpty()) {
+                                variantsList.minOf { it.price }.toInt()
+                            } else {
+                                price
+                            }
 
                             singleCategoryFoodList.add(
                                 FoodItemData(
                                     id = id,
                                     name = name,
-                                    price = price,
+                                    price = finalPrice,
                                     imageUrl = imageUrl,
                                     categoryId = categoryId,
                                     categoryName = categoryName,
-                                    isVeg = isVeg
+                                    isVeg = isVeg,
+                                    hasVariants = hasVariants,
+                                    variantsList = variantsList
                                 )
                             )
                         } catch (e: Exception) {
@@ -169,6 +190,38 @@ class OrderTakingRepository {
     }.flowOn(Dispatchers.IO)
 
     /**
+     * Finds the first active order for a specific table.
+     * Returns Pair(DocumentID, OrderModel)
+     */
+    suspend fun getActiveOrderForTable(
+        managerId: String,
+        floorId: String,
+        tableId: String
+    ): Pair<String, OrderDataModel>? {
+        return try {
+            val snapshot = firestore.collection(AppConstants.COLLECTION_USERS)
+                .document(managerId)
+                .collection(AppConstants.COLLECTION_RES_FLOORS)
+                .document(floorId)
+                .collection(AppConstants.COLLECTION_TABLES)
+                .document(tableId)
+                .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                .limit(1)
+                .get()
+                .await()
+
+            val doc = snapshot.documents.firstOrNull()
+            val model = doc?.toObject(OrderDataModel::class.java)
+            if (doc != null && model != null) {
+                doc.id to model
+            } else null
+        } catch (e: Exception) {
+            Log.e(TAG, "📦 [REPO] Error finding active order for table", e)
+            null
+        }
+    }
+
+    /**
      * Fetches a single order document to resume or add items to it.
      */
     suspend fun getExistingOrder(
@@ -196,6 +249,26 @@ class OrderTakingRepository {
     }
 
     /**
+     * Fetches FCM tokens for all staff members with 'chef' or 'kitchen' roles
+     * for a specific restaurant.
+     */
+    suspend fun getChefTokens(managerId: String): List<String> {
+        return try {
+            val snapshot = firestore.collection(AppConstants.COLLECTION_USERS)
+                .document(managerId)
+                .collection(AppConstants.COLLECTION_STAFF)
+                .whereIn(AppConstants.FIELD_ROLE, listOf("chef", "kitchen", "Chef", "Kitchen"))
+                .get()
+                .await()
+
+            snapshot.documents.mapNotNull { it.getString(AppConstants.FIELD_FCM_TOKEN) }
+        } catch (e: Exception) {
+            Log.e(TAG, "📦 [REPO] Error fetching chef tokens", e)
+            emptyList()
+        }
+    }
+
+    /**
      * Pushes the KOT payload directly inside the table's sub-collection or a central
      * active_orders collection for counter/cashier orders.
      */
@@ -205,7 +278,7 @@ class OrderTakingRepository {
         tableId: String?,
         orderData: OrderDataModel,
         existingOrderDocId: String? = null
-    ): Flow<ResourceUiState<Boolean>> = callbackFlow {
+    ): Flow<ResourceUiState<String>> = callbackFlow {
         trySend(ResourceUiState.Loading)
 
         if (managerId.isNullOrEmpty()) {
@@ -241,7 +314,7 @@ class OrderTakingRepository {
                 .document(tableId)
 
             // Stage table status update only for real table orders
-            batch.update(tableRef, "status", "OCCUPIED")
+            batch.update(tableRef, AppConstants.FIELD_STATUS, AppConstants.STATUS_OCCUPIED)
 
             tableRef.collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
                 .let { if (existingOrderDocId.isNullOrEmpty()) it.document() else it.document(existingOrderDocId) }
@@ -251,10 +324,10 @@ class OrderTakingRepository {
         if (!existingOrderDocId.isNullOrEmpty()) {
             batch.set(orderRef, orderData, com.google.firebase.firestore.SetOptions.merge())
         } else {
-            // Preserve the custom orderId (e.g. #ORD-1234) generated by the ViewModel
-            // If for some reason it's blank, fall back to the Firestore doc ID.
-            val finalOrder = if (orderData.orderId.isBlank()) {
-                orderData.copy(orderId = orderRef.id)
+            // Ensure we never have a blank orderId field in Firestore
+            val finalOrder = if (orderData.orderId.isBlank() || orderData.orderId == orderRef.id) {
+                // Generate a fallback if ViewModel didn't provide one
+                orderData.copy(orderId = "#ORD-${(1000..9999).random()}")
             } else {
                 orderData
             }
@@ -265,7 +338,7 @@ class OrderTakingRepository {
         batch.commit()
             .addOnSuccessListener {
                 Log.i("Order_Flow_Debug", "📦 [REPO] Order successfully saved/updated at: ${orderRef.path}")
-                trySend(ResourceUiState.Success(true))
+                trySend(ResourceUiState.Success(orderRef.path))
                 close()
             }
             .addOnFailureListener { exception ->
