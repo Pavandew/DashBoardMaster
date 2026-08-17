@@ -1,5 +1,7 @@
 package com.example.masterdashboard.staff_dash.kitchen_screens
 
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.activity.OnBackPressedCallback
@@ -10,12 +12,22 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivityKitchenHomeBinding
+import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.notifications.NotificationHelper
+import com.example.masterdashboard.notifications.NotificationPermissionHelper
+import com.example.masterdashboard.staff_dash.kitchen_screens.service.KitchenNotificationService
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenPreparationFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenInventoryFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenOrderFragment
 import com.example.masterdashboard.staff_dash.profile.StaffProfileFragment
+import com.example.masterdashboard.staff_dash.waiter_screens.alert.StaffNotificationFragment
+import com.example.masterdashboard.login.views.ChangePasswordFragment
 
 class KitchenHomeActivity : AppCompatActivity() {
+
+    private lateinit var permissionHelper: NotificationPermissionHelper
+    private lateinit var notificationHelper: NotificationHelper
+    private lateinit var sessionManager: SessionManager
 
     private lateinit var binding: ActivityKitchenHomeBinding
     private var currentSelectedItem = R.id.kitchen_orderFragment
@@ -26,6 +38,8 @@ class KitchenHomeActivity : AppCompatActivity() {
         val KITCHEN = "kitchen"
         val INVENTORY = "inventory"
         val PROFILE = "profile"
+        val NOTIFICATION = "notification"
+        val CHANGE_PASSWORD = "change_password"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,6 +48,12 @@ class KitchenHomeActivity : AppCompatActivity() {
 
         binding = ActivityKitchenHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        permissionHelper = NotificationPermissionHelper(this)
+        notificationHelper = NotificationHelper(this)
+        sessionManager = SessionManager(this)
+
+        startKitchenService()
 
         // Restore state if available
         if (savedInstanceState != null) {
@@ -56,6 +76,7 @@ class KitchenHomeActivity : AppCompatActivity() {
                 R.id.kitchen_Fragment -> tags.KITCHEN
                 R.id.kitchen_inventoryFragment -> tags.INVENTORY
                 R.id.kitchen_profileFragment -> tags.PROFILE
+                R.id.kitchen_notificationFragment -> tags.NOTIFICATION
                 else -> null
             }
 
@@ -120,6 +141,16 @@ class KitchenHomeActivity : AppCompatActivity() {
                 }
             }
         })
+
+        permissionHelper.askNotificationPermission()
+    }
+
+    fun hideBottomNavigation() {
+        binding.bottomNavContainer.visibility = View.GONE
+    }
+
+    fun showBottomNavigation() {
+        binding.bottomNavContainer.visibility = View.VISIBLE
     }
 
     /**
@@ -132,6 +163,7 @@ class KitchenHomeActivity : AppCompatActivity() {
         val kitchen = fm.findFragmentByTag(tags.KITCHEN) ?: KitchenPreparationFragment()
         val inventory = fm.findFragmentByTag(tags.INVENTORY) ?: KitchenInventoryFragment()
         val profile = fm.findFragmentByTag(tags.PROFILE) ?: StaffProfileFragment()
+        val notification = fm.findFragmentByTag(tags.NOTIFICATION) ?: StaffNotificationFragment()
 
         val transaction = fm.beginTransaction().setReorderingAllowed(true)
 
@@ -140,6 +172,7 @@ class KitchenHomeActivity : AppCompatActivity() {
         if (!kitchen.isAdded) transaction.add(R.id.kitchen_fragment_container, kitchen, tags.KITCHEN).hide(kitchen)
         if (!inventory.isAdded) transaction.add(R.id.kitchen_fragment_container, inventory, tags.INVENTORY).hide(inventory)
         if (!profile.isAdded) transaction.add(R.id.kitchen_fragment_container, profile, tags.PROFILE).hide(profile)
+        if (!notification.isAdded) transaction.add(R.id.kitchen_fragment_container, notification, tags.NOTIFICATION).hide(notification)
 
         // Show the default tab
         transaction.show(order)
@@ -153,7 +186,7 @@ class KitchenHomeActivity : AppCompatActivity() {
         val fm = supportFragmentManager
         val transaction = fm.beginTransaction().setReorderingAllowed(true)
 
-        val allTags = listOf(tags.ORDER, tags.KITCHEN, tags.INVENTORY, tags.PROFILE)
+        val allTags = listOf(tags.ORDER, tags.KITCHEN, tags.INVENTORY, tags.PROFILE, tags.NOTIFICATION)
 
         for (tag in allTags) {
             val fragment = fm.findFragmentByTag(tag)
@@ -171,5 +204,14 @@ class KitchenHomeActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt("currentSelectedItem", currentSelectedItem)
+    }
+
+    private fun startKitchenService() {
+        val intent = Intent(this, KitchenNotificationService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
     }
 }
