@@ -1,7 +1,7 @@
 package com.example.masterdashboard.staff_dash.waiter_screens.table.repo
 
 import android.util.Log
-import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableCardData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
@@ -47,7 +47,7 @@ class WaiterTableRepository {
 
             snapshots?.documents?.forEach { doc ->
                 val id = doc.id
-                val name = doc.getString("floorName") ?: "Unnamed Floor"
+                val name = doc.getString(AppConstants.FIELD_FLOOR_NAME) ?: "Unnamed Floor"
                 if (name.lowercase() != "all") {
                     floorList.add(TableFilterData(id = id, name = name, isSelected = false))
                 }
@@ -100,7 +100,7 @@ class WaiterTableRepository {
                 val floorId = floorDoc.id
 
                 // Point directly to the nested sub-collection: users -> {uid} -> res_floors -> {floorId} -> floor_tables
-                val tablesRef = floorsRef.document(floorId).collection("floor_tables")
+                val tablesRef = floorsRef.document(floorId).collection(AppConstants.COLLECTION_TABLES)
 
                 val tableListener = tablesRef.addSnapshotListener { tableSnapshots, tableException ->
                     if (tableException != null) {
@@ -112,16 +112,16 @@ class WaiterTableRepository {
 
                     tableSnapshots?.documents?.forEach { doc ->
                         try {
-                            val tableId = doc.getString("tableId") ?: doc.id
-                            val tableName = doc.getString("tableName") ?: "Unknown Table"
-                            val totalSeats = doc.getLong("totalSeats")?.toInt() ?: 4
-                            val statusString = doc.getString("status") ?: "FREE"
+                            val tableId = doc.getString(AppConstants.FIELD_TABLE_ID) ?: doc.id
+                            val tableName = doc.getString(AppConstants.FIELD_TABLE_NAME) ?: "Unknown Table"
+                            val totalSeats = doc.getLong(AppConstants.FIELD_TOTAL_SEATS)?.toInt() ?: 4
+                            val statusString = doc.getString(AppConstants.FIELD_STATUS) ?: AppConstants.STATUS_FREE
                             val status = try {
                                 TableStatus.valueOf(statusString.uppercase())
                             } catch (e: Exception) {
                                 TableStatus.FREE
                             }
-                            val currentBillAmount = doc.getString("currentBillAmount")
+                            val currentBillAmount = doc.getString(AppConstants.FIELD_CURRENT_BILL)
 
                             singleFloorTablesList.add(
                                 TableCardData(tableId, tableName, floorId, totalSeats, status, currentBillAmount)

@@ -9,9 +9,12 @@ import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableC
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.WaiterTableRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class WaiterTableViewModel(
@@ -32,11 +35,30 @@ class WaiterTableViewModel(
         private const val TAG = "Table_Flow_Debug"
     }
 
-    private val _tableState = MutableStateFlow<ResourceUiState<List<TableCardData>>>(ResourceUiState.Loading)
-    val tableState: StateFlow<ResourceUiState<List<TableCardData>>> = _tableState.asStateFlow()
+    private val _rawTables = MutableStateFlow<ResourceUiState<List<TableCardData>>>(ResourceUiState.Loading)
+    private val _rawFloors = MutableStateFlow<List<TableFilterData>>(emptyList())
+    private val _selectedFloorId = MutableStateFlow("ALL_FLOORS")
 
-    private val _floorState = MutableStateFlow<List<TableFilterData>>(emptyList())
-    val floorState: StateFlow<List<TableFilterData>> = _floorState.asStateFlow()
+    // Reactive pipeline for tables: combines raw tables with the selected floor filter
+    val tableState: StateFlow<ResourceUiState<List<TableCardData>>> = combine(_rawTables, _selectedFloorId) { tablesResource, selectedId ->
+        if (tablesResource is ResourceUiState.Success) {
+            val filtered = if (selectedId == "ALL_FLOORS") {
+                tablesResource.data
+            } else {
+                tablesResource.data.filter { it.floorId == selectedId }
+            }
+            ResourceUiState.Success(filtered)
+        } else {
+            tablesResource
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ResourceUiState.Loading)
+
+    // Reactive pipeline for floors: combines raw floors with the selection state
+    val floorState: StateFlow<List<TableFilterData>> = combine(_rawFloors, _selectedFloorId) { floors, selectedId ->
+        floors.map { it.copy(isSelected = it.id == selectedId) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val selectedFloorId: StateFlow<String> = _selectedFloorId.asStateFlow()
 
     var originalTableList: List<TableCardData> = emptyList()
         private set
@@ -52,13 +74,20 @@ class WaiterTableViewModel(
     fun loadDashboardData(managerId: String?) {
         if (managerId.isNullOrEmpty()) {
             Log.w(TAG, "loadDashboardData: managerId is null or empty. Aborting data fetch.")
-            _tableState.value = ResourceUiState.Error("Missing session credentials")
+            _rawTables.value = ResourceUiState.Error("Missing session credentials")
             return
         }
 
-        Log.d(TAG, "loadDashboardData: Fetching data components for Manager ID: $managerId")
-        fetchFloors(managerId)
-        fetchTables(managerId)
+        // Only fetch if we don't have data yet
+        if (originalTableList.isEmpty()) {
+            Log.d(TAG, "loadDashboardData: Fetching data components for Manager ID: $managerId")
+            fetchFloors(managerId)
+            fetchTables(managerId)
+        }
+    }
+
+    fun setFloorFilter(floorId: String) {
+        _selectedFloorId.value = floorId
     }
 
     private fun fetchFloors(managerId: String) {
@@ -66,11 +95,11 @@ class WaiterTableViewModel(
             repository.getFloors(managerId)
                 .catch { exception ->
                     Log.e(TAG, "Error collecting floors: ${exception.message}")
-                    _floorState.value = emptyList()
+                    _rawFloors.value = emptyList()
                 }
                 .collect { floors ->
                     Log.i(TAG, "Collected floors list update. Elements: ${floors.size}")
-                    _floorState.value = floors
+                    _rawFloors.value = floors
                 }
         }
     }
@@ -80,23 +109,13 @@ class WaiterTableViewModel(
             repository.getTables(managerId)
                 .catch { exception ->
                     Log.e(TAG, "Error collecting tables pipeline: ${exception.message}")
-                    _tableState.value = ResourceUiState.Error(exception.message ?: "Unknown fetch error")
+                    _rawTables.value = ResourceUiState.Error(exception.message ?: "Unknown fetch error")
                 }
                 .collect { resourceUiState ->
-                    when (resourceUiState) {
-                        is ResourceUiState.Success -> {
-                            Log.i(TAG, "Tables Success: Loaded ${resourceUiState.data.size} items.")
-                            originalTableList = resourceUiState.data
-                        }
-                        is ResourceUiState.Error -> {
-                            Log.e(TAG, "Tables Error state intercepted: ${resourceUiState.message}")
-                        }
-                        ResourceUiState.Loading -> {
-                            Log.d(TAG, "Tables stream state updating: [Loading]")
-                        }
-                        else -> {}
+                    if (resourceUiState is ResourceUiState.Success) {
+                        originalTableList = resourceUiState.data
                     }
-                    _tableState.value = resourceUiState
+                    _rawTables.value = resourceUiState
                 }
         }
     }

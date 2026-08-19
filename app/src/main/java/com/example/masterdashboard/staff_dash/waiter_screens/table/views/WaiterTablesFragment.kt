@@ -13,7 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentWaiterTablesBinding
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.master_dash.utils.SearchQueryManager
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FloorChipsAdapter
@@ -109,32 +109,9 @@ class WaiterTablesFragment : Fragment() {
     private fun setupFloorChips() {
         floorAdapter = FloorChipsAdapter { selectedChip ->
             Log.d(TAG, "📱 WaiterTablesFragment Floor chip clicked: Title = '${selectedChip.name}', ID = '${selectedChip.id}'")
-
-            val updatedList = floorAdapter.currentList.map {
-                it.copy(isSelected = it.id == selectedChip.id)
-            }
-            floorAdapter.submitList(updatedList)
-            filterTablesByFloor(selectedChip)
+            viewModel.setFloorFilter(selectedChip.id)
         }
         binding.rvFloorChips.adapter = floorAdapter
-    }
-
-    private fun filterTablesByFloor(selectedChip: TableFilterData) {
-        val masterList = viewModel.originalTableList
-        Log.d(TAG, "📱 WaiterTablesFragment Running table dataset filter operation against base list size: ${masterList.size}")
-
-        val filteredList = if (selectedChip.id == "ALL_FLOORS") {
-            Log.v(TAG, "📱 WaiterTablesFragment 'All' filter matching selected. Resetting constraints.")
-            masterList
-        } else {
-            val res = masterList.filter { it.floorId == selectedChip.id }
-            Log.v(TAG, "📱 WaiterTablesFragment Specific constraint matching applied. Found ${res.size} tables matched with Floor ID: '${selectedChip.id}'")
-            res
-        }
-
-        currentSearchList.clear()
-        currentSearchList.addAll(filteredList)
-        tableAdapter.updateList(filteredList)
     }
 
     private fun observeViewModelData() {
@@ -142,7 +119,7 @@ class WaiterTablesFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
 
-                // Collect Live Tables
+                // Collect Reactive Filtered Tables
                 launch {
                     viewModel.tableState.collect { resource ->
                         when (resource) {
@@ -158,7 +135,12 @@ class WaiterTablesFragment : Fragment() {
 
                                 tableAdapter.updateList(resource.data)
                                 currentSearchList.clear()
-                                currentSearchList.addAll(viewModel.originalTableList)
+                                currentSearchList.addAll(resource.data)
+                                
+                                // Reset search if needed
+                                if (binding.searchBar.etSearchOrder.text.isNotEmpty()) {
+                                    searchManager?.refreshSearch()
+                                }
                             }
                             is ResourceUiState.Error -> {
                                 Log.e(TAG, "📱 WaiterTablesFragment UI Collector received: [ResourceUiState.Error] ➔ Reason: ${resource.message}")
@@ -171,12 +153,25 @@ class WaiterTablesFragment : Fragment() {
                     }
                 }
 
-                // Collect Live Dynamic Floors
+                // Collect Reactive Floors (with selection state)
                 launch {
+                    var lastAutoScrolledFloorId: String? = null
                     viewModel.floorState.collectLatest { dynamicFloors ->
                         Log.i(TAG, "📱 WaiterTablesFragment UI Collector received floor list change event. Submitting ${dynamicFloors.size} elements to Chip Layout.")
                         if (dynamicFloors.isNotEmpty()) {
                             floorAdapter.submitList(dynamicFloors)
+                            
+                            // AUTO-SCROLL: Only scroll to the selected chip if it's different from the last scrolled one
+                            val currentSelectedId = dynamicFloors.find { it.isSelected }?.id
+                            if (currentSelectedId != null && currentSelectedId != lastAutoScrolledFloorId) {
+                                val selectedPos = dynamicFloors.indexOfFirst { it.id == currentSelectedId }
+                                if (selectedPos != -1) {
+                                    binding.rvFloorChips.post {
+                                        binding.rvFloorChips.smoothScrollToPosition(selectedPos)
+                                    }
+                                }
+                                lastAutoScrolledFloorId = currentSelectedId
+                            }
                         }
                     }
                 }
