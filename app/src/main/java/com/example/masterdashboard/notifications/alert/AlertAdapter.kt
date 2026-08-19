@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.waiter_screens.alert
+package com.example.masterdashboard.notifications.alert
 
 import android.view.LayoutInflater
 import android.view.View
@@ -13,7 +13,7 @@ class AlertsAdapter(
     private val onCardClicked: (StaffAlertItem) -> Unit,
     private val onAcceptClicked: (StaffAlertItem) -> Unit,
     private val onDoneClicked: (StaffAlertItem) -> Unit
-) : ListAdapter<StaffAlertItem, AlertsAdapter.AlertViewHolder>(AlertDiffCallback()) {
+) : androidx.recyclerview.widget.ListAdapter<StaffAlertItem, AlertsAdapter.AlertViewHolder>(AlertDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlertViewHolder {
         val binding = ItemAlertCardBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -39,6 +39,10 @@ class AlertsAdapter(
 
             // Assign Dynamic Icons and Tint Profiles depending on content string types
             when {
+                item.title.contains("Inventory", ignoreCase = true) -> {
+                    binding.ivAlertIcon.setImageResource(R.drawable.ic_inventory_24dp)
+                    binding.ivAlertIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.accent_orange)
+                }
                 item.message.contains("Bill", ignoreCase = true) -> {
                     binding.ivAlertIcon.setImageResource(R.drawable.biling) // Add your resource vectors here
                     binding.ivAlertIcon.imageTintList = ContextCompat.getColorStateList(context, R.color.status_billing)

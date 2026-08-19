@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.waiter_screens.alert
+package com.example.masterdashboard.notifications.alert
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

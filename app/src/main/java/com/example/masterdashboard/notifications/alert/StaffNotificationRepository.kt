@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.waiter_screens.alert
+package com.example.masterdashboard.notifications.alert
 
 import com.example.masterdashboard.utils.AppConstants
 import com.google.firebase.firestore.FirebaseFirestore
@@ -42,7 +42,9 @@ class StaffNotificationRepository {
                         status = try { RequestStatus.valueOf(doc.getString("status") ?: "PENDING") } catch (e: Exception) { RequestStatus.PENDING },
                         isRead = doc.getBoolean("isRead") ?: false,
                         targetRole = doc.getString("targetRole") ?: "",
-                        targetStaffId = doc.getString("targetStaffId") ?: ""
+                        targetStaffId = doc.getString("targetStaffId") ?: "",
+                        orderId = doc.getString("orderId") ?: "",
+                        orderDocPath = doc.getString("orderDocPath") ?: ""
                     )
                 } ?: emptyList()
 

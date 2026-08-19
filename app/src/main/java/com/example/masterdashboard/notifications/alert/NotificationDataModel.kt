@@ -1,4 +1,4 @@
-package com.example.masterdashboard.staff_dash.waiter_screens.alert
+package com.example.masterdashboard.notifications.alert
 
 enum class NotificationType { ACTIONABLE_REQUEST, INFORMATIONAL }
 enum class RequestStatus { PENDING, ACCEPTED, DONE }
@@ -14,7 +14,9 @@ data class StaffAlertItem(
     val isRead: Boolean,
     val targetRole: String = "",
     val targetStaffId: String = "",
-    val isExpanded: Boolean = false
+    val isExpanded: Boolean = false,
+    val orderId: String = "",
+    val orderDocPath: String = ""
 )
 
 data class AlertsUiState(
