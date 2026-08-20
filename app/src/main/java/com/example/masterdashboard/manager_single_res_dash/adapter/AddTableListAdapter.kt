@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.databinding.ItemTableGridCellBinding
 import com.example.masterdashboard.manager_single_res_dash.models.TableData
+import com.example.masterdashboard.staff_dash.utils.StatusUIUtils
 
 class AddTableListAdapter(
     private val onTableClick: (TableData) -> Unit,
@@ -40,41 +41,20 @@ class AddTableListAdapter(
             binding.tvTableStatusLabel.text = table.status
             binding.tvTableCapacityLabel.text = "${table.capacity} Seats"
 
-            // 2. Compute dynamic color palette highlights for textual emphasis
-            val statusColorString = when (table.status.uppercase()) {
-                "AVAILABLE" -> "#4CAF50"  // Soft Green UI
-                "OCCUPIED" -> "#FF9800"   // Soft Orange UI
-                "RESERVED" -> "#BA68C8"   // Soft Purple UI
-                else -> "#E57373"         // DIRTY / BLOCKED Red UI
-            }
-
-            val calculatedStatusColor = Color.parseColor(statusColorString)
+            // 2. Get centralized color palette from StatusUIUtils
+            val colors = StatusUIUtils.getTableStatusColors(table.status)
+            val bgColor = Color.parseColor(colors.first)
+            val textColor = Color.parseColor(colors.second)
 
             // Applying colors explicitly to the label LIVING OUTSIDE the card
-            binding.tvTableStatusLabel.setTextColor(calculatedStatusColor)
+            binding.tvTableStatusLabel.setTextColor(textColor)
 
             // Soft white/gray color mapping for inside card metadata text layout fields
             binding.tvTableCapacityLabel.setTextColor(Color.parseColor("#A5A1CD"))
 
-            // 3. Apply solid background fills to the inner card layouts cleanly
-            when (table.status.uppercase()) {
-                "AVAILABLE" -> {
-                    binding.clCellBackground.setBackgroundColor(Color.parseColor("#112B1B"))
-                    binding.tvTableShortCode.setTextColor(Color.parseColor("#4CAF50"))
-                }
-                "OCCUPIED" -> {
-                    binding.clCellBackground.setBackgroundColor(Color.parseColor("#3E2006"))
-                    binding.tvTableShortCode.setTextColor(Color.parseColor("#FF9800"))
-                }
-                "RESERVED" -> {
-                    binding.clCellBackground.setBackgroundColor(Color.parseColor("#2C123D"))
-                    binding.tvTableShortCode.setTextColor(Color.parseColor("#BA68C8"))
-                }
-                else -> { // DIRTY / BLOCKED
-                    binding.clCellBackground.setBackgroundColor(Color.parseColor("#321111"))
-                    binding.tvTableShortCode.setTextColor(Color.parseColor("#E57373"))
-                }
-            }
+            // 3. Apply background fills and text color to the inner card layout
+            binding.clCellBackground.setBackgroundColor(bgColor)
+            binding.tvTableShortCode.setTextColor(textColor)
 
             // Bind interaction click streams specifically to the Card component bounds
             binding.cvTableBoxCard.setOnClickListener { onClick(table) }
@@ -95,4 +75,3 @@ class TableDiffCallback : DiffUtil.ItemCallback<TableData>() {
     override fun areContentsTheSame(oldItem: TableData, newItem: TableData): Boolean =
         oldItem == newItem
 }
-

@@ -11,6 +11,8 @@ import com.example.masterdashboard.databinding.ItemActiveOrderCardBinding
 import com.example.masterdashboard.staff_dash.waiter_screens.order.models.ActiveOrderCardData
 import com.example.masterdashboard.staff_dash.waiter_screens.order.models.ActiveOrderStatus
 
+import com.example.masterdashboard.staff_dash.utils.StatusUIUtils
+
 class ActiveOrdersAdapter(
     private val onOrderClicked: (ActiveOrderCardData) -> Unit
 ) : ListAdapter<ActiveOrderCardData, ActiveOrdersAdapter.OrderViewHolder>(OrderDiffCallback()) {
@@ -44,39 +46,8 @@ class ActiveOrdersAdapter(
         binding.tvOrderTotalItems.text = "${order.totalItems} Items"
         binding.tvOrderTimestamp.text = order.orderTime
 
-        // Dynamic status layout badge configuration matching visual asset guidelines
-        when (order.status) {
-            ActiveOrderStatus.PENDING -> {
-                binding.tvOrderStatusTag.text = "• Pending"
-                binding.tvOrderStatusTag.setBackgroundResource(R.drawable.bg_status_preparing) // e.g., Light Yellow / Amber
-                binding.tvOrderStatusTag.setTextColor(ContextCompat.getColor(context, R.color.status_occupied))
-            }
-            ActiveOrderStatus.PREPARING -> {
-                binding.tvOrderStatusTag.text = "• Preparing"
-                binding.tvOrderStatusTag.setBackgroundResource(R.drawable.bg_status_preparing) // Orange
-                binding.tvOrderStatusTag.setTextColor(ContextCompat.getColor(context, R.color.status_occupied))
-            }
-            ActiveOrderStatus.READY -> {
-                binding.tvOrderStatusTag.text = "• Ready"
-                binding.tvOrderStatusTag.setBackgroundResource(R.drawable.bg_status_ready) // Green
-                binding.tvOrderStatusTag.setTextColor(ContextCompat.getColor(context, R.color.status_free))
-            }
-            ActiveOrderStatus.SERVED -> {
-                binding.tvOrderStatusTag.text = "• Served"
-                binding.tvOrderStatusTag.setBackgroundResource(R.drawable.bg_status_served) // Charcoal
-                binding.tvOrderStatusTag.setTextColor(ContextCompat.getColor(context, R.color.status_billing))
-            }
-            ActiveOrderStatus.BILLING -> {
-                binding.tvOrderStatusTag.text = "• Billing"
-                binding.tvOrderStatusTag.setBackgroundResource(R.drawable.bg_status_preparing)
-                binding.tvOrderStatusTag.setTextColor(ContextCompat.getColor(context, R.color.status_occupied))
-            }
-            ActiveOrderStatus.PAID -> {
-                binding.tvOrderStatusTag.text = "• Paid"
-                binding.tvOrderStatusTag.setBackgroundResource(R.drawable.bg_status_ready)
-                binding.tvOrderStatusTag.setTextColor(ContextCompat.getColor(context, R.color.status_free))
-            }
-        }
+        // Use centralized utility for status UI
+        StatusUIUtils.applyStatusUI(context, binding.tvOrderStatusTag, order.status)
 
         binding.clOrderCardContent.setOnClickListener {
             onOrderClicked(order)

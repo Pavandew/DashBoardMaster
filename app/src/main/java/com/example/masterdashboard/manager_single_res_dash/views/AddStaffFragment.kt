@@ -19,7 +19,7 @@ import com.example.masterdashboard.databinding.FragmentAddStaffBinding
 import com.example.masterdashboard.manager_single_res_dash.adapter.AddStaffFormAdapter
 import com.example.masterdashboard.manager_single_res_dash.viewModel.PhoneCheckState
 import com.example.masterdashboard.manager_single_res_dash.viewModel.StaffFormViewModel
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.launch
 
 class AddStaffFragment : Fragment() {
@@ -86,24 +86,9 @@ class AddStaffFragment : Fragment() {
             val ownerUid = sessionManager.getUid()
             sharedViewModel.verifyMobileAndProceed(ownerUid, mobile) {
 
-                // ✅ AUTOMATIC CREDENTIALS GENERATION FORMULA
-                // Remove whitespaces from name input and force uppercase
-                // Safely grab last 4 digits of phone number to guarantee id uniqueness
-                val cleanedName = name.replace("\\s".toRegex(), "").uppercase()
-                val mobileSuffix = if (mobile.length >= 4) mobile.substring(mobile.length - 4) else mobile
-
-                val generatedStaffId = "${cleanedName}${mobileSuffix}" // Produces e.g: PAVAN9730
-                val generatedPassword = generateRandomPin()           // Produces e.g: 749215 (6-digit numeric login PIN)
-
-                Log.d(TAG, "================ GENERATED CREDENTIALS DEBUG LOG ================")
-                Log.d(TAG, "Custom Account Staff ID : $generatedStaffId")
-                Log.d(TAG, "Custom Password PIN Code: $generatedPassword")
-                Log.d(TAG, "==================================================================")
-
-                // 3. Save personal fields alongside login credentials back to model cache flow states
+                // 3. Save personal fields back to model cache flow states
                 sharedViewModel.updateStep1Data(
-                    name, mobile, email, gender, role, department, joiningDate, shift, salary,
-                    generatedStaffId, generatedPassword
+                    name, mobile, email, gender, role, department, joiningDate, shift, salary
                 )
 
                 // 4. Navigate forward smoothly to Step 2 Layout Fragment Screen
@@ -115,14 +100,6 @@ class AddStaffFragment : Fragment() {
         }
 
         binding.rvAddStaffForm.adapter = formAdapter
-    }
-
-    // ✅ HELPER: Outputs a random numerical 6-digit pin string structure
-    private fun generateRandomPin(): String {
-        val numbersList = "1234567890"
-        return (1..6)
-            .map { numbersList.random() }
-            .joinToString("")
     }
 
     private fun setupValidationObservers() {

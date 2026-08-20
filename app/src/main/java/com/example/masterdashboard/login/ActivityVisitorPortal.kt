@@ -4,15 +4,15 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import com.example.masterdashboard.login.utils.PortalManager
+import com.example.masterdashboard.utils.PortalManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivityVisitorPortalBinding
 import com.example.masterdashboard.login.models.PortalFeature
 import com.example.masterdashboard.login.models.PortalItem
 import com.example.masterdashboard.login.views.LoginActivity
 import com.example.masterdashboard.login.views.StaffLoginActivity
-import com.example.masterdashboard.login.utils.AppConstants
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.SessionManager
 
 class ActivityVisitorPortal : AppCompatActivity() {
 

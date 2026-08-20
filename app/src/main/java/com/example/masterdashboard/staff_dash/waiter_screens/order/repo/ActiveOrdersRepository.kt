@@ -1,11 +1,12 @@
 package com.example.masterdashboard.staff_dash.waiter_screens.order.repo
 
 import android.util.Log
-import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.staff_dash.waiter_screens.order.models.ActiveOrderCardData
 import com.example.masterdashboard.staff_dash.waiter_screens.order.models.ActiveOrderStatus
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.OrderDataModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
+import com.example.masterdashboard.staff_dash.utils.TimeUtils
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,9 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await // FIX 1: Required import for .await()
-import java.text.SimpleDateFormat
-import java.util.Locale
+import kotlinx.coroutines.tasks.await
 
 class ActiveOrdersRepository {
     companion object {
@@ -49,29 +48,18 @@ class ActiveOrdersRepository {
             Log.i(TAG, "📦 [REPO] Snapshot event received. Total active_orders documents found in Firestore: $totalDocs")
 
             if (totalDocs == 0) {
-                // FIX 2: Explicitly type emptyList to prevent type inference errors
                 trySend(ResourceUiState.Success(emptyList<ActiveOrderCardData>()))
                 return@addSnapshotListener
             }
 
-            val formatter = SimpleDateFormat("hh:mm a", Locale.getDefault())
-
-            // FIX 3: Launch safely using CoroutineScope(Dispatchers.IO) so .await() is legal
             CoroutineScope(Dispatchers.IO).launch {
-                val activeOrderList = mutableListOf<ActiveOrderCardData>()
+                val activeOrderList = mutableListOf<Pair<ActiveOrderCardData, Long>>()
 
                 snapshots?.documents?.forEachIndexed { index, document ->
                     val docPath = document.reference.path
-                    Log.d(TAG, "--------------------------------------------------")
-                    Log.d(TAG, "📦 [REPO] Processing Document [$index]: Path -> $docPath")
-
                     if (!docPath.contains("users/$managerId")) {
-                        Log.w(TAG, "📦 [REPO] Skipping Doc [$index]: Does not belong to manager $managerId")
                         return@forEachIndexed
                     }
-
-                    val rawDataMap = document.data
-                    Log.d(TAG, "📦 [REPO] Doc ID: ${document.id} | Raw Firestore Data: $rawDataMap")
 
                     val orderModel = try {
                         document.toObject(OrderDataModel::class.java)
@@ -82,7 +70,7 @@ class ActiveOrdersRepository {
 
                     if (orderModel != null) {
                         // 1. RESOLVE DISPLAY ORDER ID
-                        val customDocOrderId = document.getString("orderId")
+                        val customDocOrderId = document.getString(AppConstants.FIELD_ORDER_ID)
                         val finalOrderId = when {
                             !customDocOrderId.isNullOrBlank() -> customDocOrderId
                             !orderModel.orderId.isNullOrBlank() -> orderModel.orderId
@@ -90,16 +78,14 @@ class ActiveOrdersRepository {
                         }
 
                         // 2. RESOLVE TABLE NAME
-                        var resolvedTableName = document.getString("tableName") ?: orderModel.tableName
+                        var resolvedTableName = document.getString(AppConstants.FIELD_TABLE_NAME) ?: orderModel.tableName
 
                         if (resolvedTableName.isBlank() || resolvedTableName == "N/A") {
                             val parentTableRef = document.reference.parent.parent
                             if (parentTableRef != null) {
                                 try {
-                                    // .await() works cleanly inside CoroutineScope.launch!
                                     val parentSnapshot = parentTableRef.get().await()
-                                    resolvedTableName = parentSnapshot.getString("tableName") ?: "Table"
-                                    Log.d(TAG, "📦 [REPO] Asynchronously fetched parent table name: '$resolvedTableName'")
+                                    resolvedTableName = parentSnapshot.getString(AppConstants.FIELD_TABLE_NAME) ?: "Table"
                                 } catch (e: Exception) {
                                     Log.e(TAG, "📦 [REPO] Failed to fetch parent table document", e)
                                     resolvedTableName = "Table"
@@ -116,23 +102,19 @@ class ActiveOrdersRepository {
                             0
                         }
 
-                        // 4. FORMAT TIMESTAMP
-                        val formattedTime = try {
-                            formatter.format(orderModel.timestamp.toDate())
-                        } catch (e: Exception) {
-                            "Just Now"
-                        }
+                        // 4. FORMAT TIMESTAMP (Using shared TimeUtils)
+                        val formattedTime = TimeUtils.getRelativeTime(orderModel.timestamp)
 
                         // 5. MAP STATUS
-                        val statusStr = document.getString("orderStatus") ?: orderModel.orderStatus
+                        val statusStr = document.getString(AppConstants.FIELD_ORDER_STATUS) ?: orderModel.orderStatus
                         val status = when (statusStr.uppercase()) {
-                            "PENDING" -> ActiveOrderStatus.PENDING      // Maps directly to PENDING!
-                            "PREPARING" -> ActiveOrderStatus.PREPARING  // Maps to PREPARING
-                            "READY" -> ActiveOrderStatus.READY          // Maps to READY
-                            "SERVED" -> ActiveOrderStatus.SERVED        // Maps to SERVED
-                            "BILLING" -> ActiveOrderStatus.BILLING      // Maps to BILLING
-                            "PAID" -> ActiveOrderStatus.PAID            // Maps to PAID
-                            else -> ActiveOrderStatus.PENDING           // Safe fallback
+                            AppConstants.STATUS_PENDING -> ActiveOrderStatus.PENDING
+                            AppConstants.STATUS_PREPARING -> ActiveOrderStatus.PREPARING
+                            AppConstants.STATUS_READY -> ActiveOrderStatus.READY
+                            AppConstants.STATUS_SERVED -> ActiveOrderStatus.SERVED
+                            AppConstants.STATUS_BILLING -> ActiveOrderStatus.BILLING
+                            AppConstants.STATUS_PAID -> ActiveOrderStatus.PAID
+                            else -> ActiveOrderStatus.PENDING
                         }
 
                         val cardData = ActiveOrderCardData(
@@ -143,14 +125,15 @@ class ActiveOrdersRepository {
                             status = status
                         )
 
-                        Log.i(TAG, "📦 [REPO] Final ActiveOrderCardData Built -> $cardData")
-                        activeOrderList.add(cardData)
+                        activeOrderList.add(cardData to orderModel.timestamp.seconds)
                     }
                 }
 
-                Log.i(TAG, "==================================================")
-                Log.i(TAG, "📦 [REPO] Emitting Success with ${activeOrderList.size} processed active order cards to ViewModel.")
-                trySend(ResourceUiState.Success(activeOrderList))
+                // Sort by timestamp descending (Recent on top)
+                val sortedList = activeOrderList.sortedByDescending { it.second }.map { it.first }
+
+                Log.i(TAG, "📦 [REPO] Emitting Success with ${sortedList.size} processed active order cards (Sorted).")
+                trySend(ResourceUiState.Success(sortedList))
             }
         }
 
@@ -178,7 +161,7 @@ class ActiveOrdersRepository {
             .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
             .document(orderId)
 
-        orderRef.update("orderStatus", newStatus.name)
+        orderRef.update(AppConstants.FIELD_ORDER_STATUS, newStatus.name)
             .addOnSuccessListener {
                 Log.i(TAG, "📦 [REPO] Order $orderId status successfully updated to ${newStatus.name}")
                 trySend(ResourceUiState.Success(true))

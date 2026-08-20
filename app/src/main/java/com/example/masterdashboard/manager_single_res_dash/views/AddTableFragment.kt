@@ -13,7 +13,7 @@ import androidx.fragment.app.activityViewModels
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentAddTableBinding
 import com.example.masterdashboard.manager_single_res_dash.viewModel.TableItemListViewModel
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.SessionManager
 
 class AddTableFragment : Fragment() {
 
@@ -176,13 +176,21 @@ class AddTableFragment : Fragment() {
 
     private fun setupSaveActionTrigger() {
         binding.btnSaveTableAction.setOnClickListener {
-            val tableNameInput = binding.etTableNameField.text?.toString()?.trim() ?: ""
+            val rawInput = binding.etTableNameField.text?.toString()?.trim() ?: ""
             val selectedStatusInput = binding.actvStatusDropdown.text.toString().trim()
             val ownerUid = sessionManager.getUid()
 
-            if (tableNameInput.isEmpty()) {
-                Toast.makeText(requireContext(), "Table Name field cannot be blank.", Toast.LENGTH_SHORT).show()
+            if (rawInput.isEmpty()) {
+                Toast.makeText(requireContext(), "Please enter a table number.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
+            }
+
+            // Automatically format the table name to 't-01', 't-10', etc.
+            val tableNum = rawInput.toIntOrNull()
+            val tableNameInput = if (tableNum != null) {
+                "T-${String.format(java.util.Locale.US, "%02d", tableNum)}"
+            } else {
+                rawInput // Fallback
             }
 
             if (ownerUid.isEmpty() || preSelectedFloorId.isEmpty()) {
@@ -190,7 +198,7 @@ class AddTableFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            Log.i(TAG, "Form Submission Verified. Shipping table definition records data downstream securely.")
+            Log.i(TAG, "Form Submission Verified. Shipping table definition records: $tableNameInput")
 
             // Dispatch dynamic addition parameters securely with live selected status choices [cite: 325]
             viewModel.addNewTable(
