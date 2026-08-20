@@ -20,7 +20,7 @@ import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenPrepa
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenInventoryFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenOrderFragment
 import com.example.masterdashboard.staff_dash.profile.StaffProfileFragment
-import com.example.masterdashboard.staff_dash.waiter_screens.alert.StaffNotificationFragment
+import com.example.masterdashboard.notifications.alert.StaffNotificationFragment
 import com.example.masterdashboard.login.views.ChangePasswordFragment
 
 class KitchenHomeActivity : AppCompatActivity() {
@@ -143,6 +143,17 @@ class KitchenHomeActivity : AppCompatActivity() {
         })
 
         permissionHelper.askNotificationPermission()
+        
+        setupBottomNavigationVisibility()
+    }
+
+    private fun setupBottomNavigationVisibility() {
+        val role = sessionManager.getRole().lowercase()
+        val canAccessInventory = role == "manager" || role == "chef" || role == "owner_single" || role == "owner_multi"
+        
+        if (!canAccessInventory) {
+            binding.kitchenBottomNavigation.menu.findItem(R.id.kitchen_inventoryFragment)?.isVisible = false
+        }
     }
 
     fun hideBottomNavigation() {

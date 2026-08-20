@@ -14,7 +14,7 @@ import com.example.masterdashboard.notifications.NotificationPermissionHelper
 import com.example.masterdashboard.staff_dash.billing_screens.views.CashierBillingFragment
 import com.example.masterdashboard.staff_dash.billing_screens.views.CashierOrderFragment
 import com.example.masterdashboard.staff_dash.profile.StaffProfileFragment
-import com.example.masterdashboard.staff_dash.waiter_screens.alert.StaffNotificationFragment
+import com.example.masterdashboard.notifications.alert.StaffNotificationFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class CashierHomeActivity : AppCompatActivity() {

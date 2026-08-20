@@ -26,6 +26,7 @@ object AppConstants {
     const val COLLECTION_TABLES = "floor_tables"
     const val COLLECTION_ACTIVE_ORDERS = "active_orders"
     const val COLLECTION_COMPLETED_ORDERS = "completed_orders"
+    const val COLLECTION_INVENTORY = "inventory"
 
     // Firestore Fields - Common
     const val FIELD_UID = "uid"
@@ -100,6 +101,15 @@ object AppConstants {
     const val FIELD_CUSTOMER_NAME = "customerName"
     const val FIELD_CUSTOMER_MOBILE = "customerMobile"
     const val FIELD_TAX = "tax"
+
+    // Firestore Fields - Inventory
+    const val FIELD_INVENTORY_ID = "inventoryId"
+    const val FIELD_ITEM_QUANTITY = "itemQuantity"
+    const val FIELD_ITEM_UNIT = "itemUnit"
+    const val FIELD_MIN_THRESHOLD = "minThreshold"
+    const val FIELD_LAST_UPDATED = "lastUpdated"
+    const val FIELD_INVENTORY_CATEGORY = "inventoryCategory"
+    const val FIELD_ESTIMATED_DAYS_LEFT = "estimatedDaysLeft"
 
     // Status Values
     const val STATUS_ACTIVE = "Active"
