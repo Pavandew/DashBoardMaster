@@ -134,19 +134,25 @@ class WaiterHomeActivity : AppCompatActivity() {
             this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    when {
-                        supportFragmentManager.backStackEntryCount > 0 -> {
-                            supportFragmentManager.popBackStack()
-                        }
-                        currentTag != TAG_TABLES -> {
-                            openTables()
-                        }
-                        else -> {
-                            if (backPressedTime + 2000 > System.currentTimeMillis()) {
-                                finish()
-                            } else {
-                                Toast.makeText(this@WaiterHomeActivity, "Press back again to exit", Toast.LENGTH_SHORT).show()
-                            }
+                    if (supportFragmentManager.backStackEntryCount > 0) {
+                        supportFragmentManager.popBackStack()
+                        return
+                    }
+
+                    // If this activity is NOT the root (e.g. opened from Manager Dash), just go back
+                    if (!isTaskRoot) {
+                        finish()
+                        return
+                    }
+
+                    // Standard "Root Home" behavior: Back to first tab, then exit toast
+                    if (currentTag != TAG_TABLES) {
+                        openTables()
+                    } else {
+                        if (backPressedTime + 2000 > System.currentTimeMillis()) {
+                            finish()
+                        } else {
+                            Toast.makeText(this@WaiterHomeActivity, "Press back again to exit", Toast.LENGTH_SHORT).show()
                             backPressedTime = System.currentTimeMillis()
                         }
                     }
