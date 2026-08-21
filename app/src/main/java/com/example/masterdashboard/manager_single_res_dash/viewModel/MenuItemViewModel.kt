@@ -1,12 +1,16 @@
 package com.example.masterdashboard.manager_single_res_dash.viewModel
 
+import android.app.Application
+import android.net.Uri
 import android.util.Log
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.masterdashboard.manager_single_res_dash.models.MenuFoodItemsData
+import com.example.masterdashboard.manager_single_res_dash.models.ItemVariant
 import com.example.masterdashboard.manager_single_res_dash.repo.MenuManagementRepository
 import com.example.masterdashboard.manager_single_res_dash.uistate.MenuItemUiState
-import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.manager_single_res_dash.form_screen.uiState.RegistrationUiState
+import com.example.masterdashboard.utils.AppConstants
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
-class MenuItemViewModel: ViewModel() {
+class MenuItemViewModel(application: Application): AndroidViewModel(application) {
     companion object {
         private const val TAG = "MenuItemViewModel ----> "
     }
@@ -23,6 +27,9 @@ class MenuItemViewModel: ViewModel() {
 
     private val _foodItemsState = MutableStateFlow<MenuItemUiState>(MenuItemUiState.Loading)
     val foodItemsState: StateFlow<MenuItemUiState> = _foodItemsState.asStateFlow()
+
+    private val _saveState = MutableStateFlow<RegistrationUiState>(RegistrationUiState.Idle)
+    val saveState: StateFlow<RegistrationUiState> = _saveState.asStateFlow()
 
 
     fun observeFoodItems(ownerUid: String, categoryId: String) {
@@ -40,71 +47,76 @@ class MenuItemViewModel: ViewModel() {
                     if (list.isEmpty()) {
                         _foodItemsState.value = MenuItemUiState.Empty
                     } else {
-                        _foodItemsState.value = MenuItemUiState.Success(list) // Type-safe mapping!
+                        _foodItemsState.value = MenuItemUiState.Success(list)
                     }
                 }
         }
     }
 
-    // Save a brand_new dish directly into the category's food_items sub-collection
-    fun saveMenuFoodItem(
+    fun uploadAndSaveMenuItem(
         ownerUid: String,
         categoryId: String,
         itemName: String,
         price: String,
         description: String,
         status: String,
-        isVeg: Boolean
+        isVeg: Boolean,
+        imageUri: Uri?,
+        hasVariants: Boolean = false,
+        variants: List<ItemVariant> = emptyList(),
+        itemId: String = "",
+        existingImageUrl: String = ""
     ) {
-        Log.i(TAG, "Attempting to save new dish: '$itemName' into Category ID: $categoryId ")
         viewModelScope.launch {
-            val firestore = FirebaseFirestore.getInstance()
+            try {
+                _saveState.value = RegistrationUiState.Loading
+                
+                // 1. Prepare/Generate Item ID first so we can use it for the filename
+                val firestore = FirebaseFirestore.getInstance()
+                val isNewItem = itemId.isEmpty()
+                val finalId = if (isNewItem) {
+                    firestore.collection(AppConstants.COLLECTION_USERS).document().id
+                } else {
+                    itemId
+                }
 
-            // build the nested collection path matching your database scheme
-            val categoryDocRef = firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(ownerUid)
-                .collection(AppConstants.COLLECTION_MENU_CATEGORIES)
-                .document(categoryId)
+                var finalImageUrl = existingImageUrl
+                
+                // 2. Handle Image Upload with Compression using the unique finalId
+                if (imageUri != null) {
+                    Log.d(TAG, "New image detected. Starting compressed upload for $finalId...")
+                    val uploadResult = repository.uploadMenuImage(getApplication(), ownerUid, imageUri, finalId)
+                    if (uploadResult.isSuccess) {
+                        finalImageUrl = uploadResult.getOrNull() ?: existingImageUrl
+                    } else {
+                        _saveState.value = RegistrationUiState.Error("Image upload failed")
+                        return@launch
+                    }
+                }
 
-            val newMenuFoodItemDocRef = categoryDocRef
-                .collection(AppConstants.COLLECTION_FOOD_ITEMS)
-                .document()
+                // 3. Prepare the item model with the link to the image
+                val itemToSave = MenuFoodItemsData(
+                    id = finalId,
+                    itemName = itemName,
+                    categoryName = "",
+                    price = price,
+                    description = description,
+                    status = status,
+                    isVeg = isVeg,
+                    imageUrl = finalImageUrl,
+                    hasVariants = hasVariants,
+                    variants = variants
+                )
 
-            val newItem = MenuFoodItemsData(
-                id = newMenuFoodItemDocRef.id,
-                itemName = itemName,
-                categoryName = "",
-                price = price,
-                description = description,
-                status = status,
-                isVeg = isVeg,
-                imageUrl = ""   // Placeholder token for future firebase Storage images
-            )
-
-            Log.d(TAG, "Launching network transaction write  for document: ${newMenuFoodItemDocRef.id}")
-
-            // 3. Execute an atomic cloud transaction
-            firestore.runTransaction { transaction ->
-
-                // Step 1: Read the current state of the category document
-                val categorySnapShot = transaction.get(categoryDocRef)
-
-                // Extract the current value of "itemCount" field safely(default to 0 if missing
-                val currentCount = categorySnapShot.getLong("itemCount") ?: 0L
-                Log.d(TAG, "Current itemCount value read from Firestore: $currentCount")
-                val newCount = currentCount +1
-
-                // Step 2: Write the new Food Item data map
-                transaction.set(newMenuFoodItemDocRef, newItem.toMap())
-
-                // step 3: Update the parent category's itemCount parameter field
-                transaction.update(categoryDocRef, "itemCount", newCount)
-
-                null // return null to signify transaction work block completion
-        }.addOnSuccessListener {
-                Log.i(TAG, "Transaction Complete! Saved '$itemName' and incremented parent itemCount successfully.")
-            }.addOnFailureListener { exception ->
-                Log.e(TAG, "Transaction Failed! Item not saved and counter not modified.", exception)
+                // 4. Save everything to Firestore
+                repository.saveMenuFoodItemTransactional(ownerUid, categoryId, itemToSave, isNewItem)
+                
+                Log.i(TAG, "Save operation completed successfully for item: $itemName")
+                _saveState.value = RegistrationUiState.Success("Item saved successfully", finalId)
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to save item", e)
+                _saveState.value = RegistrationUiState.Error("Failed to save item")
             }
         }
     }
@@ -119,7 +131,6 @@ class MenuItemViewModel: ViewModel() {
 
         viewModelScope.launch {
             try {
-                // Delegate transactional database data mutations safely to the repository layer
                 repository.removeFoodItemTransactional(ownerUid, categoryId, foodItemId)
                 Log.i(TAG, "Successfully completed deletion sequence for item: '$itemName'")
             } catch (exception: Exception) {
@@ -128,4 +139,3 @@ class MenuItemViewModel: ViewModel() {
         }
     }
 }
-

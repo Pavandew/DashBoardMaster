@@ -19,9 +19,9 @@ import com.example.masterdashboard.manager_single_res_dash.adapter.FoodItemListA
 import com.example.masterdashboard.manager_single_res_dash.models.MenuFoodItemsData
 import com.example.masterdashboard.manager_single_res_dash.uistate.MenuItemUiState
 import com.example.masterdashboard.manager_single_res_dash.viewModel.MenuItemViewModel
-import com.example.masterdashboard.login.utils.AppConstants
-import com.example.masterdashboard.login.utils.MenuDialogHelper
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.MenuDialogHelper
+import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.launch
 
 class MenuItemListFragment : Fragment() {
@@ -100,7 +100,20 @@ class MenuItemListFragment : Fragment() {
         foodItemListAdapter = FoodItemListAdapter(
             onItemClick = { selectedFoodItem ->
                 Log.d(TAG, "Selected food item: ${selectedFoodItem.itemName} -> ID: ${selectedFoodItem.id}")
-                Toast.makeText(requireContext(), "Edit: ${selectedFoodItem.itemName}", Toast.LENGTH_SHORT).show()
+                
+                // Navigate to Edit mode
+                val editMenuItemFragment = AddMenuItemFragment().apply {
+                    arguments = Bundle().apply {
+                        putString("CATEGORY_ID", categoryId)
+                        putString("CATEGORY_NAME", categoryName)
+                        putSerializable("EDIT_ITEM", selectedFoodItem)
+                    }
+                }
+
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.manager_fragmentContainer, editMenuItemFragment)
+                    .addToBackStack(null)
+                    .commit()
             },
             onItemLongClick = { targetFoodItem ->
                 // triggers when user hold down on any dish item card row

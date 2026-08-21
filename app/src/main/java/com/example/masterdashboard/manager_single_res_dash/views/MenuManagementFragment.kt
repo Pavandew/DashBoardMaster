@@ -20,9 +20,9 @@ import com.example.masterdashboard.manager_single_res_dash.models.MenuCategory
 import com.example.masterdashboard.manager_single_res_dash.uistate.MenuUiState
 import com.example.masterdashboard.manager_single_res_dash.utils.AddCategoryBottomSheet
 import com.example.masterdashboard.manager_single_res_dash.viewModel.MenuManagementViewModel
-import com.example.masterdashboard.login.utils.AppConstants
-import com.example.masterdashboard.login.utils.MenuDialogHelper
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.MenuDialogHelper
+import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.launch
 
 class MenuManagementFragment : Fragment() {

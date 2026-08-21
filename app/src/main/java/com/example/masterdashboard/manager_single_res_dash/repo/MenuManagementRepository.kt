@@ -1,11 +1,15 @@
 package com.example.masterdashboard.manager_single_res_dash.repo
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
 import com.example.masterdashboard.manager_single_res_dash.models.MenuCategory
 import com.example.masterdashboard.manager_single_res_dash.models.MenuFoodItemsData
-import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.ImageUtils
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -18,6 +22,42 @@ class MenuManagementRepository {
     }
 
     private val firestore = FirebaseFirestore.getInstance()
+    // Explicitly initialize with bucket name to avoid 404 mismatch
+    private val storage = FirebaseStorage.getInstance("gs://masterdashboard-836dd.firebasestorage.app")
+
+    /**
+     * Uploads a menu item image to Firebase Storage after compression.
+     * Uses the itemId as the filename to handle "Replace" logic cleanly.
+     */
+    suspend fun uploadMenuImage(context: Context, ownerUid: String, imageUri: Uri, itemId: String): Result<String> {
+        if (ownerUid.isEmpty() || itemId.isEmpty()) {
+            return Result.failure(Exception("OwnerUID or ItemID is empty. Cannot generate path."))
+        }
+
+        return try {
+            val fullPath = "users/$ownerUid/menu_images/item_${itemId}.jpg"
+            Log.i(TAG, "Initiating compressed upload to path: $fullPath")
+            
+            val compressedBytes = ImageUtils.compressImage(context, imageUri)
+            if (compressedBytes == null) {
+                Log.e(TAG, "Compression failed for image: $imageUri")
+                return Result.failure(Exception("Failed to process image"))
+            }
+
+            val storageRef = storage.reference.child(fullPath)
+
+            Log.d(TAG, "Starting byte upload... (${compressedBytes.size / 1024} KB)")
+            storageRef.putBytes(compressedBytes).await()
+            
+            val downloadUrl = storageRef.downloadUrl.await().toString()
+            Log.i(TAG, "Upload Successful! URL: $downloadUrl")
+            
+            Result.success(downloadUrl)
+        } catch (e: Exception) {
+            Log.e(TAG, "Storage Upload Exception: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 
     // listens to real-time additions/removals of menu categories from firebase
     fun getLiveMenuCategories(ownerUid: String) : Flow<List<MenuCategory>> = callbackFlow {
@@ -122,6 +162,40 @@ class MenuManagementRepository {
         }.await()
 
         Log.i(TAG, "✅ removeFoodItemTransactional completed successfully. Item deleted: $foodItemId")
+    }
+
+    /**
+     * Saves or updates a food item document. 
+     * Uses a transaction to increment itemCount ONLY if it's a brand new item (itemId is empty).
+     */
+    suspend fun saveMenuFoodItemTransactional(
+        ownerUid: String,
+        categoryId: String,
+        item: MenuFoodItemsData,
+        isNewItem: Boolean
+    ) {
+        Log.i(TAG, "saveMenuFoodItemTransactional initiated for item: ${item.itemName} (New: $isNewItem)")
+
+        val categoryDocRef = firestore.collection(AppConstants.COLLECTION_USERS)
+            .document(ownerUid)
+            .collection(AppConstants.COLLECTION_MENU_CATEGORIES)
+            .document(categoryId)
+
+        val foodItemDocRef = categoryDocRef.collection(AppConstants.COLLECTION_FOOD_ITEMS)
+            .document(item.id)
+
+        firestore.runTransaction { transaction ->
+            if (isNewItem) {
+                val categorySnapshot = transaction.get(categoryDocRef)
+                val currentCount = categorySnapshot.getLong("itemCount") ?: 0
+                transaction.update(categoryDocRef, "itemCount", currentCount + 1)
+            }
+
+            transaction.set(foodItemDocRef, item.toMap())
+            null
+        }.await()
+        
+        Log.i(TAG, "✅ saveMenuFoodItemTransactional completed successfully.")
     }
 }
 
