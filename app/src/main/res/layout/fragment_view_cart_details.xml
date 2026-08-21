@@ -35,7 +35,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingBottom="@dimen/margin_medium"
-        app:layout_constraintBottom_toTopOf="@id/btnSendToKitchen"
+        app:layout_constraintBottom_toTopOf="@id/llBottomButtons"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -151,22 +151,48 @@
 
     </LinearLayout>
 
-    <!-- Bottom Button -->
-    <Button
-        android:id="@+id/btnSendToKitchen"
-        android:layout_width="0dp"
-        android:layout_height="@dimen/button_height_large"
+    <!-- Bottom Buttons Container -->
+    <LinearLayout
+        android:id="@+id/llBottomButtons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:layout_marginHorizontal="@dimen/margin_medium"
-        android:layout_marginBottom="27dp"
-        android:backgroundTint="@color/chip_selected"
-        android:text="Send to Kitchen"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:textSize="@dimen/text_size_title"
-        android:textStyle="bold"
-        app:cornerRadius="@dimen/alert_card_radius"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:layout_marginBottom="20dp"
+        android:gravity="center_vertical"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <Button
+            android:id="@+id/btnPayLater"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/button_height_large"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:backgroundTint="@color/bg_card"
+            android:text="@string/pay_later"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:cornerRadius="@dimen/alert_card_radius"
+            app:strokeColor="@color/chip_border"
+            app:strokeWidth="1dp" />
+
+        <Button
+            android:id="@+id/btnSendToKitchen"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/button_height_large"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:backgroundTint="@color/chip_selected"
+            android:text="Send to Kitchen"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_title"
+            android:textStyle="bold"
+            app:cornerRadius="@dimen/alert_card_radius" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

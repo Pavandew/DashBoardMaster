@@ -65,4 +65,16 @@ class StaffNotificationRepository {
             .update("status", status.name, "isRead", true)
             .await()
     }
+
+    /**
+     * Marks a notification as read without changing its status.
+     */
+    suspend fun markAsRead(managerId: String, alertId: String) {
+        db.collection(AppConstants.COLLECTION_USERS)
+            .document(managerId)
+            .collection("notifications")
+            .document(alertId)
+            .update("isRead", true)
+            .await()
+    }
 }

@@ -14,6 +14,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentWaiterNotificationBinding
+import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
+import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.kitchen_screens.KitchenHomeActivity
@@ -80,12 +82,12 @@ class StaffNotificationFragment : androidx.fragment.app.Fragment() {
     private fun setupAlertsRecyclerView() {
         alertsAdapter = AlertsAdapter(
             onCardClicked = { clickedItem ->
+                // Mark as read immediately
+                viewModel.handleCardClicked(clickedItem)
+
                 // If the notification has order info, navigate to details on click
                 if (clickedItem.orderId.isNotEmpty() || clickedItem.orderDocPath.isNotEmpty()) {
                     navigateToOrderDetails(clickedItem)
-                } else {
-                    // Fallback to expansion if it's actionable but has no direct order link
-                    viewModel.handleCardExpansionToggle(clickedItem)
                 }
             },
             onAcceptClicked = { targetItem ->
@@ -112,10 +114,11 @@ class StaffNotificationFragment : androidx.fragment.app.Fragment() {
 
         val sessionManager = SessionManager(requireContext())
         val role = sessionManager.getRole().lowercase().trim()
+        val isManager = role == "manager" || role == "owner_single" || role == "owner_multi"
 
         when {
-            // 1. KITCHEN ROLE -> Kitchen Detail Screen
-            role == "kitchen" || role == "chef" -> {
+            // 1. KITCHEN ROLE (or Manager clicking kitchen alert) -> Kitchen Detail Screen
+            role == "kitchen" || role == "chef" || (isManager && alert.title.contains("Inventory", true)) -> {
                 val kitchenData = KitchenOrderDetailData().apply {
                     orderId = alert.orderId
                     docPath = alert.orderDocPath
@@ -130,8 +133,8 @@ class StaffNotificationFragment : androidx.fragment.app.Fragment() {
                 switchFragment(fragment)
             }
 
-            // 2. CASHIER / BILLING ROLE -> Settlement Screen
-            role == "billing" || role == "cashier" -> {
+            // 2. CASHIER / BILLING ROLE (or Manager clicking billing alert) -> Settlement Screen
+            role == "billing" || role == "cashier" || (isManager && alert.message.contains("Bill", true)) -> {
                 val cashierOrder = CashierBillingOrderModel(
                     orderId = alert.orderId,
                     tableName = alert.tableId,
@@ -161,6 +164,8 @@ class StaffNotificationFragment : androidx.fragment.app.Fragment() {
             is WaiterHomeActivity -> R.id.waiter_fragment_container
             is KitchenHomeActivity -> R.id.kitchen_fragment_container
             is CashierHomeActivity -> R.id.billing_fragment_container
+            is ManagerHomeActivity -> R.id.manager_fragmentContainer
+            is SingleResOwnerHomeActivity -> R.id.single_owner_fragmentContainer
             else -> return
         }
 

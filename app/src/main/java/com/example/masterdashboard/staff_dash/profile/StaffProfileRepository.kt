@@ -1,8 +1,8 @@
 package com.example.masterdashboard.staff_dash.profile
 
 import android.util.Log
-import com.example.masterdashboard.login.utils.AppConstants
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.SessionManager
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow

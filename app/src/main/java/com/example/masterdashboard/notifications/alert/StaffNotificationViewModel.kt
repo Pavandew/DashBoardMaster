@@ -32,20 +32,27 @@ class AlertsViewModel(
         viewModelScope.launch {
             repository.getNotificationsStream(managerId).collect { allAlerts ->
                 // Role-based filtering
-                val filteredList = allAlerts.filter { alert ->
-                    val target = alert.targetRole.lowercase().trim()
-                    when {
-                        alert.targetStaffId.isNotEmpty() -> alert.targetStaffId == staffId
-                        target.isNotEmpty() -> {
-                            target == userRole || 
-                            (userRole == "waiter_staff" && target == "waiter") ||
-                            (userRole == "waiter" && target == "waiter_staff") ||
-                            (userRole == "chef" && target == "kitchen") ||
-                            (userRole == "kitchen" && target == "chef") ||
-                            (userRole == "cashier" && target == "billing") ||
-                            (userRole == "billing" && target == "cashier")
+                val isManagerScope = userRole == "manager" || userRole == "owner_single" || userRole == "owner_multi"
+
+                val filteredList = if (isManagerScope) {
+                    // Managers see everything (Billing, Inventory, Staff alerts, etc.)
+                    allAlerts
+                } else {
+                    allAlerts.filter { alert ->
+                        val target = alert.targetRole.lowercase().trim()
+                        when {
+                            alert.targetStaffId.isNotEmpty() -> alert.targetStaffId == staffId
+                            target.isNotEmpty() -> {
+                                target == userRole || 
+                                (userRole == "waiter_staff" && target == "waiter") ||
+                                (userRole == "waiter" && target == "waiter_staff") ||
+                                (userRole == "chef" && target == "kitchen") ||
+                                (userRole == "kitchen" && target == "chef") ||
+                                (userRole == "cashier" && target == "billing") ||
+                                (userRole == "billing" && target == "cashier")
+                            }
+                            else -> true // General broadcast
                         }
-                        else -> true // General broadcast
                     }
                 }
 
@@ -59,19 +66,36 @@ class AlertsViewModel(
         }
     }
 
-    fun handleCardExpansionToggle(alertItem: StaffAlertItem) {
-        if (alertItem.type == NotificationType.INFORMATIONAL) return
-
-        expandedItemIds.update { currentSet ->
-            if (currentSet.contains(alertItem.id)) currentSet - alertItem.id else currentSet + alertItem.id
-        }
-        
-        _uiState.update { state ->
-            val updatedList = state.alertsList.map { item ->
-                item.copy(isExpanded = expandedItemIds.value.contains(item.id))
+    fun handleCardClicked(alertItem: StaffAlertItem) {
+        // Mark as read in Firestore
+        val managerId = sessionManager.getUid()
+        if (managerId.isNotEmpty() && !alertItem.isRead) {
+            viewModelScope.launch {
+                try {
+                    repository.markAsRead(managerId, alertItem.id)
+                } catch (e: Exception) {
+                    // Fail silently for read markers
+                }
             }
-            state.copy(alertsList = updatedList)
         }
+
+        // Toggle expansion if it's an actionable request
+        if (alertItem.type == NotificationType.ACTIONABLE_REQUEST) {
+            expandedItemIds.update { currentSet ->
+                if (currentSet.contains(alertItem.id)) currentSet - alertItem.id else currentSet + alertItem.id
+            }
+            
+            _uiState.update { state ->
+                val updatedList = state.alertsList.map { item ->
+                    item.copy(isExpanded = expandedItemIds.value.contains(item.id))
+                }
+                state.copy(alertsList = updatedList)
+            }
+        }
+    }
+
+    fun handleCardExpansionToggle(alertItem: StaffAlertItem) {
+        handleCardClicked(alertItem)
     }
 
     fun updateAlertRequestStatus(alertId: String, nextStatus: RequestStatus) {
