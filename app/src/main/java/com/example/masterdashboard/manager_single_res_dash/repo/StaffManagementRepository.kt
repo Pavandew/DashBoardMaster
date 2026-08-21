@@ -1,7 +1,7 @@
 package com.example.masterdashboard.manager_single_res_dash.repo
 
 import com.example.masterdashboard.manager_single_res_dash.models.StaffDataModel
-import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.utils.AppConstants
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import android.util.Log
@@ -41,7 +41,7 @@ class StaffManagementRepository {
             // Points explicitly to your operational "staff" nested sub-collection
             val documentSnapshot = firebase.collection(AppConstants.COLLECTION_USERS)
                 .document(ownerUid)
-                .collection("staff")
+                .collection(AppConstants.COLLECTION_STAFF)
                 .document(staffDocId)
                 .get()
                 .await()
@@ -53,22 +53,21 @@ class StaffManagementRepository {
             // Robust manual parsing matching your case-sensitive lowercase 'staffid' property format
             StaffDataModel(
                 id = documentSnapshot.id,
-                staffId = documentSnapshot.getString("staffid") ?: documentSnapshot.getString("staffId") ?: "",
-                password = documentSnapshot.getString("password") ?: "",
-                staffName = documentSnapshot.getString("staffName") ?: "",
-                mobile = documentSnapshot.getString("mobile") ?: "",
-                email = documentSnapshot.getString("email") ?: "",
-                gender = documentSnapshot.getString("gender") ?: "",
-                role = documentSnapshot.getString("role") ?: "",
-                department = documentSnapshot.getString("department") ?: "",
-                joiningDate = documentSnapshot.getString("joiningDate") ?: "",
-                shift = documentSnapshot.getString("shift") ?: "",
-                salary = documentSnapshot.getString("salary") ?: "",
-                status = documentSnapshot.getString("status") ?: "Active",
-                permissions = (documentSnapshot.get("permissions") as? List<*>)?.map { it.toString() } ?: emptyList(),
-                documentType = documentSnapshot.getString("documentType") ?: "",
-                documentNumber = documentSnapshot.getString("documentNumber") ?: ""
+                staffId = documentSnapshot.getString(AppConstants.FIELD_STAFF_ID) ?: documentSnapshot.getString("staffid") ?: "",
+                password = documentSnapshot.getString(AppConstants.FIELD_PASSWORD) ?: "",
+                staffName = documentSnapshot.getString(AppConstants.FIELD_STAFF_NAME) ?: "",
+                mobile = documentSnapshot.getString(AppConstants.FIELD_MOBILE) ?: "",
+                email = documentSnapshot.getString(AppConstants.FIELD_EMAIL) ?: "",
+                gender = documentSnapshot.getString(AppConstants.FIELD_GENDER) ?: "",
+                role = documentSnapshot.getString(AppConstants.FIELD_ROLE) ?: "",
+                department = documentSnapshot.getString(AppConstants.FIELD_DEPARTMENT) ?: "",
+                joiningDate = documentSnapshot.getString(AppConstants.FIELD_JOINING_DATE) ?: "",
+                shift = documentSnapshot.getString(AppConstants.FIELD_SHIFT) ?: "",
+                salary = documentSnapshot.getString(AppConstants.FIELD_SALARY) ?: "",
+                status = documentSnapshot.getString(AppConstants.FIELD_STATUS) ?: "Active",
+                permissions = (documentSnapshot.get(AppConstants.FIELD_PERMISSIONS) as? List<*>)?.map { it.toString() } ?: emptyList(),
+                documentType = documentSnapshot.getString(AppConstants.FIELD_DOCUMENT_TYPE) ?: "",
+                documentNumber = documentSnapshot.getString(AppConstants.FIELD_DOCUMENT_NUMBER) ?: ""
             )
         }
 }
-

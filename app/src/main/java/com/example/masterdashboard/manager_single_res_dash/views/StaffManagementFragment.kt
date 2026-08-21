@@ -24,9 +24,9 @@ import com.example.masterdashboard.manager_single_res_dash.uistate.StaffListUiSt
 import com.example.masterdashboard.manager_single_res_dash.viewModel.StaffFormViewModel
 import com.example.masterdashboard.manager_single_res_dash.viewModel.StaffManagementViewModel // Swapped to new ViewModel target location
 import com.example.masterdashboard.master_dash.utils.SearchQueryManager
-import com.example.masterdashboard.login.utils.AppConstants
-import com.example.masterdashboard.login.utils.MenuDialogHelper
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.MenuDialogHelper
+import com.example.masterdashboard.utils.SessionManager
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
 import kotlin.getValue
