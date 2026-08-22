@@ -13,21 +13,20 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentWaiterTablesBinding
+import com.example.masterdashboard.databinding.DialogCustomerInfoBinding
+import com.example.masterdashboard.utils.NavigationUtils
 import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.master_dash.utils.SearchQueryManager
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FloorChipsAdapter
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.TableCardsAdapter
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableCardData
-import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
 import androidx.fragment.app.activityViewModels
 import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.WaiterTableRepository
 import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderTakingRepository
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.WaiterTableViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import android.widget.EditText
-import com.google.android.material.button.MaterialButton
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableStatus
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import kotlinx.coroutines.flow.collectLatest
@@ -93,9 +92,9 @@ class WaiterTablesFragment : Fragment() {
 
     private fun setupToolbar() {
         val toolbar = binding.waiterTablesToolbar
-        toolbar.tvToolbarTitle.text = getString(R.string.tables)
+        toolbar.tvToolbarTitle.text = getString(R.string.title_manage_tables)
         toolbar.llSubtitleContainer.visibility = View.GONE
-        toolbar.toolbarImgMenu.setImageResource(R.drawable.ic_menu_24dp)
+        toolbar.toolbarImgMenu.visibility = View.GONE
     }
 
     private fun setUpRecyclerView() {
@@ -203,26 +202,22 @@ class WaiterTablesFragment : Fragment() {
     }
 
     private fun showCustomerInfoDialog(table: TableCardData) {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_customer_info, null)
-        val etName = dialogView.findViewById<EditText>(R.id.etDialogCustomerName)
-        val etPhone = dialogView.findViewById<EditText>(R.id.etDialogPhoneNumber)
-        val btnSkip = dialogView.findViewById<MaterialButton>(R.id.btnDialogSkip)
-        val btnConfirm = dialogView.findViewById<MaterialButton>(R.id.btnDialogConfirm)
+        val binding = DialogCustomerInfoBinding.inflate(layoutInflater)
 
         val dialog = MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialogTheme)
-            .setView(dialogView)
+            .setView(binding.root)
             .setCancelable(true)
             .create()
 
-        btnSkip.setOnClickListener {
+        binding.btnDialogSkip.setOnClickListener {
             orderTakingViewModel.setCustomerDetails("", "", "DINE_IN")
             dialog.dismiss()
             proceedToOrderTaking(table)
         }
 
-        btnConfirm.setOnClickListener {
-            val name = etName.text.toString().trim()
-            val phone = etPhone.text.toString().trim()
+        binding.btnDialogConfirm.setOnClickListener {
+            val name = binding.etDialogCustomerName.text.toString().trim()
+            val phone = binding.etDialogPhoneNumber.text.toString().trim()
             orderTakingViewModel.setCustomerDetails(name, phone, "DINE_IN")
             dialog.dismiss()
             proceedToOrderTaking(table)
@@ -244,10 +239,13 @@ class WaiterTablesFragment : Fragment() {
                 putString("status", table.status.name)
             }
         }
-        parentFragmentManager.beginTransaction().apply {
-            replace(this@WaiterTablesFragment.id, orderTakingFragment, "WaiterOrderTakingFragment")
-            addToBackStack("WaiterOrderTakingFragment")
-            commit()
+        val containerId = NavigationUtils.getHostContainerId(activity)
+        if (containerId != 0) {
+            parentFragmentManager.beginTransaction().apply {
+                replace(containerId, orderTakingFragment, "WaiterOrderTakingFragment")
+                addToBackStack("WaiterOrderTakingFragment")
+                commit()
+            }
         }
     }
 

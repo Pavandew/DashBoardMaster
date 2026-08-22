@@ -2,8 +2,8 @@ package com.example.masterdashboard.staff_dash.waiter_screens.table.views
 
 import android.os.Bundle
 import android.util.Log
-import com.example.masterdashboard.R
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
+import com.example.masterdashboard.utils.NavigationUtils
 
 /**
  * Specialized fragment for Waiters. Handles navigation to the Waiter's cart.
@@ -30,8 +30,11 @@ class WaiterOrderTakingFragment : BaseOrderTakingFragment() {
 
         // Navigate to the Waiter-specific cart view
         val cartFragment = WaiterViewCartDetailsFragment().apply { arguments = bundle }
-        parentFragmentManager.beginTransaction()
-            .replace(this.id, cartFragment)
-            .addToBackStack(null).commit()
+        val containerId = NavigationUtils.getHostContainerId(activity)
+        if (containerId != 0) {
+            parentFragmentManager.beginTransaction()
+                .replace(containerId, cartFragment)
+                .addToBackStack(null).commit()
+        }
     }
 }

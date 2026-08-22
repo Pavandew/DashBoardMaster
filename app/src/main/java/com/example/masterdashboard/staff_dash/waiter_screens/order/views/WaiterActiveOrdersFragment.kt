@@ -14,6 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentWaiterActiveOrdersBinding
+import com.example.masterdashboard.utils.NavigationUtils
 import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.order.adapter.ActiveOrdersAdapter
@@ -76,12 +77,9 @@ class WaiterActiveOrdersFragment : Fragment() {
 
     private fun setupToolbar() {
         val toolbar = binding.staffOrdersToolbar
-        toolbar.tvToolbarTitle.text = getString(R.string.orders)
+        toolbar.tvToolbarTitle.text = getString(R.string.title_track_orders)
         toolbar.llSubtitleContainer.visibility = View.GONE
-        toolbar.toolbarImgMenu.setImageResource(R.drawable.ic_arrow_back_24dp)
-        toolbar.toolbarImgMenu.setOnClickListener {
-            parentFragmentManager.popBackStack()
-        }
+        toolbar.toolbarImgMenu.visibility = View.GONE
     }
 
     private fun setUpRecyclerViews() {
@@ -106,10 +104,13 @@ class WaiterActiveOrdersFragment : Fragment() {
                 }
             }
 
-            parentFragmentManager.beginTransaction()
-                .replace(this@WaiterActiveOrdersFragment.id, expansionFragment)
-                .addToBackStack(null)
-                .commit()
+            val containerId = NavigationUtils.getHostContainerId(activity)
+            if (containerId != 0) {
+                parentFragmentManager.beginTransaction()
+                    .replace(containerId, expansionFragment)
+                    .addToBackStack(null)
+                    .commit()
+            }
         }
 
         binding.rvActiveOrders.apply {
