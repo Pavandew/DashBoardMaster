@@ -146,4 +146,29 @@
     <string name="summary_cancelled">Cancelled</string>
     <string name="price_format">₹ %s</string>
     <string name="no_items_added">No item added yet</string>
+    <string name="settle_bill_title">Settle Bill</string>
+    <string name="payment_cash">Cash</string>
+    <string name="payment_upi">UPI</string>
+    <string name="payment_card">Card</string>
+    <string name="payment_wallet">Wallet</string>
+
+    <string name="payment_title_format">%1$s Payment</string>
+    <string name="payment_scan_qr">Scan the QR code to pay</string>
+    <string name="payment_confirm_cash">Confirm cash received from customer</string>
+    <string name="payment_confirm_card">Confirm transaction success on POS machine</string>
+    <string name="payment_verify_receipt">Verify payment receipt on your device</string>
+
+    <string name="reprint_bill">Re-Print Bill</string>
+    <string name="settle_and_print_bill">Settle &amp; Print Bill</string>
+
+    <string name="paid">Paid</string>
+    <string name="paid_via_format">Paid via %1$s</string>
+    <string name="confirmed_at_format">Confirmed at %1$s</string>
+
+    <string name="order_label_format">Order %1$s</string>
+    <string name="order_time_format">Order Time: %1$s</string>
+
+    <string name="amount_format">₹%1$s</string>
+    <string name="discount_format">- ₹%1$s</string>
+
 </resources>

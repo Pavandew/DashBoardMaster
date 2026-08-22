@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -18,13 +17,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentCashierSettleBillBinding
 import com.example.masterdashboard.databinding.LayoutPaymentMethodItemBinding
+import com.example.masterdashboard.print_bill.PrintBillController
 import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.billing_screens.adapter.BillingItemsAdapter
 import com.example.masterdashboard.staff_dash.billing_screens.model.CashierBillingOrderModel
 import com.example.masterdashboard.staff_dash.billing_screens.viewmodel.CashierSettleViewModel
+import com.example.masterdashboard.staff_dash.utils.StatusUIUtils
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.example.masterdashboard.utils.SessionManager
-import com.example.masterdashboard.utils.AppConstants
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
@@ -54,6 +54,16 @@ class CashierSettleBillFragment : Fragment() {
     private val sessionManager by lazy { SessionManager(requireContext()) }
     private lateinit var itemsAdapter: BillingItemsAdapter
 
+    // Printer Orchestrator
+    private lateinit var printController: PrintBillController
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        printController = PrintBillController(this) { isLoading ->
+            mBinding.progressBar.isVisible = isLoading
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -82,7 +92,7 @@ class CashierSettleBillFragment : Fragment() {
     }
 
     private fun setupUI() {
-        mBinding.settleToolbar.tvToolbarTitle.text = "Settle Bill"
+        mBinding.settleToolbar.tvToolbarTitle.text = getString(R.string.settle_bill_title)
         mBinding.settleToolbar.toolbarImgMenu.setOnClickListener {
             Log.v(TAG, "Back button clicked")
             parentFragmentManager.popBackStack()
@@ -95,10 +105,10 @@ class CashierSettleBillFragment : Fragment() {
         }
 
         // Accessing nested binding views
-        mBinding.layoutUnpaid.layoutCash.tvPaymentName.text = "Cash"
-        mBinding.layoutUnpaid.layoutUpi.tvPaymentName.text = "UPI"
-        mBinding.layoutUnpaid.layoutCard.tvPaymentName.text = "Card"
-        mBinding.layoutUnpaid.layoutWallet.tvPaymentName.text = "Wallet"
+        mBinding.layoutUnpaid.layoutCash.tvPaymentName.text = getString(R.string.payment_cash)
+        mBinding.layoutUnpaid.layoutUpi.tvPaymentName.text = getString(R.string.payment_upi)
+        mBinding.layoutUnpaid.layoutCard.tvPaymentName.text = getString(R.string.payment_card)
+        mBinding.layoutUnpaid.layoutWallet.tvPaymentName.text = getString(R.string.payment_wallet)
     }
 
     private fun setupListeners() {
@@ -120,8 +130,9 @@ class CashierSettleBillFragment : Fragment() {
 
         mBinding.btnSettleAndPrint.setOnClickListener {
             val order = viewModel.activeBillingOrder.value
-            if (order?.orderStatus?.uppercase() == "PAID") {
-                navigateToSummary(order)
+            if (order?.orderStatus?.uppercase() == "PAID" || order?.orderStatus?.uppercase() == "COMPLETED") {
+                Log.d(TAG, "Re-printing bill for Order: ${order.orderId}")
+                order?.let { printController.checkAndPrint(it) }
                 return@setOnClickListener
             }
             showPaymentConfirmationDialog()
@@ -156,27 +167,27 @@ class CashierSettleBillFragment : Fragment() {
         val btnCancel = dialogView.findViewById<MaterialButton>(R.id.btnCancelPayment)
         val btnConfirm = dialogView.findViewById<MaterialButton>(R.id.btnConfirmPayment)
 
-        tvAmount.text = "₹${String.format("%.2f", currentOrder.grandTotal)}"
-        tvTitle.text = "$method Payment"
+        tvAmount.text = getString(R.string.amount_format, String.format("%.2f", currentOrder.grandTotal))
+        tvTitle.text = getString(R.string.payment_title_format, method)
 
         // Adjust dialog content based on payment type
         when (method) {
             "UPI" -> {
-                tvSubtitle.text = "Scan the QR code to pay"
+            tvSubtitle.text = getString(R.string.payment_scan_qr)
                 ivIcon.setImageResource(R.drawable.biling) 
             }
             "Cash" -> {
-                tvSubtitle.text = "Confirm cash received from customer"
+            tvSubtitle.text = getString(R.string.payment_confirm_cash)
                 ivIcon.setImageResource(R.drawable.ic_payments_24dp)
                 ivIcon.setColorFilter(Color.parseColor("#16A34A")) 
             }
             "Card" -> {
-                tvSubtitle.text = "Confirm transaction success on POS machine"
+            tvSubtitle.text = getString(R.string.payment_confirm_card)
                 ivIcon.setImageResource(R.drawable.ic_payments_24dp)
                 ivIcon.setColorFilter(Color.parseColor("#3554FF")) 
             }
             else -> {
-                tvSubtitle.text = "Verify payment receipt on your device"
+            tvSubtitle.text = getString(R.string.payment_verify_receipt)
                 ivIcon.setImageResource(R.drawable.ic_inventory_24dp)
             }
         }
@@ -191,6 +202,9 @@ class CashierSettleBillFragment : Fragment() {
             dialog.dismiss()
             val managerId = sessionManager.getUid()
             viewModel.settleAndCompleteOrder(managerId)
+            
+            // Auto-trigger print after settlement
+            currentOrder.let { printController.checkAndPrint(it) }
         }
         dialog.show()
     }
@@ -241,11 +255,12 @@ class CashierSettleBillFragment : Fragment() {
 
     private fun showPaidInfo(order: CashierBillingOrderModel) {
         mBinding.layoutPaid.root.isVisible = true
-        mBinding.layoutPaid.tvPaidMethodValue.text = "Paid via ${order.paymentMethod.ifEmpty { "Paid" }}"
+        val paidMethod = order.paymentMethod.ifEmpty { getString(R.string.paid) }
+        mBinding.layoutPaid.tvPaidMethodValue.text = getString(R.string.paid_via_format, paidMethod)
         
         val paidAt = order.paidAt?.toDate() ?: order.timestamp.toDate()
         val sdf = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
-        mBinding.layoutPaid.tvPaidTimeValue.text = "Confirmed at ${sdf.format(paidAt)}"
+        mBinding.layoutPaid.tvPaidTimeValue.text = getString(R.string.confirmed_at_format, sdf.format(paidAt))
     }
 
     private fun observeViewModel() {
@@ -256,49 +271,39 @@ class CashierSettleBillFragment : Fragment() {
                     viewModel.activeBillingOrder.collectLatest { order ->
                         if (order != null) {
                             val displayOrderId = if (order.orderId.startsWith("#")) order.orderId else "#${order.orderId}"
-                            mBinding.tvHeaderOrderId.text = "Order $displayOrderId"
+                            mBinding.tvHeaderOrderId.text = getString(R.string.order_label_format, displayOrderId)
                             mBinding.tvHeaderTableNo.text = order.tableName
 
                             val sdf = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
-                            mBinding.tvHeaderTimestamp.text = "Order Time: ${sdf.format(order.timestamp.toDate())}"
+                            mBinding.tvHeaderTimestamp.text = getString(R.string.order_time_format, sdf.format(order.timestamp.toDate()))
 
                             val status = order.orderStatus.uppercase()
                             
+                            // Apply centralized status styling
+                            StatusUIUtils.applyStatusUI(requireContext(), mBinding.tvBillingStatusTag, status)
+
                             when (status) {
                                 "COMPLETED" -> {
-                                    mBinding.tvBillingStatusTag.text = "HANDED OVER"
-                                    mBinding.tvBillingStatusTag.setBackgroundResource(R.drawable.bg_status_green)
-                                    mBinding.tvBillingStatusTag.setTextColor(ContextCompat.getColor(requireContext(), R.color.dark_green))
-                                    mBinding.btnSettleAndPrint.text = "Re-Print Bill"
+                                    mBinding.btnSettleAndPrint.text = getString(R.string.reprint_bill)
                                     mBinding.btnHandOver.isVisible = false
                                     disableInteraction()
                                     showPaidInfo(order)
                                 }
                                 "PAID" -> {
-                                    mBinding.tvBillingStatusTag.text = "PAID"
-                                    mBinding.tvBillingStatusTag.setBackgroundResource(R.drawable.bg_status_green)
-                                    mBinding.tvBillingStatusTag.setTextColor(ContextCompat.getColor(requireContext(), R.color.dark_green))
-
                                     val isCounterOrder = order.orderType == "TAKE_AWAY" || order.orderType == "DELIVERY"
                                     mBinding.btnHandOver.isVisible = isCounterOrder
-                                    mBinding.btnSettleAndPrint.text = "Re-Print Bill"
+                                    mBinding.btnSettleAndPrint.text = getString(R.string.reprint_bill)
                                     
                                     disableInteraction()
                                     showPaidInfo(order)
                                 }
                                 "BILLING" -> {
-                                    mBinding.tvBillingStatusTag.text = "READY FOR BILL"
-                                    mBinding.tvBillingStatusTag.setBackgroundResource(R.drawable.bg_status_amber)
-                                    mBinding.tvBillingStatusTag.setTextColor(Color.parseColor("#C2410C"))
-                                    mBinding.btnSettleAndPrint.text = "Settle & Print Bill"
+                                    mBinding.btnSettleAndPrint.text = getString(R.string.settle_and_print_bill)
                                     mBinding.btnHandOver.isVisible = false
                                     enableInteraction()
                                 }
                                 else -> {
-                                    mBinding.tvBillingStatusTag.text = "RUNNING BILL"
-                                    mBinding.tvBillingStatusTag.setBackgroundResource(R.drawable.bg_status_blue)
-                                    mBinding.tvBillingStatusTag.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary_blue))
-                                    mBinding.btnSettleAndPrint.text = "Settle & Print Bill"
+                                    mBinding.btnSettleAndPrint.text = getString(R.string.settle_and_print_bill)
                                     mBinding.btnHandOver.isVisible = false
                                     enableInteraction()
                                 }
@@ -306,10 +311,10 @@ class CashierSettleBillFragment : Fragment() {
 
                             itemsAdapter.submitList(order.items)
 
-                            mBinding.tvSubtotalValue.text = "₹${order.subtotal}"
-                            mBinding.tvTaxValue.text = "₹${order.taxAmount}"
-                            mBinding.tvDiscountValue.text = "- ₹${order.discountAmount}"
-                            mBinding.tvGrandTotalValue.text = "₹${order.grandTotal}"
+                            mBinding.tvSubtotalValue.text = getString(R.string.amount_format, String.format("%.2f", order.subtotal))
+                            mBinding.tvTaxValue.text = getString(R.string.amount_format, String.format("%.2f", order.taxAmount))
+                            mBinding.tvDiscountValue.text = getString(R.string.discount_format, String.format("%.2f", order.discountAmount))
+                            mBinding.tvGrandTotalValue.text = getString(R.string.amount_format, String.format("%.2f", order.grandTotal))
                         }
                     }
                 }
