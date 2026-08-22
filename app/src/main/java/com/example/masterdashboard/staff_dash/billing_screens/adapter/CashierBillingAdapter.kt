@@ -44,22 +44,20 @@ class CashierBillingAdapter(
             val type = item.orderType.uppercase()
             val isCounterOrder = type == "TAKE_AWAY" || type == "DELIVERY"
             
-            // Apply Status UI using centralized utility
-            StatusUIUtils.applyStatusUI(context, binding.tvBillingStatus, status)
+            // Apply Status UI using centralized utility (Mirroring ActiveOrdersAdapter pattern)
+            StatusUIUtils.applyCashierStatusUI(context, binding.tvBillingStatus, status, isCounterOrder)
 
-            // Overwrite specific logic for Cashier screen (Buttons and sub-labels)
+            // Button logic only
             when {
                 status == "COMPLETED" -> {
                     binding.btnGenerateBill.visibility = android.view.View.GONE
                 }
                 isCounterOrder && status == "PAID" -> {
-                    binding.tvBillingStatus.text = "PAID - PENDING PICKUP"
                     binding.btnGenerateBill.visibility = android.view.View.VISIBLE
                     binding.btnGenerateBill.text = "Confirm Hand Over"
                     binding.btnGenerateBill.setOnClickListener { onConfirmHandoverClicked(item) }
                 }
                 isCounterOrder && (status == "PENDING" || status == "PREPARING" || status == "READY") -> {
-                    binding.tvBillingStatus.text = "COUNTER - UNPAID"
                     binding.btnGenerateBill.visibility = android.view.View.VISIBLE
                     binding.btnGenerateBill.text = "Collect Payment"
                     binding.btnGenerateBill.setOnClickListener { onGenerateBillClicked(item) }
@@ -68,19 +66,16 @@ class CashierBillingAdapter(
                     binding.btnGenerateBill.visibility = android.view.View.GONE
                 }
                 status == "BILLING" -> {
-                    binding.tvBillingStatus.text = "BILL REQUESTED"
                     binding.btnGenerateBill.visibility = android.view.View.VISIBLE
                     binding.btnGenerateBill.text = "Collect Payment"
                     binding.btnGenerateBill.setOnClickListener { onGenerateBillClicked(item) }
                 }
                 status == "SERVED" -> {
-                    binding.tvBillingStatus.text = "EATING / SERVED"
                     binding.btnGenerateBill.visibility = android.view.View.VISIBLE
                     binding.btnGenerateBill.text = "Generate Bill"
                     binding.btnGenerateBill.setOnClickListener { onGenerateBillClicked(item) }
                 }
                 else -> {
-                    if (!isCounterOrder) binding.tvBillingStatus.text = "RUNNING BILL"
                     binding.btnGenerateBill.visibility = android.view.View.VISIBLE
                     binding.btnGenerateBill.text = "Generate Bill"
                     binding.btnGenerateBill.setOnClickListener { onGenerateBillClicked(item) }

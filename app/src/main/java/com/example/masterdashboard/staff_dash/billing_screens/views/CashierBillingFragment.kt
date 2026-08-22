@@ -15,6 +15,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentCashierBillingBinding
+import com.example.masterdashboard.utils.NavigationUtils
 import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.staff_dash.billing_screens.adapter.CashierBillingAdapter
 import com.example.masterdashboard.staff_dash.billing_screens.model.CashierBillingOrderModel
@@ -140,10 +141,13 @@ class CashierBillingFragment : Fragment() {
     private fun navigateToSettlement(order: CashierBillingOrderModel) {
         Log.d(TAG, "Navigating to CashierSettleBillFragment for order ${order.orderId}")
         val settlementFragment = CashierSettleBillFragment.newInstance(order)
-        parentFragmentManager.beginTransaction()
-            .replace(R.id.billing_fragment_container, settlementFragment)
-            .addToBackStack(null)
-            .commit()
+        val containerId = NavigationUtils.getHostContainerId(activity)
+        if (containerId != 0) {
+            parentFragmentManager.beginTransaction()
+                .replace(containerId, settlementFragment)
+                .addToBackStack(null)
+                .commit()
+        }
     }
 
     override fun onDestroyView() {
