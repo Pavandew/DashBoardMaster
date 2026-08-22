@@ -92,13 +92,13 @@ class RestaurantDetailsBottomSheet : BottomSheetDialogFragment() {
     private fun displayData(data: RegistrationDataModel) {
         val reviewItems = mutableListOf<FormItem>()
 
-        // 1. OWNER CARD
+        // 1. OWNER CARD - Using unified getters to handle old and new data formats
         reviewItems.add(FormItem.ReviewCard(
             title = "OWNER INFORMATION",
             details = listOf(
-                "Name" to data.ownerFullName,
-                "Email" to data.ownerEmail,
-                "Mobile" to data.ownerMobile
+                "Name" to data.getUnifiedFullName(),
+                "Email" to data.getUnifiedEmail(),
+                "Mobile" to data.getUnifiedMobile()
             ),
             onEditClick = { }
         ))

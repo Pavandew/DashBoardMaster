@@ -8,7 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivityWaiterHomeBinding
-import com.example.masterdashboard.notifications.alert.StaffNotificationFragment
+import com.example.masterdashboard.notifications.alert.NotificationFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.order.views.WaiterActiveOrdersFragment
 import com.example.masterdashboard.staff_dash.profile.StaffProfileFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.table.views.WaiterTablesFragment
@@ -114,7 +114,7 @@ class WaiterHomeActivity : AppCompatActivity() {
             targetFragment = when (tag) {
                 TAG_TABLES  -> WaiterTablesFragment()
                 TAG_ORDERS  -> WaiterActiveOrdersFragment()
-                TAG_LOGS    -> StaffNotificationFragment()
+                TAG_LOGS    -> NotificationFragment()
                 TAG_PROFILE -> StaffProfileFragment()
                 else        -> WaiterTablesFragment()
             }

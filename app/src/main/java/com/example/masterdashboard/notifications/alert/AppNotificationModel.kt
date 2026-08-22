@@ -3,7 +3,10 @@ package com.example.masterdashboard.notifications.alert
 enum class NotificationType { ACTIONABLE_REQUEST, INFORMATIONAL }
 enum class RequestStatus { PENDING, ACCEPTED, DONE }
 
-data class StaffAlertItem(
+/**
+ * Standardized data model for all in-app notifications and alerts.
+ */
+data class AppNotificationModel(
     val id: String,
     val tableId: String,
     val title: String,
@@ -19,8 +22,11 @@ data class StaffAlertItem(
     val orderDocPath: String = ""
 )
 
-data class AlertsUiState(
+/**
+ * Represents the observable state for the Notification UI.
+ */
+data class NotificationUiState(
     val isLoading: Boolean = false,
-    val alertsList: List<StaffAlertItem> = emptyList(),
+    val notifications: List<AppNotificationModel> = emptyList(),
     val errorMessage: String? = null
 )

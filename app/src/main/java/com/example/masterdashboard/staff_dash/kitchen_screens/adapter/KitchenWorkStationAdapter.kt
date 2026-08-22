@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemKitchenOrderCardBinding
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.KitchenOrderDetailData
+import com.example.masterdashboard.staff_dash.utils.StatusUIUtils
 import java.util.concurrent.TimeUnit
 
 class KitchenWorkstationAdapter(
@@ -26,7 +27,16 @@ class KitchenWorkstationAdapter(
 
     inner class WorkstationViewHolder(private val binding: ItemKitchenOrderCardBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(order: KitchenOrderDetailData) {
-            binding.tvOrderId.text = "#ORD-${order.orderId.takeLast(4).uppercase()}"
+            // Simpler ID display matching other screens
+            val displayId = when {
+                order.orderId.contains("-") -> order.orderId.substringAfter("-")
+                order.orderId.startsWith("#") -> order.orderId.substring(1)
+                else -> {
+                    val digits = order.orderId.filter { it.isDigit() }
+                    if (digits.length >= 4) digits.takeLast(4) else order.orderId.takeLast(4)
+                }
+            }
+            binding.tvOrderId.text = "Order #$displayId"
             binding.tvStatus.text = order.status
             
             // Just use order.tableName directly as it is now pre-formatted by the Repository
@@ -34,29 +44,8 @@ class KitchenWorkstationAdapter(
             
             binding.tvItems.text = "${order.items.size} Items"
 
-            // Status Badge Styling (Light Theme)
-            when (order.status.lowercase().trim()) {
-                "preparing" -> {
-                    binding.tvStatus.setBackgroundResource(R.drawable.bg_status_preparing)
-                    binding.tvStatus.setTextColor(Color.parseColor("#92400E")) // Dark Amber
-                }
-                "ready" -> {
-                    binding.tvStatus.setBackgroundResource(R.drawable.bg_status_ready)
-                    binding.tvStatus.setTextColor(Color.parseColor("#15803D")) // Dark Green
-                }
-                "completed" -> {
-                    binding.tvStatus.setBackgroundResource(R.drawable.bg_status_active)
-                    binding.tvStatus.setTextColor(Color.parseColor("#15803D")) // Dark Green
-                }
-                "new", "pending" -> {
-                    binding.tvStatus.setBackgroundResource(R.drawable.bg_status_blue)
-                    binding.tvStatus.setTextColor(Color.parseColor("#0369A1")) // Dark Blue
-                }
-                else -> {
-                    binding.tvStatus.setBackgroundResource(R.drawable.bg_status_active)
-                    binding.tvStatus.setTextColor(Color.parseColor("#374151")) // Dark Gray
-                }
-            }
+            // Status Badge Styling (Light Theme) using centralized Utils
+            StatusUIUtils.applyStatusUI(binding.root.context, binding.tvStatus, order.status)
 
             val ts = order.timestamp
             if (ts != null) {

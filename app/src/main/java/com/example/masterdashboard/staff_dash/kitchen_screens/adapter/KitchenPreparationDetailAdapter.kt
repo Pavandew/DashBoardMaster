@@ -36,13 +36,32 @@ class KitchenPreparationDetailAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: OrderDetailItem) {
-            binding.tvExpandedItemName.text = item.itemName
+            val displayName = if (item.variantName.isNotEmpty()) "${item.itemName} (${item.variantName})" else item.itemName
+            binding.tvExpandedItemName.text = displayName
             
-            // Show ready status if partially prepared
-            if (item.readyQuantity > 0) {
-                binding.tvExpandedItemRowTotal.text = "${item.readyQuantity}/${item.quantity} Ready"
+            val totalQuantity = item.quantity
+            val previouslyOrdered = item.orderedQuantity
+            val newDeltaQuantity = totalQuantity - previouslyOrdered
+
+            // Logic for Badges
+            if (newDeltaQuantity > 0) {
+                binding.tvNewItemBadge.visibility = View.VISIBLE
+                binding.tvServedItemBadge.visibility = View.GONE
+                binding.tvExpandedItemName.alpha = 1.0f
+                
+                // Emphasize the new quantity
+                binding.tvExpandedItemRowTotal.text = "$newDeltaQuantity to Prepare"
+                binding.tvExpandedItemRowTotal.setBackgroundColor(android.graphics.Color.parseColor("#FEE2E2"))
+                binding.tvExpandedItemRowTotal.setTextColor(android.graphics.Color.parseColor("#EF4444"))
             } else {
-                binding.tvExpandedItemRowTotal.text = "x ${item.quantity}"
+                binding.tvNewItemBadge.visibility = View.GONE
+                binding.tvServedItemBadge.visibility = View.VISIBLE
+                binding.tvExpandedItemName.alpha = 0.5f
+                
+                // Show total quantity for processed items
+                binding.tvExpandedItemRowTotal.text = "x $totalQuantity"
+                binding.tvExpandedItemRowTotal.setBackgroundColor(android.graphics.Color.parseColor("#F3F4F6"))
+                binding.tvExpandedItemRowTotal.setTextColor(android.graphics.Color.parseColor("#6B7280"))
             }
 
             val normalizedStatus = orderStatus.lowercase().trim()
@@ -52,16 +71,22 @@ class KitchenPreparationDetailAdapter(
                 binding.cbItemSelect.visibility = View.INVISIBLE
                 binding.root.setOnClickListener(null)
             } else if (normalizedStatus == "preparing") {
-                binding.cbItemSelect.visibility = View.VISIBLE
-                binding.cbItemSelect.setOnCheckedChangeListener(null)
-                binding.cbItemSelect.isChecked = false
-                
-                binding.cbItemSelect.setOnCheckedChangeListener { _, isChecked ->
-                    onItemToggled(item, isChecked)
-                }
+                // Only allow selecting items that are NEW
+                if (newDeltaQuantity > 0) {
+                    binding.cbItemSelect.visibility = View.VISIBLE
+                    binding.cbItemSelect.setOnCheckedChangeListener(null)
+                    binding.cbItemSelect.isChecked = false
+                    
+                    binding.cbItemSelect.setOnCheckedChangeListener { _, isChecked ->
+                        onItemToggled(item, isChecked)
+                    }
 
-                binding.root.setOnClickListener {
-                    binding.cbItemSelect.isChecked = !binding.cbItemSelect.isChecked
+                    binding.root.setOnClickListener {
+                        binding.cbItemSelect.isChecked = !binding.cbItemSelect.isChecked
+                    }
+                } else {
+                    binding.cbItemSelect.visibility = View.INVISIBLE
+                    binding.root.setOnClickListener(null)
                 }
             } else {
                 binding.cbItemSelect.visibility = View.GONE

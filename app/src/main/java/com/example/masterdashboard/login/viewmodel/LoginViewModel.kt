@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.masterdashboard.login.uistate.LoginUiState
-import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.utils.AppConstants
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,19 +42,28 @@ class LoginViewModel: ViewModel() {
 
 
             try {
-                val snapshot = db.collection(AppConstants.COLLECTION_USERS)
-                    .whereEqualTo(AppConstants.FIELD_PHONE, formattedPhone)
+                // Try querying by 'mobile' first
+                var snapshot = db.collection(AppConstants.COLLECTION_USERS)
+                    .whereEqualTo(AppConstants.FIELD_MOBILE, formattedPhone)
                     .get()
                     .await()
 
-                if(snapshot.isEmpty) {
+                // Fallback: Try querying by 'phone' if no user found with 'mobile'
+                if (snapshot.isEmpty) {
+                    Log.d("LoginVM", "User not found with 'mobile' field, trying 'phone' field fallback")
+                    snapshot = db.collection(AppConstants.COLLECTION_USERS)
+                        .whereEqualTo("phone", formattedPhone)
+                        .get()
+                        .await()
+                }
 
+                if(snapshot.isEmpty) {
+                    Log.w("LoginVM", "User not found after checking both 'mobile' and 'phone' fields for: $formattedPhone")
                     _loginState.value =
                         LoginUiState.Error(
                                 message = "User not found"
                         )
                     return@launch
-
                 }
 
                 val userDoc = snapshot.documents[0]

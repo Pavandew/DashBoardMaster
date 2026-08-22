@@ -3,58 +3,75 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:paddingVertical="8dp"
-    android:paddingHorizontal="16dp"
-    android:weightSum="1">
+    android:paddingHorizontal="16dp">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0.45"
-        android:orientation="vertical">
+        android:orientation="horizontal"
+        android:weightSum="1">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.45"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvExpandedItemName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                tools:text="Paneer Tikka" />
+
+            <TextView
+                android:id="@+id/tvItemStatusLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/status_occupied"
+                android:textSize="11sp"
+                android:textStyle="italic"
+                android:visibility="gone"
+                tools:text="New Item"
+                tools:visibility="visible" />
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/tvExpandedItemName"
-            android:layout_width="match_parent"
+            android:id="@+id/tvExpandedItemQtyPrice"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="0.35"
+            android:gravity="center"
+            android:textColor="#777777"
+            android:textSize="14sp"
+            tools:text="1 x ₹199" />
+
+        <TextView
+            android:id="@+id/tvExpandedItemRowTotal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.2"
+            android:gravity="end"
             android:textColor="@color/black"
             android:textSize="15sp"
             android:textStyle="bold"
-            tools:text="Paneer Tikka" />
-
-        <TextView
-            android:id="@+id/tvItemStatusLabel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textColor="@color/status_occupied"
-            android:textSize="11sp"
-            android:textStyle="italic"
-            android:visibility="gone"
-            tools:text="New Item"
-            tools:visibility="visible" />
+            tools:text="₹199" />
     </LinearLayout>
 
     <TextView
-        android:id="@+id/tvExpandedItemQtyPrice"
-        android:layout_width="0dp"
+        android:id="@+id/tvExpandedItemCustomization"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0.35"
-        android:gravity="center"
-        android:textColor="#777777"
-        android:textSize="14sp"
-        tools:text="1 x ₹199" />
-
-    <TextView
-        android:id="@+id/tvExpandedItemRowTotal"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="0.2"
-        android:gravity="end"
-        android:textColor="@color/black"
-        android:textSize="15sp"
-        android:textStyle="bold"
-        tools:text="₹199" />
+        android:layout_marginTop="4dp"
+        android:textColor="#666666"
+        android:textSize="12sp"
+        android:visibility="gone"
+        tools:text="+ Extra Cheese, Extra Spicy"
+        tools:visibility="gone" />
 
 </LinearLayout>

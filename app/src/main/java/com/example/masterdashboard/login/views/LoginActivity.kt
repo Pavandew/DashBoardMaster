@@ -18,8 +18,8 @@ import com.example.masterdashboard.login.viewmodel.LoginViewModel
 import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
 import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
-import com.example.masterdashboard.login.utils.AppConstants
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.SessionManager
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
@@ -139,7 +139,7 @@ class LoginActivity : AppCompatActivity() {
                             sessionManager.setLogin(
                                 uid = state.uid,
                                 role = state.role,
-                                phone = phone,
+                                mobile = phone,
                                 name = state.fullName
                             )
                             

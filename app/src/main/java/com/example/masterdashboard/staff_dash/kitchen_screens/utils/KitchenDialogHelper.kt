@@ -20,10 +20,12 @@ object KitchenDialogHelper {
 
     /**
      * Shows a customized dialog for Adding or Editing an Inventory Item.
+     * @param categories Existing categories for AutoComplete suggestions.
      */
     fun showInventoryAddEditDialog(
         context: Context,
         item: InventoryItem?,
+        categories: List<String>,
         onSave: (InventoryItem) -> Unit,
         onDelete: (String) -> Unit
     ) {
@@ -34,30 +36,57 @@ object KitchenDialogHelper {
 
         val dialog = builder.create()
 
-        // Configure Spinners
-        setupSpinners(context, binding, item)
+        // Configure Category AutoComplete
+        val categoryAdapter = ArrayAdapter(context, android.R.layout.simple_dropdown_item_1line, categories)
+        binding.etCategory.setAdapter(categoryAdapter)
+
+        // Configure Unit Spinner
+        val units = arrayOf("kg", "gm", "Liters", "ml", "Packets", "Units", "Boxes", "Pieces")
+        val unitAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, units)
+        binding.spinnerUnit.adapter = unitAdapter
+
+        // Configure Manual Status Spinner
+        val statuses = arrayOf("AUTO (Calculate)", "In Stock", "Low Stock", "Out of Stock")
+        val statusAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, statuses)
+        binding.spinnerStatus.adapter = statusAdapter
 
         // Pre-fill data if editing
         if (item != null) {
             binding.tvDialogTitle.text = "Edit Inventory Item"
             binding.etItemName.setText(item.itemName)
+            binding.etCategory.setText(item.inventoryCategory)
             binding.etQuantity.setText(item.itemQuantity.toString())
             binding.etMinThreshold.setText(item.minThreshold.toString())
             binding.etDaysLeft.setText(item.estimatedDaysLeft.toString())
+            
+            val unitPos = units.indexOf(item.itemUnit)
+            if (unitPos >= 0) binding.spinnerUnit.setSelection(unitPos)
+
+            val statusVal = if (item.manualStatus == "AUTO") "AUTO (Calculate)" else item.manualStatus
+            val statusPos = statuses.indexOf(statusVal)
+            if (statusPos >= 0) binding.spinnerStatus.setSelection(statusPos)
+            
             binding.btnDelete.visibility = View.VISIBLE
         }
 
         // Logic for Save Button
         binding.btnSave.setOnClickListener {
             val name = binding.etItemName.text.toString().trim()
+            val category = binding.etCategory.text.toString().trim()
             val qty = binding.etQuantity.text.toString().toDoubleOrNull() ?: 0.0
             val threshold = binding.etMinThreshold.text.toString().toDoubleOrNull() ?: 0.0
             val daysLeft = binding.etDaysLeft.text.toString().toIntOrNull() ?: 0
-            val category = binding.spinnerCategory.selectedItem.toString()
             val unit = binding.spinnerUnit.selectedItem.toString()
+            
+            val selectedStatus = binding.spinnerStatus.selectedItem.toString()
+            val manualStatus = if (selectedStatus == "AUTO (Calculate)") "AUTO" else selectedStatus
 
             if (name.isEmpty()) {
                 binding.etItemName.error = "Required"
+                return@setOnClickListener
+            }
+            if (category.isEmpty()) {
+                binding.etCategory.error = "Required"
                 return@setOnClickListener
             }
 
@@ -69,6 +98,7 @@ object KitchenDialogHelper {
                 minThreshold = threshold,
                 inventoryCategory = category,
                 estimatedDaysLeft = daysLeft,
+                manualStatus = manualStatus,
                 lastUpdated = System.currentTimeMillis()
             )
 
@@ -88,29 +118,10 @@ object KitchenDialogHelper {
         dialog.show()
 
         // OPTIMIZATION: Fix dialog width to match parent with horizontal margins
-        // Using MATCH_PARENT with a slight inset for better visual alignment
         dialog.window?.let { window ->
             val width = (context.resources.displayMetrics.widthPixels * 0.95).toInt()
             window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
             window.setBackgroundDrawableResource(android.R.color.transparent)
-        }
-    }
-
-    private fun setupSpinners(context: Context, binding: DialogAddInventoryItemBinding, item: InventoryItem?) {
-        val categories = arrayOf("Vegetables", "Spices", "Dairy", "Grains", "Meat", "Oil & Fats", "Other")
-        val categoryAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, categories)
-        binding.spinnerCategory.adapter = categoryAdapter
-        
-        val units = arrayOf("kg", "gm", "Liters", "ml", "Packets", "Units", "Boxes")
-        val unitAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, units)
-        binding.spinnerUnit.adapter = unitAdapter
-
-        item?.let {
-            val catPos = categories.indexOf(it.inventoryCategory)
-            if (catPos >= 0) binding.spinnerCategory.setSelection(catPos)
-            
-            val unitPos = units.indexOf(it.itemUnit)
-            if (unitPos >= 0) binding.spinnerUnit.setSelection(unitPos)
         }
     }
 }

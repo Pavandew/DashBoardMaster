@@ -18,21 +18,26 @@ class NotificationHelper(private val context: Context) {
         private const val CHANNEL_DESC = "Notifications for orders, staff updates, and alerts"
     }
 
-    fun showNotification(title: String?, message: String?, data: Map<String, String>? = null) {
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private val notificationManager =
+        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Create notification channel for Android O and above
+    init {
+        createNotificationChannel()
+    }
+
+    private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH).apply {
                 description = CHANNEL_DESC
                 enableLights(true)
                 enableVibration(true)
-                // This ensures it pops up even if the app is in background
                 lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             }
             notificationManager.createNotificationChannel(channel)
         }
+    }
 
+    fun showNotification(title: String?, message: String?, data: Map<String, String>? = null) {
         // Create an intent that opens SplashActivity (which handles routing)
         val intent = Intent(context, SplashActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -47,21 +52,23 @@ class NotificationHelper(private val context: Context) {
         )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notifications_24dp) 
+            .setSmallIcon(R.drawable.ic_notifications_24dp)
             .setContentTitle(title)
             .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_HIGH) // PRIORITY_HIGH makes it a "Heads-up" notification
-            .setDefaults(NotificationCompat.DEFAULT_ALL)   // Sound, Vibration, Lights
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
-            .setCategory(NotificationCompat.CATEGORY_MESSAGE) // Helps Android prioritize it
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+
+        val notificationId = (System.currentTimeMillis() % Int.MAX_VALUE).toInt()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                notificationManager.notify(System.currentTimeMillis().toInt(), builder.build())
+                notificationManager.notify(notificationId, builder.build())
             }
         } else {
-            notificationManager.notify(System.currentTimeMillis().toInt(), builder.build())
+            notificationManager.notify(notificationId, builder.build())
         }
     }
 }

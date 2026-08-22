@@ -37,9 +37,9 @@ class CreateRestaurantViewModel : ViewModel() {
             ),
 
             CreateRestaurantItem.InputField(
-                key = "phone",
-                label = "Phone Number *",
-                hint = "Enter phone number",
+                key = "mobile",
+                label = "Mobile Number *",
+                hint = "Enter mobile number",
                 inputType = InputType.TYPE_CLASS_PHONE
             ),
 

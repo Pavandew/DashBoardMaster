@@ -21,6 +21,7 @@ data class KitchenOrderDetailData(
     var gst: Double = 0.0,
     var grandTotal: Double = 0.0,
     var paymentMethod: String = "",
+    var waiterId: String = "", // Added to identify which waiter to notify
     var timestamp: Timestamp? = null,
     var items: List<OrderDetailItem> = emptyList(),
     // Internal fields (not in Firestore)
@@ -31,11 +32,13 @@ data class KitchenOrderDetailData(
 data class OrderDetailItem(
     var itemId: String = "",
     var itemName: String = "",
+    var variantName: String = "", // Added for sizes
     var quantity: Int = 0,
     var orderedQuantity: Int = 0,
     var readyQuantity: Int = 0, // Number of units prepared and ready for pick-up
     var itemNote: String = "",
     var price: Int = 0,
     var rowTotal: Int = 0,
-    var category: String = "Veg"
+    var category: String = "Veg",
+    var itemStatus: String = "PENDING"
 ) : Serializable

@@ -19,26 +19,29 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <!-- Country Code Dropdown -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/codeLayout"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-            android:layout_width="100dp"
+            android:layout_width="110dp"
             android:layout_height="wrap_content"
             app:boxStrokeColor="@color/primary_purple"
             app:hintEnabled="false">
 
-            <AutoCompleteTextView
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/codeAutoComplete"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="none"
-                android:padding="0dp"
-                android:textSize="14sp" />
+                android:text="+91"
+                android:textSize="15sp" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Phone Number Input -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/numberLayout"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -47,7 +50,6 @@
             android:layout_marginStart="8dp"
             android:layout_weight="1"
             app:boxStrokeColor="@color/primary_purple"
-            app:errorEnabled="true"
             app:hintEnabled="false">
 
             <com.google.android.material.textfield.TextInputEditText

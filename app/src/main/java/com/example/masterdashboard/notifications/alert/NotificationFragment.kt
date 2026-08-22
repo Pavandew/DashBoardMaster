@@ -27,20 +27,23 @@ import com.example.masterdashboard.staff_dash.waiter_screens.order.views.OrderDe
 import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.launch
 
-class StaffNotificationFragment : androidx.fragment.app.Fragment() {
+/**
+ * Fragment responsible for displaying the role-filtered Notification Feed.
+ */
+class NotificationFragment : Fragment() {
 
     companion object {
-        private const val TAG = "StaffAlertsFragment"
+        private const val TAG = "NotificationFragment"
     }
 
     private var _binding: FragmentWaiterNotificationBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: AlertsViewModel by viewModels {
-        AlertsViewModel.AlertsViewModelFactory(SessionManager(requireContext()))
+    private val viewModel: NotificationViewModel by viewModels {
+        NotificationViewModel.NotificationViewModelFactory(SessionManager(requireContext()))
     }
 
-    private lateinit var alertsAdapter: AlertsAdapter
+    private lateinit var notificationAdapter: NotificationAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -52,13 +55,13 @@ class StaffNotificationFragment : androidx.fragment.app.Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.i(TAG, "Navigation: WaiterNotificationFragment Opened")
+        Log.i(TAG, "Notification screen initialized.")
 
-        setupToolbarLayout()
-        setupAlertsRecyclerView()
-        observeAlertsStateFlow()
+        setupToolbar()
+        setupRecyclerView()
+        observeViewModel()
 
-        viewModel.fetchLiveAlertsFeed()
+        viewModel.observeNotificationStream()
     }
 
     override fun onStart() {
@@ -68,7 +71,7 @@ class StaffNotificationFragment : androidx.fragment.app.Fragment() {
         (activity as? CashierHomeActivity)?.showBottomNavigation()
     }
 
-    private fun setupToolbarLayout() {
+    private fun setupToolbar() {
         val toolbar = binding.staffAlertToolbar
         toolbar.tvToolbarTitle.text = getString(R.string.alerts)
         toolbar.llSubtitleContainer.visibility = View.GONE
@@ -79,52 +82,60 @@ class StaffNotificationFragment : androidx.fragment.app.Fragment() {
         }
     }
 
-    private fun setupAlertsRecyclerView() {
-        alertsAdapter = AlertsAdapter(
+    private fun setupRecyclerView() {
+        notificationAdapter = NotificationAdapter(
             onCardClicked = { clickedItem ->
-                // Mark as read immediately
-                viewModel.handleCardClicked(clickedItem)
+                Log.d(TAG, "Alert card clicked: id=${clickedItem.id} orderId=${clickedItem.orderId} orderDocPath=${clickedItem.orderDocPath}")
+                // 1. Mark as read and toggle expansion locally
+                viewModel.handleNotificationClicked(clickedItem)
 
-                // If the notification has order info, navigate to details on click
+                // 2. Perform contextual navigation if applicable
                 if (clickedItem.orderId.isNotEmpty() || clickedItem.orderDocPath.isNotEmpty()) {
-                    navigateToOrderDetails(clickedItem)
+                    navigateToContextDetails(clickedItem)
                 }
             },
             onAcceptClicked = { targetItem ->
-                viewModel.updateAlertRequestStatus(targetItem.id, RequestStatus.ACCEPTED)
-                Toast.makeText(context, "${targetItem.title} Request Accepted", Toast.LENGTH_SHORT).show()
+                Log.d(TAG, "Accept clicked for alert: ${targetItem.id}")
+                viewModel.updateRequestStatus(targetItem.id, RequestStatus.ACCEPTED)
+                Toast.makeText(context, "Request Accepted", Toast.LENGTH_SHORT).show()
             },
             onDoneClicked = { targetItem ->
-                viewModel.updateAlertRequestStatus(targetItem.id, RequestStatus.DONE)
-                Toast.makeText(context, "${targetItem.title} Task Cleared", Toast.LENGTH_SHORT).show()
+                Log.d(TAG, "Done clicked for alert: ${targetItem.id}")
+                viewModel.updateRequestStatus(targetItem.id, RequestStatus.DONE)
+                Toast.makeText(context, "Task Completed", Toast.LENGTH_SHORT).show()
             }
         )
 
         binding.rvAlertsFeedContainer.apply {
             layoutManager = LinearLayoutManager(context)
-            adapter = alertsAdapter
+            adapter = notificationAdapter
         }
     }
 
-    private fun navigateToOrderDetails(alert: StaffAlertItem) {
-        if (alert.orderId.isEmpty() && alert.orderDocPath.isEmpty()) {
-            Log.w(TAG, "Cannot navigate: No order ID or DocPath in notification")
-            return
-        }
-
+    /**
+     * Intelligently routes the user to the correct screen based on the notification content and their role.
+     */
+    private fun navigateToContextDetails(notification: AppNotificationModel) {
         val sessionManager = SessionManager(requireContext())
         val role = sessionManager.getRole().lowercase().trim()
         val isManager = role == "manager" || role == "owner_single" || role == "owner_multi"
 
+        Log.d(TAG, "Navigating based on role: $role, notificationTitle: ${notification.title}")
+
         when {
-            // 1. KITCHEN ROLE (or Manager clicking kitchen alert) -> Kitchen Detail Screen
-            role == "kitchen" || role == "chef" || (isManager && alert.title.contains("Inventory", true)) -> {
-                val kitchenData = KitchenOrderDetailData().apply {
-                    orderId = alert.orderId
-                    docPath = alert.orderDocPath
-                    tableName = alert.tableId
+            // A. KITCHEN / CHEF - Navigation to Order Details
+            role == "kitchen" || role == "chef" -> {
+                if (notification.orderId.isEmpty()) {
+                    Log.w(TAG, "Cannot navigate: orderId is empty for kitchen notification")
+                    return
                 }
-                
+                Log.i(TAG, "Navigating to kitchen detail for orderId=${notification.orderId}")
+                val kitchenData = KitchenOrderDetailData().apply {
+                    orderId = notification.orderId
+                    docPath = notification.orderDocPath
+                    tableName = notification.tableId
+                }
+
                 val fragment = KitchenOrderDetailFragment().apply {
                     arguments = Bundle().apply {
                         putSerializable("ORDER_DATA_KEY", kitchenData)
@@ -133,33 +144,65 @@ class StaffNotificationFragment : androidx.fragment.app.Fragment() {
                 switchFragment(fragment)
             }
 
-            // 2. CASHIER / BILLING ROLE (or Manager clicking billing alert) -> Settlement Screen
-            role == "billing" || role == "cashier" || (isManager && alert.message.contains("Bill", true)) -> {
+            // B. BILLING / CASHIER - Navigation to Settlement screen
+            role == "billing" || role == "cashier" -> {
+                if (notification.orderId.isEmpty()) {
+                    Log.w(TAG, "Cannot navigate: orderId is empty for billing notification")
+                    return
+                }
+                Log.i(TAG, "Navigating to billing detail for orderId=${notification.orderId}")
                 val cashierOrder = CashierBillingOrderModel(
-                    orderId = alert.orderId,
-                    tableName = alert.tableId,
-                    docPath = alert.orderDocPath
+                    orderId = notification.orderId,
+                    tableName = notification.tableId,
+                    docPath = notification.orderDocPath
                 )
                 val fragment = CashierSettleBillFragment.newInstance(cashierOrder)
                 switchFragment(fragment)
             }
 
-            // 3. WAITER ROLE -> Order Details Expansion
+            // C. WAITER - Navigation to Order Details
             role == "waiter" || role == "waiter_staff" -> {
+                if (notification.orderId.isEmpty()) {
+                    Log.w(TAG, "Cannot navigate: orderId is empty for waiter notification")
+                    return
+                }
+                Log.i(TAG, "Navigating to waiter order detail for orderId=${notification.orderId}")
                 val fragment = OrderDetailExpansionFragment().apply {
                     arguments = Bundle().apply {
-                        putString("orderId", alert.orderId)
-                        putString("tableName", alert.tableId)
-                        putString("orderStatus", "PENDING") // Will be updated by real-time listener
-                        putString("orderTime", alert.timeStamp)
+                        putString("orderId", notification.orderId)
+                        putString("tableName", notification.tableId)
+                        putString("orderStatus", "PENDING")
+                        putString("orderTime", notification.timeStamp)
                     }
                 }
                 switchFragment(fragment)
+            }
+
+            // D. MANAGER - Contextual navigation based on message
+            isManager -> {
+                when {
+                    notification.title.contains("Inventory", true) -> {
+                        // TODO: Navigate to Inventory Fragment when implemented
+                        Log.i(TAG, "Manager clicked inventory alert. Stay on current page or route to Inventory.")
+                        Toast.makeText(context, "Redirecting to Inventory Management...", Toast.LENGTH_SHORT).show()
+                    }
+                    notification.orderId.isNotEmpty() -> {
+                        Log.i(TAG, "Manager navigating to billing summary for orderId=${notification.orderId}")
+                        val cashierOrder = CashierBillingOrderModel(
+                            orderId = notification.orderId,
+                            tableName = notification.tableId,
+                            docPath = notification.orderDocPath
+                        )
+                        val fragment = CashierSettleBillFragment.newInstance(cashierOrder)
+                        switchFragment(fragment)
+                    }
+                }
             }
         }
     }
 
     private fun switchFragment(fragment: Fragment) {
+        Log.d(TAG, "Switching fragment to ${fragment::class.java.simpleName}")
         val containerId = when (activity) {
             is WaiterHomeActivity -> R.id.waiter_fragment_container
             is KitchenHomeActivity -> R.id.kitchen_fragment_container
@@ -175,22 +218,23 @@ class StaffNotificationFragment : androidx.fragment.app.Fragment() {
             .commit()
     }
 
-    private fun observeAlertsStateFlow() {
+    private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-
                     if (state.isLoading) {
+                        Log.d(TAG, "Loading notifications state started")
                         binding.pbAlertsLoadingIndicator.visibility = View.VISIBLE
                         binding.rvAlertsFeedContainer.visibility = View.GONE
                     } else {
+                        Log.d(TAG, "Loading notifications state finished with ${state.notifications.size} items")
                         binding.pbAlertsLoadingIndicator.visibility = View.GONE
                         binding.rvAlertsFeedContainer.visibility = View.VISIBLE
-                        alertsAdapter.submitList(state.alertsList)
+                        notificationAdapter.submitList(state.notifications)
                     }
 
                     state.errorMessage?.let { error ->
-                        binding.pbAlertsLoadingIndicator.visibility = View.GONE
+                        Log.e(TAG, "Notification UI error: $error")
                         Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                     }
                 }

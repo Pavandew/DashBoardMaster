@@ -56,7 +56,14 @@ class FoodMenuAdapter(
 
             // 1. Bind structural textual data
             binding.tvFoodName.text = foodItem.name
-            binding.tvFoodPrice.text = "₹ ${foodItem.price}"
+            
+            // Show "Starts from" if there are variants
+            if (foodItem.hasVariants && foodItem.variantsList.isNotEmpty()) {
+                binding.tvFoodPrice.text = "Starts from ₹ ${foodItem.price}"
+            } else {
+                binding.tvFoodPrice.text = "₹ ${foodItem.price}"
+            }
+
             binding.tvQuantityText.text = foodItem.currentQuantity.toString()
 
             // 2. Load food image using Glide

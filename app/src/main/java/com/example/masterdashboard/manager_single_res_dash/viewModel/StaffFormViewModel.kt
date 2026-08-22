@@ -40,48 +40,41 @@ class StaffFormViewModel(
         _currentStaffData.value = data
     }
 
-    // ✅ UPDATED: Accepts auto-generated credentials strings payload parameters from Step 1 Fragment
+    // ✅ UPDATED: Removed auto-generated credentials from Step 1
     fun updateStep1Data(
         staffName: String, mobile: String, email: String, gender: String,
-        role: String, department: String, joiningData: String, shift: String, salary: String,
-        staffId: String, password: String
+        role: String, department: String, joiningData: String, shift: String, salary: String
     ) {
-        Log.d(TAG, "➡ STEP 1 CACHED: [Name=$staffName, ID=$staffId, Pass=$password, Mobile=$mobile, Role=$role]")
+        Log.d(TAG, "➡ STEP 1 CACHED: [Name=$staffName, Mobile=$mobile, Role=$role]")
 
         _currentStaffData.value = _currentStaffData.value.copy(
             staffName = staffName, mobile = mobile, email = email, gender = gender,
-            role = role, department = department, joiningDate = joiningData, shift = shift, salary = salary,
-            staffId = staffId,     // ✅ Saved to shared flow memory block layout references
-            password = password   // ✅ Saved to shared flow memory block layout references
+            role = role, department = department, joiningDate = joiningData, shift = shift, salary = salary
         )
     }
 
     fun submitFinalStaffData(
         ownerUid: String, documentType: String, documentNumber: String, permission: List<String>
     ) {
-        // Appends step 2 validation criteria selections cleanly over top of step 1 cache boundaries
+        // ✅ GENERATE CREDENTIALS AT THE LAST MOMENT
+        val name = _currentStaffData.value.staffName
+        val mobile = _currentStaffData.value.mobile
+
+        val cleanedName = name.replace("\\s".toRegex(), "").uppercase()
+        val mobileSuffix = if (mobile.length >= 4) mobile.substring(mobile.length - 4) else mobile
+        val generatedStaffId = "${cleanedName}${mobileSuffix}"
+        val generatedPassword = generateRandomPin()
+
+        // Appends step 2 validation criteria and newly generated credentials
         val finalData = _currentStaffData.value.copy(
+            staffId = generatedStaffId,
+            password = generatedPassword,
             documentType = documentType,
             documentNumber = documentNumber,
             permissions = permission
         )
 
-        Log.d(TAG, "FINAL SUBMISSION PAYLOAD INCLUDING ID & PASS: {\n" +
-                "  \"staffId\": \"${finalData.staffId}\",\n" +
-                "  \"password\": \"${finalData.password}\",\n" +
-                "  \"staffName\": \"${finalData.staffName}\",\n" +
-                "  \"mobile\": \"${finalData.mobile}\",\n" +
-                "  \"email\": \"${finalData.email}\",\n" +
-                "  \"gender\": \"${finalData.gender}\",\n" +
-                "  \"role\": \"${finalData.role}\",\n" +
-                "  \"department\": \"${finalData.department}\",\n" +
-                "  \"joiningDate\": \"${finalData.joiningDate}\",\n" +
-                "  \"shift\": \"${finalData.shift}\",\n" +
-                "  \"salary\": \"${finalData.salary}\",\n" +
-                "  \"documentType\": \"${finalData.documentType}\",\n" +
-                "  \"documentNumber\": \"${finalData.documentNumber}\",\n" +
-                "  \"permissions\": ${finalData.permissions}\n" +
-                "}")
+        Log.d(TAG, "FINAL SUBMISSION PAYLOAD: ID=$generatedStaffId, Pass=$generatedPassword")
 
         viewModelScope.launch {
             _uiState.value = FirebaseUiState.Loading
@@ -90,8 +83,9 @@ class StaffFormViewModel(
             result.fold(
                 onSuccess = {
                     Log.d(TAG, "Firebase Upload Success!")
+                    // We keep the final data in _currentStaffData temporarily so UI can show the popup
+                    _currentStaffData.value = finalData
                     _uiState.value = FirebaseUiState.Success
-                    _currentStaffData.value = StaffDataModel() // Clean state post-success
                 },
                 onFailure = {
                     Log.e(TAG, " Firebase Upload Failed: ${it.message}", it)
@@ -99,6 +93,11 @@ class StaffFormViewModel(
                 }
             )
         }
+    }
+
+    private fun generateRandomPin(): String {
+        val numbersList = "1234567890"
+        return (1..6).map { numbersList.random() }.joinToString("")
     }
 
     fun verifyMobileAndProceed(ownerUid: String, mobile: String, onSuccessToProceed: () -> Unit) {

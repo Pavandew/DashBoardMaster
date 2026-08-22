@@ -1,7 +1,6 @@
 package com.example.masterdashboard.staff_dash.kitchen_screens.service
 
 import android.app.*
-import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.media.RingtoneManager
@@ -11,7 +10,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.masterdashboard.R
 import com.example.masterdashboard.login.SplashActivity
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.notifications.NotificationHelper
 import com.example.masterdashboard.staff_dash.kitchen_screens.repo.KitchenOrderRepository
 import kotlinx.coroutines.*

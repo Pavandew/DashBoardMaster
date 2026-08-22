@@ -56,7 +56,13 @@ class OrderTakingRepository {
                     categoryList.add(MenuCategoryData(id = id, name = name, isSelected = false))
                 }
             }
-            trySend(categoryList)
+
+            // SORT: Sort categories alphabetically by name, keeping "All" at the start
+            val sortedList = mutableListOf<MenuCategoryData>()
+            sortedList.add(categoryList.first()) // Add "All"
+            sortedList.addAll(categoryList.drop(1).sortedBy { it.name.lowercase() })
+
+            trySend(sortedList)
         }
 
         awaitClose { listener.remove() }

@@ -1,6 +1,7 @@
 package com.example.masterdashboard.staff_dash.kitchen_screens.repo
 
 import android.util.Log
+import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.KitchenOrderDetailData
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.OrderDetailItem
 import com.google.firebase.firestore.FirebaseFirestore
@@ -39,49 +40,52 @@ class KitchenOrderDetailsRepository(
             if (snapshot != null && snapshot.exists()) {
                 try {
                     // Manual extraction of top-level fields
-                    val orderType = (snapshot.getString("orderType") ?: snapshot.getString("order_type")) ?: "DINE_IN"
-                    val rawStatus = (snapshot.getString("orderStatus") ?: snapshot.getString("order_status")) ?: "PENDING"
+                    val orderType = (snapshot.getString(AppConstants.FIELD_ORDER_TYPE) ?: snapshot.getString("order_type")) ?: AppConstants.ORDER_TYPE_DINE_IN
+                    val rawStatus = (snapshot.getString(AppConstants.FIELD_ORDER_STATUS) ?: snapshot.getString("order_status")) ?: AppConstants.STATUS_PENDING
                     
                     // Status Mapping for UI
                     val displayStatus = when {
-                        rawStatus.equals("PENDING", ignoreCase = true) -> "New"
+                        rawStatus.equals(AppConstants.STATUS_PENDING, ignoreCase = true) -> "New"
                         (orderType.contains("TAKE", true) || orderType.contains("DELIVERY", true)) && 
-                                rawStatus.equals("PAID", ignoreCase = true) -> "New"
+                                rawStatus.equals(AppConstants.STATUS_PAID, ignoreCase = true) -> "New"
                         else -> rawStatus
                     }
 
                     // Manual extraction of the items list
-                    val rawItems = snapshot.get("items") as? List<Map<String, Any>>
+                    val rawItems = snapshot.get(AppConstants.FIELD_ORDER_ITEMS) as? List<Map<String, Any>>
                     val itemsList = rawItems?.map { item ->
                         OrderDetailItem(
-                            itemId = item["itemId"] as? String ?: "",
-                            itemName = (item["itemName"] as? String ?: item["item_name"] as? String) ?: "",
-                            quantity = (item["quantity"] as? Number)?.toInt() ?: 0,
-                            orderedQuantity = (item["orderedQuantity"] as? Number)?.toInt() ?: 0,
-                            readyQuantity = (item["readyQuantity"] as? Number)?.toInt() ?: 0,
-                            itemNote = (item["itemNote"] as? String ?: item["item_note"] as? String) ?: "",
-                            price = (item["price"] as? Number)?.toInt() ?: 0,
-                            rowTotal = (item["rowTotal"] as? Number)?.toInt() ?: 0,
-                            category = item["category"] as? String ?: "Veg"
+                            itemId = item[AppConstants.FIELD_ITEM_ID] as? String ?: "",
+                            itemName = (item[AppConstants.FIELD_ITEM_NAME] as? String ?: item["item_name"] as? String) ?: "",
+                            variantName = item[AppConstants.FIELD_VARIANT_NAME] as? String ?: "",
+                            quantity = (item[AppConstants.FIELD_QUANTITY] as? Number)?.toInt() ?: 0,
+                            orderedQuantity = (item[AppConstants.FIELD_ORDERED_QTY] as? Number)?.toInt() ?: 0,
+                            readyQuantity = (item[AppConstants.FIELD_READY_QTY] as? Number)?.toInt() ?: 0,
+                            itemNote = (item[AppConstants.FIELD_ITEM_NOTE] as? String ?: item["item_note"] as? String) ?: "",
+                            price = (item[AppConstants.FIELD_ITEM_PRICE] as? Number)?.toInt() ?: 0,
+                            rowTotal = (item[AppConstants.FIELD_ROW_TOTAL] as? Number)?.toInt() ?: 0,
+                            category = item[AppConstants.FIELD_CATEGORY] as? String ?: "Veg",
+                            itemStatus = item["itemStatus"] as? String ?: "PENDING"
                         )
                     } ?: emptyList()
 
                     val orderData = KitchenOrderDetailData(
-                        orderId = snapshot.id,
+                        orderId = snapshot.getString(AppConstants.FIELD_ORDER_ID) ?: snapshot.getString("order_id") ?: snapshot.id,
                         docPath = snapshot.reference.path,
-                        tableName = (snapshot.getString("tableName") ?: snapshot.getString("table_name")) ?: "Counter",
+                        tableName = (snapshot.getString(AppConstants.FIELD_TABLE_NAME) ?: snapshot.getString("table_name")) ?: "Counter",
                         orderStatus = rawStatus,
                         status = displayStatus,
-                        specialNotes = (snapshot.getString("specialNotes") ?: snapshot.getString("special_notes")) ?: "",
+                        specialNotes = (snapshot.getString(AppConstants.FIELD_SPECIAL_NOTES) ?: snapshot.getString("special_notes")) ?: "",
                         orderType = orderType,
-                        timestamp = snapshot.getTimestamp("timestamp"),
+                        timestamp = snapshot.getTimestamp(AppConstants.FIELD_TIMESTAMP),
                         items = itemsList,
-                        customerName = snapshot.getString("customerName") ?: "",
-                        customerPhone = snapshot.getString("customerPhone") ?: "",
-                        subtotal = snapshot.getDouble("subtotal") ?: 0.0,
-                        gst = (snapshot.getDouble("gst") ?: snapshot.getDouble("tax")) ?: 0.0,
-                        grandTotal = snapshot.getDouble("grandTotal") ?: 0.0,
-                        paymentMethod = snapshot.getString("paymentMethod") ?: ""
+                        customerName = snapshot.getString(AppConstants.FIELD_CUSTOMER_NAME) ?: "",
+                        customerPhone = snapshot.getString(AppConstants.FIELD_CUSTOMER_MOBILE) ?: "",
+                        waiterId = snapshot.getString(AppConstants.FIELD_WAITER_ID) ?: "", // FIXED: Added missing waiterId mapping
+                        subtotal = snapshot.getDouble(AppConstants.FIELD_SUBTOTAL) ?: 0.0,
+                        gst = (snapshot.getDouble(AppConstants.FIELD_GST) ?: snapshot.getDouble(AppConstants.FIELD_TAX)) ?: 0.0,
+                        grandTotal = snapshot.getDouble(AppConstants.FIELD_GRAND_TOTAL) ?: 0.0,
+                        paymentMethod = snapshot.getString(AppConstants.FIELD_PAYMENT_METHOD) ?: ""
                     )
                     
                     trySend(orderData)
@@ -103,9 +107,9 @@ class KitchenOrderDetailsRepository(
     suspend fun updateOrderStatus(docPath: String, newStatus: String, reason: String = "") {
         if (docPath.isEmpty()) return
         try {
-            val firestoreStatus = if (newStatus.equals("New", ignoreCase = true)) "PENDING" else newStatus
-            val updates = mutableMapOf<String, Any>("orderStatus" to firestoreStatus)
-            if (reason.isNotEmpty()) updates["rejectionReason"] = reason
+            val firestoreStatus = if (newStatus.equals("New", ignoreCase = true)) AppConstants.STATUS_PENDING else newStatus
+            val updates = mutableMapOf<String, Any>(AppConstants.FIELD_ORDER_STATUS to firestoreStatus)
+            if (reason.isNotEmpty()) updates[AppConstants.FIELD_REJECTION_REASON] = reason
             firestore.document(docPath).update(updates).await()
         } catch (e: Exception) {
             Log.e(TAG, "updateOrderStatus failure", e)
@@ -127,11 +131,11 @@ class KitchenOrderDetailsRepository(
         if (docPath.isEmpty()) return
         try {
             val updates = mapOf(
-                "items" to updatedItems,
-                "subtotal" to newSubtotal,
-                "gst" to newGst,
-                "grandTotal" to newGrandTotal,
-                "rejectionReason" to rejectionReason
+                AppConstants.FIELD_ORDER_ITEMS to updatedItems,
+                AppConstants.FIELD_SUBTOTAL to newSubtotal,
+                AppConstants.FIELD_GST to newGst,
+                AppConstants.FIELD_GRAND_TOTAL to newGrandTotal,
+                AppConstants.FIELD_REJECTION_REASON to rejectionReason
             )
             firestore.document(docPath).update(updates).await()
         } catch (e: Exception) {

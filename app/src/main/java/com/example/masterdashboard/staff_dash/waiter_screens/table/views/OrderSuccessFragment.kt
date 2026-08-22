@@ -47,8 +47,8 @@ class OrderSuccessFragment : Fragment() {
 
         val isCashier = arguments?.getBoolean("isCashier") ?: false
         if (isCashier) {
-            binding.btnViewActiveOrders.text = "View All Bills"
-            binding.btnBackToTables.text = "New Order"
+            binding.btnViewActiveOrders.text = getString(R.string.view_all_bills)
+            binding.btnBackToTables.text = getString(R.string.new_order)
         }
 
         // NEW: Clear the cart and reset the upload status now that we are safely on the success screen.
@@ -82,10 +82,11 @@ class OrderSuccessFragment : Fragment() {
 
         val currentTimestamp = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date())
 
-        binding.tvSuccessTableId.text = "T-$tableName"
+        binding.tvSuccessTableId.text = getString(R.string.table_id_format, tableName)
         binding.tvSuccessOrderId.text = orderId
         binding.tvSuccessTotalItems.text = totalItems.toString()
-        binding.tvSuccessTotalAmount.text = getString(R.string.currency_symbol) + " ${String.format("%.2f", totalPrice)}"
+        val currency = getString(R.string.currency_symbol)
+        binding.tvSuccessTotalAmount.text = String.format(Locale.US, "%s %.2f", currency, totalPrice)
         binding.tvSuccessTimestamp.text = currentTimestamp
     }
 

@@ -12,12 +12,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentKitchenOrderBinding
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.staff_dash.kitchen_screens.adapter.KitchenOrderStreamAdapter
 import com.example.masterdashboard.staff_dash.kitchen_screens.uistate.KitchenOrderUiState
 import com.example.masterdashboard.staff_dash.kitchen_screens.viewModel.KitchenOrderViewModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.FloorChipsAdapter
-import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -68,23 +67,13 @@ class KitchenOrderFragment : Fragment(R.layout.fragment_kitchen_order) {
 
     private fun setupChipsRecyclerView() {
         filterAdapter = FloorChipsAdapter { chip ->
-            Log.d(TAG, "setupChipsRecyclerView: Filter changed to: [${chip.name}]")
-            viewModel.setTypeFilter(chip.name)
-
-            val updatedList = filterAdapter.currentList.map {
-                it.copy(isSelected = it.id == chip.id)
-            }
-            filterAdapter.submitList(updatedList)
+            // Extract the original name from label "Name (Count)"
+            val originalName = chip.name.substringBefore(" (").trim()
+            Log.d(TAG, "setupChipsRecyclerView: Filter changed to: [$originalName]")
+            viewModel.setTypeFilter(originalName)
         }
 
         binding.rvOrderFilterChips.adapter = filterAdapter
-
-        val typeFilters = listOf(
-            TableFilterData("1", "All", true),
-            TableFilterData("2", "Takeaway", false),
-            TableFilterData("3", "Dine In", false)
-        )
-        filterAdapter.submitList(typeFilters)
     }
 
     private fun setupOrdersRecyclerView() {
@@ -109,6 +98,8 @@ class KitchenOrderFragment : Fragment(R.layout.fragment_kitchen_order) {
         }
     }
 
+    private var lastAutoScrolledFilterId: String? = null
+
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -121,6 +112,28 @@ class KitchenOrderFragment : Fragment(R.layout.fragment_kitchen_order) {
                         is KitchenOrderUiState.Success -> {
                             binding.pbKitchenLoading.visibility = View.GONE
                             orderAdapter.submitList(state.orders)
+                            filterAdapter.submitList(state.filters)
+                            
+                            // AUTO-SCROLL: Only scroll to the selected chip if it's different from the last scrolled one
+                            val currentSelectedId = state.filters.find { it.isSelected }?.id
+                            if (currentSelectedId != null && currentSelectedId != lastAutoScrolledFilterId) {
+                                val selectedPos = state.filters.indexOfFirst { it.id == currentSelectedId }
+                                if (selectedPos != -1) {
+                                    binding.rvOrderFilterChips.post {
+                                        binding.rvOrderFilterChips.smoothScrollToPosition(selectedPos)
+                                    }
+                                }
+                                lastAutoScrolledFilterId = currentSelectedId
+                            }
+
+                            // Show or hide empty state based on list size
+                            if (state.orders.isEmpty()) {
+                                binding.rvKitchenOrdersStream.visibility = View.GONE
+                                binding.layoutEmptyState.visibility = View.VISIBLE
+                            } else {
+                                binding.rvKitchenOrdersStream.visibility = View.VISIBLE
+                                binding.layoutEmptyState.visibility = View.GONE
+                            }
 
                             // Dynamic update of subtitle with live order count
                             val count = state.orders.size

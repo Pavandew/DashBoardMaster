@@ -37,9 +37,14 @@ class KitchenRejectItemsAdapter(
 
         fun bind(item: OrderDetailItem) {
             // Log to check if data is coming correctly
-            Log.d("KitchenRejectAdapter", "Binding item: name='${item.itemName}', qty=${item.quantity}")
+            Log.d("KitchenRejectAdapter", "Binding item: name='${item.itemName}', variant='${item.variantName}', qty=${item.quantity}")
             
-            tvItemName.text = if (item.itemName.isNullOrBlank()) "Unnamed Item" else item.itemName
+            val displayName = when {
+                item.itemName.isNullOrBlank() -> "Unnamed Item"
+                item.variantName.isNotEmpty() -> "${item.itemName} (${item.variantName})"
+                else -> item.itemName
+            }
+            tvItemName.text = displayName
             tvQuantity.text = "x ${item.quantity}"
             
             // Handle checkbox state correctly

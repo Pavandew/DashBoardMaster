@@ -2,6 +2,7 @@ package com.example.masterdashboard.staff_dash.billing_screens.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.masterdashboard.notifications.AppNotificationHelper
 import com.example.masterdashboard.staff_dash.billing_screens.model.CashierBillingOrderModel
 import com.example.masterdashboard.staff_dash.billing_screens.repo.CashierBillingRepository
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
@@ -25,6 +26,20 @@ class CashierSettleViewModel(
 
     fun setOrder(order: CashierBillingOrderModel) {
         _activeBillingOrder.value = order
+        // If items are missing, load full details automatically
+        if (order.items.isEmpty() && order.docPath.isNotEmpty()) {
+            loadFullOrderDetails(order.docPath)
+        }
+    }
+
+    private fun loadFullOrderDetails(docPath: String) {
+        viewModelScope.launch {
+            repository.fetchOrderDetails(docPath).collect { resource ->
+                if (resource is ResourceUiState.Success) {
+                    _activeBillingOrder.value = resource.data
+                }
+            }
+        }
     }
 
     fun setSelectedPaymentMode(mode: String) {
@@ -42,11 +57,23 @@ class CashierSettleViewModel(
         )
     }
 
-    fun settleAndCompleteOrder() {
+    fun settleAndCompleteOrder(managerId: String) {
         val order = _activeBillingOrder.value ?: return
         viewModelScope.launch {
-            repository.settleOrder(order, selectedPaymentMode, discountAmount).collect {
-                _settleState.value = it
+            repository.settleOrder(order, selectedPaymentMode, discountAmount).collect { status ->
+                _settleState.value = status
+                
+                if (status is ResourceUiState.Success) {
+                    // Notify Manager (Revenue), Waiter (Table Free), and Billing (Log)
+                    AppNotificationHelper.notifyPaymentSuccess(
+                        managerId = managerId,
+                        tableName = order.tableName,
+                        orderId = order.orderId,
+                        amount = order.grandTotal,
+                        waiterId = order.waiterId,
+                        orderDocPath = order.docPath
+                    )
+                }
             }
         }
     }

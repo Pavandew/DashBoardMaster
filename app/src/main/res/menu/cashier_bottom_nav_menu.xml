@@ -4,12 +4,12 @@
     <item
         android:id="@+id/cashier_billsFragment"
         android:title="Bills"
-        android:icon="@drawable/ic_table_24dp"
+        android:icon="@drawable/biling"
         />
     <item
         android:id="@+id/cashier_orderFragment"
         android:title="Order"
-        android:icon="@drawable/ic_logs_24dp"
+        android:icon="@drawable/ic_order_approve_24dp"
         />
 
     <item

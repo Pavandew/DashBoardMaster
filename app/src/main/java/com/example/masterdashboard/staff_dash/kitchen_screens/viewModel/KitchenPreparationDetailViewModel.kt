@@ -3,10 +3,12 @@ package com.example.masterdashboard.staff_dash.kitchen_screens.viewModel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.masterdashboard.notifications.AppNotificationHelper
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.KitchenOrderDetailData
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.OrderDetailItem
 import com.example.masterdashboard.staff_dash.kitchen_screens.repo.KitchenPreparationDetailRepository
 import com.example.masterdashboard.staff_dash.kitchen_screens.uistate.KitchenOrderDetailUiState
+import com.example.masterdashboard.notifications.NotificationHelper
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -39,14 +41,44 @@ class KitchenPreparationDetailViewModel(
     }
 
     fun finalizeOrderToServe(docPath: String) {
+        val currentData = _rawOrderData.value ?: return
         viewModelScope.launch {
             try {
                 repository.updateOrderStatusToReady(docPath)
                 _statusUpdateAction.value = Result.success("Order Ready")
+
+                // Notify Waiter
+                notifyWaiter(currentData)
             } catch (e: Exception) {
                 Log.e(TAG, "finalizeOrderToServe failed", e)
                 _statusUpdateAction.value = Result.failure(e)
             }
+        }
+    }
+
+    private suspend fun notifyWaiter(data: KitchenOrderDetailData) {
+        Log.d(TAG, "notifyWaiter: Attempting to notify waiter for order ${data.orderId}. WaiterID: '${data.waiterId}', RestaurantID: '${data.restaurantId}'")
+        
+        if (data.waiterId.isEmpty()) {
+            Log.w(TAG, "notifyWaiter: waiterId is empty. Notification cannot be sent.")
+            return
+        }
+
+        // Fetch token for PUSH
+        val token = repository.getWaiterToken(data.restaurantId, data.waiterId)
+        
+        // ALWAYS call dispatcher. It will save the record to history even if token is null.
+        AppNotificationHelper.notifyWaiterOrderReady(
+            waiterToken = token,
+            tableName = data.tableName,
+            orderId = data.orderId,
+            managerId = data.restaurantId,
+            waiterId = data.waiterId,
+            orderDocPath = data.docPath
+        )
+        
+        if (token == null) {
+            Log.d(TAG, "notifyWaiter: No FCM token found for waiter ${data.waiterId}. Record saved to history only.")
         }
     }
 
@@ -61,8 +93,11 @@ class KitchenPreparationDetailViewModel(
                 val updatedItemsList = currentData.items.map { originalItem ->
                     val isToMark = itemsToMark.any { it.itemId == originalItem.itemId }
                     if (isToMark) {
-                        // Mark as fully ready for now as per simple request
-                        originalItem.copy(readyQuantity = originalItem.quantity)
+                        // Mark as fully ready and update status
+                        originalItem.copy(
+                            readyQuantity = originalItem.quantity,
+                            itemStatus = "READY"
+                        )
                     } else {
                         originalItem
                     }
@@ -79,7 +114,8 @@ class KitchenPreparationDetailViewModel(
                         "price" to item.price,
                         "rowTotal" to item.rowTotal,
                         "category" to item.category,
-                        "itemNote" to item.itemNote
+                        "itemNote" to item.itemNote,
+                        "itemStatus" to item.itemStatus
                     )
                 }
 

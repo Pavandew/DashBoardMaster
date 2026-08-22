@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -14,28 +16,11 @@
         android:layout_marginBottom="12dp"
         android:textStyle="bold" />
 
-    <LinearLayout
-        android:id="@+id/quickActionsContainer"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvQuickActions"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         android:orientation="horizontal"
-        android:weightSum="5">
-
-        <include
-            android:id="@+id/actionAddStaff"
-            layout="@layout/item_quick_action"/>
-
-        <include android:id="@+id/actionMenu"
-            layout="@layout/item_quick_action"/>
-
-        <include android:id="@+id/actionFloorTable"
-            layout="@layout/item_quick_action"/>
-
-        <include android:id="@+id/actionOrders"
-            layout="@layout/item_quick_action"/>
-
-        <include android:id="@+id/actionReports"
-            layout="@layout/item_quick_action"/>
-
-    </LinearLayout>
+        tools:listitem="@layout/item_quick_action" />
 </LinearLayout>

@@ -1,5 +1,6 @@
 package com.example.masterdashboard.staff_dash.waiter_screens.table.models
 
+import com.example.masterdashboard.manager_single_res_dash.models.ItemVariant
 import java.io.Serializable
 
 data class AddonItem(
@@ -17,6 +18,8 @@ data class MenuItemDetailData(
     val rating: String = "4.5",
     val imageUrl: String = "",
     val isVeg: Boolean = true,
+    val hasVariants: Boolean = false,
+    val variants: List<ItemVariant> = emptyList(),
     val availableAddons: List<AddonItem> = listOf(
         AddonItem("1", "Extra Butter", 30.0),
         AddonItem("2", "Green Chutney", 20.0),

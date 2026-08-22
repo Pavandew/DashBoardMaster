@@ -14,7 +14,7 @@ import com.example.masterdashboard.notifications.NotificationPermissionHelper
 import com.example.masterdashboard.staff_dash.billing_screens.views.CashierBillingFragment
 import com.example.masterdashboard.staff_dash.billing_screens.views.CashierOrderFragment
 import com.example.masterdashboard.staff_dash.profile.StaffProfileFragment
-import com.example.masterdashboard.notifications.alert.StaffNotificationFragment
+import com.example.masterdashboard.notifications.alert.NotificationFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class CashierHomeActivity : AppCompatActivity() {
@@ -118,7 +118,7 @@ class CashierHomeActivity : AppCompatActivity() {
             targetFragment = when (tag) {
                 TAG_BILLS           -> CashierBillingFragment()
                 TAG_ORDERS          -> CashierOrderFragment()
-                TAG_LOGS            -> StaffNotificationFragment()
+                TAG_LOGS            -> NotificationFragment()
                 TAG_PROFILE         -> StaffProfileFragment()
                 else                -> CashierBillingFragment()
             }
@@ -138,19 +138,25 @@ class CashierHomeActivity : AppCompatActivity() {
             this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    when {
-                        supportFragmentManager.backStackEntryCount > 0 -> {
-                            supportFragmentManager.popBackStack()
-                        }
-                        currentTag != TAG_BILLS -> {
-                            openBills()
-                        }
-                        else -> {
-                            if (backPressedTime + 2000 > System.currentTimeMillis()) {
-                                finish()
-                            } else {
-                                Toast.makeText(this@CashierHomeActivity, "Press back again to exit", Toast.LENGTH_SHORT).show()
-                            }
+                    if (supportFragmentManager.backStackEntryCount > 0) {
+                        supportFragmentManager.popBackStack()
+                        return
+                    }
+
+                    // If this activity is NOT the root (e.g. opened from Manager Dash), just go back
+                    if (!isTaskRoot) {
+                        finish()
+                        return
+                    }
+
+                    // Standard "Root Home" behavior: Back to first tab, then exit toast
+                    if (currentTag != TAG_BILLS) {
+                        openBills()
+                    } else {
+                        if (backPressedTime + 2000 > System.currentTimeMillis()) {
+                            finish()
+                        } else {
+                            Toast.makeText(this@CashierHomeActivity, "Press back again to exit", Toast.LENGTH_SHORT).show()
                             backPressedTime = System.currentTimeMillis()
                         }
                     }

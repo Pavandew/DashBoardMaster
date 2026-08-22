@@ -16,6 +16,16 @@ class DrawerMenuAdapter(
 
     private var selectedPosition = 0
 
+    fun setSelectedItem(id: Int) {
+        val newPos = menuItems.indexOfFirst { it.id == id }
+        if (newPos != -1 && newPos != selectedPosition) {
+            val oldPos = selectedPosition
+            selectedPosition = newPos
+            notifyItemChanged(oldPos)
+            notifyItemChanged(selectedPosition)
+        }
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MenuViewHolder {
         val binding = ItemDrawerMenuBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return MenuViewHolder(binding)

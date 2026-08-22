@@ -25,18 +25,38 @@ class KitchenDetailItemAdapter : ListAdapter<OrderDetailItem, KitchenDetailItemA
 
     class ItemViewHolder(private val binding: ItemKitchenDetailRowBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: OrderDetailItem) {
-            binding.tvItemName.text = item.itemName
+            val displayName = if (item.variantName.isNotEmpty()) "${item.itemName} (${item.variantName})" else item.itemName
+            binding.tvItemName.text = displayName
             
             // Format price as Integer for display (e.g. 200 instead of 200.0)
             val unitPrice = item.price.toInt()
             
-            // Show only the "Delta" (New items to be prepared) with price for size context
-            val newQuantity = item.quantity - item.orderedQuantity
-            if (newQuantity > 0) {
-                binding.tvQuantity.text = "$newQuantity x $unitPrice"
+            val totalQuantity = item.quantity
+            val previouslyOrdered = item.orderedQuantity
+            val newDeltaQuantity = totalQuantity - previouslyOrdered
+
+            if (newDeltaQuantity > 0) {
+                // This item has NEW quantities to be prepared
+                binding.tvNewItemBadge.visibility = android.view.View.VISIBLE
+                binding.tvServedItemBadge.visibility = android.view.View.GONE
+                
+                // Emphasize the new quantity
+                binding.tvQuantity.text = "$newDeltaQuantity x $unitPrice"
+                binding.tvQuantity.setBackgroundColor(android.graphics.Color.parseColor("#FEE2E2"))
+                binding.tvQuantity.setTextColor(android.graphics.Color.parseColor("#EF4444"))
+                
+                binding.tvItemName.alpha = 1.0f
             } else {
-                // If this item was fully prepared before, show total quantity
-                binding.tvQuantity.text = "${item.quantity} x $unitPrice"
+                // This item is already processed / sent to kitchen before
+                binding.tvNewItemBadge.visibility = android.view.View.GONE
+                binding.tvServedItemBadge.visibility = android.view.View.VISIBLE
+                
+                binding.tvQuantity.text = "$totalQuantity x $unitPrice"
+                binding.tvQuantity.setBackgroundColor(android.graphics.Color.parseColor("#F3F4F6"))
+                binding.tvQuantity.setTextColor(android.graphics.Color.parseColor("#6B7280"))
+                
+                // De-emphasize processed items
+                binding.tvItemName.alpha = 0.5f
             }
         }
     }

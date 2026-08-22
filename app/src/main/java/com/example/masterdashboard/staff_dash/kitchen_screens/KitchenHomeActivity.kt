@@ -20,7 +20,7 @@ import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenPrepa
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenInventoryFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenOrderFragment
 import com.example.masterdashboard.staff_dash.profile.StaffProfileFragment
-import com.example.masterdashboard.notifications.alert.StaffNotificationFragment
+import com.example.masterdashboard.notifications.alert.NotificationFragment
 import com.example.masterdashboard.login.views.ChangePasswordFragment
 
 class KitchenHomeActivity : AppCompatActivity() {
@@ -31,6 +31,7 @@ class KitchenHomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityKitchenHomeBinding
     private var currentSelectedItem = R.id.kitchen_orderFragment
+    private var backPressedTime: Long = 0
 
     // Tags to keep track of main base fragments in supportFragmentManager
     private val tags = object {
@@ -127,17 +128,27 @@ class KitchenHomeActivity : AppCompatActivity() {
         // Optimized Back Press Routing
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                val backStackCount = supportFragmentManager.backStackEntryCount
-
-                if (backStackCount > 0) {
-                    // 1. If there's a detailed screen open, pop it off and return to previous fragment safely
+                if (supportFragmentManager.backStackEntryCount > 0) {
                     supportFragmentManager.popBackStack()
-                } else if (currentSelectedItem != R.id.kitchen_orderFragment) {
-                    // 2. If no backstack exists but user isn't on the Home tab, route them back to the Home tab
+                    return
+                }
+
+                // If this activity is NOT the root (e.g. opened from Manager Dash), just go back
+                if (!isTaskRoot) {
+                    finish()
+                    return
+                }
+
+                // Standard "Root Home" behavior: Back to first tab, then finish with double-tap
+                if (currentSelectedItem != R.id.kitchen_orderFragment) {
                     binding.kitchenBottomNavigation.selectedItemId = R.id.kitchen_orderFragment
                 } else {
-                    // 3. Close the application gracefully
-                    finish()
+                    if (backPressedTime + 2000 > System.currentTimeMillis()) {
+                        finish()
+                    } else {
+                        android.widget.Toast.makeText(this@KitchenHomeActivity, "Press back again to exit", android.widget.Toast.LENGTH_SHORT).show()
+                        backPressedTime = System.currentTimeMillis()
+                    }
                 }
             }
         })
@@ -174,7 +185,7 @@ class KitchenHomeActivity : AppCompatActivity() {
         val kitchen = fm.findFragmentByTag(tags.KITCHEN) ?: KitchenPreparationFragment()
         val inventory = fm.findFragmentByTag(tags.INVENTORY) ?: KitchenInventoryFragment()
         val profile = fm.findFragmentByTag(tags.PROFILE) ?: StaffProfileFragment()
-        val notification = fm.findFragmentByTag(tags.NOTIFICATION) ?: StaffNotificationFragment()
+        val notification = fm.findFragmentByTag(tags.NOTIFICATION) ?: NotificationFragment()
 
         val transaction = fm.beginTransaction().setReorderingAllowed(true)
 

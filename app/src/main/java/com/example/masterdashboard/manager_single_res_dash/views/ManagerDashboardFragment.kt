@@ -5,27 +5,35 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.RecyclerView
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentManagerDashboardBinding
+import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
-import com.example.masterdashboard.manager_single_res_dash.utils.DrawerNavigationHelper
-import com.example.masterdashboard.manager_single_res_dash.adapter.DrawerMenuAdapter
+import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeActivity
 import com.example.masterdashboard.manager_single_res_dash.adapter.ManagerDashboardAdapter
 import com.example.masterdashboard.manager_single_res_dash.models.DashboardSummary
 import com.example.masterdashboard.manager_single_res_dash.models.DrawerMenuItem
-import com.example.masterdashboard.manager_single_res_dash.models.TopSellingFoodItem
 import com.example.masterdashboard.manager_single_res_dash.models.StatMetric
-import com.example.masterdashboard.staff_dash.waiter_screens.order.views.WaiterActiveOrdersFragment
+import com.example.masterdashboard.manager_single_res_dash.models.TopSellingFoodItem
+import com.example.masterdashboard.manager_single_res_dash.utils.DrawerNavigationHelper
+import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
+import com.example.masterdashboard.staff_dash.kitchen_screens.KitchenHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class ManagerDashboardFragment : Fragment() {
 
     private var _binding: FragmentManagerDashboardBinding? = null
     private val binding get() = _binding!!
+    
     private lateinit var navigationHelper: DrawerNavigationHelper
+    private lateinit var sessionManager: SessionManager
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -38,17 +46,71 @@ class ManagerDashboardFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.i("ManagerDashboardFragment", "Navigation: ManagerDashboardFragment Opened")
+        sessionManager = SessionManager(requireContext())
+        
         // 1. Initialize central navigation engine helper
         navigationHelper = DrawerNavigationHelper(this)
 
-        setupHeaderClickListeners()
+        setupHeader()
         setupDashboardRecyclerView()
-        setupActivityDrawerRecyclerView() // 2. Bind side menu layout dynamically
+        navigationHelper.initDrawerMenu()
+        
+        // 3. Update Drawer Header immediately with available User Info
+        navigationHelper.updateDrawerHeader()
     }
 
-    private fun setupHeaderClickListeners() {
-        binding.masterDashHeader.btnDrawerMenu.setOnClickListener {
-            (activity as? ManagerHomeActivity)?.openNavigationDrawer()
+    private fun setupHeader() {
+        val header = binding.masterDashHeader
+        
+        // 1. Set personalized greeting
+        val userName = sessionManager.getUserName() ?: "Manager"
+        header.txtGreeting.text = "Good Morning, $userName 👋"
+
+        header.btnDrawerMenu.setOnClickListener {
+            Log.d("ManagerDashboard", "Action: Drawer Menu button clicked")
+            when (val currentActivity = activity) {
+                is ManagerHomeActivity -> currentActivity.openNavigationDrawer()
+                is SingleResOwnerHomeActivity -> currentActivity.openNavigationDrawer()
+            }
+        }
+        
+        // 2. Set up click listeners for the Bottom Sheet
+        val clickListener = View.OnClickListener {
+            Log.i("ManagerDashboard", "Action: Restaurant Name/Profile clicked - Opening Bottom Sheet")
+            val ownerUid = sessionManager.getUid() // Use UID as the key now
+            if (ownerUid.isNotEmpty()) {
+                RestaurantDetailsBottomSheet.newInstance(ownerUid).show(childFragmentManager, "ResDetails")
+            } else {
+                Log.w("ManagerDashboard", "Warning: Cannot open bottom sheet, User ID is empty")
+            }
+        }
+        
+        header.txtRestaurantName.setOnClickListener(clickListener)
+        header.imgProfile.setOnClickListener(clickListener)
+        
+        // Fetch and show current restaurant name
+        fetchRestaurantName()
+    }
+
+    private fun fetchRestaurantName() {
+        val ownerUid = sessionManager.getUid()
+        if (ownerUid.isEmpty()) return
+
+        lifecycleScope.launch {
+            try {
+                Log.d("ManagerDashboard", "Fetching restaurant name from User document: $ownerUid")
+                val db = FirebaseFirestore.getInstance()
+                val doc = db.collection(AppConstants.COLLECTION_USERS).document(ownerUid).get().await()
+                val name = doc.getString(AppConstants.FIELD_RESTAURANT_NAME) ?: "My Restaurant"
+                
+                binding.masterDashHeader.txtRestaurantName.text = "$name ▾"
+                
+                // Update Drawer Header with the fetched restaurant name
+                navigationHelper.updateDrawerHeader(name)
+                
+            } catch (e: Exception) {
+                Log.e("ManagerDashboard", "Error fetching restaurant name from Firebase", e)
+            }
         }
     }
 
@@ -75,19 +137,42 @@ class ManagerDashboardFragment : Fragment() {
         )
 
         // Wired up Quick Action types mapping to IDs via your navigation helper
-        val dashboardAdapter = ManagerDashboardAdapter(metricsData, summaryData, foodItemsList) { actionType ->
-            val simulatedMenuId = when (actionType) {
-                ManagerDashboardAdapter.QuickActionType.ADD_STAFF -> 5
-                ManagerDashboardAdapter.QuickActionType.MENU -> 4
-                ManagerDashboardAdapter.QuickActionType.FLOOR_TABLE -> 2
-                ManagerDashboardAdapter.QuickActionType.ORDERS -> 1
-                ManagerDashboardAdapter.QuickActionType.REPORTS -> 8
-            }
+        val dashboardAdapter = ManagerDashboardAdapter(
+            metricsData, 
+            summaryData, 
+            foodItemsList,
+            onQuickActionClicked = { actionType ->
+                val simulatedItem = when (actionType) {
+                    ManagerDashboardAdapter.QuickActionType.WAITER -> 
+                        DrawerMenuItem(1, "Take Orders", 0, activityClass = WaiterHomeActivity::class.java)
+                    ManagerDashboardAdapter.QuickActionType.KITCHEN -> 
+                        DrawerMenuItem(3, "Kitchen Screen", 0, activityClass = KitchenHomeActivity::class.java)
+                    ManagerDashboardAdapter.QuickActionType.BILLING -> 
+                        DrawerMenuItem(6, "Billing Screen", 0, activityClass = CashierHomeActivity::class.java)
+                    ManagerDashboardAdapter.QuickActionType.ADD_STAFF -> 
+                        DrawerMenuItem(5, "Staff Management", 0, fragmentClass = StaffManagementFragment::class.java)
+                    ManagerDashboardAdapter.QuickActionType.MENU -> 
+                        DrawerMenuItem(4, "Menu Management", 0, fragmentClass = MenuManagementFragment::class.java)
+                    ManagerDashboardAdapter.QuickActionType.FLOOR_TABLE -> 
+                        DrawerMenuItem(2, "Table Management", 0, fragmentClass = TableManagementFragment::class.java)
+                    ManagerDashboardAdapter.QuickActionType.REPORTS -> 
+                        DrawerMenuItem(8, "Reports & Analytics", 0, fragmentClass = ManagerDashboardFragment::class.java)
+                }
 
-            // Build temporary model instance package placeholder to trigger routing handler smoothly
-            val simulatedItem = DrawerMenuItem(simulatedMenuId, "", 0, null)
-            navigationHelper.handleNavigation(simulatedItem)
-        }
+                navigationHelper.handleNavigation(simulatedItem)
+            },
+            onSummaryClicked = { status ->
+                val simulatedItem = when (status) {
+                    "KITCHEN" -> 
+                        DrawerMenuItem(3, "Kitchen Screen", 0, activityClass = KitchenHomeActivity::class.java)
+                    "READY", "SERVED" -> 
+                        DrawerMenuItem(6, "Billing Screen", 0, activityClass = CashierHomeActivity::class.java)
+                    else -> 
+                        DrawerMenuItem(1, "Take Orders", 0, activityClass = WaiterHomeActivity::class.java)
+                }
+                navigationHelper.handleNavigation(simulatedItem)
+            }
+        )
 
         binding.mainDashboardRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -95,45 +180,9 @@ class ManagerDashboardFragment : Fragment() {
         }
     }
 
-    /**
-     * Finds the side navigation list inside the hosting Activity's layouts,
-     * and sets its adapter to forward selections directly to the DrawerNavigationHelper.
-     */
-    private fun setupActivityDrawerRecyclerView() {
-        val homeActivity = activity as? ManagerHomeActivity ?: return
-
-        val dynamicDrawerOptions = listOf(
-            DrawerMenuItem(0, "Dashboard", R.drawable.ic_dashboard_24dp, ManagerDashboardFragment::class.java),
-            DrawerMenuItem(1, "Orders", R.drawable.bg_order_notes, WaiterActiveOrdersFragment::class.java),
-            DrawerMenuItem(2, "Tables", R.drawable.ic_table_24dp, TableManagementFragment::class.java),
-            DrawerMenuItem(3, "Kitchen", R.drawable.bg_order_notes, ManagerDashboardFragment::class.java),
-            DrawerMenuItem(4, "Menu Management", R.drawable.biling, MenuManagementFragment::class.java),
-            DrawerMenuItem(5, "Staff Management", R.drawable.ic_staffs_24dp, StaffManagementFragment::class.java),
-            DrawerMenuItem(6, "Billing", R.drawable.biling, ManagerDashboardFragment::class.java),
-            DrawerMenuItem(7, "Inventory", R.drawable.bg_order_notes, ManagerDashboardFragment::class.java),
-            DrawerMenuItem(8, "Reports & Analytics", R.drawable.ic_sales_report_24dp, ManagerDashboardFragment::class.java),
-            DrawerMenuItem(9, "Customers", R.drawable.ic_person_24dp, ManagerDashboardFragment::class.java),
-            DrawerMenuItem(10, "Offers & Discounts", R.drawable.bg_order_notes, ManagerDashboardFragment::class.java),
-            DrawerMenuItem(11, "Notifications", R.drawable.ic_notifications_24dp, ManagerDashboardFragment::class.java, badgeCount = 2),
-            DrawerMenuItem(12, "Settings", R.drawable.ic_settings_24dp, ManagerDashboardFragment::class.java),
-            DrawerMenuItem(13, "Logout", R.drawable.ic_inventory_24dp, null, isLogout = true)
-        )
-
-        val menuAdapter = DrawerMenuAdapter(dynamicDrawerOptions) { selectedMenu ->
-            navigationHelper.handleNavigation(selectedMenu)
-            homeActivity.binding.drawerLayout.closeDrawer(GravityCompat.START)
-        }
-
-        // Direct view accessor parsing onto the Activity layout components
-        homeActivity.binding.navigationView.findViewById<RecyclerView>(R.id.rvDrawerMenu).apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            adapter = menuAdapter
-        }
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
+        navigationHelper.destroy()
         _binding = null
     }
 }
-

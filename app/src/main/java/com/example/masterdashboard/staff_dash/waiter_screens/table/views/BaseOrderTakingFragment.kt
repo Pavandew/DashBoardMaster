@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.SimpleItemAnimator
 import com.example.masterdashboard.databinding.FragmentOrderTakingBinding
 import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.master_dash.utils.SearchQueryManager
@@ -22,7 +23,6 @@ import com.example.masterdashboard.staff_dash.waiter_screens.table.models.*
 import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderTakingRepository
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.*
 import com.example.masterdashboard.staff_dash.waiter_screens.table.utils.ItemCustomizationOverlayManager
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
@@ -136,6 +136,8 @@ abstract class BaseOrderTakingFragment : Fragment() {
             scrollToCategory(it.id)
         }
         binding.rvMenuCategories.adapter = categoryAdapter
+        // FIX: Disable change animations to prevent blinking when selection changes during scroll
+        (binding.rvMenuCategories.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
         
         // Setup Diet Filter Scroll (Veg / Non-Veg)
         dietAdapter = FloorChipsAdapter { 
@@ -143,6 +145,7 @@ abstract class BaseOrderTakingFragment : Fragment() {
             menuViewModel.selectDietFilter(it.id, sessionViewModel.originalFoodList.value) 
         }
         binding.rvDietFilters.adapter = dietAdapter
+        (binding.rvDietFilters.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
 
         // Setup Main Food Menu List
         foodAdapter = FoodMenuAdapter(
@@ -193,6 +196,8 @@ abstract class BaseOrderTakingFragment : Fragment() {
         overlayManager?.show(item)
     }
 
+    private var lastObservedCatId: String? = null
+
     /**
      * Logic to highlight the top category chip based on current list scroll position.
      */
@@ -203,7 +208,6 @@ abstract class BaseOrderTakingFragment : Fragment() {
                 val layoutManager = recyclerView.layoutManager as? LinearLayoutManager ?: return
                 val firstPos = layoutManager.findFirstVisibleItemPosition()
                 if (firstPos != RecyclerView.NO_POSITION) {
-                    // FIX: Ensure "All" is selected when at the very top
                     val isAtTop = firstPos == 0 && (layoutManager.findViewByPosition(0)?.top ?: 0) >= 0
                     val catId = if (isAtTop) "ALL_ITEMS" else {
                         val item = foodAdapter.currentList.getOrNull(firstPos)
@@ -213,9 +217,12 @@ abstract class BaseOrderTakingFragment : Fragment() {
                             else -> "ALL_ITEMS"
                         }
                     }
-                    menuViewModel.syncCategoryHighlight(catId)
-                    val chipPos = categoryAdapter.currentList.indexOfFirst { it.id == catId }
-                    if (chipPos != -1) binding.rvMenuCategories.smoothScrollToPosition(chipPos)
+                    
+                    // FIX: Only trigger VM update if the category actually changed to avoid redundant UI cycles
+                    if (catId != lastObservedCatId) {
+                        menuViewModel.syncCategoryHighlight(catId)
+                        lastObservedCatId = catId
+                    }
                 }
             }
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
@@ -267,10 +274,13 @@ abstract class BaseOrderTakingFragment : Fragment() {
                         }
 
                         // Update the RecyclerView: Only submit grouped list if search is not active
+                        // FIX: Keep search manager's data list in sync with the latest quantities
+                        if (state.menuItems.isNotEmpty()) {
+                            searchManager?.updateDataList(state.menuItems)
+                        }
+
                         if (binding.searchBar.etSearchOrder.text.isNullOrEmpty()) {
                             foodAdapter.submitList(state.displayItems)
-                        } else {
-                            searchManager?.refreshSearch()
                         }
                     }
                 }

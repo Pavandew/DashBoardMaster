@@ -113,4 +113,29 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- FAST OVERLAY: For instant item customization -->
+    <FrameLayout
+        android:id="@+id/customizationOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="16dp"
+            app:strokeWidth="0dp">
+
+            <include
+                android:id="@+id/layoutCustomization"
+                layout="@layout/bottom_sheet_item_customization" />
+
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

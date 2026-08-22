@@ -17,13 +17,15 @@ import com.example.masterdashboard.databinding.ItemTopSellingCardsBinding
 import com.example.masterdashboard.manager_single_res_dash.models.DashboardSummary
 import com.example.masterdashboard.manager_single_res_dash.models.TopSellingFoodItem
 import com.example.masterdashboard.manager_single_res_dash.models.StatMetric
+import com.example.masterdashboard.manager_single_res_dash.models.QuickActionModel
 import com.google.android.material.card.MaterialCardView
 
 class ManagerDashboardAdapter (
     private var metricsList: List<StatMetric>,
     private var summaryData: DashboardSummary,
     private var topSellingItems: List<TopSellingFoodItem>,
-    private val onQuickActionClicked: (actionType: QuickActionType) -> Unit
+    private val onQuickActionClicked: (actionType: QuickActionType) -> Unit,
+    private val onSummaryClicked: (status: String) -> Unit = {}
 ): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     fun updateData(
@@ -39,7 +41,7 @@ class ManagerDashboardAdapter (
 
     // Enum representing your distinct quick action options cleanly
     enum class QuickActionType {
-        ADD_STAFF, MENU, FLOOR_TABLE, ORDERS, REPORTS
+        WAITER, KITCHEN, BILLING, ADD_STAFF, MENU, FLOOR_TABLE, REPORTS
     }
 
     companion object {
@@ -78,7 +80,7 @@ class ManagerDashboardAdapter (
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
             is OverviewViewHolder -> holder.bind(metricsList)
-            is SummaryViewHolder -> holder.bind(summaryData)
+            is SummaryViewHolder -> holder.bind(summaryData, onSummaryClicked)
             is QuickActionsViewHolder -> holder.bind(onQuickActionClicked)
             is TopSellingViewHolder -> holder.bind(topSellingItems)
         }
@@ -131,31 +133,36 @@ class ManagerDashboardAdapter (
     }
 
     class SummaryViewHolder(val binding: ItemDashboardSummaryBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(summary: DashboardSummary) {
+        fun bind(summary: DashboardSummary, onSummaryClicked: (String) -> Unit) {
             val context = binding.root.context
+            
             binding.summaryNew.apply {
                 txtSummaryLabel.text = context.getString(R.string.summary_new)
                 txtSummaryCount.text = summary.newCount
                 imgSummaryIcon.setImageResource(R.drawable.ic_person_24dp)
                 imgSummaryIcon.imageTintList = ColorStateList.valueOf(context.getColor(R.color.accent_blue))
+                root.setOnClickListener { onSummaryClicked("NEW") }
             }
             binding.summaryKitchen.apply {
                 txtSummaryLabel.text = context.getString(R.string.summary_kitchen)
                 txtSummaryCount.text = summary.kitchenCount
-                imgSummaryIcon.setImageResource(R.drawable.ic_person_24dp)
+                imgSummaryIcon.setImageResource(R.drawable.ic_chef_24dp)
                 imgSummaryIcon.imageTintList = ColorStateList.valueOf(context.getColor(R.color.accent_purple))
+                root.setOnClickListener { onSummaryClicked("KITCHEN") }
             }
             binding.summaryReady.apply {
                 txtSummaryLabel.text = context.getString(R.string.summary_ready)
                 txtSummaryCount.text = summary.readyCount
                 imgSummaryIcon.setImageResource(R.drawable.ic_person_24dp)
                 imgSummaryIcon.imageTintList = ColorStateList.valueOf(context.getColor(R.color.green_growth))
+                root.setOnClickListener { onSummaryClicked("READY") }
             }
             binding.summaryServed.apply {
                 txtSummaryLabel.text = context.getString(R.string.summary_served)
                 txtSummaryCount.text = summary.servedCount
-                imgSummaryIcon.setImageResource(R.drawable.ic_person_24dp)
+                imgSummaryIcon.setImageResource(R.drawable.ic_waiter_24dp)
                 imgSummaryIcon.imageTintList = ColorStateList.valueOf(context.getColor(R.color.accent_blue))
+                root.setOnClickListener { onSummaryClicked("SERVED") }
             }
             binding.summaryCancelled.apply {
                 txtSummaryLabel.text = context.getString(R.string.summary_cancelled)
@@ -163,6 +170,7 @@ class ManagerDashboardAdapter (
                 imgSummaryIcon.setImageResource(R.drawable.ic_person_24dp)
                 imgSummaryIcon.imageTintList = ColorStateList.valueOf(context.getColor(R.color.red_alert))
                 summaryDivider.visibility = View.GONE
+                root.setOnClickListener { onSummaryClicked("CANCELLED") }
             }
         }
     }
@@ -171,54 +179,67 @@ class ManagerDashboardAdapter (
         fun bind(onItemAction: (QuickActionType) -> Unit) {
             val context = binding.root.context
 
-            // Add Staff Click handling
-            binding.actionAddStaff.apply {
-                quickActionTitle.text = "Add Staff"
-                quickActionIcon.setImageResource(R.drawable.ic_staffs_24dp)
-                quickActionIcon.setColorFilter(context.getColor(R.color.accent_purple))
-                cardQuickAction.strokeColor = "#2B204D".toColorInt()
-                cardQuickAction.setCardBackgroundColor("#151426".toColorInt())
-                root.setOnClickListener { onItemAction(QuickActionType.ADD_STAFF) }
-            }
+            val actions = listOf(
+                QuickActionModel(
+                    QuickActionType.BILLING,
+                    "Billing Screen",
+                    R.drawable.biling,
+                    context.getColor(R.color.accent_blue),
+                    "#1D2D4B".toColorInt(),
+                    "#121826".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.WAITER,
+                    "Take Orders",
+                    R.drawable.waiter,
+                    context.getColor(R.color.accent_pink),
+                    "#461F33".toColorInt(),
+                    "#1A1420".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.KITCHEN,
+                    "Kitchen Screen",
+                    R.drawable.ic_chef_24dp,
+                    context.getColor(R.color.accent_purple),
+                    "#2B204D".toColorInt(),
+                    "#151426".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.ADD_STAFF,
+                    "Staff Management",
+                    R.drawable.ic_staffs_24dp,
+                    context.getColor(R.color.accent_purple),
+                    "#2B204D".toColorInt(),
+                    "#151426".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.MENU,
+                    "Menu Management",
+                    R.drawable.ic_menu_24dp,
+                    context.getColor(R.color.accent_orange),
+                    "#44321A".toColorInt(),
+                    "#1C1917".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.FLOOR_TABLE,
+                    "Table Management",
+                    R.drawable.ic_table_24dp,
+                    context.getColor(R.color.green_growth),
+                    "#173B2C".toColorInt(),
+                    "#111818".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.REPORTS,
+                    "Reports",
+                    R.drawable.ic_sales_report_24dp,
+                    context.getColor(R.color.accent_blue),
+                    "#1D2D4B".toColorInt(),
+                    "#121826".toColorInt()
+                )
+            )
 
-            // Menu Click handling
-            binding.actionMenu.apply {
-                quickActionTitle.text = "Menu"
-                quickActionIcon.setImageResource(R.drawable.biling)
-                quickActionIcon.setColorFilter(context.getColor(R.color.accent_orange))
-                cardQuickAction.strokeColor = "#44321A".toColorInt()
-                cardQuickAction.setCardBackgroundColor("#1C1917".toColorInt())
-                root.setOnClickListener { onItemAction(QuickActionType.MENU) }
-            }
-
-            // Floor/Table Click handling
-            binding.actionFloorTable.apply {
-                quickActionTitle.text = "Floor / Table"
-                quickActionIcon.setImageResource(R.drawable.ic_table_24dp)
-                quickActionIcon.setColorFilter(context.getColor(R.color.green_growth))
-                cardQuickAction.strokeColor = "#173B2C".toColorInt()
-                cardQuickAction.setCardBackgroundColor("#111818".toColorInt())
-                root.setOnClickListener { onItemAction(QuickActionType.FLOOR_TABLE) }
-            }
-
-            // Orders Click handling
-            binding.actionOrders.apply {
-                quickActionTitle.text = "Orders"
-                quickActionIcon.setImageResource(R.drawable.bg_order_notes)
-                quickActionIcon.setColorFilter(context.getColor(R.color.accent_pink))
-                cardQuickAction.strokeColor = "#461F33".toColorInt()
-                cardQuickAction.setCardBackgroundColor("#1A1420".toColorInt())
-                root.setOnClickListener { onItemAction(QuickActionType.ORDERS) }
-            }
-
-            // Reports Click handling
-            binding.actionReports.apply {
-                quickActionTitle.text = "Reports"
-                quickActionIcon.setImageResource(R.drawable.ic_sales_report_24dp)
-                quickActionIcon.setColorFilter(context.getColor(R.color.accent_blue))
-                cardQuickAction.strokeColor = "#1D2D4B".toColorInt()
-                cardQuickAction.setCardBackgroundColor("#121826".toColorInt())
-                root.setOnClickListener { onItemAction(QuickActionType.REPORTS) }
+            binding.rvQuickActions.apply {
+                adapter = QuickActionAdapter(actions, onItemAction)
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.example.masterdashboard.staff_dash.kitchen_screens.repo
 
 import android.util.Log
+import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.KitchenOrderDetailData
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.OrderDetailItem
 import com.google.firebase.firestore.FirebaseFirestore
@@ -28,33 +29,34 @@ class KitchenOrderRepository(private val firestore: FirebaseFirestore = Firebase
             return@callbackFlow
         }
 
+        Log.d(TAG, "📦 [REPO] Opening real-time kitchen stream for manager: $managerId")
+        val startTime = System.currentTimeMillis()
+
         // Listens to all active_orders across table subcollections for this manager
-        val listenerRegistration = firestore.collectionGroup("active_orders")
-            .orderBy("timestamp", Query.Direction.DESCENDING)
+        // IMPORTANT: Composite index (collectionGroup "active_orders" field "restaurantId" ASC, "timestamp" DESC) 
+        // is required for this query.
+        val listenerRegistration = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
+            .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
+            .orderBy(AppConstants.FIELD_TIMESTAMP, Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    Log.e(TAG, "📦 [REPO] Snapshot error: ${error.message}")
+                    // Safely close without propagating a crash-inducing exception
+                    // The ViewModel's .catch() or empty check will handle this.
+                    trySend(emptyList())
                     return@addSnapshotListener
                 }
 
-                val documents = snapshot?.documents?.filter { it.reference.path.contains("users/$managerId/") } ?: emptyList()
+                val documents = snapshot?.documents ?: emptyList()
+                val snapshotTime = System.currentTimeMillis()
+                Log.d(TAG, "📦 [REPO] Received snapshot with ${documents.size} docs. Latency: ${snapshotTime - startTime}ms")
 
-                // Process documents in parallel to match the robust naming logic of CashierBillingRepository
-                launch(Dispatchers.IO) {
+                // Process documents in parallel for speed
+                launch(Dispatchers.Default) {
                     val ordersList = documents.map { doc ->
                         async {
-                            val orderType = (doc.getString("orderType") ?: doc.getString("order_type")) ?: "DINE_IN"
-                            var tableName = doc.getString("tableName") ?: doc.getString("table_name")
-
-                            // If Dine-In and tableName is missing, try to fetch from parent Table document
-                            if (tableName == null && (orderType.equals("DINE_IN", true) || orderType.equals("NORMAL", true))) {
-                                try {
-                                    val tableDoc = doc.reference.parent.parent?.get()?.await()
-                                    tableName = tableDoc?.getString("tableName") ?: tableDoc?.getString("table_name")
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "Failed to fetch parent table name", e)
-                                }
-                            }
+                            val orderType = (doc.getString(AppConstants.FIELD_ORDER_TYPE) ?: doc.getString("order_type")) ?: AppConstants.ORDER_TYPE_DINE_IN
+                            val tableName = doc.getString(AppConstants.FIELD_TABLE_NAME) ?: doc.getString("table_name")
 
                             // Robust display name logic matching CashierBilling screen
                             val finalDisplayName = when {
@@ -66,51 +68,52 @@ class KitchenOrderRepository(private val firestore: FirebaseFirestore = Firebase
                                 else -> "Counter Order"
                             }
 
-                            val rawItems = doc.get("items") as? List<Map<String, Any>>
+                            val rawItems = doc.get(AppConstants.FIELD_ORDER_ITEMS) as? List<Map<String, Any>>
                             val items = rawItems?.map { item ->
                                 OrderDetailItem(
-                                    itemId = item["itemId"] as? String ?: "",
-                                    itemName = (item["itemName"] as? String ?: item["item_name"] as? String) ?: "",
-                                    quantity = (item["quantity"] as? Number)?.toInt() ?: 0,
-                                    orderedQuantity = (item["orderedQuantity"] as? Number)?.toInt() ?: 0,
-                                    readyQuantity = (item["readyQuantity"] as? Number)?.toInt() ?: 0,
-                                    itemNote = (item["itemNote"] as? String ?: item["item_note"] as? String) ?: "",
-                                    price = (item["price"] as? Number)?.toInt() ?: 0,
-                                    rowTotal = (item["rowTotal"] as? Number)?.toInt() ?: 0,
-                                    category = item["category"] as? String ?: "Veg"
+                                    itemId = item[AppConstants.FIELD_ITEM_ID] as? String ?: "",
+                                    itemName = (item[AppConstants.FIELD_ITEM_NAME] as? String ?: item["item_name"] as? String) ?: "",
+                                    variantName = item[AppConstants.FIELD_VARIANT_NAME] as? String ?: "",
+                                    quantity = (item[AppConstants.FIELD_QUANTITY] as? Number)?.toInt() ?: 0,
+                                    orderedQuantity = (item[AppConstants.FIELD_ORDERED_QTY] as? Number)?.toInt() ?: 0,
+                                    readyQuantity = (item[AppConstants.FIELD_READY_QTY] as? Number)?.toInt() ?: 0,
+                                    itemNote = (item[AppConstants.FIELD_ITEM_NOTE] as? String ?: item["item_note"] as? String) ?: "",
+                                    price = (item[AppConstants.FIELD_ITEM_PRICE] as? Number)?.toInt() ?: 0,
+                                    rowTotal = (item[AppConstants.FIELD_ROW_TOTAL] as? Number)?.toInt() ?: 0,
+                                    category = item[AppConstants.FIELD_CATEGORY] as? String ?: "Veg",
+                                    itemStatus = item["itemStatus"] as? String ?: "PENDING"
                                 )
                             } ?: emptyList()
 
-                            val rawStatus = doc.getString("orderStatus") ?: doc.getString("order_status") ?: "PENDING"
+                            val rawStatus = doc.getString(AppConstants.FIELD_ORDER_STATUS) ?: doc.getString("order_status") ?: AppConstants.STATUS_PENDING
                             
-                            // Status Mapping: 
-                            // 1. PENDING (Dine-in/Waiter) -> New
-                            // 2. PAID (Takeaway/Cashier) -> New (if it hasn't been prepared yet)
-                            // 3. SERVED (Marked by waiter) -> Completed
-                            // 4. Otherwise use the raw status (Preparing, Ready, etc.)
                             val displayStatus = when {
-                                rawStatus.equals("PENDING", ignoreCase = true) -> "New"
+                                rawStatus.equals(AppConstants.STATUS_PENDING, ignoreCase = true) -> "New"
                                 (orderType.contains("TAKE", true) || orderType.contains("DELIVERY", true)) && 
-                                        rawStatus.equals("PAID", ignoreCase = true) -> "New"
-                                rawStatus.equals("SERVED", ignoreCase = true) -> "Completed"
+                                        rawStatus.equals(AppConstants.STATUS_PAID, ignoreCase = true) -> "New"
+                                rawStatus.equals(AppConstants.STATUS_SERVED, ignoreCase = true) -> "Completed"
                                 else -> rawStatus
                             }
 
                             KitchenOrderDetailData(
-                                orderId = doc.getString("orderId") ?: doc.getString("order_id") ?: doc.id,
+                                orderId = doc.getString(AppConstants.FIELD_ORDER_ID) ?: doc.getString("order_id") ?: doc.id,
                                 tableName = finalDisplayName,
                                 orderStatus = rawStatus,
                                 status = displayStatus,
-                                specialNotes = doc.getString("specialNotes") ?: doc.getString("special_notes") ?: "",
-                                rejectionReason = doc.getString("rejectionReason") ?: doc.getString("rejection_reason") ?: "",
+                                specialNotes = doc.getString(AppConstants.FIELD_SPECIAL_NOTES) ?: doc.getString("special_notes") ?: "",
+                                rejectionReason = doc.getString(AppConstants.FIELD_REJECTION_REASON) ?: doc.getString("rejection_reason") ?: "",
                                 orderType = orderType,
-                                timestamp = doc.getTimestamp("timestamp"),
+                                restaurantId = doc.getString(AppConstants.FIELD_RESTAURANT_ID) ?: managerId,
+                                waiterId = doc.getString(AppConstants.FIELD_WAITER_ID) ?: "",
+                                timestamp = doc.getTimestamp(AppConstants.FIELD_TIMESTAMP),
                                 items = items,
                                 docPath = doc.reference.path
                             )
                         }
                     }.awaitAll()
 
+                    val processTime = System.currentTimeMillis()
+                    Log.d(TAG, "📦 [REPO] Finished processing list. Processing Time: ${processTime - snapshotTime}ms")
                     trySend(ordersList)
                 }
             }

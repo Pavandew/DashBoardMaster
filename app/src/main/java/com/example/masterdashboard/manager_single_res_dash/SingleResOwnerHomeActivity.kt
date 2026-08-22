@@ -10,7 +10,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivitySingleResOwnerHomeBinding
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.manager_single_res_dash.form_screen.viewModel.RegistrationDataViewModel
 import com.example.masterdashboard.manager_single_res_dash.form_screen.views.FormStep1Fragment
 import com.example.masterdashboard.notifications.NotificationPermissionHelper

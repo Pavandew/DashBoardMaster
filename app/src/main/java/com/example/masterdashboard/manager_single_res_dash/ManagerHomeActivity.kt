@@ -9,8 +9,11 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivityManagerHomeBinding
 import com.example.masterdashboard.manager_single_res_dash.views.ManagerDashboardFragment
+import com.example.masterdashboard.notifications.NotificationPermissionHelper
 
 class ManagerHomeActivity : AppCompatActivity() {
+
+    private lateinit var permissionHelper: NotificationPermissionHelper
 
     // Clean standard backing layout variable setup for safe View Binding access
     private var _binding: ActivityManagerHomeBinding? = null
@@ -22,6 +25,11 @@ class ManagerHomeActivity : AppCompatActivity() {
 
         _binding = ActivityManagerHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        
+        // Ensure background is solid from the start to prevent flickering
+        binding.root.setBackgroundResource(R.color.bg_main)
+
+        permissionHelper = NotificationPermissionHelper(this)
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.mainContent) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -35,6 +43,8 @@ class ManagerHomeActivity : AppCompatActivity() {
                 .replace(R.id.manager_fragmentContainer, ManagerDashboardFragment())
                 .commit()
         }
+
+        permissionHelper.askNotificationPermission()
     }
 
     override fun onBackPressed() {

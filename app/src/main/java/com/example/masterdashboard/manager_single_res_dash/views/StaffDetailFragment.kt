@@ -15,7 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentStaffDetailBinding
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.manager_single_res_dash.models.StaffDataModel
 import com.example.masterdashboard.manager_single_res_dash.uistate.StaffDetailUiState
 import com.example.masterdashboard.manager_single_res_dash.viewModel.StaffDetailViewModel
@@ -121,3 +121,4 @@ class StaffDetailFragment : Fragment() {
         _binding = null
     }
 }
+

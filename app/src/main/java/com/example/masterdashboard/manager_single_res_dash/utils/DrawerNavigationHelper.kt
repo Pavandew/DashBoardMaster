@@ -8,8 +8,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import com.example.masterdashboard.R
 import android.widget.TextView
-import com.example.masterdashboard.login.utils.SessionManager
-import com.example.masterdashboard.login.utils.AppConstants
+import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
 import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeActivity
 import androidx.core.view.GravityCompat
@@ -21,13 +21,17 @@ import com.example.masterdashboard.manager_single_res_dash.views.*
 import com.example.masterdashboard.manager_single_res_dash.views.MenuManagementFragment
 import com.example.masterdashboard.manager_single_res_dash.views.StaffManagementFragment
 import com.example.masterdashboard.manager_single_res_dash.views.TableManagementFragment
+import com.example.masterdashboard.notifications.alert.NotificationFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.order.views.WaiterActiveOrdersFragment
-import com.example.masterdashboard.login.utils.LogoutManager
+import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenInventoryFragment
+import com.example.masterdashboard.utils.LogoutManager
 import com.example.masterdashboard.staff_dash.billing_screens.views.CashierBillingFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenOrderFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.KitchenHomeActivity
 import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 
 class DrawerNavigationHelper(private val fragment: Fragment) {
 
@@ -53,6 +57,10 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
     private val logoutManager by lazy { LogoutManager(context) }
     private val sessionManager by lazy { SessionManager(context) }
 
+    private var menuAdapter: DrawerMenuAdapter? = null
+    private var unreadListener: ListenerRegistration? = null
+    private var menuItems: MutableList<DrawerMenuItem> = mutableListOf()
+
     /**
      * Handles routing for any given sidebar drawer item click event
      */
@@ -66,6 +74,11 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
         // NEW: Handle Activity Navigation (Show "all things" like bottom nav)
         item.activityClass?.let { activityClass ->
             Log.i(TAG, "Navigating to Activity: ${activityClass.simpleName}")
+            
+            // FIX: If we open a new Activity, reset drawer selection in current activity to 'Dashboard' (ID 0)
+            // so when user comes back, it's correct.
+            menuAdapter?.setSelectedItem(0)
+            
             val intent = Intent(context, activityClass)
             context.startActivity(intent)
             return
@@ -105,11 +118,11 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
             4 -> MenuManagementFragment()
             5 -> StaffManagementFragment()
             6 -> CashierBillingFragment()
-            7 -> null
+            7 -> KitchenInventoryFragment()
             8 -> null
             9 -> null
             10 -> null
-            11 -> null
+            11 -> NotificationFragment()
             12 -> null
             else -> null
         }
@@ -172,7 +185,7 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
     fun initDrawerMenu() {
         val currentActivity = activity ?: return
 
-        val dynamicDrawerOptions = listOf(
+        menuItems = mutableListOf(
             DrawerMenuItem(0, "Dashboard", R.drawable.ic_dashboard_24dp, fragmentClass = ManagerDashboardFragment::class.java),
             DrawerMenuItem(6, "Billing Screen", R.drawable.biling, activityClass = CashierHomeActivity::class.java),
             DrawerMenuItem(1, "Take Orders", R.drawable.waiter, activityClass = WaiterHomeActivity::class.java),
@@ -180,11 +193,11 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
             DrawerMenuItem(5, "Staff Management", R.drawable.ic_staffs_24dp, fragmentClass = StaffManagementFragment::class.java),
             DrawerMenuItem(4, "Menu Management", R.drawable.ic_menu_24dp, fragmentClass = MenuManagementFragment::class.java),
             DrawerMenuItem(2, "Table Management", R.drawable.ic_table_24dp, fragmentClass = TableManagementFragment::class.java),
-            DrawerMenuItem(7, "Inventory", R.drawable.ic_inventory_24dp, fragmentClass = ManagerDashboardFragment::class.java),
+            DrawerMenuItem(7, "Inventory", R.drawable.ic_inventory_24dp, fragmentClass = KitchenInventoryFragment::class.java),
             DrawerMenuItem(8, "Reports & Analytics", R.drawable.ic_sales_report_24dp, fragmentClass = ManagerDashboardFragment::class.java),
             DrawerMenuItem(9, "Customers", R.drawable.ic_person_24dp, fragmentClass = ManagerDashboardFragment::class.java),
             DrawerMenuItem(10, "Offers & Discounts", R.drawable.ic_discount_24dp, fragmentClass = ManagerDashboardFragment::class.java),
-            DrawerMenuItem(11, "Notifications", R.drawable.ic_notifications_24dp, fragmentClass = ManagerDashboardFragment::class.java, badgeCount = 2),
+            DrawerMenuItem(11, "Notifications", R.drawable.ic_notifications_24dp, fragmentClass = NotificationFragment::class.java),
             DrawerMenuItem(12, "Settings", R.drawable.ic_settings_24dp, fragmentClass = ManagerDashboardFragment::class.java),
             DrawerMenuItem(13, "Logout", R.drawable.ic_logout_24dp, isLogout = true)
         )
@@ -197,16 +210,63 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
 
         if (drawerLayout == null || navigationView == null) return
 
-        val menuAdapter = DrawerMenuAdapter(dynamicDrawerOptions) { selectedMenu ->
+        val adapter = DrawerMenuAdapter(menuItems) { selectedMenu ->
             handleNavigation(selectedMenu)
             drawerLayout.closeDrawer(GravityCompat.START)
         }
+        this.menuAdapter = adapter
 
         val rvMenu = navigationView.findViewById<RecyclerView>(R.id.rvDrawerMenu)
         rvMenu?.apply {
             layoutManager = LinearLayoutManager(context)
-            adapter = menuAdapter
+            this.adapter = adapter
+        }
+
+        startUnreadCountListener()
+    }
+
+    private fun startUnreadCountListener() {
+        val managerId = sessionManager.getUid()
+        if (managerId.isEmpty()) {
+            Log.w(TAG, "Skipping unread listener because managerId is empty")
+            return
+        }
+
+        Log.d(TAG, "Starting real-time unread badge listener for managerId: $managerId")
+        unreadListener?.remove()
+        unreadListener = FirebaseFirestore.getInstance()
+            .collection(AppConstants.COLLECTION_USERS)
+            .document(managerId)
+            .collection(AppConstants.COLLECTION_NOTIFICATIONS)
+            .whereEqualTo(AppConstants.FIELD_IS_READ, false)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e(TAG, "Error in unread badge listener", error)
+                    return@addSnapshotListener
+                }
+
+                val unreadCount = snapshot?.size() ?: 0
+                Log.d(TAG, "Unread notifications update: count=$unreadCount")
+                updateBadgeCount(11, unreadCount)
+            }
+    }
+
+    private fun updateBadgeCount(itemId: Int, count: Int) {
+        val index = menuItems.indexOfFirst { it.id == itemId }
+        if (index != -1) {
+            val oldItem = menuItems[index]
+            if (oldItem.badgeCount != count) {
+                menuItems[index] = oldItem.copy(badgeCount = count)
+                menuAdapter?.notifyItemChanged(index)
+            }
         }
     }
-}
 
+    /**
+     * Call this from Fragment.onDestroyView() to stop listeners
+     */
+    fun destroy() {
+        unreadListener?.remove()
+        unreadListener = null
+    }
+}

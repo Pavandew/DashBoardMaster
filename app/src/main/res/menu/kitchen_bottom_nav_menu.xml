@@ -15,6 +15,12 @@
     <item
         android:id="@+id/kitchen_inventoryFragment"
         android:title="Inventory"
+        android:icon="@drawable/ic_inventory_24dp"
+        />
+
+    <item
+        android:id="@+id/kitchen_notificationFragment"
+        android:title="Alerts"
         android:icon="@drawable/ic_notifications_24dp"
         />
 

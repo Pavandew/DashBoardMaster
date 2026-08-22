@@ -44,7 +44,18 @@ class FoodItemListAdapter(
 
             // Bind textual data elements
             binding.tvFoodName.text = item.itemName
-            binding.tvFoodPrice.text = context.getString(R.string.price_format, item.price)
+            
+            if (item.hasVariants && item.variants.isNotEmpty()) {
+                val minPrice = item.variants.minOfOrNull { it.price }
+                if (minPrice != null && minPrice != Double.MAX_VALUE) {
+                    binding.tvFoodPrice.text = "Starts from ₹${minPrice.toInt()}"
+                } else {
+                    binding.tvFoodPrice.text = "Multiple Sizes"
+                }
+            } else {
+                binding.tvFoodPrice.text = context.getString(R.string.price_format, item.price)
+            }
+
             binding.tvStatusText.text = item.status
 
             // Handle active/inactive indicator state backgrounds dynamically

@@ -14,9 +14,10 @@ import com.example.masterdashboard.staff_dash.kitchen_screens.model.KitchenOrder
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.OrderDetailItem
 import com.example.masterdashboard.staff_dash.kitchen_screens.uistate.KitchenOrderDetailUiState
 import com.example.masterdashboard.staff_dash.kitchen_screens.viewModel.KitchenPreparationDetailViewModel
+import com.example.masterdashboard.staff_dash.utils.StatusUIUtils
+import com.example.masterdashboard.staff_dash.utils.TimeUtils
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.util.concurrent.TimeUnit
 
 class KitchenPreparationDetailFragment : Fragment(R.layout.fragment_kitchen_preparation_detail) {
 
@@ -101,61 +102,45 @@ class KitchenPreparationDetailFragment : Fragment(R.layout.fragment_kitchen_prep
     }
 
     private fun populateUi(data: KitchenOrderDetailData) {
-        binding.tvDetailTitle.text = "Order #${data.orderId.takeLast(4).uppercase()}"
+        // Simpler ID display logic matching list screen
+        val displayId = when {
+            data.orderId.contains("-") -> data.orderId.substringAfter("-")
+            data.orderId.startsWith("#") -> data.orderId.substring(1)
+            else -> {
+                val digits = data.orderId.filter { it.isDigit() }
+                if (digits.length >= 4) digits.takeLast(4) else data.orderId.takeLast(4)
+            }
+        }
+        
+        binding.tvDetailTitle.text = "Order #$displayId"
         binding.tvTableNo.text = data.tableName.ifEmpty { "Table N/A" }
         binding.tvDineIn.text = " • ${data.orderType}"
 
-        // 1. Dynamic Status Badge Styling
-        val normalizedStatus = data.status.lowercase().trim()
-        binding.tvStatusBadge.text = data.status
-        when (normalizedStatus) {
-            "preparing" -> {
-                binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_status_preparing)
-                binding.tvStatusBadge.setTextColor(android.graphics.Color.parseColor("#92400E"))
-            }
-            "ready" -> {
-                binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_status_ready)
-                binding.tvStatusBadge.setTextColor(android.graphics.Color.parseColor("#15803D"))
-            }
-            "completed" -> {
-                binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_status_active)
-                binding.tvStatusBadge.setTextColor(android.graphics.Color.parseColor("#15803D"))
-            }
-            else -> {
-                binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_status_active)
-                binding.tvStatusBadge.setTextColor(android.graphics.Color.parseColor("#374151"))
-            }
-        }
+        // 1. Dynamic Status Badge Styling using centralized Utils
+        StatusUIUtils.applyStatusUI(requireContext(), binding.tvStatusBadge, data.status)
 
-        // 2. Button Visibility: Hide "Ready to Serve" button if status is already "Ready" or "Completed"
-        if (normalizedStatus == "ready" || normalizedStatus == "completed") {
+        // 2. Button Visibility: Hide "Ready to Serve" button if status is finalized
+        val normalizedStatus = data.status.lowercase().trim()
+        val finalizedStatuses = setOf("ready", "completed", "handed over", "handover", "served", "paid", "billing", "success")
+        
+        if (finalizedStatuses.contains(normalizedStatus)) {
             binding.btnFinishReady.visibility = View.GONE
         } else {
             binding.btnFinishReady.visibility = View.VISIBLE
         }
         
-        // Time formatting
-        val ts = data.timestamp
-        if (ts != null) {
-            val durationMillis = System.currentTimeMillis() - ts.toDate().time
-            val min = TimeUnit.MILLISECONDS.toMinutes(durationMillis)
-            val hr = TimeUnit.MILLISECONDS.toHours(durationMillis)
-            val dy = TimeUnit.MILLISECONDS.toDays(durationMillis)
-
-            val timeText = when {
-                dy > 0 -> "$dy d ago"
-                hr > 0 -> "$hr h ago"
-                else -> "$min min ago"
-            }
-            binding.tvItemCount.text = "Elapsed time: $timeText"
-        } else {
-            binding.tvItemCount.text = "Just now"
-        }
+        // Set Relative Time using centralized TimeUtils
+        binding.tvItemCount.text = TimeUtils.getRelativeTime(data.timestamp)
         
         binding.tvItemToPrepare.text = "Items to Prepare (${data.items.size})"
         
+        // Sort items: New items (qty > orderedQty) first, then processed items
+        val sortedItems = data.items.sortedWith(compareByDescending<OrderDetailItem> { 
+            it.quantity > it.orderedQuantity 
+        }.thenBy { it.itemName })
+
         preparationDetailAdapter.updateOrderStatusContext(data.status)
-        preparationDetailAdapter.submitList(data.items)
+        preparationDetailAdapter.submitList(sortedItems)
         
         // Reset selection if list changes significantly or refresh happens
         updateButtonLabel()

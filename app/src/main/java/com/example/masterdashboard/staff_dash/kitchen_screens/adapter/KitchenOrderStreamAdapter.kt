@@ -9,6 +9,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemKitchenOrderTicketBinding
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.KitchenOrderDetailData
+import com.example.masterdashboard.staff_dash.utils.StatusUIUtils
+import com.example.masterdashboard.staff_dash.utils.TimeUtils
 
 class KitchenOrderStreamAdapter(private val onItemClicked: (KitchenOrderDetailData) -> Unit) :
     ListAdapter<KitchenOrderDetailData, KitchenOrderStreamAdapter.OrderViewHolder>(OrderDiffCallback) {
@@ -24,52 +26,28 @@ class KitchenOrderStreamAdapter(private val onItemClicked: (KitchenOrderDetailDa
 
     class OrderViewHolder(private val binding: ItemKitchenOrderTicketBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(order: KitchenOrderDetailData, onItemClicked: (KitchenOrderDetailData) -> Unit) {
-            binding.tvOrderId.text = "Order #${order.orderId.takeLast(4).uppercase()}"
-//            binding.tvOrderItemsSummary.text = order.itemsSummary
-            binding.tvTicketTable.text = order.tableName
-            binding.tvTicketStatus.text = order.status
-
-            // Clean Operational Time Formatting Logic safely
-            val ts = order.timestamp
-            if (ts != null) {
-                val durationMillis = System.currentTimeMillis() - ts.toDate().time
-                val min = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(durationMillis)
-                val hr = java.util.concurrent.TimeUnit.MILLISECONDS.toHours(durationMillis)
-                val dy = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(durationMillis)
-
-                binding.tvTicketTime.text = when {
-                    dy > 0 -> "$dy d ago"
-                    hr > 0 -> "$hr h ago"
-                    else -> "$min min ago"
-                }
-            } else {
-                binding.tvTicketTime.text = "Just now"
-            }
-            // OPTION A: If you want to show total unique rows count (e.g., 3 unique types of dishes)
-            binding.tvOrderItemsSummary.text = "${order.items.size} Items"
-            // Contextual Status Badge Coloring (Light Theme)
-            when (order.status.lowercase().trim()) {
-                "new", "pending" -> {
-                    binding.statusBadge.setCardBackgroundColor(Color.parseColor("#E0F2FE")) // Light Blue
-                    binding.tvTicketStatus.setTextColor(Color.parseColor("#0369A1"))
-                }
-                "preparing" -> {
-                    binding.statusBadge.setCardBackgroundColor(Color.parseColor("#FEF3C7")) // Light Amber
-                    binding.tvTicketStatus.setTextColor(Color.parseColor("#92400E"))
-                }
-                "ready" -> {
-                    binding.statusBadge.setCardBackgroundColor(Color.parseColor("#DCFCE7")) // Light Green
-                    binding.tvTicketStatus.setTextColor(Color.parseColor("#15803D"))
-                }
-                "rejected" -> {
-                    binding.statusBadge.setCardBackgroundColor(Color.parseColor("#FEE2E2")) // Light Red
-                    binding.tvTicketStatus.setTextColor(Color.parseColor("#B91C1C"))
-                }
+            val context = binding.root.context
+            
+            // Simpler ID display matching Detail screen
+            val displayId = when {
+                order.orderId.contains("-") -> order.orderId.substringAfter("-")
+                order.orderId.startsWith("#") -> order.orderId.substring(1)
                 else -> {
-                    binding.statusBadge.setCardBackgroundColor(Color.parseColor("#F3F4F6")) // Light Gray
-                    binding.tvTicketStatus.setTextColor(Color.parseColor("#374151"))
+                    val digits = order.orderId.filter { it.isDigit() }
+                    if (digits.length >= 4) digits.takeLast(4) else order.orderId.takeLast(4)
                 }
             }
+            
+            binding.tvOrderId.text = "Order #$displayId"
+            binding.tvTicketTable.text = order.tableName
+
+            // Using centralized TimeUtils
+            binding.tvTicketTime.text = TimeUtils.getRelativeTime(order.timestamp)
+
+            binding.tvOrderItemsSummary.text = "${order.items.size} Items"
+            
+            // Using centralized StatusUIUtils
+            StatusUIUtils.applyStatusUI(context, binding.tvTicketStatus, order.status, binding.statusBadge)
 
             binding.root.setOnClickListener { onItemClicked(order) }
         }

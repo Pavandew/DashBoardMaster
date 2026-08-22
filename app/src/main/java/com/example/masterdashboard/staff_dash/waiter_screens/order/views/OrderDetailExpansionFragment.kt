@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -15,9 +14,10 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentOrderDetailsExpansionBinding
-import com.example.masterdashboard.login.utils.SessionManager
+import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.order.adapter.OrderDetailRowAdapter
+import com.example.masterdashboard.staff_dash.utils.StatusUIUtils
 import com.example.masterdashboard.staff_dash.waiter_screens.order.models.ActiveOrderStatus
 import com.example.masterdashboard.staff_dash.waiter_screens.order.repo.OrderDetailRepository
 import com.example.masterdashboard.staff_dash.waiter_screens.order.viewModel.OrderDetailViewModel
@@ -133,58 +133,38 @@ class OrderDetailExpansionFragment : Fragment() {
                         binding.tvExpandedOrderId.text = state.orderId
                         binding.tvExpandedTimestamp.text = state.timeStamp
 
-                        // Status Tag Configuration
-                        when (state.status) {
-                            ActiveOrderStatus.PENDING -> {
-                                binding.tvExpandedStatusTag.text = "• Pending"
-                                binding.tvExpandedStatusTag.setBackgroundResource(R.drawable.bg_status_preparing)
-                                binding.tvExpandedStatusTag.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_occupied))
-                            }
-                            ActiveOrderStatus.PREPARING -> {
-                                binding.tvExpandedStatusTag.text = "• Preparing"
-                                binding.tvExpandedStatusTag.setBackgroundResource(R.drawable.bg_status_preparing)
-                                binding.tvExpandedStatusTag.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_occupied))
-                            }
-                            ActiveOrderStatus.READY -> {
-                                binding.tvExpandedStatusTag.text = "• Ready"
-                                binding.tvExpandedStatusTag.setBackgroundResource(R.drawable.bg_status_ready)
-                                binding.tvExpandedStatusTag.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_free))
-                            }
-                            ActiveOrderStatus.SERVED -> {
-                                binding.tvExpandedStatusTag.text = "• Served"
-                                binding.tvExpandedStatusTag.setBackgroundResource(R.drawable.bg_status_served)
-                                binding.tvExpandedStatusTag.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_billing))
-                            }
-                            ActiveOrderStatus.BILLING -> {
-                                binding.tvExpandedStatusTag.text = "• Billing"
-                                binding.tvExpandedStatusTag.setBackgroundResource(R.drawable.bg_status_preparing) // Reuse or add new bg
-                                binding.tvExpandedStatusTag.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_occupied))
-                            }
-                            ActiveOrderStatus.PAID -> {
-                                binding.tvExpandedStatusTag.text = "• Paid"
-                                binding.tvExpandedStatusTag.setBackgroundResource(R.drawable.bg_status_ready)
-                                binding.tvExpandedStatusTag.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_free))
-                            }
-                            else -> {
-                                binding.tvExpandedStatusTag.text = "• ${state.status.name}"
-                                binding.tvExpandedStatusTag.setBackgroundResource(R.drawable.bg_status_preparing)
-                                binding.tvExpandedStatusTag.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_occupied))
-                            }
-                        }
+                        // Status Tag Configuration - Using centralized utility
+                        StatusUIUtils.applyStatusUI(requireContext(), binding.tvExpandedStatusTag, state.status)
+
+                        // Update adapter with current order status to ensure items reflect served/ready states
+                        rowAdapter.updateOrderStatus(state.status)
 
                         // Bottom Actions Logic
                         when (state.status) {
-                            ActiveOrderStatus.PENDING, ActiveOrderStatus.PREPARING, ActiveOrderStatus.READY -> {
+                            ActiveOrderStatus.PENDING, ActiveOrderStatus.PREPARING -> {
+                                binding.btnMarkAsServed.visibility = View.GONE
+                                binding.btnAddMoreItems.visibility = View.VISIBLE
+                                binding.btnGenerateBill.visibility = View.GONE
+                            }
+                            ActiveOrderStatus.READY -> {
                                 binding.btnMarkAsServed.visibility = View.VISIBLE
-                                binding.llAfterServedActions.visibility = View.GONE
+                                binding.btnAddMoreItems.visibility = View.VISIBLE
+                                binding.btnGenerateBill.visibility = View.GONE
                             }
                             ActiveOrderStatus.SERVED -> {
                                 binding.btnMarkAsServed.visibility = View.GONE
-                                binding.llAfterServedActions.visibility = View.VISIBLE
+                                binding.btnAddMoreItems.visibility = View.VISIBLE
+                                binding.btnGenerateBill.visibility = View.VISIBLE
+                            }
+                            ActiveOrderStatus.BILLING -> {
+                                binding.btnMarkAsServed.visibility = View.GONE
+                                binding.btnAddMoreItems.visibility = View.VISIBLE
+                                binding.btnGenerateBill.visibility = View.GONE
                             }
                             else -> {
                                 binding.btnMarkAsServed.visibility = View.GONE
-                                binding.llAfterServedActions.visibility = View.GONE
+                                binding.btnAddMoreItems.visibility = View.GONE
+                                binding.btnGenerateBill.visibility = View.GONE
                             }
                         }
 

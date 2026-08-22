@@ -15,9 +15,10 @@ import com.example.masterdashboard.staff_dash.kitchen_screens.model.OrderDetailI
 import com.example.masterdashboard.staff_dash.kitchen_screens.uistate.KitchenOrderDetailUiState
 import com.example.masterdashboard.staff_dash.kitchen_screens.utils.KitchenRejectionDialogHelper
 import com.example.masterdashboard.staff_dash.kitchen_screens.viewModel.KitchenOrderDetailViewModel
+import com.example.masterdashboard.staff_dash.utils.StatusUIUtils
+import com.example.masterdashboard.staff_dash.utils.TimeUtils
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.util.concurrent.TimeUnit
 
 class KitchenOrderDetailFragment : Fragment(R.layout.fragment_kitchen_order_detail) {
 
@@ -70,7 +71,18 @@ class KitchenOrderDetailFragment : Fragment(R.layout.fragment_kitchen_order_deta
 
     private fun populateUi(data: KitchenOrderDetailData) {
         currentOrderData = data
-        binding.tvDetailTitle.text = "Order #${data.orderId.takeLast(4).uppercase()}"
+        
+        // Simpler ID display: Use numeric part if possible, otherwise last 4 chars
+        val displayId = when {
+            data.orderId.contains("-") -> data.orderId.substringAfter("-")
+            data.orderId.startsWith("#") -> data.orderId.substring(1)
+            else -> {
+                val digits = data.orderId.filter { it.isDigit() }
+                if (digits.length >= 4) digits.takeLast(4) else data.orderId.takeLast(4)
+            }
+        }
+        
+        binding.tvDetailTitle.text = "Order #$displayId"
         binding.tvTableNo.text = data.tableName
         
         binding.tvDineIn1.text = " • ${data.orderType}"
@@ -78,46 +90,21 @@ class KitchenOrderDetailFragment : Fragment(R.layout.fragment_kitchen_order_deta
         val normalizedStatus = data.status.lowercase().trim()
         Log.d(TAG, "populateUi: status='$normalizedStatus', total items=${data.items.size}")
 
-        // Only show NEW items (Delta) if the ticket is currently in the Order Log (New/Pending/Paid)
-        val itemsToShow = if (normalizedStatus == "new" || normalizedStatus == "pending" || normalizedStatus == "paid") {
-            val filtered = data.items.filter { it.quantity > it.orderedQuantity }
-            Log.d(TAG, "populateUi: New items filter: ${filtered.size} items meet (qty > orderedQty) criteria.")
-            filtered
-        } else {
-            // For Workstation (Preparing), show the full list
-            Log.d(TAG, "populateUi: Workstation mode - showing all ${data.items.size} items.")
-            data.items
-        }
+        // Sort items: New items (qty > orderedQty) first, then processed items
+        val sortedItems = data.items.sortedWith(compareByDescending<OrderDetailItem> { 
+            it.quantity > it.orderedQuantity 
+        }.thenBy { it.itemName })
 
-        // NEW: If filtered list is empty but original list is not, it means orderedQuantity caught up to quantity.
-        // In such cases, if we are in "New" status, we should show at least the latest item.
-        val finalItems = if (itemsToShow.isEmpty() && data.items.isNotEmpty()) {
-            data.items
-        } else {
-            itemsToShow
-        }
-
-        binding.tvItemCount.text = "${finalItems.size} Items"
+        binding.tvItemCount.text = "${sortedItems.size} Total Items"
         binding.tvMasterNoteText.text = data.specialNotes.ifEmpty { "No custom instructions note." }
 
-        // Set Relative Time
-        val ts = data.timestamp
-        if (ts != null) {
-            val durationMillis = System.currentTimeMillis() - ts.toDate().time
-            val min = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(durationMillis)
-            val hr = java.util.concurrent.TimeUnit.MILLISECONDS.toHours(durationMillis)
-            val dy = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(durationMillis)
+        // Set Relative Time using centralized TimeUtils
+        binding.tvTime.text = TimeUtils.getRelativeTime(data.timestamp)
 
-            binding.tvTime.text = when {
-                dy > 0 -> "$dy d ago"
-                hr > 0 -> "$hr h ago"
-                else -> "$min min ago"
-            }
-        } else {
-            binding.tvTime.text = "Just now"
-        }
+        // Set Status using centralized StatusUIUtils
+        StatusUIUtils.applyStatusUI(requireContext(), binding.tvNewOrOld, data.status, binding.detailTableBadge)
 
-        detailItemsAdapter.submitList(finalItems)
+        detailItemsAdapter.submitList(sortedItems)
         updateButtonVisibilities(data.status)
     }
 

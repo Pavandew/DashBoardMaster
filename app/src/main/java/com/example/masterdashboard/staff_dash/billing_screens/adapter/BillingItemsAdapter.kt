@@ -24,7 +24,8 @@ class BillingItemsAdapter : ListAdapter<OrderItemModel, BillingItemsAdapter.Item
     class ItemViewHolder(private val binding: ItemOrderDetailRowBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(item: OrderItemModel) {
-            binding.tvExpandedItemName.text = item.itemName
+            val displayName = if (item.variantName.isNotEmpty()) "${item.itemName} (${item.variantName})" else item.itemName
+            binding.tvExpandedItemName.text = displayName
             binding.tvExpandedItemQtyPrice.text = "${item.quantity} x ₹${item.price}"
             binding.tvExpandedItemRowTotal.text = "₹${item.rowTotal}"
         }

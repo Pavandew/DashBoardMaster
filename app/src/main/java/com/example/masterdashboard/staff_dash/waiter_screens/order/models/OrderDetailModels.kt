@@ -3,10 +3,12 @@ package com.example.masterdashboard.staff_dash.waiter_screens.order.models
 data class OrderExpandedItemData(
     val id: String = "",
     val name: String = "",
+    val variantName: String = "", // Added for sizes
     val quantity: Int = 0,
     val unitPrice: Int = 0,
     val totalPrice: Int = 0,
-    val orderedQuantity: Int = 0 // Existing quantity already sent to kitchen
+    val orderedQuantity: Int = 0, // Existing quantity already sent to kitchen
+    val status: String = "PENDING" // PENDING, PREPARING, SERVED, REJECTED
 )
 
 data class OrderDetailExpansionUiState(

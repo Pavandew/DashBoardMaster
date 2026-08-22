@@ -11,9 +11,12 @@ data class InventoryItem(
     val minThreshold: Double = 0.0,
     val lastUpdated: Long = System.currentTimeMillis(),
     val inventoryCategory: String = "",
-    val estimatedDaysLeft: Int = 0
+    val estimatedDaysLeft: Int = 0,
+    val manualStatus: String = "AUTO" // Values: AUTO, "In Stock", "Low Stock", "Out of Stock"
 ) {
     fun getStockStatus(): String {
+        if (manualStatus != "AUTO") return manualStatus
+
         return when {
             itemQuantity <= 0 -> "Out of Stock"
             itemQuantity <= minThreshold -> "Low Stock"

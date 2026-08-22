@@ -50,8 +50,22 @@
             android:textColor="#8C96A5"
             android:textSize="14sp" />
 
+        <AutoCompleteTextView
+            android:id="@+id/etCategory"
+            style="@style/FormEditTextStyle"
+            android:hint="e.g. Vegetables"
+            android:completionThreshold="1"
+            android:inputType="textCapWords" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set Status (Optional)"
+            android:textColor="#8C96A5"
+            android:textSize="14sp" />
+
         <Spinner
-            android:id="@+id/spinnerCategory"
+            android:id="@+id/spinnerStatus"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="6dp"

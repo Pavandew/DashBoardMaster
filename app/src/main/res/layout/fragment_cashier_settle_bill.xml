@@ -107,86 +107,15 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Payment Method -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="Select Payment Method"
-                android:textColor="#111827"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+            <!-- Already Paid Info Section -->
+            <include
+                android:id="@+id/layoutPaid"
+                layout="@layout/layout_settle_paid_section" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="vertical">
-
-                <include
-                    android:id="@+id/layoutCash"
-                    layout="@layout/layout_payment_method_item" />
-
-                <include
-                    android:id="@+id/layoutUpi"
-                    layout="@layout/layout_payment_method_item" />
-
-                <include
-                    android:id="@+id/layoutCard"
-                    layout="@layout/layout_payment_method_item" />
-
-                <include
-                    android:id="@+id/layoutWallet"
-                    layout="@layout/layout_payment_method_item" />
-
-            </LinearLayout>
-
-            <!-- Discount Section -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="Discount (Optional)"
-                android:textColor="#111827"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:layout_marginTop="8dp"
-                android:orientation="horizontal">
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    app:cardBackgroundColor="#FFFFFF"
-                    app:cardCornerRadius="10dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="#E5E7EB"
-                    app:strokeWidth="1dp">
-
-                    <EditText
-                        android:id="@+id/etDiscountInput"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@null"
-                        android:hint="Enter amount"
-                        android:inputType="numberDecimal"
-                        android:paddingHorizontal="16dp"
-                        android:textColor="#111827"
-                        android:textSize="15sp" />
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnApplyDiscount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="8dp"
-                    android:text="Apply"
-                    app:cornerRadius="10dp" />
-            </LinearLayout>
+            <!-- Unpaid / Selection Section -->
+            <include
+                android:id="@+id/layoutUnpaid"
+                layout="@layout/layout_settle_unpaid_section" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

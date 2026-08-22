@@ -135,7 +135,7 @@ class ItemCustomizationOverlayManager(
         val addonsPrice = customizationList.filter { !it.isVariant && it.isSelected }.sumOf { it.price }
         
         val total = (itemPrice + addonsPrice) * quantity
-        binding.btnAddToOrder.text = "Add to Order • ₹${total.toInt()}"
+        binding.btnAddToOrder.text = "Add • ₹${total.toInt()}"
         binding.tvFoodBasePrice.text = "₹${itemPrice.toInt()}"
     }
 }

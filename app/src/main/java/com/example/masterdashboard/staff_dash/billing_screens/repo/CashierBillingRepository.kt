@@ -94,6 +94,7 @@ class CashierBillingRepository(
                             val timestamp = doc.getTimestamp(AppConstants.FIELD_TIMESTAMP) ?: Timestamp.now()
                             val paidAt = doc.getTimestamp(AppConstants.FIELD_PAID_AT)
                             val paymentMethod = doc.getString(AppConstants.FIELD_PAYMENT_METHOD) ?: doc.getString("paymentMode") ?: ""
+                            val waiterId = doc.getString(AppConstants.FIELD_WAITER_ID) ?: ""
 
                             // Convert Firestore list to OrderItemModel list
                             val rawItems = doc.get(AppConstants.FIELD_ORDER_ITEMS) as? List<Map<String, Any>>
@@ -125,6 +126,7 @@ class CashierBillingRepository(
                                 timestamp = timestamp,
                                 paidAt = paidAt,
                                 paymentMethod = paymentMethod,
+                                waiterId = waiterId,
                                 docPath = doc.reference.path
                             )
                         }

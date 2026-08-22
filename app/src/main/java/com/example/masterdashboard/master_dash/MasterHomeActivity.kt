@@ -15,8 +15,9 @@ import com.example.masterdashboard.master_dash.dashboard.DashboardFragment
 import com.example.masterdashboard.master_dash.logs.LogsFragment
 import com.example.masterdashboard.master_dash.res_lists.views.RestaurantListsFragment
 import com.example.masterdashboard.master_dash.settings.manager.SettingsDrawerManager
-import com.example.masterdashboard.master_dash.settings.views.ChangePasswordFragment
+import com.example.masterdashboard.login.views.ChangePasswordFragment
 import com.example.masterdashboard.master_dash.settings.views.ProfileFragment
+import com.example.masterdashboard.notifications.NotificationPermissionHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MasterHomeActivity : AppCompatActivity() {
@@ -24,6 +25,7 @@ class MasterHomeActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMasterHomeBinding
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var settingsDrawerManager: SettingsDrawerManager
+    private lateinit var permissionHelper: NotificationPermissionHelper
 
     private var currentTag: String? = null
     private var pendingTag: String? = null
@@ -48,6 +50,8 @@ class MasterHomeActivity : AppCompatActivity() {
         binding = ActivityMasterHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        permissionHelper = NotificationPermissionHelper(this)
+
         bottomNav = binding.hostBottomNav
 
         setupBottomNavigation()
@@ -62,6 +66,8 @@ class MasterHomeActivity : AppCompatActivity() {
             Log.d(TAG, "onCreate: Restoring state, currentTag: $currentTag")
             navigateTo(currentTag ?: TAG_DASHBOARD)
         }
+
+        permissionHelper.askNotificationPermission()
     }
 
     // Bottom Navigation

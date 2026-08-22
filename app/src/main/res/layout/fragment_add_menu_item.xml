@@ -45,7 +45,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:padding="40dp"
-                        android:src="@drawable/person"
+                        android:src="@drawable/camera"
                         android:scaleType="centerInside" />
 
                     <ImageView
@@ -55,7 +55,7 @@
                         android:layout_gravity="top|end"
                         android:layout_margin="10dp"
                         android:src="@android:drawable/ic_menu_close_clear_cancel"
-                        android:visibility="gone"
+                        android:visibility="visible"
                         app:tint="#FFFFFF" />
                 </FrameLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -91,20 +91,83 @@
                 android:focusable="false"
                 android:textColor="@color/text_secondary" />
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Price *"
-                android:textColor="#8C96A5"
-                android:textSize="14sp" />
-
-            <EditText
-                android:id="@+id/etMenuFoodPrice"
-                style="@style/FormEditTextStyle"
-                android:layout_marginTop="6dp"
+                android:orientation="horizontal"
                 android:layout_marginBottom="16dp"
-                android:hint="Enter price"
-                android:inputType="number" />
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Has Multiple Sizes/Variants?"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchHasVariants"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:thumbTint="@color/switch_thumb_color"
+                    app:trackTint="@color/switch_track_color" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/llPriceContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Base Price *"
+                    android:textColor="#8C96A5"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/etMenuFoodPrice"
+                    style="@style/FormEditTextStyle"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="16dp"
+                    android:hint="Enter price"
+                    android:inputType="number" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/llVariantsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sizes / Variants *"
+                    android:textColor="#8C96A5"
+                    android:textSize="14sp" />
+
+                <LinearLayout
+                    android:id="@+id/variantsList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddVariant"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="+ Add Another Size"
+                    android:textAllCaps="false"
+                    android:textColor="@color/primary_purple"
+                    app:icon="@android:drawable/ic_input_add"
+                    app:iconTint="@color/primary_purple" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"

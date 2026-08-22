@@ -18,41 +18,40 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentOrderPaymentBinding
 import com.example.masterdashboard.databinding.LayoutPaymentMethodItemBinding
-import com.example.masterdashboard.staff_dash.billing_screens.views.CashierBillSummaryFragment
-import com.example.masterdashboard.login.utils.SessionManager
-import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
+import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+/**
+ * Fragment handling the payment selection and finalization for counter orders.
+ * Supports Cash, UPI, Card, and Wallet payment methods.
+ */
 class OrderPaymentFragment : Fragment() {
 
     companion object {
-        private const val TAG = "OrderPaymentFragment"
+        private const val TAG = "OrderPaymentFrag"
     }
 
     private var _binding: FragmentOrderPaymentBinding? = null
     private val binding get() = _binding!!
 
+    // Uses activity-scoped ViewModel to finalize the cart and process the bill
     private val viewModel: OrderTakingViewModel by activityViewModels()
     private val sessionManager by lazy { SessionManager(requireContext()) }
 
     private var selectedMethod = "Cash"
     private var totalAmount = 0.0
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        Log.d(TAG, "onCreateView: Inflating payment fragment layout")
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentOrderPaymentBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.i(TAG, "onViewCreated: Starting payment flow for new counter order")
+        Log.i(TAG, "onViewCreated: Initializing Payment Flow.")
 
         setupToolbar()
         setupPaymentMethods()
@@ -64,51 +63,52 @@ class OrderPaymentFragment : Fragment() {
     private fun setupToolbar() {
         binding.paymentToolbar.tvToolbarTitle.text = "Payment"
         binding.paymentToolbar.toolbarImgMenu.setOnClickListener {
-            Log.v(TAG, "Navigation back clicked")
+            Log.v(TAG, "Back clicked: Returning to cart.")
             parentFragmentManager.popBackStack()
         }
         binding.paymentToolbar.toolbarImgNotification.isVisible = false
     }
 
     private fun setupPaymentMethods() {
-        // Initialize payment option labels
+        // Initialize static labels for payment cards
         binding.layoutCash.tvPaymentName.text = "Cash"
         binding.layoutUpi.tvPaymentName.text = "UPI"
         binding.layoutCard.tvPaymentName.text = "Card"
         binding.layoutWallet.tvPaymentName.text = "Wallet"
 
-        // Set icons for each method
+        // Set default icons
         binding.layoutCash.ivPaymentIcon.setImageResource(R.drawable.ic_payments_24dp)
         binding.layoutUpi.ivPaymentIcon.setImageResource(R.drawable.ic_payments_24dp)
         binding.layoutCard.ivPaymentIcon.setImageResource(R.drawable.ic_payments_24dp)
         binding.layoutWallet.ivPaymentIcon.setImageResource(R.drawable.ic_inventory_24dp)
 
-        // Register tap listeners for selection
+        // Register click listeners for mode selection
         binding.layoutCash.root.setOnClickListener { updateSelectedMethod("Cash") }
         binding.layoutUpi.root.setOnClickListener { updateSelectedMethod("UPI") }
         binding.layoutCard.root.setOnClickListener { updateSelectedMethod("Card") }
         binding.layoutWallet.root.setOnClickListener { updateSelectedMethod("Wallet") }
 
-        // Initialize with default method
+        // Start with Cash as default
         updateSelectedMethod("Cash")
     }
 
     /**
-     * Updates the local selection state and refreshes card visuals.
+     * Updates UI visuals when a payment method is changed.
      */
     private fun updateSelectedMethod(method: String) {
-        Log.d(TAG, "Method selected: $method")
+        Log.d(TAG, "Selection: Payment mode changed to $method")
         selectedMethod = method
         
-        // Reset all cards to default (white)
+        // Reset all cards to standard state
         resetMethodUI(binding.layoutCash, R.drawable.ic_payments_24dp)
         resetMethodUI(binding.layoutUpi, R.drawable.ic_payments_24dp)
         resetMethodUI(binding.layoutCard, R.drawable.ic_payments_24dp)
         resetMethodUI(binding.layoutWallet, R.drawable.ic_inventory_24dp)
 
-        // Highlight selected card and toggle cash-only views
+        // Show/Hide cash-specific "Amount Received" input
         binding.llCashDetailsContainer.isVisible = (method == "Cash")
 
+        // Highlight the selected card
         when (method) {
             "Cash" -> highlightMethodUI(binding.layoutCash)
             "UPI" -> highlightMethodUI(binding.layoutUpi)
@@ -134,46 +134,47 @@ class OrderPaymentFragment : Fragment() {
     }
 
     /**
-     * Real-time calculation of change to be returned to customer
+     * Calculates the "Change" to return to customer when Cash is selected.
      */
     @SuppressLint("DefaultLocale")
     private fun setupReceivedAmountLogic() {
         binding.etReceivedAmount.addTextChangedListener {
-            val receivedStr = it.toString()
-            val received = receivedStr.toDoubleOrNull() ?: 0.0
+            val received = it.toString().toDoubleOrNull() ?: 0.0
             val change = maxOf(0.0, received - totalAmount)
-            Log.v(TAG, "Change updated: received=$received, total=$totalAmount, change=$change")
             binding.tvChangeAmount.text = String.format("₹ %.2f", change)
         }
     }
 
+    /**
+     * Observes the cart totals and the upload status from the ViewModel.
+     */
     @SuppressLint("DefaultLocale")
     private fun observeOrderData() {
-        // Pipeline 1: Collect totals from current cart
+        // Pipeline 1: Listen for price changes in the session cart
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collectLatest { state ->
-                    val subtotal = state.cartSummary.totalPrice.toDouble()
-                    val gst = subtotal * 0.05
-                    totalAmount = subtotal + gst
-                    Log.d(TAG, "Total updated from cart: ₹$totalAmount")
+                viewModel.cartSummary.collectLatest { summary ->
+                    val subtotal = summary.totalPrice.toDouble()
+                    // Total = Subtotal + 5% GST
+                    totalAmount = subtotal * 1.05
+                    Log.d(TAG, "Sync: Bill total updated to ₹$totalAmount")
                     binding.tvTotalPayable.text = String.format("₹ %.2f", totalAmount)
                 }
             }
         }
         
-        // Pipeline 2: Track Firestore upload operation for order finalization
+        // Pipeline 2: Track order submission result (Firestore write)
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.orderUploadStatus.collect { resource ->
                     when (resource) {
                         is ResourceUiState.Loading -> {
-                            Log.d(TAG, "Operation -> Finalizing Bill in Firestore...")
+                            Log.d(TAG, "Submission: Finalizing record in Firestore...")
                             binding.progressBar.isVisible = true
                             binding.btnGenerateBill.isEnabled = false
                         }
                         is ResourceUiState.Success -> {
-                            Log.i(TAG, "🚀 Bill successfully created in Firestore. Moving to Summary.")
+                            Log.i(TAG, "Submission: Success! Navigating to Summary screen.")
                             binding.progressBar.isVisible = false
                             
                             val receivedAmount = if (selectedMethod == "Cash") {
@@ -181,16 +182,15 @@ class OrderPaymentFragment : Fragment() {
                             } else {
                                 totalAmount
                             }
-                            val change = maxOf(0.0, receivedAmount - totalAmount)
                             
-                            // Forward all details to Summary screen
+                            // Open Receipt Summary Fragment
                             val summaryFragment = CashierBillSummaryFragment.newInstance(
                                 orderId = viewModel.lastOrderId ?: "N/A",
-                                totalItems = viewModel.uiState.value.cartSummary.totalItems,
+                                totalItems = viewModel.cartSummary.value.totalItems,
                                 totalAmount = totalAmount,
                                 method = selectedMethod,
                                 received = receivedAmount,
-                                change = change,
+                                change = maxOf(0.0, receivedAmount - totalAmount),
                                 paidAtMillis = System.currentTimeMillis()
                             )
 
@@ -200,7 +200,7 @@ class OrderPaymentFragment : Fragment() {
                                 .commit()
                         }
                         is ResourceUiState.Error -> {
-                            Log.e(TAG, "❌ Bill creation failed: ${resource.message}")
+                            Log.e(TAG, "Submission: Failed - ${resource.message}")
                             binding.progressBar.isVisible = false
                             binding.btnGenerateBill.isEnabled = true
                             Toast.makeText(context, "Error: ${resource.message}", Toast.LENGTH_LONG).show()
@@ -215,85 +215,58 @@ class OrderPaymentFragment : Fragment() {
 
     private fun setupGenerateBillAction() {
         binding.btnGenerateBill.setOnClickListener {
+            Log.d(TAG, "Action: Generate Bill clicked for mode: $selectedMethod")
             if (selectedMethod == "Cash") {
                 proceedWithOrderFinalization()
             } else {
+                // Show QR/Verification dialog for digital payments
                 showPaymentConfirmationDialog()
             }
         }
     }
 
     /**
-     * Reusing the premium confirmation dialog for non-cash payments.
+     * Logic for UPI/Card/Wallet confirmation.
      */
     private fun showPaymentConfirmationDialog() {
-        val method = selectedMethod
-        Log.i("CashierSettleFlow", "💳 [UI] Opening confirmation dialog for Method: $method, Amount: $totalAmount")
-
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_payment_qr, null)
-        val tvTitle = dialogView.findViewById<android.widget.TextView>(R.id.tvPaymentTitle)
-        val tvSubtitle = dialogView.findViewById<android.widget.TextView>(R.id.tvPaymentSubtitle)
-        val ivIcon = dialogView.findViewById<android.widget.ImageView>(R.id.ivPaymentQr)
         val tvAmount = dialogView.findViewById<android.widget.TextView>(R.id.tvAmountToPay)
         val btnCancel = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancelPayment)
         val btnConfirm = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnConfirmPayment)
 
         tvAmount.text = String.format("₹ %.2f", totalAmount)
-        tvTitle.text = "$method Payment"
-
-        when (method) {
-            "UPI" -> {
-                tvSubtitle.text = "Scan the QR code to pay"
-                ivIcon.setImageResource(R.drawable.biling)
-                ivIcon.colorFilter = null
-            }
-            "Card" -> {
-                tvSubtitle.text = "Confirm transaction success on POS machine"
-                ivIcon.setImageResource(R.drawable.ic_payments_24dp)
-                ivIcon.setColorFilter(Color.parseColor("#3554FF"))
-            }
-            else -> {
-                tvSubtitle.text = "Verify payment receipt on your device"
-                ivIcon.setImageResource(R.drawable.ic_inventory_24dp)
-                ivIcon.setColorFilter(Color.parseColor("#6B7280"))
-            }
-        }
-
+        
         val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialogTheme)
             .setView(dialogView)
             .setCancelable(false)
             .create()
 
-        btnCancel.setOnClickListener {
-            Log.i("CashierSettleFlow", "❌ Payment confirmation cancelled")
-            dialog.dismiss()
-        }
-
+        btnCancel.setOnClickListener { dialog.dismiss() }
         btnConfirm.setOnClickListener {
-            Log.i("CashierSettleFlow", "✅ Payment verified. Finalizing order.")
+            Log.i(TAG, "Digital Payment: User confirmed transaction success.")
             dialog.dismiss()
             proceedWithOrderFinalization()
         }
-
         dialog.show()
     }
 
+    /**
+     * Triggers the actual Firestore write via the ViewModel.
+     */
     private fun proceedWithOrderFinalization() {
         val managerId = sessionManager.getUid()
+        val waiterId = sessionManager.getStaffDocId() // Stores current staff ID
         val tableId = arguments?.getString("tableId") ?: "N/A"
         val floorId = arguments?.getString("floorId") ?: "N/A"
 
-        Log.i(TAG, "Finalizing Bill: Manager=$managerId, Method=$selectedMethod")
-
-        // Set the separate payment method field, keeping orderType (Takeaway) intact
+        Log.i(TAG, "Process: Finalizing PAID order for $tableId")
         viewModel.setPaymentMethod(selectedMethod)
-        
-        // Finalize order as PAID immediately for Cashier/Counter flow
-        viewModel.submitActiveOrderToKitchen(managerId, floorId, tableId, "", "PAID")
+        viewModel.submitActiveOrderToKitchen(managerId, floorId, tableId, "", "PAID", waiterId = waiterId)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        Log.v(TAG, "onDestroyView: Cleaning up view binding.")
         _binding = null
     }
 }

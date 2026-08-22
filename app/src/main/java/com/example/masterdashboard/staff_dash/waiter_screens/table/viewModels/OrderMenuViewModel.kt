@@ -36,12 +36,15 @@ class OrderMenuViewModel(private val repository: OrderTakingRepository) : ViewMo
             MenuCategoryData("VEG", "Veg", false),
             MenuCategoryData("NON-VEG", "Non-Veg", false)
         )
-        _uiState.update { it.copy(dietFilters = filters) }
+        // INITIAL STATE: Provide a default "All" category so the UI isn't empty on first run
+        val initialCategories = listOf(MenuCategoryData("ALL_ITEMS", "All", true))
+        _uiState.update { it.copy(dietFilters = filters, categories = initialCategories) }
     }
 
     /**
      * Connects to Firestore listeners for food items.
-     * Categories are now synced from the Session ViewModel via [syncCategories].
+     * Categories are now synced from the Session ViewModel via [syncCategories],
+     * but we also maintain a local listener for first-time robustness.
      */
     fun loadMenuData(
         managerId: String?, 
@@ -62,9 +65,9 @@ class OrderMenuViewModel(private val repository: OrderTakingRepository) : ViewMo
             firestoreFoodList = currentCart
         }
         
-        if (initialCategories.isNotEmpty() && _uiState.value.categories.isEmpty()) {
-            Log.d(TAG, "Load: Initializing categories from session cache.")
-            _uiState.update { it.copy(categories = initialCategories) }
+        if (initialCategories.isNotEmpty()) {
+            Log.d(TAG, "Load: Syncing provided initial categories.")
+            syncCategories(initialCategories)
         }
 
         // Skip reload if items are already fully cached
@@ -73,10 +76,17 @@ class OrderMenuViewModel(private val repository: OrderTakingRepository) : ViewMo
             buildDisplayList()
         }
 
-        Log.i(TAG, "Load: Starting real-time Firestore item fetch for $managerId")
+        Log.i(TAG, "Load: Starting real-time Firestore catalog fetch for $managerId")
         _uiState.update { it.copy(isLoading = true) }
 
-        // 1. Listen for Food Items
+        // 1. Listen for Categories (Self-sufficient backup)
+        viewModelScope.launch {
+            repository.getMenuCategories(managerId)
+                .catch { Log.e(TAG, "Load: Category fetch failed", it) }
+                .collect { syncCategories(it) }
+        }
+
+        // 2. Listen for Food Items
         viewModelScope.launch {
             repository.getFoodMenu(managerId)
                 .catch { e -> 
@@ -102,7 +112,16 @@ class OrderMenuViewModel(private val repository: OrderTakingRepository) : ViewMo
         Log.d(TAG, "Sync: Received ${newCategories.size} categories from Session.")
         
         _uiState.update { state ->
-            val updated = newCategories.map { incoming ->
+            // Ensure "All" is at the start and rest are alphabetical
+            val sorted = if (newCategories.size > 1) {
+                val allChip = newCategories.find { it.id == "ALL_ITEMS" } ?: MenuCategoryData("ALL_ITEMS", "All", true)
+                val others = newCategories.filter { it.id != "ALL_ITEMS" }.sortedBy { it.name.lowercase() }
+                listOf(allChip) + others
+            } else {
+                newCategories
+            }
+
+            val updated = sorted.map { incoming ->
                 // Preserve local selection if it exists, otherwise use incoming selection
                 val match = state.categories.find { it.id == incoming.id }
                 if (match != null) incoming.copy(isSelected = match.isSelected) else incoming
@@ -154,28 +173,21 @@ class OrderMenuViewModel(private val repository: OrderTakingRepository) : ViewMo
      */
     fun syncCategoryHighlight(categoryId: String) {
         _uiState.update { state ->
-            if (state.activeFilterId != "ALL_ITEMS") return@update state
-            
             val currentHighlight = state.categories.find { it.isSelected }?.id
             if (currentHighlight != categoryId) {
                 val updated = state.categories.map { it.copy(isSelected = it.id == categoryId) }
-                state.copy(categories = updated)
+                state.copy(categories = updated, activeFilterId = categoryId)
             } else state
         }
     }
 
     /**
      * CORE LOGIC: Filters the raw Firestore list and prepares it for the RecyclerView.
+     * UPDATED: Now always builds the full grouped list to allow navigation-style scrolling.
      */
     private fun buildDisplayList() {
         val state = _uiState.value
         
-        // FIX 3: Do not finish loading if we don't even have categories yet.
-        if (state.categories.isEmpty()) {
-            Log.v(TAG, "Build: Postponed. Categories not yet loaded.")
-            return
-        }
-
         // Merge state from the latest cart snapshot (Quantities, Variants, and Prices)
         val cartMap = lastCartSnapshot.associateBy { it.id }
         val listWithQty = firestoreFoodList.map { item ->
@@ -191,37 +203,30 @@ class OrderMenuViewModel(private val repository: OrderTakingRepository) : ViewMo
             }
         }
 
-        // 1. Apply Diet Filtering
+        // 1. Apply Diet Filtering (Veg/Non-Veg)
         val dietFiltered = when (state.activeDietFilter) {
             "VEG" -> listWithQty.filter { it.isVeg }
             "NON-VEG" -> listWithQty.filter { !it.isVeg }
             else -> listWithQty
         }
 
-        // 2. Apply Category Filtering
-        val filtered = if (state.activeFilterId == "ALL_ITEMS") dietFiltered else dietFiltered.filter { it.categoryId == state.activeFilterId }
-
-        // 3. Construct UI List with headers
+        // 2. Navigation Mode: Always construct the full UI List with headers
         val displayItems = mutableListOf<MenuItemType>()
-        if (state.activeFilterId == "ALL_ITEMS") {
-            // Group by category and add headers
-            val grouped = dietFiltered.groupBy { it.categoryId }
-            state.categories.filter { it.id != "ALL_ITEMS" }.forEach { cat ->
-                val items = grouped[cat.id]
-                if (!items.isNullOrEmpty()) {
-                    displayItems.add(MenuItemType.Header(cat.id, cat.name))
-                    items.forEach { displayItems.add(MenuItemType.Food(it)) }
-                }
+        
+        // Group by category
+        val grouped = dietFiltered.groupBy { it.categoryId }
+        
+        // Use the ordered categories to build the flat list for the Adapter
+        state.categories.filter { it.id != "ALL_ITEMS" }.forEach { cat ->
+            val items = grouped[cat.id]
+            if (!items.isNullOrEmpty()) {
+                displayItems.add(MenuItemType.Header(cat.id, cat.name))
+                items.forEach { displayItems.add(MenuItemType.Food(it)) }
             }
-        } else {
-            // Single category view: Add one header and all matching items
-            val name = state.categories.find { it.id == state.activeFilterId }?.name ?: "Items"
-            displayItems.add(MenuItemType.Header(state.activeFilterId, name))
-            filtered.forEach { displayItems.add(MenuItemType.Food(it)) }
         }
 
-        Log.d(TAG, "Build: UI List ready with ${displayItems.size} items.")
-        _uiState.update { it.copy(menuItems = filtered, displayItems = displayItems, isLoading = false) }
+        Log.d(TAG, "Build: UI List ready with ${displayItems.size} items (Navigation Mode).")
+        _uiState.update { it.copy(menuItems = dietFiltered, displayItems = displayItems, isLoading = false) }
     }
 
     fun getRawFoodList() = firestoreFoodList
