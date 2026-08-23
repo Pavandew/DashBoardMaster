@@ -121,6 +121,12 @@ class ItemCustomizationOverlayManager(
         }
 
         addonsAdapter.notifyDataSetChanged()
+
+        // Show placeholder if no addons are available
+        val hasAddons = item.availableAddons.isNotEmpty()
+        binding.rvAddonsList.visibility = if (hasAddons) View.VISIBLE else View.GONE
+        binding.tvNoAddons.visibility = if (hasAddons) View.GONE else View.VISIBLE
+
         recalculatePrice()
     }
 
