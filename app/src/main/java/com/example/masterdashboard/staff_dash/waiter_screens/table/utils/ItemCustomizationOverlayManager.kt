@@ -121,13 +121,6 @@ class ItemCustomizationOverlayManager(
         }
 
         addonsAdapter.notifyDataSetChanged()
-
-        // Show placeholder if no addon items (non-variant) are present in the customization list
-        val hasAddonItems = customizationList.any { !it.isVariant }
-        binding.rvAddonsList.visibility = if (hasAddonItems) View.VISIBLE else View.GONE
-        binding.tvNoAddons.visibility = if (hasAddonItems) View.GONE else View.VISIBLE
-        binding.tvNoAddons.text = if (hasAddonItems) "" else context.getString(com.example.masterdashboard.R.string.no_addons)
-
         recalculatePrice()
     }
 
@@ -142,7 +135,7 @@ class ItemCustomizationOverlayManager(
         val addonsPrice = customizationList.filter { !it.isVariant && it.isSelected }.sumOf { it.price }
         
         val total = (itemPrice + addonsPrice) * quantity
-        binding.btnAddToOrder.text = context.getString(com.example.masterdashboard.R.string.add_to_order_format, total.toInt().toString())
-        binding.tvFoodBasePrice.text = context.getString(com.example.masterdashboard.R.string.amount_format, itemPrice.toInt().toString())
+        binding.btnAddToOrder.text = "Add • ₹${total.toInt()}"
+        binding.tvFoodBasePrice.text = "₹${itemPrice.toInt()}"
     }
 }

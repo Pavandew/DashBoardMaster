@@ -171,17 +171,4 @@
     <string name="amount_format">₹%1$s</string>
     <string name="discount_format">- ₹%1$s</string>
 
-    <!-- Staff Screen Titles -->
-    <string name="title_manage_tables">Manage Floor Tables</string>
-    <string name="title_track_orders">Track Active Orders</string>
-    <string name="title_live_alerts">Live Alert Notifications</string>
-    <string name="title_staff_profile">My Staff Account</string>
-    <string name="title_settlement_center">Settlement Center</string>
-    <string name="title_quick_bill_counter">Quick Bill Counter</string>
-    <string name="title_live_orders">Live Order Station</string>
-    <string name="title_cooking_workstation">Cooking Workstation</string>
-    <string name="title_inventory_hub">Kitchen Inventory Hub</string>
-
-    <string name="no_addons">No items in add-on</string>
-    <string name="add_to_order_format">Add • ₹%1$s</string>
 </resources>

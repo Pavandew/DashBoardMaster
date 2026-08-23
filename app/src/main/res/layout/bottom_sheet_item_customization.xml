@@ -95,7 +95,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:layout_marginVertical="10dp"
+                android:layout_marginVertical="16dp"
                 android:background="#F3F4F6" />
 
             <TextView
@@ -117,21 +117,10 @@
                 tools:itemCount="3"
                 tools:listitem="@layout/item_addon_checkbox_row" />
 
-            <TextView
-                android:id="@+id/tvNoAddons"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="#6B7280"
-                android:textSize="14sp"
-                android:gravity="center"
-                android:visibility="gone"
-                tools:text="No items in add-on" />
-
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:layout_marginVertical="12dp"
+                android:layout_marginVertical="16dp"
                 android:background="#F3F4F6" />
 
             <TextView
