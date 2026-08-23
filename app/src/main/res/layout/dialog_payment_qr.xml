@@ -89,6 +89,12 @@
                 android:layout_weight="1"
                 android:text="Cancel"
                 android:textColor="#6B7280"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="10sp"
+                android:autoSizeMaxTextSize="18sp"
+                android:autoSizeStepGranularity="1sp"
                 app:cornerRadius="12dp" />
 
             <com.google.android.material.button.MaterialButton
@@ -101,6 +107,12 @@
                 android:textAllCaps="false"
                 android:textSize="14sp"
                 android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="12sp"
+                android:autoSizeMaxTextSize="18sp"
+                android:autoSizeStepGranularity="1sp"
                 app:backgroundTint="#3554FF"
                 app:cornerRadius="12dp" />
         </LinearLayout>
