@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -107,7 +107,7 @@
             android:visibility="gone"
             tools:visibility="visible">
 
-            <com.google.android.material.button.MaterialButton android:maxLines="1" android:ellipsize="end" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="12sp" android:autoSizeMaxTextSize="18sp" android:autoSizeStepGranularity="1sp"
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAcceptRequest"
                 style="@style/Widget.Material3.Button.UnelevatedButton"
                 android:layout_width="wrap_content"
@@ -117,7 +117,7 @@
                 app:backgroundTint="@color/alert_btn_accept_bg"
                 app:cornerRadius="10dp" />
 
-            <com.google.android.material.button.MaterialButton android:maxLines="1" android:ellipsize="end" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="12sp" android:autoSizeMaxTextSize="18sp" android:autoSizeStepGranularity="1sp"
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDoneRequest"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="wrap_content"
@@ -131,4 +131,3 @@
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
-

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -28,7 +28,7 @@
         android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <com.google.android.material.button.MaterialButton android:maxLines="1" android:ellipsize="end" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="12sp" android:autoSizeMaxTextSize="18sp" android:autoSizeStepGranularity="1sp"
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnBack"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
@@ -40,7 +40,7 @@
             app:strokeColor="@color/primary_purple"
             app:cornerRadius="12dp" />
 
-        <com.google.android.material.button.MaterialButton android:maxLines="1" android:ellipsize="end" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="12sp" android:autoSizeMaxTextSize="18sp" android:autoSizeStepGranularity="1sp"
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnContinue"
             android:layout_width="0dp"
             android:layout_height="60dp"
@@ -57,4 +57,3 @@
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-

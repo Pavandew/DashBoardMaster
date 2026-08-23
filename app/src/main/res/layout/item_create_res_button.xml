@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -10,7 +10,7 @@
     android:weightSum="2">
 
     <!-- CANCEL BUTTON -->
-    <com.google.android.material.button.MaterialButton android:maxLines="1" android:ellipsize="end" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="12sp" android:autoSizeMaxTextSize="18sp" android:autoSizeStepGranularity="1sp"
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnCancel"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:layout_width="0dp"
@@ -26,7 +26,7 @@
         app:strokeColor="#4A69FF"/>
 
     <!-- SAVE BUTTON -->
-    <com.google.android.material.button.MaterialButton android:maxLines="1" android:ellipsize="end" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="12sp" android:autoSizeMaxTextSize="18sp" android:autoSizeStepGranularity="1sp"
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSave"
         android:layout_width="0dp"
         android:layout_height="52dp"

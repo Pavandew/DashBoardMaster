@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -167,7 +167,7 @@
 
                     <!-- Button -->
                     <!--                app:icon="@drawable/ic_save"-->
-                    <com.google.android.material.button.MaterialButton android:maxLines="1" android:ellipsize="end" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="12sp" android:autoSizeMaxTextSize="18sp" android:autoSizeStepGranularity="1sp"
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnUpdate"
                         style="@style/Button.MyApp.Medium"
                         android:layout_width="wrap_content"

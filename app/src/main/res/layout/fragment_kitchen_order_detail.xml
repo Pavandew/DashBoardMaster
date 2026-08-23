@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -72,7 +72,7 @@
                 android:layout_height="wrap_content"
                 android:textColor="#333333"
                 android:textSize="13sp"
-                tools:text="â€¢ Dine-in" />
+                tools:text="• Dine-in" />
         </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView
@@ -252,7 +252,7 @@
             android:visibility="visible"
             tools:visibility="visible">
 
-            <com.google.android.material.button.MaterialButton android:maxLines="1" android:ellipsize="end" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="12sp" android:autoSizeMaxTextSize="18sp" android:autoSizeStepGranularity="1sp"
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_reject"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
@@ -264,7 +264,7 @@
                 app:cornerRadius="12dp"
                 app:strokeColor="#EF5350" />
 
-            <com.google.android.material.button.MaterialButton android:maxLines="1" android:ellipsize="end" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="12sp" android:autoSizeMaxTextSize="18sp" android:autoSizeStepGranularity="1sp"
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_accept"
                 android:layout_width="0dp"
                 android:layout_height="52dp"

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -151,7 +151,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="#111827"
-                    tools:text="â‚¹800.00" />
+                    tools:text="₹800.00" />
             </LinearLayout>
 
             <LinearLayout
@@ -170,7 +170,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="#111827"
-                    tools:text="â‚¹40.00" />
+                    tools:text="₹40.00" />
             </LinearLayout>
 
             <LinearLayout
@@ -189,7 +189,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="#EF4444"
-                    tools:text="- â‚¹0.00" />
+                    tools:text="- ₹0.00" />
             </LinearLayout>
 
             <View
@@ -218,10 +218,10 @@
                     android:textColor="#3554FF"
                     android:textSize="20sp"
                     android:textStyle="bold"
-                    tools:text="â‚¹840.00" />
+                    tools:text="₹840.00" />
             </LinearLayout>
 
-            <com.google.android.material.button.MaterialButton android:maxLines="1" android:ellipsize="end" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="12sp" android:autoSizeMaxTextSize="18sp" android:autoSizeStepGranularity="1sp"
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSettleAndPrint"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
@@ -233,7 +233,7 @@
                 app:backgroundTint="#3554FF"
                 app:cornerRadius="12dp" />
 
-            <com.google.android.material.button.MaterialButton android:maxLines="1" android:ellipsize="end" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="12sp" android:autoSizeMaxTextSize="18sp" android:autoSizeStepGranularity="1sp"
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnHandOver"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
