@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -41,7 +41,7 @@
             app:layout_constraintBottom_toBottomOf="@id/tvTableNumber"
             app:layout_constraintStart_toEndOf="@id/tvTableNumber"
             app:layout_constraintTop_toTopOf="@id/tvTableNumber"
-            tools:text="• #ORD-8118" />
+            tools:text="â€¢ #ORD-8118" />
 
         <TextView
             android:id="@+id/tvBillingStatus"
@@ -79,9 +79,9 @@
             android:textStyle="bold"
             app:layout_constraintStart_toEndOf="@+id/tvTotalLabel"
             app:layout_constraintTop_toBottomOf="@+id/tvBillingStatus"
-            tools:text="₹840.00" />
+            tools:text="â‚¹840.00" />
 
-        <com.google.android.material.button.MaterialButton
+        <com.google.android.material.button.MaterialButton android:maxLines="1" android:ellipsize="end" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="12sp" android:autoSizeMaxTextSize="18sp" android:autoSizeStepGranularity="1sp"
             android:id="@+id/btnGenerateBill"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
