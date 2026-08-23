@@ -66,20 +66,10 @@ class SessionManager(context: Context) {
     }
 
     // 🛡️ REUSABLE EXPLICIT FIELD CACHE METHODS
-    fun saveUid(uid: String) {
-        Log.d(TAG, "saveUid: $uid")
-        prefs.edit { putString(AppConstants.KEY_UID, uid) }
-    }
-
     fun getUid(): String {
         val uid = prefs.getString(AppConstants.KEY_UID, "") ?: ""
         Log.d(TAG, "getUid: $uid")
         return uid
-    }
-
-    fun saveRole(role: String) {
-        Log.d(TAG, "saveRole: $role")
-        prefs.edit { putString(AppConstants.KEY_ROLE, role) }
     }
 
     fun getRole(): String {
@@ -88,22 +78,11 @@ class SessionManager(context: Context) {
         return role
     }
 
-    // Caches custom custom-generated alphanumeric Staff ID values (e.g. PAVAN9730)
-    fun saveStaffId(staffId: String) {
-        Log.d(TAG, "saveStaffId: $staffId")
-        prefs.edit { putString(AppConstants.KEY_STAFF_ID, staffId) }
-    }
-
     //  Pulls cached Staff ID mapping profiles
     fun getStaffId(): String {
         val staffId = prefs.getString(AppConstants.KEY_STAFF_ID, "") ?: ""
         Log.d(TAG, "getStaffId: $staffId")
         return staffId
-    }
-
-    fun saveStaffDocId(staffDocId: String) {
-        Log.d(TAG, "saveStaffDocId: $staffDocId")
-        prefs.edit { putString(AppConstants.KEY_STAFF_DOC_ID, staffDocId) }
     }
 
     fun getStaffDocId(): String {
@@ -135,6 +114,34 @@ class SessionManager(context: Context) {
         val id = prefs.getString(AppConstants.KEY_RESTAURANT_ID, "") ?: ""
         Log.d(TAG, "getRestaurantId: $id")
         return id
+    }
+
+    fun saveRestaurantName(name: String) {
+        Log.d(TAG, "saveRestaurantName: $name")
+        prefs.edit { putString(AppConstants.KEY_RESTAURANT_NAME, name) }
+    }
+
+    fun getRestaurantName(): String {
+        val name = prefs.getString(AppConstants.KEY_RESTAURANT_NAME, "") ?: ""
+        Log.d(TAG, "getRestaurantName: $name")
+        return name
+    }
+
+    fun saveRestaurantDetails(data: RegistrationDataModel) {
+        val json = Gson().toJson(data)
+        Log.d(TAG, "saveRestaurantDetails: Restaurant data cached")
+        prefs.edit { putString(AppConstants.KEY_RESTAURANT_DETAILS, json) }
+    }
+
+    fun getCachedRestaurantDetails(): RegistrationDataModel? {
+        val json = prefs.getString(AppConstants.KEY_RESTAURANT_DETAILS, null)
+        return if (json != null) {
+            Log.d(TAG, "getCachedRestaurantDetails: Returning cached data")
+            Gson().fromJson(json, RegistrationDataModel::class.java)
+        } else {
+            Log.d(TAG, "getCachedRestaurantDetails: No cached data found")
+            null
+        }
     }
 
     // 🏗️ RESTAURANT SETUP CONTROL
@@ -226,6 +233,8 @@ class SessionManager(context: Context) {
             remove(AppConstants.KEY_NAME)
             remove(AppConstants.KEY_IS_RESTAURANT_SETUP)
             remove(AppConstants.KEY_RESTAURANT_ID)
+            remove(AppConstants.KEY_RESTAURANT_NAME)
+            remove(AppConstants.KEY_RESTAURANT_DETAILS)
         }
     }
 }

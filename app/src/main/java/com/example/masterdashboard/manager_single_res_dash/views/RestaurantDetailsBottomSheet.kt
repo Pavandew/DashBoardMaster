@@ -15,6 +15,7 @@ import com.example.masterdashboard.manager_single_res_dash.form_screen.model.For
 import com.example.masterdashboard.manager_single_res_dash.form_screen.model.RegistrationDataModel
 import com.example.masterdashboard.manager_single_res_dash.uistate.RestaurantDetailsUiState
 import com.example.masterdashboard.manager_single_res_dash.viewModel.RestaurantDetailsViewModel
+import com.example.masterdashboard.utils.SessionManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 
@@ -24,6 +25,7 @@ class RestaurantDetailsBottomSheet : BottomSheetDialogFragment() {
     private val binding get() = _binding!!
 
     private val viewModel: RestaurantDetailsViewModel by viewModels()
+    private lateinit var sessionManager: SessionManager
     private var ownerUid: String = ""
 
     companion object {
@@ -56,6 +58,7 @@ class RestaurantDetailsBottomSheet : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.i(TAG, "Bottom Sheet Opened for Owner UID: $ownerUid")
+        sessionManager = SessionManager(requireContext())
         
         binding.btnClose.setOnClickListener { dismiss() }
         
@@ -63,7 +66,7 @@ class RestaurantDetailsBottomSheet : BottomSheetDialogFragment() {
         observeViewModel()
 
         if (ownerUid.isNotEmpty()) {
-            viewModel.fetchRestaurantDetails(ownerUid)
+            viewModel.fetchRestaurantDetails(ownerUid, sessionManager)
         } else {
             dismiss()
         }
