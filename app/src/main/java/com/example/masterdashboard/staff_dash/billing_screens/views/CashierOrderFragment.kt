@@ -8,12 +8,12 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentCashierOrderBinding
+import com.example.masterdashboard.R
 import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderTakingRepository
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
-import com.example.masterdashboard.staff_dash.waiter_screens.table.views.WaiterOrderTakingFragment // Not using old one anymore
+import com.example.masterdashboard.utils.NavigationUtils
 
 class CashierOrderFragment : Fragment() {
 
@@ -50,9 +50,20 @@ class CashierOrderFragment : Fragment() {
     }
 
     private fun setupToolbar() {
-        binding.orderToolbar.tvToolbarTitle.text = "New Order"
-        binding.orderToolbar.toolbarImgMenu.visibility = View.GONE
-        binding.orderToolbar.toolbarImgNotification.visibility = View.GONE
+        binding.orderToolbar.apply {
+            tvToolbarTitle.text = getString(R.string.title_quick_bill_counter)
+            toolbarImgNotification.visibility = View.GONE
+
+            if (parentFragmentManager.backStackEntryCount > 0) {
+                toolbarImgMenu.visibility = View.VISIBLE
+                toolbarImgMenu.setImageResource(R.drawable.ic_arrow_back_24dp)
+                toolbarImgMenu.setOnClickListener {
+                    parentFragmentManager.popBackStack()
+                }
+            } else {
+                toolbarImgMenu.visibility = View.GONE
+            }
+        }
     }
 
     override fun onStart() {
@@ -145,10 +156,13 @@ class CashierOrderFragment : Fragment() {
             arguments = bundle
         }
 
-        parentFragmentManager.beginTransaction()
-            .replace(R.id.billing_fragment_container, orderTakingFragment)
-            .addToBackStack(null)
-            .commit()
+        val containerId = NavigationUtils.getHostContainerId(activity)
+        if (containerId != 0) {
+            parentFragmentManager.beginTransaction()
+                .replace(containerId, orderTakingFragment)
+                .addToBackStack(null)
+                .commit()
+        }
     }
 
     override fun onDestroyView() {

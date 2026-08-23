@@ -7,11 +7,11 @@ import android.widget.Toast
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.example.masterdashboard.R
 import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.example.masterdashboard.staff_dash.waiter_screens.table.views.BaseViewCartFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.table.views.OrderSuccessFragment
+import com.example.masterdashboard.utils.NavigationUtils
 import kotlinx.coroutines.launch
 
 /**
@@ -75,9 +75,12 @@ class CashierViewCartDetailsFragment : BaseViewCartFragment() {
         }
 
         val paymentFragment = OrderPaymentFragment().apply { arguments = bundle }
-        parentFragmentManager.beginTransaction()
-            .replace(R.id.billing_fragment_container, paymentFragment)
-            .addToBackStack(null).commit()
+        val containerId = NavigationUtils.getHostContainerId(activity)
+        if (containerId != 0) {
+            parentFragmentManager.beginTransaction()
+                .replace(containerId, paymentFragment)
+                .addToBackStack(null).commit()
+        }
     }
 
     /**

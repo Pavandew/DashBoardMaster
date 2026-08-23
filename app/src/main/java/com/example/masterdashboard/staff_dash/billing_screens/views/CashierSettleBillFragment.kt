@@ -22,11 +22,10 @@ import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivit
 import com.example.masterdashboard.staff_dash.billing_screens.adapter.BillingItemsAdapter
 import com.example.masterdashboard.staff_dash.billing_screens.model.CashierBillingOrderModel
 import com.example.masterdashboard.staff_dash.billing_screens.viewmodel.CashierSettleViewModel
-import com.example.masterdashboard.staff_dash.utils.StatusUIUtils
+import com.example.masterdashboard.staff_dash.utils.PaymentDialogHelper
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.example.masterdashboard.utils.SessionManager
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.example.masterdashboard.staff_dash.utils.StatusUIUtils
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -141,13 +140,9 @@ class CashierSettleBillFragment : Fragment() {
 
     private fun navigateToSummary(order: CashierBillingOrderModel) {
         val summaryFragment = CashierBillSummaryFragment.newInstance(
-            orderId = order.orderId,
-            totalItems = order.items.sumOf { it.quantity },
-            totalAmount = order.grandTotal,
-            method = order.paymentMethod.ifEmpty { "Paid" },
+            order = order,
             received = order.grandTotal,
-            change = 0.0,
-            paidAtMillis = order.paidAt?.toDate()?.time ?: order.timestamp.toDate().time
+            change = 0.0
         )
         parentFragmentManager.beginTransaction()
             .replace(this.id, summaryFragment)
@@ -158,55 +153,19 @@ class CashierSettleBillFragment : Fragment() {
     private fun showPaymentConfirmationDialog() {
         val currentOrder = viewModel.activeBillingOrder.value ?: return
         val method = viewModel.getSelectedPaymentMode()
-        
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_payment_qr, null)
-        val tvTitle = dialogView.findViewById<android.widget.TextView>(R.id.tvPaymentTitle)
-        val tvSubtitle = dialogView.findViewById<android.widget.TextView>(R.id.tvPaymentSubtitle)
-        val ivIcon = dialogView.findViewById<android.widget.ImageView>(R.id.ivPaymentQr)
-        val tvAmount = dialogView.findViewById<android.widget.TextView>(R.id.tvAmountToPay)
-        val btnCancel = dialogView.findViewById<MaterialButton>(R.id.btnCancelPayment)
-        val btnConfirm = dialogView.findViewById<MaterialButton>(R.id.btnConfirmPayment)
 
-        tvAmount.text = getString(R.string.amount_format, String.format("%.2f", currentOrder.grandTotal))
-        tvTitle.text = getString(R.string.payment_title_format, method)
-
-        // Adjust dialog content based on payment type
-        when (method) {
-            "UPI" -> {
-            tvSubtitle.text = getString(R.string.payment_scan_qr)
-                ivIcon.setImageResource(R.drawable.biling) 
+        PaymentDialogHelper.showPaymentConfirmation(
+            context = requireContext(),
+            amount = currentOrder.grandTotal,
+            paymentMethod = method,
+            onConfirm = {
+                val managerId = sessionManager.getUid()
+                viewModel.settleAndCompleteOrder(managerId)
+                
+                // Auto-trigger print after settlement
+                currentOrder.let { printController.checkAndPrint(it) }
             }
-            "Cash" -> {
-            tvSubtitle.text = getString(R.string.payment_confirm_cash)
-                ivIcon.setImageResource(R.drawable.ic_payments_24dp)
-                ivIcon.setColorFilter(Color.parseColor("#16A34A")) 
-            }
-            "Card" -> {
-            tvSubtitle.text = getString(R.string.payment_confirm_card)
-                ivIcon.setImageResource(R.drawable.ic_payments_24dp)
-                ivIcon.setColorFilter(Color.parseColor("#3554FF")) 
-            }
-            else -> {
-            tvSubtitle.text = getString(R.string.payment_verify_receipt)
-                ivIcon.setImageResource(R.drawable.ic_inventory_24dp)
-            }
-        }
-
-        val dialog = MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialogTheme)
-            .setView(dialogView)
-            .setCancelable(false) 
-            .create()
-
-        btnCancel.setOnClickListener { dialog.dismiss() }
-        btnConfirm.setOnClickListener {
-            dialog.dismiss()
-            val managerId = sessionManager.getUid()
-            viewModel.settleAndCompleteOrder(managerId)
-            
-            // Auto-trigger print after settlement
-            currentOrder.let { printController.checkAndPrint(it) }
-        }
-        dialog.show()
+        )
     }
 
     private fun selectPaymentMethod(method: String) {
@@ -333,13 +292,9 @@ class CashierSettleBillFragment : Fragment() {
                                 val order = viewModel.activeBillingOrder.value
                                 if (order != null) {
                                     val summaryFragment = CashierBillSummaryFragment.newInstance(
-                                        orderId = order.orderId,
-                                        totalItems = order.items.sumOf { it.quantity },
-                                        totalAmount = order.grandTotal,
-                                        method = viewModel.getSelectedPaymentMode(),
-                                        received = order.grandTotal, 
-                                        change = 0.0,
-                                        paidAtMillis = System.currentTimeMillis()
+                                        order = order,
+                                        received = order.grandTotal,
+                                        change = 0.0
                                     )
                                     parentFragmentManager.beginTransaction()
                                         .replace(this@CashierSettleBillFragment.id, summaryFragment)

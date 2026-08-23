@@ -65,9 +65,20 @@ class CashierBillingFragment : Fragment() {
     }
 
     private fun setupToolbar() {
-        binding.billingToolbar.tvToolbarTitle.text = "Billings"
-        binding.billingToolbar.toolbarImgMenu.visibility = View.GONE
-        binding.billingToolbar.toolbarImgNotification.visibility = View.GONE
+        binding.billingToolbar.apply {
+            tvToolbarTitle.text = getString(R.string.title_settlement_center)
+            toolbarImgNotification.visibility = View.GONE
+
+            if (parentFragmentManager.backStackEntryCount > 0) {
+                toolbarImgMenu.visibility = View.VISIBLE
+                toolbarImgMenu.setImageResource(R.drawable.ic_arrow_back_24dp)
+                toolbarImgMenu.setOnClickListener {
+                    parentFragmentManager.popBackStack()
+                }
+            } else {
+                toolbarImgMenu.visibility = View.GONE
+            }
+        }
     }
 
     private fun setupAdapters() {

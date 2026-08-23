@@ -2,9 +2,9 @@ package com.example.masterdashboard.staff_dash.billing_screens.views
 
 import android.os.Bundle
 import android.util.Log
-import com.example.masterdashboard.R
 import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.table.views.BaseOrderTakingFragment
+import com.example.masterdashboard.utils.NavigationUtils
 
 /**
  * Specialized fragment for Cashiers. Handles navigation to the Cashier's payment flow.
@@ -31,8 +31,11 @@ class CashierOrderTakingFragment : BaseOrderTakingFragment() {
 
         // Navigate to the Cashier-specific cart/payment view
         val paymentFragment = CashierViewCartDetailsFragment().apply { arguments = bundle }
-        parentFragmentManager.beginTransaction()
-            .replace(this.id, paymentFragment)
-            .addToBackStack(null).commit()
+        val containerId = NavigationUtils.getHostContainerId(activity)
+        if (containerId != 0) {
+            parentFragmentManager.beginTransaction()
+                .replace(containerId, paymentFragment)
+                .addToBackStack(null).commit()
+        }
     }
 }
