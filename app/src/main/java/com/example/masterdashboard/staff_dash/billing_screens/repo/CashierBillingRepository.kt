@@ -95,6 +95,8 @@ class CashierBillingRepository(
                             val paidAt = doc.getTimestamp(AppConstants.FIELD_PAID_AT)
                             val paymentMethod = doc.getString(AppConstants.FIELD_PAYMENT_METHOD) ?: doc.getString("paymentMode") ?: ""
                             val waiterId = doc.getString(AppConstants.FIELD_WAITER_ID) ?: ""
+                            val customerName = doc.getString(AppConstants.FIELD_CUSTOMER_NAME) ?: ""
+                            val customerPhone = doc.getString(AppConstants.FIELD_CUSTOMER_MOBILE) ?: ""
 
                             // Convert Firestore list to OrderItemModel list
                             val rawItems = doc.get(AppConstants.FIELD_ORDER_ITEMS) as? List<Map<String, Any>>
@@ -126,6 +128,8 @@ class CashierBillingRepository(
                                 timestamp = timestamp,
                                 paidAt = paidAt,
                                 paymentMethod = paymentMethod,
+                                customerName = customerName,
+                                customerPhone = customerPhone,
                                 waiterId = waiterId,
                                 docPath = doc.reference.path
                             )
@@ -264,6 +268,30 @@ class CashierBillingRepository(
         val tableRef = orderRef.parent.parent
         if (tableRef != null) {
             batch.update(tableRef, AppConstants.FIELD_STATUS, AppConstants.STATUS_FREE)
+            // Also clear customer name from table
+            batch.update(tableRef, AppConstants.FIELD_CUSTOMER_NAME_TABLE, null)
+        }
+
+        // 5. Update CRM (Customer Relationship Management)
+        if (order.customerPhone.isNotEmpty()) {
+            val pathSegments = order.docPath.split("/")
+            if (pathSegments.size >= 2 && pathSegments[0] == "users") {
+                val managerId = pathSegments[1]
+                val customerRef = firestore.collection(AppConstants.COLLECTION_USERS)
+                    .document(managerId)
+                    .collection(AppConstants.COLLECTION_CUSTOMERS)
+                    .document(order.customerPhone)
+                
+                val customerData = mapOf(
+                    "customerId" to order.customerPhone,
+                    "customerName" to order.customerName,
+                    "customerMobile" to order.customerPhone,
+                    "lastVisit" to currentTime,
+                    "visitCount" to com.google.firebase.firestore.FieldValue.increment(1),
+                    "totalSpent" to com.google.firebase.firestore.FieldValue.increment(finalGrandTotal)
+                )
+                batch.set(customerRef, customerData, com.google.firebase.firestore.SetOptions.merge())
+            }
         }
 
         batch.commit()

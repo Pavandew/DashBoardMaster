@@ -15,6 +15,7 @@ import com.example.masterdashboard.staff_dash.billing_screens.views.CashierBilli
 import com.example.masterdashboard.staff_dash.billing_screens.views.CashierOrderFragment
 import com.example.masterdashboard.staff_dash.profile.StaffProfileFragment
 import com.example.masterdashboard.notifications.alert.NotificationFragment
+import com.example.masterdashboard.staff_dash.waiter_screens.table.views.WaiterTablesFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class CashierHomeActivity : AppCompatActivity() {
@@ -29,6 +30,7 @@ class CashierHomeActivity : AppCompatActivity() {
     companion object {
         private const val KEY_CURRENT_TAG = "current_tag"
         const val TAG_BILLS = "bills"
+        const val TAG_TABLES = "tables"
         const val TAG_ORDERS = "order"
         const val TAG_LOGS = "alert"
         const val TAG_PROFILE = "profile"
@@ -69,6 +71,7 @@ class CashierHomeActivity : AppCompatActivity() {
         bottomNav.setOnItemSelectedListener { item ->
             val tag = when (item.itemId) {
                 R.id.cashier_billsFragment      -> TAG_BILLS
+                R.id.cashier_tablesFragment     -> TAG_TABLES
                 R.id.cashier_orderFragment      -> TAG_ORDERS
                 R.id.cashier_logFragment        -> TAG_LOGS
                 R.id.cashier_settingFragment    -> TAG_PROFILE
@@ -91,6 +94,7 @@ class CashierHomeActivity : AppCompatActivity() {
     }
 
     fun openBills() = navigateTo(TAG_BILLS)
+    fun openTables() = navigateTo(TAG_TABLES)
     fun openOrders() = navigateTo(TAG_ORDERS)
     fun openAlerts() = navigateTo(TAG_LOGS)
     fun openProfile() = navigateTo(TAG_PROFILE)
@@ -98,6 +102,7 @@ class CashierHomeActivity : AppCompatActivity() {
     fun navigateTo(tag: String) {
         when (tag) {
             TAG_BILLS    -> bottomNav.selectedItemId = R.id.cashier_billsFragment
+            TAG_TABLES   -> bottomNav.selectedItemId = R.id.cashier_tablesFragment
             TAG_ORDERS    -> bottomNav.selectedItemId = R.id.cashier_orderFragment
             TAG_LOGS      -> bottomNav.selectedItemId = R.id.cashier_logFragment
             TAG_PROFILE  -> bottomNav.selectedItemId = R.id.cashier_settingFragment
@@ -117,6 +122,7 @@ class CashierHomeActivity : AppCompatActivity() {
         if (targetFragment == null) {
             targetFragment = when (tag) {
                 TAG_BILLS           -> CashierBillingFragment()
+                TAG_TABLES          -> WaiterTablesFragment()
                 TAG_ORDERS          -> CashierOrderFragment()
                 TAG_LOGS            -> NotificationFragment()
                 TAG_PROFILE         -> StaffProfileFragment()

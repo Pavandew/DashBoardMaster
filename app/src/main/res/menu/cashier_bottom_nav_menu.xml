@@ -7,6 +7,11 @@
         android:icon="@drawable/biling"
         />
     <item
+        android:id="@+id/cashier_tablesFragment"
+        android:title="Tables"
+        android:icon="@drawable/ic_table_24dp"
+        />
+    <item
         android:id="@+id/cashier_orderFragment"
         android:title="Order"
         android:icon="@drawable/ic_order_approve_24dp"

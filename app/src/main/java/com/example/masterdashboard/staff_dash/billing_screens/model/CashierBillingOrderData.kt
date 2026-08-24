@@ -8,6 +8,8 @@ data class CashierBillingOrderModel(
     val orderId: String = "",
     val tableId: String = "",
     val tableName: String = "Table",
+    val customerName: String = "",
+    val customerPhone: String = "",
     val orderType: String = "TAKE_AWAY", // e.g. "DINE_IN", "TAKE_AWAY", "DELIVERY"
     val orderStatus: String = "SERVED", // e.g. "SERVED", "BILLING_REQUESTED", "PAID"
     val itemsSummary: String = "",
