@@ -8,6 +8,7 @@ import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableF
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableStatus
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -34,6 +35,7 @@ class WaiterTableRepository {
         val floorsRef = firestore.collection(AppConstants.COLLECTION_USERS)
             .document(managerId)
             .collection(AppConstants.COLLECTION_RES_FLOORS)
+            .orderBy("displayFloor", Query.Direction.ASCENDING)
 
         val listener = floorsRef.addSnapshotListener { snapshots, exception ->
             if (exception != null) {
@@ -98,6 +100,7 @@ class WaiterTableRepository {
             // Step B: Loop through every single floor document found
             floorDocs.forEach { floorDoc ->
                 val floorId = floorDoc.id
+                val floorName = floorDoc.getString(AppConstants.FIELD_FLOOR_NAME) ?: "Unknown Floor"
 
                 // Point directly to the nested sub-collection: users -> {uid} -> res_floors -> {floorId} -> floor_tables
                 val tablesRef = floorsRef.document(floorId).collection(AppConstants.COLLECTION_TABLES)
@@ -121,10 +124,11 @@ class WaiterTableRepository {
                             } catch (e: Exception) {
                                 TableStatus.FREE
                             }
+                            val customerName = doc.getString(AppConstants.FIELD_CUSTOMER_NAME_TABLE)
                             val currentBillAmount = doc.getString(AppConstants.FIELD_CURRENT_BILL)
 
                             singleFloorTablesList.add(
-                                TableCardData(tableId, tableName, floorId, totalSeats, status, currentBillAmount)
+                                TableCardData(tableId, tableName, floorId, floorName, totalSeats, status, customerName, currentBillAmount)
                             )
                         } catch (e: Exception) {
                             Log.e(TAG, "Error parsing table object doc: ${doc.id}", e)
@@ -151,4 +155,35 @@ class WaiterTableRepository {
             activeListeners.forEach { it.remove() }
         }
     }.flowOn(Dispatchers.IO)
+
+    /**
+     * Updates the status and customer name of a specific table.
+     */
+    fun updateTableStatus(managerId: String, floorId: String, tableId: String, newStatus: TableStatus, customerName: String? = null) {
+        val tableRef = firestore.collection(AppConstants.COLLECTION_USERS)
+            .document(managerId)
+            .collection(AppConstants.COLLECTION_RES_FLOORS)
+            .document(floorId)
+            .collection(AppConstants.COLLECTION_TABLES)
+            .document(tableId)
+
+        val updates = mutableMapOf<String, Any?>(
+            AppConstants.FIELD_STATUS to newStatus.name
+        )
+        
+        // If table is being made FREE, clear the customer name
+        if (newStatus == TableStatus.FREE) {
+            updates[AppConstants.FIELD_CUSTOMER_NAME_TABLE] = null
+        } else if (customerName != null) {
+            updates[AppConstants.FIELD_CUSTOMER_NAME_TABLE] = customerName
+        }
+
+        tableRef.update(updates)
+            .addOnSuccessListener {
+                Log.d(TAG, "Successfully updated table $tableId to ${newStatus.name}")
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error updating table status", e)
+            }
+    }
 }

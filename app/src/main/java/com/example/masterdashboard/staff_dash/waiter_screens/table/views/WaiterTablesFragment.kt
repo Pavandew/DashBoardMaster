@@ -13,7 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentWaiterTablesBinding
-import com.example.masterdashboard.databinding.DialogCustomerInfoBinding
+import com.example.masterdashboard.staff_dash.utils.TableDialogHelper
 import com.example.masterdashboard.utils.NavigationUtils
 import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.master_dash.utils.SearchQueryManager
@@ -26,7 +26,6 @@ import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.WaiterTa
 import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderTakingRepository
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.WaiterTableViewModel
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableStatus
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import kotlinx.coroutines.flow.collectLatest
@@ -88,13 +87,23 @@ class WaiterTablesFragment : Fragment() {
         super.onStart()
         Log.v(TAG, "📱 WaiterTablesFragment onStart lifecycle visibility check triggered.")
         (activity as? WaiterHomeActivity)?.showBottomNavigation()
+        (activity as? com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity)?.showBottomNavigation()
     }
 
     private fun setupToolbar() {
         val toolbar = binding.waiterTablesToolbar
         toolbar.tvToolbarTitle.text = getString(R.string.title_manage_tables)
         toolbar.llSubtitleContainer.visibility = View.GONE
-        toolbar.toolbarImgMenu.visibility = View.GONE
+        
+        if (parentFragmentManager.backStackEntryCount > 0) {
+            toolbar.toolbarImgMenu.visibility = View.VISIBLE
+            toolbar.toolbarImgMenu.setImageResource(R.drawable.ic_arrow_back_24dp)
+            toolbar.toolbarImgMenu.setOnClickListener {
+                parentFragmentManager.popBackStack()
+            }
+        } else {
+            toolbar.toolbarImgMenu.visibility = View.GONE
+        }
     }
 
     private fun setUpRecyclerView() {
@@ -194,36 +203,47 @@ class WaiterTablesFragment : Fragment() {
     }
 
     private fun navigateToOrderTaking(table: TableCardData) {
-        if (table.status == TableStatus.FREE) {
-            showCustomerInfoDialog(table)
-        } else {
-            proceedToOrderTaking(table)
+        when (table.status) {
+            TableStatus.FREE -> showCustomerInfoDialog(table)
+            TableStatus.RESERVED -> showReservedTableDialog(table)
+            else -> proceedToOrderTaking(table)
         }
     }
 
     private fun showCustomerInfoDialog(table: TableCardData) {
-        val binding = DialogCustomerInfoBinding.inflate(layoutInflater)
+        val managerId = sessionManager.getUid()
+        TableDialogHelper.showCustomerInfoDialog(
+            context = requireContext(),
+            inflater = layoutInflater,
+            onStartOrder = { name, phone ->
+                orderTakingViewModel.setCustomerDetails(name, phone, "DINE_IN")
+                if (name.isNotEmpty()) {
+                    viewModel.updateTableStatus(managerId, table.floorId, table.tableId, TableStatus.OCCUPIED, name)
+                }
+                proceedToOrderTaking(table)
+            },
+            onReserve = { name ->
+                viewModel.updateTableStatus(managerId, table.floorId, table.tableId, TableStatus.RESERVED, name)
+                Toast.makeText(requireContext(), "Table ${table.tableName} Reserved for $name", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
 
-        val dialog = MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialogTheme)
-            .setView(binding.root)
-            .setCancelable(true)
-            .create()
-
-        binding.btnDialogSkip.setOnClickListener {
-            orderTakingViewModel.setCustomerDetails("", "", "DINE_IN")
-            dialog.dismiss()
-            proceedToOrderTaking(table)
-        }
-
-        binding.btnDialogConfirm.setOnClickListener {
-            val name = binding.etDialogCustomerName.text.toString().trim()
-            val phone = binding.etDialogPhoneNumber.text.toString().trim()
-            orderTakingViewModel.setCustomerDetails(name, phone, "DINE_IN")
-            dialog.dismiss()
-            proceedToOrderTaking(table)
-        }
-
-        dialog.show()
+    private fun showReservedTableDialog(table: TableCardData) {
+        val managerId = sessionManager.getUid()
+        TableDialogHelper.showReservedTableActionsDialog(
+            context = requireContext(),
+            inflater = layoutInflater,
+            table = table,
+            onStartOrder = {
+                viewModel.updateTableStatus(managerId, table.floorId, table.tableId, TableStatus.OCCUPIED, table.customerName)
+                proceedToOrderTaking(table)
+            },
+            onRelease = {
+                viewModel.updateTableStatus(managerId, table.floorId, table.tableId, TableStatus.FREE)
+                Toast.makeText(requireContext(), "Reservation Released", Toast.LENGTH_SHORT).show()
+            }
+        )
     }
 
     private fun proceedToOrderTaking(table: TableCardData) {

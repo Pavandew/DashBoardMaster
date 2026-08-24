@@ -79,7 +79,16 @@ class WaiterActiveOrdersFragment : Fragment() {
         val toolbar = binding.staffOrdersToolbar
         toolbar.tvToolbarTitle.text = getString(R.string.title_track_orders)
         toolbar.llSubtitleContainer.visibility = View.GONE
-        toolbar.toolbarImgMenu.visibility = View.GONE
+
+        if (parentFragmentManager.backStackEntryCount > 0) {
+            toolbar.toolbarImgMenu.visibility = View.VISIBLE
+            toolbar.toolbarImgMenu.setImageResource(R.drawable.ic_arrow_back_24dp)
+            toolbar.toolbarImgMenu.setOnClickListener {
+                parentFragmentManager.popBackStack()
+            }
+        } else {
+            toolbar.toolbarImgMenu.visibility = View.GONE
+        }
     }
 
     private fun setUpRecyclerViews() {

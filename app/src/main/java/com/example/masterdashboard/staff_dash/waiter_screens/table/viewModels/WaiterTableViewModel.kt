@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableCardData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableStatus
 import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.WaiterTableRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -47,11 +48,19 @@ class WaiterTableViewModel(
             } else {
                 tablesResource.data.filter { it.floorId == selectedId }
             }
-            ResourceUiState.Success(filtered)
+            // Smart sorting: Sort by floor name first (to group floors), then by table name numerically
+            val sorted = filtered.sortedWith(compareBy<TableCardData> { it.floorName }
+                .thenBy { extractInt(it.tableName) })
+            ResourceUiState.Success(sorted)
         } else {
             tablesResource
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ResourceUiState.Loading)
+
+    private fun extractInt(s: String): Int {
+        val num = s.replace("\\D".toRegex(), "")
+        return if (num.isEmpty()) 0 else num.toInt()
+    }
 
     // Reactive pipeline for floors: combines raw floors with the selection state
     val floorState: StateFlow<List<TableFilterData>> = combine(_rawFloors, _selectedFloorId) { floors, selectedId ->
@@ -88,6 +97,10 @@ class WaiterTableViewModel(
 
     fun setFloorFilter(floorId: String) {
         _selectedFloorId.value = floorId
+    }
+
+    fun updateTableStatus(managerId: String, floorId: String, tableId: String, newStatus: TableStatus, customerName: String? = null) {
+        repository.updateTableStatus(managerId, floorId, tableId, newStatus, customerName)
     }
 
     private fun fetchFloors(managerId: String) {
