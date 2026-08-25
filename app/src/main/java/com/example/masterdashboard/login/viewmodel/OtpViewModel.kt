@@ -3,22 +3,20 @@ package com.example.masterdashboard.login.viewmodel
 import android.app.Activity
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.masterdashboard.login.models.UserModelData
+import com.example.masterdashboard.login.repo.AuthRepository
 import com.example.masterdashboard.login.uistate.OtpUiState
 import com.google.firebase.FirebaseException
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
-import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
-import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.launch
 
 class OtpViewModel : ViewModel() {
 
-    private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseFirestore.getInstance()
+    private val repository = AuthRepository()
     private val TAG = "OtpViewModel"
 
     private val _otpState =
@@ -31,9 +29,7 @@ class OtpViewModel : ViewModel() {
     private var tempPhone: String = ""
     private var tempFullName: String = ""
     private var tempPassword: String = ""
-
     private var tempRole: String = ""
-
     private var tempPortal: String = ""
 
     // STEP 1: SEND OTP
@@ -47,59 +43,33 @@ class OtpViewModel : ViewModel() {
     ) {
         Log.i(TAG, "sendOtp: Initiating OTP request for phone: $phone")
 
-        tempPhone =
-            if(phone.startsWith("+91")) {
-                phone
-            } else {
-                "+91$phone"
-            }
+        tempPhone = phone
         tempFullName = fullName
         tempPassword = password
         tempRole = role
         tempPortal = portalType
 
-
         _otpState.value = OtpUiState.Loading
 
-        val callbacks =
-            object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-
-                override fun onVerificationCompleted(
-                    credential: PhoneAuthCredential
-                ) {
-                    Log.i(TAG, "onVerificationCompleted: Auto-verification successful")
-                    signInWithCredential(credential)
-                }
-
-                override fun onVerificationFailed(
-                    e: FirebaseException
-                ) {
-                    Log.e(TAG, "onVerificationFailed: ${e.message}", e)
-                    _otpState.value =
-                        OtpUiState.Error(
-                            e.message ?: "Verification failed"
-                        )
-                }
-
-                override fun onCodeSent(
-                    verificationId: String,
-                    token: PhoneAuthProvider.ForceResendingToken
-                ) {
-                    Log.d(TAG, "onCodeSent: Verification ID received: $verificationId")
-                    storedVerificationId = verificationId
-                    _otpState.value = OtpUiState.CodeSent
-                }
+        val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+            override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+                Log.i(TAG, "onVerificationCompleted: Auto-verification successful")
+                signInWithCredential(credential)
             }
 
-        val options =
-            PhoneAuthOptions.newBuilder(auth)
-                .setPhoneNumber(tempPhone)
-                .setTimeout(60L, TimeUnit.SECONDS)
-                .setActivity(activity)
-                .setCallbacks(callbacks)
-                .build()
+            override fun onVerificationFailed(e: FirebaseException) {
+                Log.e(TAG, "onVerificationFailed: ${e.message}", e)
+                _otpState.value = OtpUiState.Error(e.message ?: "Verification failed")
+            }
 
-        PhoneAuthProvider.verifyPhoneNumber(options)
+            override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
+                Log.d(TAG, "onCodeSent: Verification ID received: $verificationId")
+                storedVerificationId = verificationId
+                _otpState.value = OtpUiState.CodeSent
+            }
+        }
+
+        repository.sendOtp(tempPhone, activity, callbacks)
     }
 
     // STEP 2: VERIFY OTP
@@ -109,74 +79,45 @@ class OtpViewModel : ViewModel() {
         val verificationId = storedVerificationId
 
         if (verificationId == null) {
-            Log.w(TAG, "verifyOtp: Verification ID is null, OTP might not have been sent")
-            _otpState.value =
-                OtpUiState.Error("OTP not sent yet")
+            _otpState.value = OtpUiState.Error("OTP not sent yet")
             return
         }
 
         _otpState.value = OtpUiState.Loading
 
-        val credential =
-            PhoneAuthProvider.getCredential(
-                verificationId,
-                code
-            )
-
+        val credential = PhoneAuthProvider.getCredential(verificationId, code)
         signInWithCredential(credential)
     }
 
     // STEP 3: FIREBASE AUTH + FIRESTORE SAVE
-    private fun signInWithCredential(
-        credential: PhoneAuthCredential
-    ) {
-        Log.d(TAG, "signInWithCredential: Attempting Firebase sign-in")
-
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener { task ->
-
-                if (task.isSuccessful) {
-                    Log.i(TAG, "signInWithCredential: Sign-in successful")
-
-                    val uid = auth.currentUser?.uid ?: run {
-                        Log.e(TAG, "signInWithCredential: Current user or UID is null after successful sign-in")
-                        return@addOnCompleteListener
-                    }
-
+    private fun signInWithCredential(credential: PhoneAuthCredential) {
+        viewModelScope.launch {
+            repository.signInWithCredential(credential).fold(
+                onSuccess = { uid ->
                     val user = UserModelData(
                         uid = uid,
                         fullName = tempFullName,
-                        mobile = tempPhone,
-                        passwordHash = hashPassword(tempPassword),
+                        mobile = if (tempPhone.startsWith("+91")) tempPhone else "+91$tempPhone",
+                        passwordHash = repository.hashPassword(tempPassword),
                         role = tempRole,
                         portalType = tempPortal,
                         isVerified = true,
                         status = "Active"
                     )
 
-                    Log.d(TAG, "signInWithCredential: Saving user profile to Firestore for UID: $uid")
-                    db.collection("users")
-                        .document(uid)
-                        .set(user)
-                        .addOnSuccessListener {
-                            Log.i(TAG, "signInWithCredential: User profile saved successfully")
+                    repository.saveUserProfile(user).fold(
+                        onSuccess = {
                             _otpState.value = OtpUiState.Verified(uid)
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e(TAG, "signInWithCredential: Failed to save user profile", e)
+                        },
+                        onFailure = { e ->
                             _otpState.value = OtpUiState.Error("Failed to create profile: ${e.message}")
                         }
-
-                } else {
-                    Log.w(TAG, "signInWithCredential: Sign-in failed", task.exception)
-                    _otpState.value =
-                        OtpUiState.Error(
-                            "Wrong OTP. Try again"
-                        )
+                    )
+                },
+                onFailure = { e ->
+                    _otpState.value = OtpUiState.Error("Wrong OTP or sign-in failed")
                 }
-            }
-    }
-    private fun hashPassword(password: String) : String {
-        return password.hashCode().toString()
+            )
+        }
     }
 }

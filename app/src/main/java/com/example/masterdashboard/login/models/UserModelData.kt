@@ -18,6 +18,9 @@ data class UserModelData(
     val role: String = "",
     val portalType: String = "",
     
+    val isSetupComplete: Boolean = false,
+    val restaurantId: String = "",
+    
     @get:PropertyName("isVerified")
     val isVerified: Boolean = false,
     val status: String = "Disabled"
