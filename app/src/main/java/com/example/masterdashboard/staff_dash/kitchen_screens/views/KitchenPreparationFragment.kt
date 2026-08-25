@@ -10,6 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentKitchenPreparationBinding
+import com.example.masterdashboard.utils.NavigationUtils
 import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.staff_dash.kitchen_screens.adapter.KitchenWorkstationAdapter
 import com.example.masterdashboard.staff_dash.kitchen_screens.uistate.KitchenOrderUiState
@@ -51,17 +52,30 @@ class KitchenPreparationFragment : Fragment(R.layout.fragment_kitchen_preparatio
     }
 
     private fun setupToolbar() {
-        binding.kitchenToolbar.tvToolbarTitle.text = "Kitchen Preparation Screen"
-        binding.kitchenToolbar.toolbarImgMenu.visibility = View.GONE
-        binding.kitchenToolbar.toolbarImgNotification.visibility = View.VISIBLE
-        binding.kitchenToolbar.toolbarImgNotification.setBackgroundResource(R.drawable.ic_history_24dp)
-        binding.kitchenToolbar.toolbarImgNotification.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.kitchen_fragment_container, KitchenHistoryFragment())
-                .addToBackStack(null)
-                .commit()
-        }
+        binding.kitchenToolbar.apply {
+            tvToolbarTitle.text = getString(R.string.title_cooking_workstation)
+            toolbarImgNotification.visibility = View.VISIBLE
+            toolbarImgNotification.setBackgroundResource(R.drawable.ic_history_24dp)
+            toolbarImgNotification.setOnClickListener {
+                val containerId = NavigationUtils.getHostContainerId(activity)
+                if (containerId != 0) {
+                    parentFragmentManager.beginTransaction()
+                        .replace(containerId, KitchenHistoryFragment())
+                        .addToBackStack(null)
+                        .commit()
+                }
+            }
 
+            if (parentFragmentManager.backStackEntryCount > 0) {
+                toolbarImgMenu.visibility = View.VISIBLE
+                toolbarImgMenu.setImageResource(R.drawable.ic_arrow_back_24dp)
+                toolbarImgMenu.setOnClickListener {
+                    parentFragmentManager.popBackStack()
+                }
+            } else {
+                toolbarImgMenu.visibility = View.GONE
+            }
+        }
     }
 
     private fun setupChipsRecyclerView() {
@@ -82,10 +96,13 @@ class KitchenPreparationFragment : Fragment(R.layout.fragment_kitchen_preparatio
                 }
             }
 
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.kitchen_fragment_container, detailFragment)
-                .addToBackStack(null)
-                .commit()
+            val containerId = NavigationUtils.getHostContainerId(activity)
+            if (containerId != 0) {
+                parentFragmentManager.beginTransaction()
+                    .replace(containerId, detailFragment)
+                    .addToBackStack(null)
+                    .commit()
+            }
         }
         binding.rvInprogressOrders.adapter = workstationAdapter
     }

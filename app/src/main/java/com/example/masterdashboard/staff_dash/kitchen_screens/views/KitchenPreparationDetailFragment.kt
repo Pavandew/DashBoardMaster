@@ -132,11 +132,24 @@ class KitchenPreparationDetailFragment : Fragment(R.layout.fragment_kitchen_prep
         // Set Relative Time using centralized TimeUtils
         binding.tvItemCount.text = TimeUtils.getRelativeTime(data.timestamp)
         
-        binding.tvItemToPrepare.text = "Items to Prepare (${data.items.size})"
+        val totalItems = data.items.size
+        val readyItems = data.items.count { it.readyQuantity >= it.quantity && it.quantity > 0 }
+        val toPrepare = totalItems - readyItems
         
-        // Sort items: New items (qty > orderedQty) first, then processed items
-        val sortedItems = data.items.sortedWith(compareByDescending<OrderDetailItem> { 
-            it.quantity > it.orderedQuantity 
+        binding.tvItemToPrepare.text = if (readyItems > 0) {
+            "Items to Prepare ($toPrepare / $totalItems)"
+        } else {
+            "Items to Prepare ($totalItems)"
+        }
+        
+        // Sort items: 
+        // 1. Items needing preparation (newly added) first
+        // 2. Previously ordered items next
+        // 3. Fully prepared items last
+        val sortedItems = data.items.sortedWith(compareBy<OrderDetailItem> { 
+            it.readyQuantity >= it.quantity && it.quantity > 0 // Ready items last
+        }.thenByDescending { 
+            it.quantity > it.orderedQuantity // New items first
         }.thenBy { it.itemName })
 
         preparationDetailAdapter.updateOrderStatusContext(data.status)

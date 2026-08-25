@@ -121,10 +121,16 @@ class KitchenPreparationDetailViewModel(
 
                 repository.updateItemsAsReady(docPath, itemsMap)
                 
-                // If all items are now ready, we could automatically finalize the order,
-                // but let's leave that to the chef for now to avoid confusion.
+                // Auto-Finalize Check: If all items in this order are now ready,
+                // automatically move the order to READY status and notify the waiter.
+                val allReady = updatedItemsList.all { it.readyQuantity >= it.quantity || it.quantity <= 0 }
                 
-                _statusUpdateAction.value = Result.success("Items Prepared")
+                if (allReady) {
+                    Log.i(TAG, "markItemsAsReady: All items are ready. Auto-finalizing order status.")
+                    finalizeOrderToServe(docPath)
+                } else {
+                    _statusUpdateAction.value = Result.success("Items Prepared")
+                }
             } catch (e: Exception) {
                 _statusUpdateAction.value = Result.failure(e)
             }
