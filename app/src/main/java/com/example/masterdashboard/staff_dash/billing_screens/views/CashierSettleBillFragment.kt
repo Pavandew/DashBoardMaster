@@ -139,10 +139,19 @@ class CashierSettleBillFragment : Fragment() {
     }
 
     private fun navigateToSummary(order: CashierBillingOrderModel) {
+        val paidAt = order.paidAt?.toDate() ?: java.util.Date()
+        val sdf = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
+
         val summaryFragment = CashierBillSummaryFragment.newInstance(
-            order = order,
+            orderDocPath = order.docPath,
+            orderId = order.orderId,
+            totalAmount = order.grandTotal,
             received = order.grandTotal,
-            change = 0.0
+            change = 0.0,
+            discount = order.discountAmount,
+            itemCount = order.items.sumOf { it.quantity },
+            method = order.paymentMethod.ifEmpty { "Paid" },
+            dateTime = sdf.format(paidAt)
         )
         parentFragmentManager.beginTransaction()
             .replace(this.id, summaryFragment)
@@ -291,10 +300,19 @@ class CashierSettleBillFragment : Fragment() {
 
                                 val order = viewModel.activeBillingOrder.value
                                 if (order != null) {
+                                    val paidAt = order.paidAt?.toDate() ?: java.util.Date()
+                                    val sdf = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
+
                                     val summaryFragment = CashierBillSummaryFragment.newInstance(
-                                        order = order,
+                                        orderDocPath = order.docPath,
+                                        orderId = order.orderId,
+                                        totalAmount = order.grandTotal,
                                         received = order.grandTotal,
-                                        change = 0.0
+                                        change = 0.0,
+                                        discount = order.discountAmount,
+                                        itemCount = order.items.sumOf { it.quantity },
+                                        method = order.paymentMethod.ifEmpty { "Paid" },
+                                        dateTime = sdf.format(paidAt)
                                     )
                                     parentFragmentManager.beginTransaction()
                                         .replace(this@CashierSettleBillFragment.id, summaryFragment)

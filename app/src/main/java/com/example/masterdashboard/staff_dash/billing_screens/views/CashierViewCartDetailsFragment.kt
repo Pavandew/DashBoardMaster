@@ -96,9 +96,9 @@ class CashierViewCartDetailsFragment : BaseViewCartFragment() {
                             binding.btnSendToKitchen.isEnabled = false
                         }
                         is ResourceUiState.Success -> {
-                            Log.d("CashierViewCart", "KOT successfully submitted via Pay Later.")
+                            Log.d("CashierViewCart", "KOT successfully submitted via Pay Later at path: ${state.data}")
                             Toast.makeText(context, "Order sent to kitchen!", Toast.LENGTH_SHORT).show()
-                            navigateToSuccess()
+                            navigateToSuccess(state.data)
                         }
                         is ResourceUiState.Error -> {
                             Log.e("CashierViewCart", "Pay Later submission failed: ${state.message}")
@@ -114,11 +114,12 @@ class CashierViewCartDetailsFragment : BaseViewCartFragment() {
         }
     }
 
-    private fun navigateToSuccess() {
+    private fun navigateToSuccess(docPath: String = "") {
         val bundle = Bundle().apply {
             putString("tableId", arguments?.getString("tableId"))
             putString("tableName", arguments?.getString("tableName"))
             putString("orderId", viewModel.lastOrderId)
+            putString("docPath", docPath)
             putInt("totalItems", viewModel.cartSummary.value.totalItems)
             putDouble("totalPrice", viewModel.cartSummary.value.totalPrice * 1.05)
             putBoolean("isCashier", true)

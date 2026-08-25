@@ -91,6 +91,7 @@ class CashierBillingRepository(
                             val subtotal = doc.getDouble(AppConstants.FIELD_SUBTOTAL) ?: 0.0
                             val taxAmount = doc.getDouble(AppConstants.FIELD_GST) ?: 0.0
                             val grandTotal = doc.getDouble(AppConstants.FIELD_GRAND_TOTAL) ?: 0.0
+                            val discountAmount = doc.getDouble(AppConstants.FIELD_DISCOUNT_AMOUNT) ?: 0.0
                             val timestamp = doc.getTimestamp(AppConstants.FIELD_TIMESTAMP) ?: Timestamp.now()
                             val paidAt = doc.getTimestamp(AppConstants.FIELD_PAID_AT)
                             val paymentMethod = doc.getString(AppConstants.FIELD_PAYMENT_METHOD) ?: doc.getString("paymentMode") ?: ""
@@ -124,6 +125,7 @@ class CashierBillingRepository(
                                 items = itemsList,
                                 subtotal = subtotal,
                                 taxAmount = taxAmount,
+                                discountAmount = discountAmount,
                                 grandTotal = grandTotal,
                                 timestamp = timestamp,
                                 paidAt = paidAt,
@@ -194,8 +196,13 @@ class CashierBillingRepository(
                     items = itemsList,
                     subtotal = doc.getDouble(AppConstants.FIELD_SUBTOTAL) ?: 0.0,
                     taxAmount = doc.getDouble(AppConstants.FIELD_GST) ?: 0.0,
+                    discountAmount = doc.getDouble(AppConstants.FIELD_DISCOUNT_AMOUNT) ?: 0.0,
                     grandTotal = doc.getDouble(AppConstants.FIELD_GRAND_TOTAL) ?: 0.0,
                     timestamp = doc.getTimestamp(AppConstants.FIELD_TIMESTAMP) ?: Timestamp.now(),
+                    paidAt = doc.getTimestamp(AppConstants.FIELD_PAID_AT),
+                    paymentMethod = doc.getString(AppConstants.FIELD_PAYMENT_METHOD) ?: "",
+                    customerName = doc.getString(AppConstants.FIELD_CUSTOMER_NAME) ?: "",
+                    customerPhone = doc.getString(AppConstants.FIELD_CUSTOMER_MOBILE) ?: "",
                     docPath = doc.reference.path
                 )
                 emit(ResourceUiState.Success(model))
@@ -265,11 +272,14 @@ class CashierBillingRepository(
         }
 
         // 4. Reset the table status to FREE so waiters can take new guests
-        val tableRef = orderRef.parent.parent
-        if (tableRef != null) {
-            batch.update(tableRef, AppConstants.FIELD_STATUS, AppConstants.STATUS_FREE)
-            // Also clear customer name from table
-            batch.update(tableRef, AppConstants.FIELD_CUSTOMER_NAME_TABLE, null)
+        // Only do this if it's a Dine-In order (Table-based)
+        if (order.orderType == AppConstants.ORDER_TYPE_DINE_IN && order.tableId.isNotEmpty()) {
+            val tableRef = orderRef.parent.parent
+            if (tableRef != null) {
+                batch.update(tableRef, AppConstants.FIELD_STATUS, AppConstants.STATUS_FREE)
+                // Also clear customer name from table
+                batch.update(tableRef, AppConstants.FIELD_CUSTOMER_NAME_TABLE, null)
+            }
         }
 
         // 5. Update CRM (Customer Relationship Management)
