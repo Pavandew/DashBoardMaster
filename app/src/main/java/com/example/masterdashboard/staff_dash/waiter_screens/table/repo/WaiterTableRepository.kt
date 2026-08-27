@@ -119,11 +119,18 @@ class WaiterTableRepository {
                             val tableName = doc.getString(AppConstants.FIELD_TABLE_NAME) ?: "Unknown Table"
                             val totalSeats = doc.getLong(AppConstants.FIELD_TOTAL_SEATS)?.toInt() ?: 4
                             val statusString = doc.getString(AppConstants.FIELD_STATUS) ?: AppConstants.STATUS_FREE
-                            val status = try {
-                                TableStatus.valueOf(statusString.uppercase())
-                            } catch (e: Exception) {
-                                TableStatus.FREE
+                            
+                            // Defensive Status Mapping: If it's a success status, treat as FREE
+                            val normalized = statusString.uppercase().trim()
+                            val status = when (normalized) {
+                                "FREE", "AVAILABLE" -> TableStatus.FREE
+                                "OCCUPIED", "BUSY" -> TableStatus.OCCUPIED
+                                "RESERVED", "BOOKED" -> TableStatus.RESERVED
+                                "BILLING", "CHECKOUT" -> TableStatus.BILLING
+                                "PAID", "SUCCESS", "COMPLETED" -> TableStatus.FREE // Automatically show as free if paid
+                                else -> TableStatus.FREE
                             }
+
                             val customerName = doc.getString(AppConstants.FIELD_CUSTOMER_NAME_TABLE)
                             val currentBillAmount = doc.getString(AppConstants.FIELD_CURRENT_BILL)
 

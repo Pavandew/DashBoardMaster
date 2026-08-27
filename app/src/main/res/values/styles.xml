@@ -261,6 +261,18 @@
         <item name="android:fontFamily">@font/poppins_bold</item>
     </style>
 
+    <style name="TextAppearance.MyApp.TableFloor">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">#777777</item>
+        <item name="android:fontFamily">@font/poppins_medium</item>
+    </style>
+
+    <style name="TextAppearance.MyApp.TableCustomer">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">#16A34A</item>
+        <item name="android:fontFamily">@font/poppins_semibold</item>
+    </style>
+
     <style name="TextAppearance.MyApp.TableSeats">
         <item name="android:textSize">13sp</item>
         <item name="android:textColor">@color/table_seat_text</item>

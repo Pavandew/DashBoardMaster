@@ -33,7 +33,17 @@ class TableCardsAdapter(
         fun bind(table: TableCardData, onTableClick: (TableCardData) -> Unit) {
             val context = itemView.context
             binding.tvTableName.text = table.tableName
+            binding.tvFloorName.text = table.floorName
             binding.tvSeatCount.text = context.getString(R.string.seat_count_format, table.totalSeats)
+
+            // Show customer name only if the table is NOT free
+            val isActuallyFree = table.status == TableStatus.FREE
+            if (!table.customerName.isNullOrEmpty() && !isActuallyFree) {
+                binding.tvCustomerName.visibility = View.VISIBLE
+                binding.tvCustomerName.text = table.customerName
+            } else {
+                binding.tvCustomerName.visibility = View.GONE
+            }
 
             itemView.setOnClickListener {
                 onTableClick(table)
@@ -61,19 +71,19 @@ class TableCardsAdapter(
 
                 TableStatus.RESERVED -> {
                     binding.tvTableStatus.text = context.getString(R.string.status_reserved)
-                    binding.tvTableStatus.setBackgroundColor(ContextCompat.getColor(context, R.color.status_reserved_bg))
+                    binding.tvTableStatus.setBackgroundResource(R.drawable.bg_status_amber)
                     binding.tvTableStatus.setTextColor(ContextCompat.getColor(context, R.color.status_reserved))
                     binding.ivTableIcon.setColorFilter(ContextCompat.getColor(context, R.color.status_reserved))
-                    binding.cvTableCard.setCardBackgroundColor(ContextCompat.getColor(context, R.color.white))
+                    binding.cvTableCard.setCardBackgroundColor(ContextCompat.getColor(context, R.color.status_reserved_bg))
                     binding.tvTablePrice.visibility = View.GONE
                 }
 
                 TableStatus.BILLING -> {
                     binding.tvTableStatus.text = context.getString(R.string.status_billing)
-                    binding.tvTableStatus.setBackgroundColor(ContextCompat.getColor(context, R.color.status_billing_bg))
+                    binding.tvTableStatus.setBackgroundResource(R.drawable.bg_status_blue)
                     binding.tvTableStatus.setTextColor(ContextCompat.getColor(context, R.color.status_billing))
                     binding.ivTableIcon.setColorFilter(ContextCompat.getColor(context, R.color.status_billing))
-                    binding.cvTableCard.setCardBackgroundColor(ContextCompat.getColor(context, R.color.white))
+                    binding.cvTableCard.setCardBackgroundColor(ContextCompat.getColor(context, R.color.status_billing_bg))
                     binding.tvTablePrice.visibility = View.GONE
                 }
             }
