@@ -21,15 +21,17 @@ import com.example.masterdashboard.manager_single_res_dash.views.*
 import com.example.masterdashboard.manager_single_res_dash.views.MenuManagementFragment
 import com.example.masterdashboard.manager_single_res_dash.views.StaffManagementFragment
 import com.example.masterdashboard.manager_single_res_dash.views.TableManagementFragment
+import com.example.masterdashboard.manager_single_res_dash.views.CustomerManagementFragment
 import com.example.masterdashboard.notifications.alert.NotificationFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.order.views.WaiterActiveOrdersFragment
+import com.example.masterdashboard.staff_dash.waiter_screens.table.views.WaiterTablesFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenInventoryFragment
+import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenPreparationFragment
 import com.example.masterdashboard.utils.LogoutManager
 import com.example.masterdashboard.staff_dash.billing_screens.views.CashierBillingFragment
+import com.example.masterdashboard.staff_dash.billing_screens.views.CashierOrderFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenOrderFragment
-import com.example.masterdashboard.staff_dash.kitchen_screens.KitchenHomeActivity
-import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
-import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
+import com.example.masterdashboard.utils.NavigationUtils
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 
@@ -46,11 +48,7 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
         get() = fragment.activity
 
     private val containerId: Int
-        get() = when (activity) {
-            is ManagerHomeActivity -> R.id.manager_fragmentContainer
-            is SingleResOwnerHomeActivity -> R.id.single_owner_fragmentContainer
-            else -> 0
-        }
+        get() = NavigationUtils.getHostContainerId(activity)
 
     //  Initialize universal helper class lazily using the contextual reference.
     // This deprecates the local duplicate SessionManager and FirebaseAuth calls safely.
@@ -112,18 +110,21 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
         // Fallback structural router matching your explicit index IDs sequence setup map fallback
         val destinationFragment: Fragment? = when (item.id) {
             0 -> ManagerDashboardFragment()
-            1 -> WaiterActiveOrdersFragment()
-            2 -> TableManagementFragment()
-            3 -> KitchenOrderFragment()
-            4 -> MenuManagementFragment()
-            5 -> StaffManagementFragment()
-            6 -> CashierBillingFragment()
-            7 -> KitchenInventoryFragment()
-            8 -> null
-            9 -> null
-            10 -> null
-            11 -> NotificationFragment()
-            12 -> null
+            1 -> WaiterTablesFragment()
+            2 -> WaiterActiveOrdersFragment()
+            3 -> TableManagementFragment()
+            4 -> KitchenOrderFragment()
+            5 -> KitchenPreparationFragment()
+            6 -> KitchenInventoryFragment()
+            7 -> CashierBillingFragment()
+            8 -> CashierOrderFragment()
+            9 -> MenuManagementFragment()
+            10 -> StaffManagementFragment()
+            11 -> ManagerDashboardFragment() // Reports
+            12 -> CustomerManagementFragment()
+            13 -> ManagerDashboardFragment() // Offers
+            14 -> NotificationFragment()
+            15 -> ManagerDashboardFragment() // Settings
             else -> null
         }
 
@@ -187,19 +188,19 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
 
         menuItems = mutableListOf(
             DrawerMenuItem(0, "Dashboard", R.drawable.ic_dashboard_24dp, fragmentClass = ManagerDashboardFragment::class.java),
-            DrawerMenuItem(6, "Billing Screen", R.drawable.biling, activityClass = CashierHomeActivity::class.java),
-            DrawerMenuItem(1, "Take Orders", R.drawable.waiter, activityClass = WaiterHomeActivity::class.java),
-            DrawerMenuItem(3, "Kitchen Screen", R.drawable.ic_chef_24dp, activityClass = KitchenHomeActivity::class.java),
-            DrawerMenuItem(5, "Staff Management", R.drawable.ic_staffs_24dp, fragmentClass = StaffManagementFragment::class.java),
-            DrawerMenuItem(4, "Menu Management", R.drawable.ic_menu_24dp, fragmentClass = MenuManagementFragment::class.java),
-            DrawerMenuItem(2, "Table Management", R.drawable.ic_table_24dp, fragmentClass = TableManagementFragment::class.java),
-            DrawerMenuItem(7, "Inventory", R.drawable.ic_inventory_24dp, fragmentClass = KitchenInventoryFragment::class.java),
-            DrawerMenuItem(8, "Reports & Analytics", R.drawable.ic_sales_report_24dp, fragmentClass = ManagerDashboardFragment::class.java),
-            DrawerMenuItem(9, "Customers", R.drawable.ic_person_24dp, fragmentClass = ManagerDashboardFragment::class.java),
-            DrawerMenuItem(10, "Offers & Discounts", R.drawable.ic_discount_24dp, fragmentClass = ManagerDashboardFragment::class.java),
-            DrawerMenuItem(11, "Notifications", R.drawable.ic_notifications_24dp, fragmentClass = NotificationFragment::class.java),
-            DrawerMenuItem(12, "Settings", R.drawable.ic_settings_24dp, fragmentClass = ManagerDashboardFragment::class.java),
-            DrawerMenuItem(13, "Logout", R.drawable.ic_logout_24dp, isLogout = true)
+            DrawerMenuItem(7, "Billing Screen", R.drawable.biling, fragmentClass = CashierBillingFragment::class.java),
+            DrawerMenuItem(1, "Take Orders", R.drawable.waiter, fragmentClass = WaiterTablesFragment::class.java),
+            DrawerMenuItem(4, "Kitchen Screen", R.drawable.ic_chef_24dp, fragmentClass = KitchenOrderFragment::class.java),
+            DrawerMenuItem(10, "Staff Management", R.drawable.ic_staffs_24dp, fragmentClass = StaffManagementFragment::class.java),
+            DrawerMenuItem(9, "Menu Management", R.drawable.ic_menu_24dp, fragmentClass = MenuManagementFragment::class.java),
+            DrawerMenuItem(3, "Table Management", R.drawable.ic_table_24dp, fragmentClass = TableManagementFragment::class.java),
+            DrawerMenuItem(6, "Inventory", R.drawable.ic_inventory_24dp, fragmentClass = KitchenInventoryFragment::class.java),
+            DrawerMenuItem(11, "Reports & Analytics", R.drawable.ic_sales_report_24dp, fragmentClass = ManagerDashboardFragment::class.java),
+            DrawerMenuItem(12, "Customers", R.drawable.ic_person_24dp, fragmentClass = CustomerManagementFragment::class.java),
+            DrawerMenuItem(13, "Offers & Discounts", R.drawable.ic_discount_24dp, fragmentClass = ManagerDashboardFragment::class.java),
+            DrawerMenuItem(14, "Notifications", R.drawable.ic_notifications_24dp, fragmentClass = NotificationFragment::class.java),
+            DrawerMenuItem(15, "Settings", R.drawable.ic_settings_24dp, fragmentClass = ManagerDashboardFragment::class.java),
+            DrawerMenuItem(16, "Logout", R.drawable.ic_logout_24dp, isLogout = true)
         )
 
         val (drawerLayout, navigationView) = when (currentActivity) {
@@ -227,28 +228,63 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
 
     private fun startUnreadCountListener() {
         val managerId = sessionManager.getUid()
+        val userRole = sessionManager.getRole().lowercase().trim()
+        val staffId = sessionManager.getStaffDocId()
+
         if (managerId.isEmpty()) {
             Log.w(TAG, "Skipping unread listener because managerId is empty")
             return
         }
 
-        Log.d(TAG, "Starting real-time unread badge listener for managerId: $managerId")
+        // Build role-based filter list consistent with NotificationRepository
+        val isManager = userRole == "manager" || userRole == "owner_single" || userRole == "owner_multi"
+        val roleTargets = mutableListOf("all", userRole)
+        when (userRole) {
+            "waiter", "waiter_staff" -> roleTargets.addAll(listOf("waiter", "waiter_staff"))
+            "chef", "kitchen" -> roleTargets.addAll(listOf("chef", "kitchen"))
+            "cashier", "billing" -> roleTargets.addAll(listOf("cashier", "billing"))
+        }
+        val distinctRoleTargets = roleTargets.distinct()
+
+        // Apply server-side filtering for efficiency
+        val targets = if (isManager) {
+            listOf("all", "manager")
+        } else {
+            distinctRoleTargets
+        }
+
+        Log.d(TAG, "Starting filtered unread badge listener for managerId: $managerId, role: $userRole, targets: $targets")
         unreadListener?.remove()
-        unreadListener = FirebaseFirestore.getInstance()
+
+        val query = FirebaseFirestore.getInstance()
             .collection(AppConstants.COLLECTION_USERS)
             .document(managerId)
             .collection(AppConstants.COLLECTION_NOTIFICATIONS)
             .whereEqualTo(AppConstants.FIELD_IS_READ, false)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    Log.e(TAG, "Error in unread badge listener", error)
-                    return@addSnapshotListener
-                }
+            .whereIn(AppConstants.FIELD_TARGET_ROLE, targets)
 
-                val unreadCount = snapshot?.size() ?: 0
-                Log.d(TAG, "Unread notifications update: count=$unreadCount")
-                updateBadgeCount(11, unreadCount)
+        unreadListener = query.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.e(TAG, "Error in unread badge listener", error)
+                return@addSnapshotListener
             }
+
+            val unreadCount = snapshot?.mapNotNull { doc ->
+                val tStaffId = doc.getString(AppConstants.FIELD_TARGET_STAFF_ID) ?: ""
+                
+                // Local filtering for Staff-specific alerts (e.g. alerts sent to a specific waiter ID)
+                val isRelevant = when {
+                    isManager -> true
+                    tStaffId.isNotEmpty() -> tStaffId == staffId
+                    else -> true
+                }
+                
+                if (isRelevant) 1 else null
+            }?.size ?: 0
+
+            Log.d(TAG, "Unread notifications update (filtered): count=$unreadCount")
+            updateBadgeCount(14, unreadCount)
+        }
     }
 
     private fun updateBadgeCount(itemId: Int, count: Int) {

@@ -1,6 +1,8 @@
 package com.example.masterdashboard.staff_dash.waiter_screens.table.adapter
 
 
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -45,6 +47,7 @@ class AddonsAdapter(
             binding.tvAddonPrice.text = if (item.isVariant) "₹${item.price.toInt()}" else "+₹${item.price.toInt()}"
             
             binding.cbAddon.isChecked = item.isSelected
+            updateCardUI(item.isSelected)
 
             binding.cbAddon.setOnClickListener {
                 handleItemSelection(item)
@@ -64,8 +67,27 @@ class AddonsAdapter(
                 // Multi selection logic for addons
                 selectedItem.isSelected = !selectedItem.isSelected
                 binding.cbAddon.isChecked = selectedItem.isSelected
+                updateCardUI(selectedItem.isSelected)
             }
             onSelectionChanged()
+        }
+
+        private fun updateCardUI(isSelected: Boolean) {
+            if (isSelected) {
+                binding.cardAddonRoot.setCardBackgroundColor(Color.parseColor("#F0FDF4")) // Light Green
+                binding.cardAddonRoot.strokeColor = Color.parseColor("#BBF7D0") // Border Green
+                binding.cardAddonRoot.strokeWidth = 3
+                
+                // Set Checkbox color to Green when selected
+                binding.cbAddon.buttonTintList = ColorStateList.valueOf(Color.parseColor("#16A34A"))
+            } else {
+                binding.cardAddonRoot.setCardBackgroundColor(Color.WHITE)
+                binding.cardAddonRoot.strokeColor = Color.parseColor("#E5E7EB") // Light Gray
+                binding.cardAddonRoot.strokeWidth = 2
+                
+                // Reset Checkbox color to default gray when unselected
+                binding.cbAddon.buttonTintList = ColorStateList.valueOf(Color.parseColor("#6B7280"))
+            }
         }
     }
 }

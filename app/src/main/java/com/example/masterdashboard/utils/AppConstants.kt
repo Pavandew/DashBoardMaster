@@ -28,6 +28,7 @@ object AppConstants {
     const val COLLECTION_COMPLETED_ORDERS = "completed_orders"
     const val COLLECTION_INVENTORY = "inventory"
     const val COLLECTION_NOTIFICATIONS = "notifications"
+    const val COLLECTION_CUSTOMERS = "customers"
 
     // Firestore Fields - Common
     const val FIELD_UID = "uid"
@@ -71,10 +72,12 @@ object AppConstants {
     const val FIELD_VARIANT_NAME = "variantName"
 
     // Firestore Fields - Table & Floor
+    const val FIELD_FLOOR_ID = "floorId"
     const val FIELD_FLOOR_NAME = "floorName"
     const val FIELD_TABLE_ID = "tableId"
     const val FIELD_TABLE_NAME = "tableName"
-    const val FIELD_TOTAL_SEATS = "totalSeats"
+    const val FIELD_TOTAL_SEATS = "capacity"
+    const val FIELD_CUSTOMER_NAME_TABLE = "customerName"
     const val FIELD_CURRENT_BILL = "currentBillAmount"
 
     // Firestore Fields - Orders & Billing
@@ -109,6 +112,12 @@ object AppConstants {
     const val FIELD_NOTIFICATION_TYPE = "type"
     const val FIELD_NOTIFICATION_TITLE = "title"
     const val FIELD_NOTIFICATION_MESSAGE = "message"
+
+    // Firestore Fields - Customer
+    const val FIELD_CUSTOMER_ID = "customerId"
+    const val FIELD_LAST_VISIT = "lastVisit"
+    const val FIELD_VISIT_COUNT = "visitCount"
+    const val FIELD_TOTAL_SPENT = "totalSpent"
 
     // Firestore Fields - Inventory
     const val FIELD_INVENTORY_ID = "inventoryId"
@@ -146,6 +155,8 @@ object AppConstants {
     const val KEY_NAME = "name"
     const val KEY_IS_LOGGED_IN = "is_logged_in"
     const val KEY_RESTAURANT_ID = "restaurant_id"
+    const val KEY_RESTAURANT_NAME = "restaurant_name"
+    const val KEY_RESTAURANT_DETAILS = "restaurant_details"
     const val KEY_IS_RESTAURANT_SETUP = "is_restaurant_setup"
     const val KEY_REGISTRATION_DRAFT = "registration_draft"
 
