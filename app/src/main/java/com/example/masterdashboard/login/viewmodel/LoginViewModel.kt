@@ -59,7 +59,7 @@ class LoginViewModel: ViewModel() {
                         uid = user.uid,
                         role = user.role,
                         portalType = user.portalType,
-                        isRestaurantSetup = user.isSetupComplete,
+                        isRestaurantSetup = user.isActuallySetup(),
                         restaurantId = user.restaurantId,
                         fullName = user.fullName
                     )

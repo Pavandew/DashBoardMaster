@@ -5,6 +5,7 @@ import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import com.example.masterdashboard.login.ActivityVisitorPortal
+import com.example.masterdashboard.staff_dash.kitchen_screens.service.KitchenNotificationService
 import com.example.masterdashboard.popup_manager.LogoutPopupManager
 import com.google.firebase.auth.FirebaseAuth
 import kotlin.getValue
@@ -34,6 +35,10 @@ class LogoutManager(private val context: Context) {
         Log.i(TAG, "executeUniversalLogout: Initializing application-wide session termination framework sequence.")
 
         try {
+            // 0. Stop background services
+            val kitchenServiceIntent = Intent(context, KitchenNotificationService::class.java)
+            context.stopService(kitchenServiceIntent)
+
             // 1. Invalidate Firebase Auth cloud access session token safely
             if (FirebaseAuth.getInstance().currentUser != null) {
                 FirebaseAuth.getInstance().signOut()
