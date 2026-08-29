@@ -6,26 +6,34 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentManagerDashboardBinding
-import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
 import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeActivity
 import com.example.masterdashboard.manager_single_res_dash.adapter.ManagerDashboardAdapter
-import com.example.masterdashboard.manager_single_res_dash.models.DashboardSummary
 import com.example.masterdashboard.manager_single_res_dash.models.DrawerMenuItem
 import com.example.masterdashboard.manager_single_res_dash.models.StatMetric
 import com.example.masterdashboard.manager_single_res_dash.models.TopSellingFoodItem
 import com.example.masterdashboard.manager_single_res_dash.utils.DrawerNavigationHelper
-import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
-import com.example.masterdashboard.staff_dash.kitchen_screens.KitchenHomeActivity
-import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.masterdashboard.manager_single_res_dash.viewModel.ManagerDashboardViewModel
+import com.example.masterdashboard.manager_single_res_dash.views.MenuManagementFragment
+import com.example.masterdashboard.manager_single_res_dash.views.StaffManagementFragment
+import com.example.masterdashboard.manager_single_res_dash.views.TableManagementFragment
+import com.example.masterdashboard.manager_single_res_dash.views.CustomerManagementFragment
+import com.example.masterdashboard.staff_dash.billing_screens.views.CashierBillingFragment
+import com.example.masterdashboard.staff_dash.billing_screens.views.CashierOrderFragment
+import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenOrderFragment
+import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenPreparationFragment
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.WaiterActiveOrdersFragment
+import com.example.masterdashboard.staff_dash.waiter_screens.table.views.WaiterTablesFragment
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+import kotlin.getValue
 
 class ManagerDashboardFragment : Fragment() {
 
@@ -34,6 +42,8 @@ class ManagerDashboardFragment : Fragment() {
     
     private lateinit var navigationHelper: DrawerNavigationHelper
     private lateinit var sessionManager: SessionManager
+    private val viewModel: ManagerDashboardViewModel by viewModels()
+    private lateinit var dashboardAdapter: ManagerDashboardAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -51,15 +61,70 @@ class ManagerDashboardFragment : Fragment() {
         // 1. Initialize central navigation engine helper
         navigationHelper = DrawerNavigationHelper(this)
 
-        setupHeader()
-        setupDashboardRecyclerView()
+        configureHeaderNavigationAndProfile()
+        initializeMainDashboardAdapter()
+        subscribeToDashboardData()
+        
         navigationHelper.initDrawerMenu()
         
-        // 3. Update Drawer Header immediately with available User Info
+        // 3. Start real-time order status tracking
+        val managerId = sessionManager.getUid()
+        viewModel.startRealTimeOrderStatusTracking(managerId)
+        viewModel.loadRestaurantDetails(managerId, sessionManager)
+        
+        // 4. Update Drawer Header immediately with available User Info
         navigationHelper.updateDrawerHeader()
     }
 
-    private fun setupHeader() {
+    /**
+     * Binds UI components to the ViewModel's data flows for reactive dashboard updates.
+     */
+    private fun subscribeToDashboardData() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observe Order Status Summary
+                launch {
+                    viewModel.orderStatusSummary.collect { summary ->
+                        Log.d("ManagerDashboard", "UI Update: Order status counts refreshed")
+                        dashboardAdapter.updateData(
+                            newMetrics = getDummyMetrics(), 
+                            newSummary = summary,
+                            newTopSelling = getDummyTopSelling(),
+                            isExpanded = viewModel.isQuickActionsExpanded.value
+                        )
+                    }
+                }
+
+                // Observe Quick Actions Expansion state
+                launch {
+                    viewModel.isQuickActionsExpanded.collect { isExpanded ->
+                        dashboardAdapter.updateData(
+                            newMetrics = getDummyMetrics(),
+                            newSummary = viewModel.orderStatusSummary.value,
+                            newTopSelling = getDummyTopSelling(),
+                            isExpanded = isExpanded
+                        )
+                    }
+                }
+                
+                // Observe Restaurant Name
+                launch {
+                    viewModel.restaurantName.collect { name ->
+                        if (name.isNotEmpty()) {
+                            Log.d("ManagerDashboard", "UI Update: Restaurant name updated: $name")
+                            binding.masterDashHeader.txtRestaurantName.text = "$name ▾"
+                            navigationHelper.updateDrawerHeader(name)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Sets up the dashboard greeting, navigation drawer triggers, and restaurant profile details.
+     */
+    private fun configureHeaderNavigationAndProfile() {
         val header = binding.masterDashHeader
         
         // 1. Set personalized greeting
@@ -77,9 +142,12 @@ class ManagerDashboardFragment : Fragment() {
         // 2. Set up click listeners for the Bottom Sheet
         val clickListener = View.OnClickListener {
             Log.i("ManagerDashboard", "Action: Restaurant Name/Profile clicked - Opening Bottom Sheet")
-            val ownerUid = sessionManager.getUid() // Use UID as the key now
+            val ownerUid = sessionManager.getUid() 
             if (ownerUid.isNotEmpty()) {
-                RestaurantDetailsBottomSheet.newInstance(ownerUid).show(childFragmentManager, "ResDetails")
+                // 🛡️ Guard against double-tap: only show if not already showing
+                if (childFragmentManager.findFragmentByTag("ResDetails") == null) {
+                    RestaurantDetailsBottomSheet.newInstance(ownerUid).show(childFragmentManager, "ResDetails")
+                }
             } else {
                 Log.w("ManagerDashboard", "Warning: Cannot open bottom sheet, User ID is empty")
             }
@@ -87,88 +155,59 @@ class ManagerDashboardFragment : Fragment() {
         
         header.txtRestaurantName.setOnClickListener(clickListener)
         header.imgProfile.setOnClickListener(clickListener)
-        
-        // Fetch and show current restaurant name
-        fetchRestaurantName()
     }
 
-    private fun fetchRestaurantName() {
-        val ownerUid = sessionManager.getUid()
-        if (ownerUid.isEmpty()) return
-
-        lifecycleScope.launch {
-            try {
-                Log.d("ManagerDashboard", "Fetching restaurant name from User document: $ownerUid")
-                val db = FirebaseFirestore.getInstance()
-                val doc = db.collection(AppConstants.COLLECTION_USERS).document(ownerUid).get().await()
-                val name = doc.getString(AppConstants.FIELD_RESTAURANT_NAME) ?: "My Restaurant"
-                
-                binding.masterDashHeader.txtRestaurantName.text = "$name ▾"
-                
-                // Update Drawer Header with the fetched restaurant name
-                navigationHelper.updateDrawerHeader(name)
-                
-            } catch (e: Exception) {
-                Log.e("ManagerDashboard", "Error fetching restaurant name from Firebase", e)
-            }
-        }
-    }
-
-    private fun setupDashboardRecyclerView() {
-        val metricsData = listOf(
-            StatMetric("Total Sales", "₹ 45,670", "↑ 18.6%", true),
-            StatMetric("Total Orders", "86", "↑ 12.4%", true),
-            StatMetric("Active Orders", "24", "↑ 15.3%", true),
-            StatMetric("Avg. Order Time", "18 mins", "↑ 2.2 mins", false)
-        )
-
-        val summaryData = DashboardSummary(
-            newCount = "12",
-            kitchenCount = "08",
-            readyCount = "05",
-            servedCount = "42",
-            cancelledCount = "02"
-        )
-
-        val foodItemsList = listOf(
-            TopSellingFoodItem("1", "Paneer Butter Masala", 120, "₹ 18,240", R.drawable.shield),
-            TopSellingFoodItem("2", "Veg Biryani", 98, "₹ 14,700", R.drawable.shield),
-            TopSellingFoodItem("3", "Chili Paneer", 80, "₹ 12,450", R.drawable.shield)
-        )
-
-        // Wired up Quick Action types mapping to IDs via your navigation helper
-        val dashboardAdapter = ManagerDashboardAdapter(
-            metricsData, 
-            summaryData, 
-            foodItemsList,
+    /**
+     * Configures the main RecyclerView and its multi-view adapter.
+     */
+    private fun initializeMainDashboardAdapter() {
+        // Initial setup with current (empty/default) summary
+        dashboardAdapter = ManagerDashboardAdapter(
+            getDummyMetrics(), 
+            viewModel.orderStatusSummary.value, 
+            getDummyTopSelling(),
+            viewModel.isQuickActionsExpanded.value,
             onQuickActionClicked = { actionType ->
                 val simulatedItem = when (actionType) {
-                    ManagerDashboardAdapter.QuickActionType.WAITER -> 
-                        DrawerMenuItem(1, "Take Orders", 0, activityClass = WaiterHomeActivity::class.java)
-                    ManagerDashboardAdapter.QuickActionType.KITCHEN -> 
-                        DrawerMenuItem(3, "Kitchen Screen", 0, activityClass = KitchenHomeActivity::class.java)
-                    ManagerDashboardAdapter.QuickActionType.BILLING -> 
-                        DrawerMenuItem(6, "Billing Screen", 0, activityClass = CashierHomeActivity::class.java)
+                    ManagerDashboardAdapter.QuickActionType.WAITER_TABLES -> 
+                        DrawerMenuItem(1, "Manage Floor Tables", 0, fragmentClass = WaiterTablesFragment::class.java)
+                    ManagerDashboardAdapter.QuickActionType.WAITER_ORDERS -> 
+                        DrawerMenuItem(2, "Track Active Orders", 0, fragmentClass = WaiterActiveOrdersFragment::class.java)
+                    ManagerDashboardAdapter.QuickActionType.KITCHEN_ORDERS -> 
+                        DrawerMenuItem(4, "Live Order Station", 0, fragmentClass = KitchenOrderFragment::class.java)
+                    ManagerDashboardAdapter.QuickActionType.KITCHEN_PREP -> 
+                        DrawerMenuItem(5, "Cooking Workstation", 0, fragmentClass = KitchenPreparationFragment::class.java)
+                    ManagerDashboardAdapter.QuickActionType.BILLING_MAIN -> 
+                        DrawerMenuItem(7, "Settlement Center", 0, fragmentClass = CashierBillingFragment::class.java)
+                    ManagerDashboardAdapter.QuickActionType.BILLING_ORDERS -> 
+                        DrawerMenuItem(8, "Quick Bill Counter", 0, fragmentClass = CashierOrderFragment::class.java)
                     ManagerDashboardAdapter.QuickActionType.ADD_STAFF -> 
-                        DrawerMenuItem(5, "Staff Management", 0, fragmentClass = StaffManagementFragment::class.java)
+                        DrawerMenuItem(10, "Staff Management", 0, fragmentClass = StaffManagementFragment::class.java)
                     ManagerDashboardAdapter.QuickActionType.MENU -> 
-                        DrawerMenuItem(4, "Menu Management", 0, fragmentClass = MenuManagementFragment::class.java)
-                    ManagerDashboardAdapter.QuickActionType.FLOOR_TABLE -> 
-                        DrawerMenuItem(2, "Table Management", 0, fragmentClass = TableManagementFragment::class.java)
+                        DrawerMenuItem(9, "Menu Management", 0, fragmentClass = MenuManagementFragment::class.java)
+                    ManagerDashboardAdapter.QuickActionType.FLOOR_TABLE ->
+                        DrawerMenuItem(3, "Table Management", 0, fragmentClass = TableManagementFragment::class.java)
                     ManagerDashboardAdapter.QuickActionType.REPORTS -> 
-                        DrawerMenuItem(8, "Reports & Analytics", 0, fragmentClass = ManagerDashboardFragment::class.java)
+                        DrawerMenuItem(11, "Reports & Analytics", 0, fragmentClass = ManagerDashboardFragment::class.java)
+                    ManagerDashboardAdapter.QuickActionType.CUSTOMERS -> 
+                        DrawerMenuItem(12, "Customer Insights", 0, fragmentClass = CustomerManagementFragment::class.java)
                 }
 
                 navigationHelper.handleNavigation(simulatedItem)
             },
+            onToggleQuickActions = {
+                viewModel.toggleQuickActionsExpanded()
+            },
             onSummaryClicked = { status ->
                 val simulatedItem = when (status) {
                     "KITCHEN" -> 
-                        DrawerMenuItem(3, "Kitchen Screen", 0, activityClass = KitchenHomeActivity::class.java)
-                    "READY", "SERVED" -> 
-                        DrawerMenuItem(6, "Billing Screen", 0, activityClass = CashierHomeActivity::class.java)
+                        DrawerMenuItem(4, "Kitchen Screen", 0, fragmentClass = KitchenOrderFragment::class.java)
+                    "READY" -> 
+                        DrawerMenuItem(2, "Waiter Orders", 0, fragmentClass = WaiterActiveOrdersFragment::class.java)
+                    "SERVED" -> 
+                        DrawerMenuItem(7, "Billing Screen", 0, fragmentClass = CashierBillingFragment::class.java)
                     else -> 
-                        DrawerMenuItem(1, "Take Orders", 0, activityClass = WaiterHomeActivity::class.java)
+                        DrawerMenuItem(1, "Take Orders", 0, fragmentClass = WaiterTablesFragment::class.java)
                 }
                 navigationHelper.handleNavigation(simulatedItem)
             }
@@ -178,6 +217,23 @@ class ManagerDashboardFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = dashboardAdapter
         }
+    }
+
+    private fun getDummyMetrics(): List<StatMetric> {
+        return listOf(
+            StatMetric("Total Sales", "₹ 45,670", "↑ 18.6%", true),
+            StatMetric("Total Orders", "86", "↑ 12.4%", true),
+            StatMetric("Active Orders", "24", "↑ 15.3%", true),
+            StatMetric("Avg. Order Time", "18 mins", "↑ 2.2 mins", false)
+        )
+    }
+
+    private fun getDummyTopSelling(): List<TopSellingFoodItem> {
+        return listOf(
+            TopSellingFoodItem("1", "Paneer Butter Masala", 120, "₹ 18,240", R.drawable.shield),
+            TopSellingFoodItem("2", "Veg Biryani", 98, "₹ 14,700", R.drawable.shield),
+            TopSellingFoodItem("3", "Chili Paneer", 80, "₹ 12,450", R.drawable.shield)
+        )
     }
 
     override fun onDestroyView() {

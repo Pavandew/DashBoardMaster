@@ -1,6 +1,8 @@
 package com.example.masterdashboard.manager_single_res_dash
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -21,6 +23,7 @@ class ManagerHomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("ManagerHomeActivity", "onCreate: Instance created")
         enableEdgeToEdge()
 
         _binding = ActivityManagerHomeBinding.inflate(layoutInflater)
@@ -37,14 +40,21 @@ class ManagerHomeActivity : AppCompatActivity() {
             insets
         }
 
-        // CRITICAL FIX: Instantiates and displays the dashboard fragment on initial clean app launch
-        if (supportFragmentManager.findFragmentById(R.id.manager_fragmentContainer) == null) {
+        // CRITICAL FIX: Instantiates and displays the dashboard fragment only on fresh launch
+        if (savedInstanceState == null && supportFragmentManager.findFragmentById(R.id.manager_fragmentContainer) == null) {
+            Log.d("ManagerHomeActivity", "onCreate: First time launch - adding dashboard")
             supportFragmentManager.beginTransaction()
                 .replace(R.id.manager_fragmentContainer, ManagerDashboardFragment())
                 .commit()
         }
 
         permissionHelper.askNotificationPermission()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        Log.d("ManagerHomeActivity", "onNewIntent: Activity brought to front")
+        // No logic needed here to reset, singleTask handles bringing current state forward.
     }
 
     override fun onBackPressed() {
