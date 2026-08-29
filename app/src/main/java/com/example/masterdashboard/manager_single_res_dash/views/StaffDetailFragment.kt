@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -19,6 +20,7 @@ import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.manager_single_res_dash.models.StaffDataModel
 import com.example.masterdashboard.manager_single_res_dash.uistate.StaffDetailUiState
 import com.example.masterdashboard.manager_single_res_dash.viewModel.StaffDetailViewModel
+import com.example.masterdashboard.manager_single_res_dash.viewModel.StaffFormViewModel
 import kotlinx.coroutines.launch
 
 class StaffDetailFragment : Fragment() {
@@ -32,6 +34,7 @@ class StaffDetailFragment : Fragment() {
 
     // ✅ Instantiate using modern decoupled delegation extensions
     private val viewModel: StaffDetailViewModel by viewModels()
+    private val staffFormViewModel: StaffFormViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -68,7 +71,24 @@ class StaffDetailFragment : Fragment() {
 
         toolbar.toolbarImgMenu.setColorFilter(whiteColor)
         toolbar.llSubtitleContainer.visibility = View.GONE
-        toolbar.toolbarImgNotification.visibility = View.GONE
+        
+        // Use Notification icon slot as Edit button for Details view
+        toolbar.toolbarImgNotification.apply {
+            visibility = View.VISIBLE
+            setImageResource(R.drawable.person) // I will use 'person' for now if edit icon isn't found, but user should change it
+            setColorFilter(whiteColor)
+            setOnClickListener {
+                val state = viewModel.uiState.value
+                if (state is StaffDetailUiState.Success) {
+                    staffFormViewModel.setEditMode(true, state.staff)
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.manager_fragmentContainer, AddStaffFragment())
+                        .addToBackStack(null)
+                        .commit()
+                }
+            }
+        }
+
         toolbar.toolbarImgMenu.setOnClickListener {
             parentFragmentManager.popBackStack()
         }

@@ -140,8 +140,6 @@ class StaffLoginActivity : AppCompatActivity() {
                                 staffDocId = state.staffDocId
                             )
 
-                            sessionManager.saveStaffId(state.staffId)
-                            sessionManager.saveStaffDocId(state.staffDocId)
                             sessionManager.savePermissions(state.permissions)
 
                             saveFcmToken(state.restaurantOwnerUid, state.staffDocId)

@@ -36,6 +36,19 @@ class StaffFormViewModel(
     private val _phoneState = MutableStateFlow<PhoneCheckState>(PhoneCheckState.Idle)
     val phoneState: StateFlow<PhoneCheckState> = _phoneState.asStateFlow()
 
+    private val _isEditMode = MutableStateFlow(false)
+    val isEditMode: StateFlow<Boolean> = _isEditMode.asStateFlow()
+
+    fun setEditMode(isEdit: Boolean, staffData: StaffDataModel? = null) {
+        _isEditMode.value = isEdit
+        if (isEdit && staffData != null) {
+            _currentStaffData.value = staffData
+            Log.d(TAG, "Edit Mode Active: [ID=${staffData.id}, Name=${staffData.staffName}]")
+        } else {
+            clearFormData()
+        }
+    }
+
     fun updateStaffData(data: StaffDataModel) {
         _currentStaffData.value = data
     }
@@ -54,6 +67,16 @@ class StaffFormViewModel(
     }
 
     fun submitFinalStaffData(
+        ownerUid: String, documentType: String, documentNumber: String, permission: List<String>
+    ) {
+        if (_isEditMode.value) {
+            handleUpdateStaff(ownerUid, documentType, documentNumber, permission)
+        } else {
+            handleNewStaffRegistration(ownerUid, documentType, documentNumber, permission)
+        }
+    }
+
+    private fun handleNewStaffRegistration(
         ownerUid: String, documentType: String, documentNumber: String, permission: List<String>
     ) {
         // ✅ GENERATE CREDENTIALS AT THE LAST MOMENT
@@ -80,19 +103,41 @@ class StaffFormViewModel(
             _uiState.value = FirebaseUiState.Loading
 
             val result = repo.saveStaffToFirestore(finalData, ownerUid)
-            result.fold(
-                onSuccess = {
-                    Log.d(TAG, "Firebase Upload Success!")
-                    // We keep the final data in _currentStaffData temporarily so UI can show the popup
-                    _currentStaffData.value = finalData
-                    _uiState.value = FirebaseUiState.Success
-                },
-                onFailure = {
-                    Log.e(TAG, " Firebase Upload Failed: ${it.message}", it)
-                    _uiState.value = FirebaseUiState.Error(it.message ?: "Submission failed")
-                }
-            )
+            processResult(result, finalData)
         }
+    }
+
+    private fun handleUpdateStaff(
+        ownerUid: String, documentType: String, documentNumber: String, permission: List<String>
+    ) {
+        val finalData = _currentStaffData.value.copy(
+            documentType = documentType,
+            documentNumber = documentNumber,
+            permissions = permission
+        )
+
+        Log.d(TAG, "FINAL UPDATE PAYLOAD: ID=${finalData.id}, Name=${finalData.staffName}")
+
+        viewModelScope.launch {
+            _uiState.value = FirebaseUiState.Loading
+
+            val result = repo.updateStaffInFirestore(finalData, ownerUid)
+            processResult(result, finalData)
+        }
+    }
+
+    private fun processResult(result: Result<Unit>, finalData: StaffDataModel) {
+        result.fold(
+            onSuccess = {
+                Log.d(TAG, "Firebase Transaction Success!")
+                _currentStaffData.value = finalData
+                _uiState.value = FirebaseUiState.Success
+            },
+            onFailure = {
+                Log.e(TAG, " Firebase Transaction Failed: ${it.message}", it)
+                _uiState.value = FirebaseUiState.Error(it.message ?: "Transaction failed")
+            }
+        )
     }
 
     private fun generateRandomPin(): String {
@@ -101,6 +146,13 @@ class StaffFormViewModel(
     }
 
     fun verifyMobileAndProceed(ownerUid: String, mobile: String, onSuccessToProceed: () -> Unit) {
+        // If in edit mode and mobile hasn't changed, skip verification
+        if (_isEditMode.value && mobile == _currentStaffData.value.mobile) {
+            Log.d(TAG, "Edit mode: Mobile unchanged ($mobile). Skipping verification.")
+            onSuccessToProceed()
+            return
+        }
+
         viewModelScope.launch {
             _phoneState.value = PhoneCheckState.Checking
             repo.isMobileNumberRegistered(ownerUid, mobile).fold(
@@ -126,6 +178,7 @@ class StaffFormViewModel(
         _currentStaffData.value = StaffDataModel()
         _phoneState.value = PhoneCheckState.Idle
         _uiState.value = FirebaseUiState.Idle
+        _isEditMode.value = false
         Log.d(TAG, "Staff form data cleared")
     }
 }

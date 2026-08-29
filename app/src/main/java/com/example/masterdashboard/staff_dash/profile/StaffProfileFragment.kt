@@ -53,7 +53,7 @@ class StaffProfileFragment : Fragment() {
 
     private fun setupToolbar() {
         binding.staffProfileToolbar.apply {
-            tvToolbarTitle.text = "Profile"
+            tvToolbarTitle.text = getString(R.string.title_staff_profile)
             toolbarImgMenu.visibility = View.GONE
             toolbarImgNotification.visibility = View.GONE
             tvToolbarEndText.visibility = View.GONE

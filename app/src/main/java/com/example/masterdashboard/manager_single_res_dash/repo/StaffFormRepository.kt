@@ -45,5 +45,23 @@ class StaffFormRepository {
         // If the snapshot is not empty, it means a staff member with this number exists
         !querySnapshot.isEmpty
     }
+
+    suspend fun updateStaffInFirestore(staff: StaffDataModel, ownerUid: String): Result<Unit> {
+        return try {
+            if (ownerUid.isBlank() || staff.id.isBlank()) {
+                return Result.failure(Exception("Required IDs are missing"))
+            }
+
+            firestore.collection(AppConstants.COLLECTION_USERS)
+                .document(ownerUid)
+                .collection(AppConstants.COLLECTION_STAFF)
+                .document(staff.id)
+                .set(staff.toMap())
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
 
