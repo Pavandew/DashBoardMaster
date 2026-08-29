@@ -44,7 +44,34 @@ class KitchenPreparationDetailViewModel(
         val currentData = _rawOrderData.value ?: return
         viewModelScope.launch {
             try {
+                // Ensure all items are marked as ready when the order is finalized
+                val updatedItemsList = currentData.items.map { item ->
+                    item.copy(
+                        readyQuantity = item.quantity,
+                        itemStatus = "READY"
+                    )
+                }
+
+                val itemsMap = updatedItemsList.map { item ->
+                    mapOf(
+                        "itemId" to item.itemId,
+                        "itemName" to item.itemName,
+                        "variantName" to item.variantName,
+                        "quantity" to item.quantity,
+                        "orderedQuantity" to item.orderedQuantity,
+                        "readyQuantity" to item.readyQuantity,
+                        "price" to item.price,
+                        "rowTotal" to item.rowTotal,
+                        "category" to item.category,
+                        "itemNote" to item.itemNote,
+                        "itemStatus" to item.itemStatus
+                    )
+                }
+
+                // Batch update: Update items first to ensure UI reflects completion, then update order status
+                repository.updateItemsAsReady(docPath, itemsMap)
                 repository.updateOrderStatusToReady(docPath)
+                
                 _statusUpdateAction.value = Result.success("Order Ready")
 
                 // Notify Waiter
@@ -103,11 +130,12 @@ class KitchenPreparationDetailViewModel(
                     }
                 }
 
-                // Convert to Map for Firestore
+                // Convert to Map for Firestore (Ensuring variantName is included)
                 val itemsMap = updatedItemsList.map { item ->
                     mapOf(
                         "itemId" to item.itemId,
                         "itemName" to item.itemName,
+                        "variantName" to item.variantName,
                         "quantity" to item.quantity,
                         "orderedQuantity" to item.orderedQuantity,
                         "readyQuantity" to item.readyQuantity,

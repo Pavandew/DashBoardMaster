@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentKitchenOrderBinding
+import com.example.masterdashboard.utils.NavigationUtils
 import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.staff_dash.kitchen_screens.adapter.KitchenOrderStreamAdapter
 import com.example.masterdashboard.staff_dash.kitchen_screens.uistate.KitchenOrderUiState
@@ -52,6 +53,17 @@ class KitchenOrderFragment : Fragment(R.layout.fragment_kitchen_order) {
     }
 
     private fun setupToolbar() {
+        binding.toolbarKitchen.title = getString(R.string.title_live_orders)
+        
+        if (parentFragmentManager.backStackEntryCount > 0) {
+            binding.toolbarKitchen.setNavigationIcon(R.drawable.ic_arrow_back_24dp)
+            binding.toolbarKitchen.setNavigationOnClickListener {
+                parentFragmentManager.popBackStack()
+            }
+        } else {
+            binding.toolbarKitchen.navigationIcon = null
+        }
+        
         // Optional: If you want menu items (like Sound Toggle or Refresh) on the toolbar
         binding.toolbarKitchen.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
@@ -84,10 +96,13 @@ class KitchenOrderFragment : Fragment(R.layout.fragment_kitchen_order) {
                 }
             }
 
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.kitchen_fragment_container, detailFragment)
-                .addToBackStack(null)
-                .commit()
+            val containerId = NavigationUtils.getHostContainerId(activity)
+            if (containerId != 0) {
+                parentFragmentManager.beginTransaction()
+                    .replace(containerId, detailFragment)
+                    .addToBackStack(null)
+                    .commit()
+            }
         }
         binding.rvKitchenOrdersStream.adapter = orderAdapter
     }

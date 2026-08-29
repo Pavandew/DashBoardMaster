@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentKitchenInventoryBinding
 import com.example.masterdashboard.staff_dash.kitchen_screens.adapter.KitchenInventoryAdapter
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.InventoryItem
@@ -76,7 +77,7 @@ class KitchenInventoryFragment : Fragment() {
     }
 
     private fun setupToolbar() {
-        binding.toolbar.tvToolbarTitle.text = "Inventory Management"
+        binding.toolbar.tvToolbarTitle.text = getString(R.string.title_inventory_hub)
         binding.toolbar.toolbarImgMenu.visibility = View.GONE
     }
 

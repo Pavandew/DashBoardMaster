@@ -182,6 +182,10 @@
             android:textColor="#FFFFFF"
             android:textSize="16sp"
             android:textStyle="bold"
+            android:maxLines="1"
+            app:autoSizeTextType="uniform"
+            app:autoSizeMinTextSize="12sp"
+            app:autoSizeMaxTextSize="16sp"
             app:cornerRadius="14dp"
             app:elevation="4dp"
             app:layout_constraintBottom_toBottomOf="parent" />

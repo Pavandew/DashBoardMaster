@@ -31,6 +31,7 @@ class KitchenNotificationService : Service() {
         private const val TAG = "KitchenService"
         private const val NOTIFICATION_ID = 999
         private const val CHANNEL_ID = "kitchen_background_service"
+        private const val ACTION_STOP_SERVICE = "STOP_KITCHEN_SERVICE"
     }
 
     override fun onCreate() {
@@ -42,6 +43,13 @@ class KitchenNotificationService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_STOP_SERVICE) {
+            Log.i(TAG, "onStartCommand: Stop action received. Killing service.")
+            stopForeground(true)
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
         val managerId = sessionManager.getUid()
         Log.i(TAG, "onStartCommand: Service triggered for Manager: $managerId")
         
@@ -115,13 +123,22 @@ class KitchenNotificationService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
+        val stopIntent = Intent(this, KitchenNotificationService::class.java).apply {
+            action = ACTION_STOP_SERVICE
+        }
+        val stopPendingIntent = PendingIntent.getService(
+            this, 1, stopIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
         // Using IMPORTANCE_DEFAULT to keep the service stable
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Kitchen Hub Active")
             .setContentText("Monitoring live orders...")
             .setSmallIcon(R.drawable.ic_notifications_24dp)
-            .setOngoing(true)
+            .setOngoing(false) // Made non-ongoing so it can be dismissed on Android 13+
             .setContentIntent(pendingIntent)
+            .addAction(R.drawable.ic_notifications_24dp, "Stop Monitoring", stopPendingIntent)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()

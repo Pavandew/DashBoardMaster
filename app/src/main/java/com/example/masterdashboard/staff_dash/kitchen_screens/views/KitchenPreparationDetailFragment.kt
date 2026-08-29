@@ -94,11 +94,11 @@ class KitchenPreparationDetailFragment : Fragment(R.layout.fragment_kitchen_prep
     private fun updateButtonLabel() {
         if (selectedItems.isNotEmpty()) {
             binding.btnFinishReady.text = "Mark ${selectedItems.size} Selected as Ready"
-            binding.btnFinishReady.setBackgroundColor(android.graphics.Color.parseColor("#4CAF50")) // Green for partial
         } else {
             binding.btnFinishReady.text = "Finished / Ready to Serve"
-            binding.btnFinishReady.setBackgroundColor(android.graphics.Color.parseColor("#6200EE")) // Original Purple
         }
+        // Use Green for both conditions as requested for consistent success state
+        binding.btnFinishReady.setBackgroundColor(android.graphics.Color.parseColor("#4CAF50"))
     }
 
     private fun populateUi(data: KitchenOrderDetailData) {

@@ -261,6 +261,10 @@
                 android:layout_weight="1"
                 android:text="Reject Order"
                 android:textColor="#EF5350"
+                android:maxLines="1"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMinTextSize="10sp"
+                app:autoSizeMaxTextSize="14sp"
                 app:cornerRadius="12dp"
                 app:strokeColor="#EF5350" />
 
@@ -273,6 +277,10 @@
                 android:text="Accept &amp; Prepare"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
+                android:maxLines="1"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMinTextSize="10sp"
+                app:autoSizeMaxTextSize="14sp"
                 app:backgroundTint="#4CAF50"
                 app:cornerRadius="12dp" />
         </LinearLayout>
