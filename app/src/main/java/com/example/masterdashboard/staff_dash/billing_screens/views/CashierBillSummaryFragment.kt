@@ -17,7 +17,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.databinding.FragmentCashierBillSummaryBinding
 import com.example.masterdashboard.print_bill.PrintBillController
 import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
-import com.example.masterdashboard.staff_dash.billing_screens.model.CashierBillingOrderModel
 import com.example.masterdashboard.staff_dash.billing_screens.viewmodel.CashierBillSummaryViewModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import kotlinx.coroutines.flow.collectLatest

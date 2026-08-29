@@ -249,15 +249,11 @@ class CashierBillingRepository(
             AppConstants.FIELD_DISCOUNT_AMOUNT to discount,
             AppConstants.FIELD_GRAND_TOTAL to finalGrandTotal,
             AppConstants.FIELD_PAID_AT to currentTime,
-            AppConstants.FIELD_BILLING_MONTH to monthYear, // Helpful for monthly revenue reports
-            AppConstants.FIELD_BILLING_DATE to exactDate    // Helpful for daily revenue reports
+            AppConstants.FIELD_BILLING_MONTH to monthYear,
+            AppConstants.FIELD_BILLING_DATE to exactDate
         )
 
-        // 2. Update the original order document
-        batch.update(orderRef, orderUpdates)
-
-        // 3. Store a copy in a central 'completed_orders' collection for the Manager/Owner
-        // Extract managerId from the path (format: users/{managerId}/...)
+        // 2. Store a copy in a central 'completed_orders' collection
         val pathSegments = order.docPath.split("/")
         if (pathSegments.size >= 2 && pathSegments[0] == "users") {
             val managerId = pathSegments[1]
@@ -266,25 +262,40 @@ class CashierBillingRepository(
                 .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
                 .document(order.orderId)
             
-            // We use set with merge to ensure all item details are copied over
-            // but we add the new payment fields too
+            // Map the full order data plus the new payment fields
             batch.set(completedOrderRef, orderUpdates, com.google.firebase.firestore.SetOptions.merge())
         }
 
-        // 4. Reset the table status to FREE so waiters can take new guests
-        // Only do this if it's a Dine-In order (Table-based)
-        if (order.orderType == AppConstants.ORDER_TYPE_DINE_IN && order.tableId.isNotEmpty()) {
-            val tableRef = orderRef.parent.parent
-            if (tableRef != null) {
-                batch.update(tableRef, AppConstants.FIELD_STATUS, AppConstants.STATUS_FREE)
-                // Also clear customer name from table
-                batch.update(tableRef, AppConstants.FIELD_CUSTOMER_NAME_TABLE, null)
+        // 3. Reset the table status to FREE
+        // We identify if it's a table order by checking the document path segments
+        if (pathSegments.contains(AppConstants.COLLECTION_TABLES) && pathSegments.size >= 6) {
+            try {
+                // Precise path reconstruction for the table document:
+                // users/{uid}/res_floors/{floorId}/floor_tables/{tableId}
+                val tableRef = firestore.collection(pathSegments[0])
+                    .document(pathSegments[1])
+                    .collection(pathSegments[2])
+                    .document(pathSegments[3])
+                    .collection(pathSegments[4])
+                    .document(pathSegments[5])
+
+                Log.d(TAG, "settleOrder: Releasing table. Path: ${tableRef.path}")
+                
+                batch.update(tableRef, mapOf(
+                    AppConstants.FIELD_STATUS to AppConstants.STATUS_FREE,
+                    AppConstants.FIELD_CUSTOMER_NAME_TABLE to null,
+                    AppConstants.FIELD_CURRENT_BILL to null
+                ))
+            } catch (e: Exception) {
+                Log.e(TAG, "settleOrder: Error reconstructing table path", e)
             }
         }
 
+        // 4. Delete the active order document (Crucial: Delete instead of update in active_orders)
+        batch.delete(orderRef)
+
         // 5. Update CRM (Customer Relationship Management)
         if (order.customerPhone.isNotEmpty()) {
-            val pathSegments = order.docPath.split("/")
             if (pathSegments.size >= 2 && pathSegments[0] == "users") {
                 val managerId = pathSegments[1]
                 val customerRef = firestore.collection(AppConstants.COLLECTION_USERS)

@@ -24,10 +24,20 @@ class BillingItemsAdapter : ListAdapter<OrderItemModel, BillingItemsAdapter.Item
     class ItemViewHolder(private val binding: ItemOrderDetailRowBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(item: OrderItemModel) {
+            val context = binding.root.context
             val displayName = if (item.variantName.isNotEmpty()) "${item.itemName} (${item.variantName})" else item.itemName
             binding.tvExpandedItemName.text = displayName
             binding.tvExpandedItemQtyPrice.text = "${item.quantity} x ₹${item.price}"
             binding.tvExpandedItemRowTotal.text = "₹${item.rowTotal}"
+
+            // RESET SHARED UI COMPONENTS
+            // Ensure white background and full visibility for the settlement screen
+            binding.cardItemRoot.setCardBackgroundColor(androidx.core.content.ContextCompat.getColor(context, android.R.color.white))
+            binding.cardItemRoot.alpha = 1.0f
+            
+            // Hide the status strip and label as they are not needed on the "Settle Bill" screen
+            binding.viewStatusStrip.visibility = android.view.View.GONE
+            binding.tvItemStatusLabel.visibility = android.view.View.GONE
         }
     }
 

@@ -184,8 +184,8 @@ class CashierSettleBillFragment : Fragment() {
 
     private fun selectPaymentUI(method: String) {
         resetCardUI(mBinding.layoutUnpaid.layoutCash, R.drawable.ic_payments_24dp)
-        resetCardUI(mBinding.layoutUnpaid.layoutUpi, R.drawable.ic_payments_24dp)
-        resetCardUI(mBinding.layoutUnpaid.layoutCard, R.drawable.ic_payments_24dp)
+        resetCardUI(mBinding.layoutUnpaid.layoutUpi, R.drawable.ic_upi_pay_24dp)
+        resetCardUI(mBinding.layoutUnpaid.layoutCard, R.drawable.ic_card_payment_24dp)
         resetCardUI(mBinding.layoutUnpaid.layoutWallet, R.drawable.ic_inventory_24dp)
 
         when (method) {
