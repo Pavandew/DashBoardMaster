@@ -10,42 +10,24 @@ object TimeUtils {
     private val dateFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
     /**
-     * Converts a Firebase Timestamp into a relative string:
-     * - Today (< 1 min): "Just now"
-     * - Today (< 60 min): "X min ago"
-     * - Today (> 60 min): "X hr ago"
-     * - Older: "dd MMM yyyy"
+     * Converts a Firebase Timestamp into a localized relative string:
+     * - "Just now", "45 minutes ago", "2 hours ago" (for today)
+     * - "Yesterday"
+     * - "5 days ago"
+     * - "Aug 25" (for older dates)
      */
     fun getRelativeTime(timestamp: Timestamp?): String {
         if (timestamp == null) return "Just now"
         
-        val orderDate = timestamp.toDate()
-        val currentTime = System.currentTimeMillis()
-        val orderTimeMillis = orderDate.time
-        val diffMillis = currentTime - orderTimeMillis
-
-        val calendarOrder = Calendar.getInstance().apply { time = orderDate }
-        val calendarToday = Calendar.getInstance()
-
-        val isToday = calendarOrder.get(Calendar.YEAR) == calendarToday.get(Calendar.YEAR) &&
-                     calendarOrder.get(Calendar.DAY_OF_YEAR) == calendarToday.get(Calendar.DAY_OF_YEAR)
-
-        return try {
-            if (isToday) {
-                val diffMinutes = diffMillis / (60 * 1000)
-                val diffHours = diffMillis / (60 * 60 * 1000)
-
-                when {
-                    diffMinutes < 1 -> "Just now"
-                    diffMinutes < 60 -> "$diffMinutes min ago"
-                    else -> "$diffHours hr ago"
-                }
-            } else {
-                dateFormatter.format(orderDate)
-            }
-        } catch (e: Exception) {
-            "Just now"
-        }
+        val time = timestamp.toDate().time
+        val now = System.currentTimeMillis()
+        
+        // Use Android's standard utility for robust, localized relative time strings
+        return android.text.format.DateUtils.getRelativeTimeSpanString(
+            time,
+            now,
+            android.text.format.DateUtils.MINUTE_IN_MILLIS
+        ).toString()
     }
 
     /**

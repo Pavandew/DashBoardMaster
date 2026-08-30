@@ -30,12 +30,16 @@ class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 🔴 FIX: If this is NOT the root activity, the app is already open in background!
-        // Simply finish SplashActivity so Android brings the user back to where they were.
+        
+        // 🔴 ABSOLUTE FIX for Android App Restart Issue:
+        // If this activity is not the root of the task, it means the app was already 
+        // running and Android is incorrectly trying to start it again from Splash.
+        // We finish immediately to let the existing task stack show.
         if (!isTaskRoot) {
             finish()
             return
         }
+
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 

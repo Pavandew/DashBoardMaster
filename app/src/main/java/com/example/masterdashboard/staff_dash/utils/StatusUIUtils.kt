@@ -2,6 +2,7 @@ package com.example.masterdashboard.staff_dash.utils
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.view.View
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.example.masterdashboard.R
@@ -38,23 +39,23 @@ object StatusUIUtils {
             }
             ActiveOrderStatus.READY -> {
                 label = "• Ready"
-                bgColor = R.color.primary_green          // Light Purple
-                textColor = R.color.status_free           // Purple
+                bgColor = R.color.status_free_bg          
+                textColor = R.color.status_free           
             }
             ActiveOrderStatus.SERVED -> {
                 label = "• Served"
-                bgColor = R.color.bg_light_purple           // Light Gray
-                textColor = R.color.accent_purple       // Gray
+                bgColor = R.color.bg_light_purple           
+                textColor = R.color.accent_purple       
             }
             ActiveOrderStatus.BILLING -> {
                 label = "• Billing"
-                bgColor = R.color.status_billing_bg       // Light Blue
-                textColor = R.color.status_billing        // Dark Blue
+                bgColor = R.color.status_billing_bg       
+                textColor = R.color.status_billing        
             }
             ActiveOrderStatus.PAID -> {
                 label = "• Paid"
-                bgColor = R.color.dark_green             // Dark Green Background
-                textColor = R.color.white                // White text for high contrast
+                bgColor = R.color.light_green             
+                textColor = R.color.dark_green                
             }
         }
 
@@ -99,12 +100,24 @@ object StatusUIUtils {
         
         // Handle custom cashier/kitchen statuses first
         when (normalized) {
-            "COMPLETED", "SERVED", "HANDED OVER" -> {
-                applyUI(context, textView, "• Handed Over", R.color.bg_light_purple, R.color.accent_purple, cardView)
+            "COMPLETED", "HANDED OVER" -> {
+                applyUI(context, textView, "HANDED OVER", R.color.light_green, R.color.dark_green, cardView)
                 return
             }
-            "BILLING" -> {
+            "PAID" -> {
+                applyUI(context, textView, "PAID", R.color.light_green, R.color.dark_green, cardView)
+                return
+            }
+            "BILLING", "BILLING_REQUESTED" -> {
                 applyUI(context, textView, "READY FOR BILL", R.color.status_reserved_bg, R.color.status_reserved, cardView)
+                return
+            }
+            "SERVED" -> {
+                applyUI(context, textView, "EATING / SERVED", R.color.bg_light_purple, R.color.accent_purple, cardView)
+                return
+            }
+            "RUNNING", "ACTIVE" -> {
+                applyUI(context, textView, "RUNNING BILL", R.color.bg_light_blue, R.color.primary_blue, cardView)
                 return
             }
         }
@@ -118,6 +131,43 @@ object StatusUIUtils {
             else -> ActiveOrderStatus.PENDING
         }
         applyStatusUI(context, textView, statusEnum, cardView)
+    }
+
+    /**
+     * Specialized UI application for the Cashier/Billing dashboard.
+     * Handles complex combined labels like "PAID - PENDING PICKUP".
+     */
+    fun applyCashierStatusUI(
+        context: Context,
+        textView: TextView,
+        status: String,
+        isCounterOrder: Boolean
+    ) {
+        val normalized = status.uppercase().trim()
+
+        when {
+            normalized == "COMPLETED" -> {
+                applyUI(context, textView, "HANDED OVER", R.color.light_green, R.color.dark_green)
+            }
+            isCounterOrder && normalized == "PAID" -> {
+                applyUI(context, textView, "PAID - PENDING PICKUP", R.color.light_green, R.color.dark_green)
+            }
+            isCounterOrder && (normalized == "PENDING" || normalized == "PREPARING" || normalized == "READY") -> {
+                applyUI(context, textView, "COUNTER - UNPAID", R.color.bg_light_blue, R.color.primary_blue)
+            }
+            normalized == "PAID" -> {
+                applyUI(context, textView, "PAID", R.color.light_green, R.color.dark_green)
+            }
+            normalized == "BILLING" || normalized == "BILLING_REQUESTED" -> {
+                applyUI(context, textView, "BILL REQUESTED", R.color.status_reserved_bg, R.color.status_reserved)
+            }
+            normalized == "SERVED" -> {
+                applyUI(context, textView, "EATING / SERVED", R.color.bg_light_purple, R.color.accent_purple)
+            }
+            else -> {
+                applyUI(context, textView, "RUNNING BILL", R.color.bg_light_blue, R.color.primary_blue)
+            }
+        }
     }
 
     /**
@@ -137,26 +187,32 @@ object StatusUIUtils {
             status.equals("REJECTED", true) -> {
                 label = "Rejected by Chef"
                 colorRes = R.color.red_alert
-            }
-            isNewAddition -> {
-                label = if (delta > 1) "• $delta New Items Added" else "• New Item Added"
-                colorRes = R.color.status_occupied
+                textView.visibility = View.VISIBLE
             }
             status.equals("SERVED", true) -> {
-                label = "• Served"
-                colorRes = R.color.accent_purple
+                // If served, hide the label to keep the UI clean (Background color handles it)
+                textView.visibility = View.GONE
+                return
             }
             status.equals("READY", true) -> {
                 label = "• Ready to Serve"
                 colorRes = R.color.status_free
+                textView.visibility = View.VISIBLE
+            }
+            isNewAddition -> {
+                label = if (delta > 1) "• $delta New Items Added" else "• New Item Added"
+                colorRes = R.color.status_occupied
+                textView.visibility = View.VISIBLE
             }
             status.equals("PREPARING", true) -> {
                 label = "• Preparing in Kitchen"
                 colorRes = R.color.status_reserved
+                textView.visibility = View.VISIBLE
             }
             else -> {
                 label = "• Sent to Kitchen"
                 colorRes = R.color.search_bar_hint
+                textView.visibility = View.VISIBLE
             }
         }
 
