@@ -1,6 +1,7 @@
 package com.example.masterdashboard.notifications.alert
 
 import android.util.Log
+import com.example.masterdashboard.staff_dash.utils.TimeUtils
 import com.example.masterdashboard.utils.AppConstants
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -24,23 +25,36 @@ class NotificationRepository {
      */
     fun getNotificationsStream(managerId: String, role: String, staffId: String): Flow<List<AppNotificationModel>> = callbackFlow {
         val userRole = role.lowercase().trim()
-        Log.d(TAG, "Starting notifications stream for managerId=$managerId role=$userRole staffId=$staffId")
+        val isManager = userRole == "manager" || userRole == "owner_single" || userRole == "owner_multi"
+        Log.d(TAG, "Starting notifications stream for managerId=$managerId role=$userRole staffId=$staffId isManager=$isManager")
 
-        // Build role-based filter list
+        // Build role-based filter list for server-side filtering
         val roleTargets = mutableListOf("all", userRole)
         when (userRole) {
             "waiter", "waiter_staff" -> roleTargets.addAll(listOf("waiter", "waiter_staff"))
             "chef", "kitchen" -> roleTargets.addAll(listOf("chef", "kitchen"))
             "cashier", "billing" -> roleTargets.addAll(listOf("cashier", "billing"))
         }
+        val distinctRoleTargets = roleTargets.distinct()
 
         val query = db.collection(AppConstants.COLLECTION_USERS)
             .document(managerId)
             .collection(AppConstants.COLLECTION_NOTIFICATIONS)
             .orderBy(AppConstants.FIELD_TIMESTAMP, Query.Direction.DESCENDING)
-            .limit(50) // Optimization: Only show recent 50 alerts
 
-        val listener = query.addSnapshotListener { snapshots, error ->
+        // Apply server-side filtering for efficiency
+        val targets = if (isManager) {
+            // Managers/Owners only need to see alerts for themselves or global broadcasts
+            listOf("all", "manager")
+        } else {
+            // Staff roles (waiter, kitchen, billing)
+            distinctRoleTargets
+        }
+
+        Log.d(TAG, "Applying server-side filter for targets: $targets")
+        val finalQuery = query.whereIn(AppConstants.FIELD_TARGET_ROLE, targets).limit(50)
+
+        val listener = finalQuery.addSnapshotListener { snapshots, error ->
             if (error != null) {
                 Log.e(TAG, "Notification stream error for managerId=$managerId", error)
                 close(error)
@@ -51,23 +65,17 @@ class NotificationRepository {
                 val target = doc.getString(AppConstants.FIELD_TARGET_ROLE)?.lowercase()?.trim() ?: ""
                 val tStaffId = doc.getString(AppConstants.FIELD_TARGET_STAFF_ID) ?: ""
 
-                // Server-side filtering logic
-                val isManager = userRole == "manager" || userRole == "owner_single" || userRole == "owner_multi"
-
+                // Local filtering for Staff-specific alerts (e.g. alerts sent to a specific waiter ID)
                 val shouldShow = when {
                     isManager -> true // Managers see everything
                     tStaffId.isNotEmpty() -> tStaffId == staffId
-                    target in roleTargets -> true
-                    else -> false
+                    else -> true // Already filtered by role in query for non-managers
                 }
 
                 if (!shouldShow) return@mapNotNull null
 
                 val ts = doc.getTimestamp(AppConstants.FIELD_TIMESTAMP)
-                val timeStr = if (ts != null) {
-                    val sdf = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
-                    sdf.format(ts.toDate())
-                } else "Just now"
+                val timeStr = TimeUtils.getRelativeTime(ts)
 
                 AppNotificationModel(
                     id = doc.id,

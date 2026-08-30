@@ -86,15 +86,10 @@
                 android:layout_width="0dp"
                 android:layout_height="56dp"
                 android:layout_marginEnd="8dp"
-                android:layout_weight="1"
+                android:layout_weight="0.8"
                 android:text="Cancel"
                 android:textColor="#6B7280"
                 android:maxLines="1"
-                android:ellipsize="end"
-                android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="10sp"
-                android:autoSizeMaxTextSize="18sp"
-                android:autoSizeStepGranularity="1sp"
                 app:cornerRadius="12dp" />
 
             <com.google.android.material.button.MaterialButton
@@ -102,17 +97,15 @@
                 android:layout_width="0dp"
                 android:layout_height="56dp"
                 android:layout_marginStart="8dp"
-                android:layout_weight="1"
+                android:layout_weight="1.2"
                 android:text="Payment Received"
                 android:textAllCaps="false"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:maxLines="1"
-                android:ellipsize="end"
-                android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="12sp"
-                android:autoSizeMaxTextSize="18sp"
-                android:autoSizeStepGranularity="1sp"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMinTextSize="10sp"
+                app:autoSizeMaxTextSize="14sp"
                 app:backgroundTint="#3554FF"
                 app:cornerRadius="12dp" />
         </LinearLayout>

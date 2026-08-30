@@ -38,6 +38,7 @@ class FormStep6Fragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+
         _binding = FragmentFormStep6Binding.inflate(inflater, container, false)
         return binding.root
     }
@@ -47,7 +48,8 @@ class FormStep6Fragment : Fragment() {
         Log.i("FormStep6Fragment", "Navigation: Review & Launch Screen Opened")
         sessionManager = SessionManager(requireContext())
         
-        binding.btnContinue.text = "Launch Restaurant"
+        val isEditMode = dataViewModel.isEditMode
+        binding.btnContinue.text = if (isEditMode) "Update Restaurant" else "Launch Restaurant"
         
         val currentData = dataViewModel.registrationData
         Log.d("FormStep6Fragment", "Compiling data for restaurant: ${currentData.restaurantName}")
@@ -104,23 +106,29 @@ class FormStep6Fragment : Fragment() {
                 when (state) {
                     is RegistrationUiState.Loading -> {
                         binding.btnContinue.isEnabled = false
-                        binding.btnContinue.text = "Launching..."
+                        binding.btnContinue.text = if (dataViewModel.isEditMode) "Updating..." else "Launching..."
                     }
                     is RegistrationUiState.Success -> {
-                        Log.i("FormStep6Fragment", "Success: Restaurant Launched ID: ${state.restaurantId}")
+                        val isEdit = dataViewModel.isEditMode
+                        Log.i("FormStep6Fragment", "Success: Restaurant Transaction Complete. ID: ${state.restaurantId}")
                         binding.btnContinue.isEnabled = true
-                        binding.btnContinue.text = "Launch Restaurant"
-                        Toast.makeText(requireContext(), state.message, Toast.LENGTH_LONG).show()
+                        binding.btnContinue.text = if (isEdit) "Update Restaurant" else "Launch Restaurant"
+                        
+                        val successMsg = if (isEdit) "Restaurant Profile Updated Successfully!" else state.message
+                        Toast.makeText(requireContext(), successMsg, Toast.LENGTH_LONG).show()
                         
                         // Save Restaurant ID to session
                         sessionManager.saveRestaurantId(state.restaurantId)
                         
+                        // Save the full updated details into cache immediately so dashboard reflects it
+                        sessionManager.saveRestaurantDetails(dataViewModel.registrationData)
+                        sessionManager.saveRestaurantName(dataViewModel.registrationData.restaurantName)
+
                         // Clear draft and finish setup
                         sessionManager.clearRegistrationDraft()
                         sessionManager.setRestaurantSetup(true)
                         
                         // Restart activity completely fresh to load Dashboard and clear fragment stack
-                        // Redirecting to ManagerHomeActivity as requested
                         val intent = Intent(requireContext(), ManagerHomeActivity::class.java)
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                         startActivity(intent)

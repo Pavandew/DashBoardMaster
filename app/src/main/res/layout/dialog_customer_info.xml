@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:cardCornerRadius="24dp"
@@ -33,7 +34,8 @@
                     android:layout_height="24dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_person_24dp"
-                    app:tint="#4F46E5" />
+                    app:tint="#4F46E5"
+                    tools:ignore="ContentDescription" />
             </com.google.android.material.card.MaterialCardView>
 
             <LinearLayout
@@ -70,7 +72,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="Customer Name"
+            android:text="Customer Name:"
             android:textColor="#374151"
             android:textSize="13sp"
             android:textStyle="bold" />
@@ -96,7 +98,8 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:src="@drawable/ic_person_24dp"
-                    app:tint="#9CA3AF" />
+                    app:tint="#9CA3AF"
+                    tools:ignore="ContentDescription" />
 
                 <EditText
                     android:id="@+id/etDialogCustomerName"
@@ -108,7 +111,9 @@
                     android:singleLine="true"
                     android:textColor="#111827"
                     android:textColorHint="#9CA3AF"
-                    android:textSize="15sp" />
+                    android:textSize="15sp"
+                    android:autofillHints="name"
+                    android:inputType="textPersonName" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -142,7 +147,8 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:src="@drawable/ic_call_24dp"
-                    app:tint="#9CA3AF" />
+                    app:tint="#9CA3AF"
+                    tools:ignore="ContentDescription" />
 
                 <EditText
                     android:id="@+id/etDialogPhoneNumber"
@@ -155,7 +161,8 @@
                     android:singleLine="true"
                     android:textColor="#111827"
                     android:textColorHint="#9CA3AF"
-                    android:textSize="15sp" />
+                    android:textSize="15sp"
+                    android:autofillHints="phone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -163,34 +170,58 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:orientation="horizontal">
+            android:layout_marginTop="24dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDialogReserve"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="54dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:text="Reserve"
+                    android:textColor="#D97706"
+                    android:textAllCaps="false"
+                    android:textStyle="bold"
+                    app:backgroundTint="#FFFBEB"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_calendar_24dp"
+                    app:iconTint="#D97706" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDialogConfirm"
+                    android:layout_width="0dp"
+                    android:layout_height="54dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:elevation="4dp"
+                    android:text="Dine In"
+                    android:textAllCaps="false"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#16A34A"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_restaurant_24dp"
+                    app:iconTint="@color/white" />
+            </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDialogSkip"
                 style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="0dp"
-                android:layout_height="54dp"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:text="Skip Now"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="8dp"
+                android:text="Skip &amp; Start Order"
                 android:textColor="#6B7280"
-                android:textSize="15sp"
+                android:textSize="14sp"
                 app:cornerRadius="12dp" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDialogConfirm"
-                android:layout_width="0dp"
-                android:layout_height="54dp"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                android:elevation="4dp"
-                android:text="Save &amp; Continue"
-                android:textAllCaps="false"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                app:backgroundTint="#4F46E5"
-                app:cornerRadius="12dp" />
         </LinearLayout>
 
     </LinearLayout>

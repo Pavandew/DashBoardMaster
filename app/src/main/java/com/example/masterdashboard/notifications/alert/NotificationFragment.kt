@@ -1,11 +1,16 @@
 package com.example.masterdashboard.notifications.alert
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -14,8 +19,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentWaiterNotificationBinding
-import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
-import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.kitchen_screens.KitchenHomeActivity
@@ -24,6 +27,7 @@ import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenOrder
 import com.example.masterdashboard.staff_dash.billing_screens.model.CashierBillingOrderModel
 import com.example.masterdashboard.staff_dash.billing_screens.views.CashierSettleBillFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.order.views.OrderDetailExpansionFragment
+import com.example.masterdashboard.utils.NavigationUtils
 import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.launch
 
@@ -45,6 +49,21 @@ class NotificationFragment : Fragment() {
 
     private lateinit var notificationAdapter: NotificationAdapter
 
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            Log.i(TAG, "Notification permission granted.")
+            viewModel.observeNotificationStream()
+        } else {
+            Log.w(TAG, "Notification permission denied.")
+            Toast.makeText(context, "Please enable notifications to receive alerts", Toast.LENGTH_LONG).show()
+            // Still observing because in-app alerts don't technically require the POST_NOTIFICATIONS permission,
+            // but the user experience is better with push enabled.
+            viewModel.observeNotificationStream()
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -61,7 +80,28 @@ class NotificationFragment : Fragment() {
         setupRecyclerView()
         observeViewModel()
 
-        viewModel.observeNotificationStream()
+        checkNotificationPermission()
+    }
+
+    private fun checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    Log.d(TAG, "Notification permission already granted.")
+                    viewModel.observeNotificationStream()
+                }
+                else -> {
+                    Log.d(TAG, "Requesting notification permission.")
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        } else {
+            // Below Android 13, permission is granted at install time
+            viewModel.observeNotificationStream()
+        }
     }
 
     override fun onStart() {
@@ -73,13 +113,10 @@ class NotificationFragment : Fragment() {
 
     private fun setupToolbar() {
         val toolbar = binding.staffAlertToolbar
-        toolbar.tvToolbarTitle.text = getString(R.string.alerts)
+        toolbar.tvToolbarTitle.text = getString(R.string.title_live_alerts)
         toolbar.llSubtitleContainer.visibility = View.GONE
         toolbar.toolbarImgNotification.visibility = View.GONE
-
-        toolbar.toolbarImgMenu.setOnClickListener {
-            parentFragmentManager.popBackStack()
-        }
+        toolbar.toolbarImgMenu.visibility = View.GONE
     }
 
     private fun setupRecyclerView() {
@@ -203,14 +240,9 @@ class NotificationFragment : Fragment() {
 
     private fun switchFragment(fragment: Fragment) {
         Log.d(TAG, "Switching fragment to ${fragment::class.java.simpleName}")
-        val containerId = when (activity) {
-            is WaiterHomeActivity -> R.id.waiter_fragment_container
-            is KitchenHomeActivity -> R.id.kitchen_fragment_container
-            is CashierHomeActivity -> R.id.billing_fragment_container
-            is ManagerHomeActivity -> R.id.manager_fragmentContainer
-            is SingleResOwnerHomeActivity -> R.id.single_owner_fragmentContainer
-            else -> return
-        }
+        val containerId = NavigationUtils.getHostContainerId(activity)
+        
+        if (containerId == 0) return
 
         parentFragmentManager.beginTransaction()
             .replace(containerId, fragment)
