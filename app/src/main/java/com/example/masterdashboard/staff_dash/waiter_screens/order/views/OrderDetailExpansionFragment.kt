@@ -14,6 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentOrderDetailsExpansionBinding
+import com.example.masterdashboard.utils.NavigationUtils
 import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.order.adapter.OrderDetailRowAdapter
@@ -208,10 +209,13 @@ class OrderDetailExpansionFragment : Fragment() {
                                 arguments = bundle
                             }
 
-                            parentFragmentManager.beginTransaction()
-                                .replace(R.id.waiter_fragment_container, orderTakingFragment)
-                                .addToBackStack(null)
-                                .commit()
+                            val containerId = NavigationUtils.getHostContainerId(activity)
+                            if (containerId != 0) {
+                                parentFragmentManager.beginTransaction()
+                                    .replace(containerId, orderTakingFragment)
+                                    .addToBackStack(null)
+                                    .commit()
+                            }
                         }
 
                         // Generate Bill Action

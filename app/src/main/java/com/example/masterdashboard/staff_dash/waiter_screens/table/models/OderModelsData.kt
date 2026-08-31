@@ -27,6 +27,7 @@ data class FoodItemData(
     var selectedAddons: List<String> = emptyList(), // Added: List of selected addon names
     var currentQuantity: Int = 0,   // Tracks active item stepper additions locally
     var previousQuantity: Int = 0,  // Tracks items already saved in the active order
+    var readyQuantity: Int = 0,     // NEW: Tracks items marked as ready by kitchen
     var itemStatus: String = AppConstants.STATUS_PENDING, // Tracks if item was PENDING, READY, SERVED, etc.
     val hasVariants: Boolean = false, // Added to know if we should show customization sheet
     val variantsList: List<ItemVariant> = emptyList(), // Added to store available variants

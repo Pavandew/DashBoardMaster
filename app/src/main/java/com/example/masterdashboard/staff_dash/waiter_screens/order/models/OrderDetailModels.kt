@@ -8,7 +8,8 @@ data class OrderExpandedItemData(
     val unitPrice: Int = 0,
     val totalPrice: Int = 0,
     val orderedQuantity: Int = 0, // Existing quantity already sent to kitchen
-    val status: String = "PENDING" // PENDING, PREPARING, SERVED, REJECTED
+    val readyQuantity: Int = 0, // Quantity prepared by kitchen
+    val status: String = "PENDING" // PENDING, PREPARING, READY, SERVED, REJECTED
 )
 
 data class OrderDetailExpansionUiState(

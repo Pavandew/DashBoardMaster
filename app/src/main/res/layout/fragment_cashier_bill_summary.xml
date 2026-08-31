@@ -72,6 +72,10 @@
                     layout="@layout/layout_summary_row" />
 
                 <include
+                    android:id="@+id/rowDiscount"
+                    layout="@layout/layout_summary_row" />
+
+                <include
                     android:id="@+id/rowPaymentMethod"
                     layout="@layout/layout_summary_row" />
 

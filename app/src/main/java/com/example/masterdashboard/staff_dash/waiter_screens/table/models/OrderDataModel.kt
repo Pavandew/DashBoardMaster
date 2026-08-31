@@ -6,9 +6,11 @@ import java.io.Serializable
 
 data class OrderDataModel(
     val orderId: String = "",
+    val tableId: String = "",
+    val floorId: String = "",
     val tableName: String = "", // Stores the human-readable table name (e.g. "T20")
     val customerName: String = "",
-    val customerPhone: String = "",
+    val customerMobile: String = "",
     val orderType: String = AppConstants.ORDER_TYPE_DINE_IN,
     val items: List<OrderItemModel> = emptyList(),
     val specialNotes: String = "",
@@ -30,5 +32,6 @@ data class OrderItemModel(
     val quantity: Int = 0,
     val rowTotal: Int = 0,
     val orderedQuantity: Int = 0, // Number of items already sent to kitchen/served
-    val itemStatus: String = AppConstants.STATUS_PENDING // PENDING, PREPARING, SERVED, REJECTED
+    val readyQuantity: Int = 0, // Quantity prepared by kitchen and ready for pick-up
+    val itemStatus: String = AppConstants.STATUS_PENDING // PENDING, PREPARING, READY, SERVED, REJECTED
 ) : Serializable
