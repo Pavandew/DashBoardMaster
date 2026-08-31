@@ -11,8 +11,14 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivitySingleResOwnerHomeBinding
 import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.manager_single_res_dash.form_screen.viewModel.RegistrationDataViewModel
 import com.example.masterdashboard.manager_single_res_dash.form_screen.views.FormStep1Fragment
+import com.example.masterdashboard.manager_single_res_dash.form_screen.views.FormStep2Fragment
+import com.example.masterdashboard.manager_single_res_dash.form_screen.views.FormStep3Fragment
+import com.example.masterdashboard.manager_single_res_dash.form_screen.views.FormStep4Fragment
+import com.example.masterdashboard.manager_single_res_dash.form_screen.views.FormStep5Fragment
+import com.example.masterdashboard.manager_single_res_dash.form_screen.views.FormStep6Fragment
 import com.example.masterdashboard.notifications.NotificationPermissionHelper
 
 class SingleResOwnerHomeActivity : AppCompatActivity() {
@@ -28,8 +34,12 @@ class SingleResOwnerHomeActivity : AppCompatActivity() {
         
         sessionManager = SessionManager(this)
 
+        val isEditMode = intent.getBooleanExtra(AppConstants.EXTRA_EDIT_MODE, false)
+        val startStep = intent.getIntExtra(AppConstants.EXTRA_START_STEP, 1)
+
         // 1. FAST ROUTING: Check setup status before inflating any UI
-        if (sessionManager.isRestaurantSetup()) {
+        // Bypass if we are explicitly coming here to EDIT
+        if (sessionManager.isRestaurantSetup() && !isEditMode) {
             val intent = Intent(this, ManagerHomeActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             startActivity(intent)
@@ -44,6 +54,10 @@ class SingleResOwnerHomeActivity : AppCompatActivity() {
 
         permissionHelper = NotificationPermissionHelper(this)
 
+        if (isEditMode) {
+            dataViewModel.setEditMode(true)
+        }
+
         // RESTORE DRAFT IF EXISTS
         sessionManager.getRegistrationDraft()?.let { draft ->
             dataViewModel.restoreFromDraft(draft)
@@ -55,12 +69,22 @@ class SingleResOwnerHomeActivity : AppCompatActivity() {
             insets
         }
 
-        loadRestaurantDetailsForm()
+        loadRestaurantDetailsForm(startStep)
     }
 
-    private fun loadRestaurantDetailsForm() {
+    private fun loadRestaurantDetailsForm(startStep: Int = 1) {
+        val fragment = when (startStep) {
+            1 -> FormStep1Fragment()
+            2 -> FormStep2Fragment()
+            3 -> FormStep3Fragment()
+            4 -> FormStep4Fragment()
+            5 -> FormStep5Fragment()
+            6 -> FormStep6Fragment()
+            else -> FormStep1Fragment()
+        }
+
         supportFragmentManager.beginTransaction()
-            .replace(R.id.single_owner_fragmentContainer, FormStep1Fragment())
+            .replace(R.id.single_owner_fragmentContainer, fragment)
             .commit()
 
         // Match activity background to form

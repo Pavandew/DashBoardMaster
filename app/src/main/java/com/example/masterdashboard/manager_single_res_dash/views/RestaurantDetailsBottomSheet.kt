@@ -15,7 +15,10 @@ import com.example.masterdashboard.manager_single_res_dash.form_screen.model.For
 import com.example.masterdashboard.manager_single_res_dash.form_screen.model.RegistrationDataModel
 import com.example.masterdashboard.manager_single_res_dash.uistate.RestaurantDetailsUiState
 import com.example.masterdashboard.manager_single_res_dash.viewModel.RestaurantDetailsViewModel
+import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeActivity
+import android.content.Intent
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 
@@ -95,6 +98,22 @@ class RestaurantDetailsBottomSheet : BottomSheetDialogFragment() {
     private fun displayData(data: RegistrationDataModel) {
         val reviewItems = mutableListOf<FormItem>()
 
+        // Shared function to start editing at a specific step
+        val startEditAction: (Int) -> Unit = { step ->
+            Log.i(TAG, "Action: Editing Restaurant at Step $step")
+            
+            // 1. Save data as draft so it can be restored in the registration activity
+            sessionManager.saveRegistrationDraft(data)
+            
+            // 2. Start Registration Activity in Edit Mode
+            val intent = Intent(requireContext(), SingleResOwnerHomeActivity::class.java).apply {
+                putExtra(AppConstants.EXTRA_EDIT_MODE, true)
+                putExtra(AppConstants.EXTRA_START_STEP, step)
+            }
+            startActivity(intent)
+            dismiss()
+        }
+
         // 1. OWNER CARD - Using unified getters to handle old and new data formats
         reviewItems.add(FormItem.ReviewCard(
             title = "OWNER INFORMATION",
@@ -103,7 +122,7 @@ class RestaurantDetailsBottomSheet : BottomSheetDialogFragment() {
                 "Email" to data.getUnifiedEmail(),
                 "Mobile" to data.getUnifiedMobile()
             ),
-            onEditClick = { }
+            onEditClick = { startEditAction(1) }
         ))
 
         // 2. RESTAURANT CARD
@@ -115,7 +134,7 @@ class RestaurantDetailsBottomSheet : BottomSheetDialogFragment() {
                 "Legal Name" to data.legalName,
                 "Display Name" to data.displayName
             ),
-            onEditClick = { }
+            onEditClick = { startEditAction(1) }
         ))
 
         // 3. LOCATION CARD
@@ -126,7 +145,7 @@ class RestaurantDetailsBottomSheet : BottomSheetDialogFragment() {
                 "PIN Code" to data.pinCode,
                 "Contact" to data.contactNumber
             ),
-            onEditClick = { }
+            onEditClick = { startEditAction(2) }
         ))
 
         // 4. COMPLIANCE & BILLING (Filtered: No PAN, No Currency as requested)
@@ -138,7 +157,7 @@ class RestaurantDetailsBottomSheet : BottomSheetDialogFragment() {
                 "Inv Prefix" to data.invoicePrefix,
                 "Tax Rate" to "${data.defaultTaxRate}%"
             ),
-            onEditClick = { }
+            onEditClick = { startEditAction(3) }
         ))
 
         binding.rvDetails.adapter = FormAdapter(reviewItems) { _, _ -> }

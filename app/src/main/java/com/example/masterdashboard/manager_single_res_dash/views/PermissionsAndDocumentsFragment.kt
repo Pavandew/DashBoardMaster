@@ -68,7 +68,10 @@ class PermissionsAndDocumentsFragment : Fragment() {
         val whiteColor = ContextCompat.getColor(context, android.R.color.white)
 
         toolbar.customToolbar.setBackgroundColor(ContextCompat.getColor(context, R.color.bg_main))
-        toolbar.tvToolbarTitle.text = getString(R.string.add_staff)
+        
+        val isEditMode = sharedViewModel.isEditMode.value
+        toolbar.tvToolbarTitle.text = if (isEditMode) "Edit Staff" else getString(R.string.add_staff)
+        
         toolbar.tvToolbarTitle.setTextColor(whiteColor)
 
         toolbar.toolbarImgMenu.setColorFilter(whiteColor)
@@ -80,20 +83,41 @@ class PermissionsAndDocumentsFragment : Fragment() {
     }
 
     private fun setupFormItemsList() {
+        val currentPermissions = sharedViewModel.currentStaffData.value.permissions
+        val isEditMode = sharedViewModel.isEditMode.value
+
         formItems = listOf(
             Step2FormItem.Header,
             Step2FormItem.SectionTitle("Set Permissions", "Choose the access level for this staff member"),
-            Step2FormItem.PermissionItem("dash_access", "Dashboard Access", "View dashboard and reports", R.drawable.person),
-            Step2FormItem.PermissionItem("menu_access", "Menu Management", "Add / Edit menu items", R.drawable.person),
-            Step2FormItem.PermissionItem("order_access", "Order Management", "Manage customer orders", R.drawable.person),
-            Step2FormItem.PermissionItem("staff_access", "Staff Management", "Add / Edit staff details", R.drawable.person),
-            Step2FormItem.PermissionItem("billing_access", "Billing & Payments", "Manage bills and payments", R.drawable.person),
+            Step2FormItem.PermissionItem("dash_access", "Dashboard Access", "View dashboard and reports", R.drawable.person).apply {
+                isChecked = currentPermissions.contains("dash_access")
+            },
+            Step2FormItem.PermissionItem("menu_access", "Menu Management", "Add / Edit menu items", R.drawable.person).apply {
+                isChecked = currentPermissions.contains("menu_access")
+            },
+            Step2FormItem.PermissionItem("order_access", "Order Management", "Manage customer orders", R.drawable.person).apply {
+                isChecked = currentPermissions.contains("order_access")
+            },
+            Step2FormItem.PermissionItem("staff_access", "Staff Management", "Add / Edit staff details", R.drawable.person).apply {
+                isChecked = currentPermissions.contains("staff_access")
+            },
+            Step2FormItem.PermissionItem("billing_access", "Billing & Payments", "Manage bills and payments", R.drawable.person).apply {
+                isChecked = currentPermissions.contains("billing_access")
+            },
 
             Step2FormItem.SectionTitle("Upload Documents", "Upload necessary documents for verification"),
-            Step2FormItem.DocumentItem("aadhar", "Identity Verification Document *", "Upload Verification Copy", R.drawable.person),
-            Step2FormItem.DocumentItem("pan", "Tax Card (Optional)", "Upload Identification Copy", R.drawable.person),
-            Step2FormItem.DocumentItem("photo", "Photo *", "Upload Profile Photo", R.drawable.person),
-            Step2FormItem.DocumentItem("address", "Address Proof (Optional)", "Upload Address Proof", R.drawable.person)
+            Step2FormItem.DocumentItem("aadhar", "Identity Verification Document *", "Upload Verification Copy", R.drawable.person).apply {
+                if (isEditMode) isUploaded = true // Assume already uploaded in edit mode for simplicity, or we'd need to fetch URLs
+            },
+            Step2FormItem.DocumentItem("pan", "Tax Card (Optional)", "Upload Identification Copy", R.drawable.person).apply {
+                if (isEditMode) isUploaded = true
+            },
+            Step2FormItem.DocumentItem("photo", "Photo *", "Upload Profile Photo", R.drawable.person).apply {
+                if (isEditMode) isUploaded = true
+            },
+            Step2FormItem.DocumentItem("address", "Address Proof (Optional)", "Upload Address Proof", R.drawable.person).apply {
+                if (isEditMode) isUploaded = true
+            }
         )
 
         adapter = PermissionsDocumentsAdapter(formItems) { item, position ->
@@ -121,16 +145,21 @@ class PermissionsAndDocumentsFragment : Fragment() {
             return
         }
 
+        val isEditMode = sharedViewModel.isEditMode.value
+        val dialogTitle = if (isEditMode) "Update Staff Profile?" else "Register Staff?"
+        val dialogMsg = if (isEditMode) "Are you sure you want to save changes to this staff member's profile?"
+                       else "Are you sure you want to register this staff member? Account credentials will be generated automatically upon confirmation."
+
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Register Staff?")
-            .setMessage("Are you sure you want to register this staff member? Account credentials will be generated automatically upon confirmation.")
-            .setPositiveButton("Yes, Register") { dialog, _ ->
+            .setTitle(dialogTitle)
+            .setMessage(dialogMsg)
+            .setPositiveButton(if (isEditMode) "Update" else "Yes, Register") { dialog, _ ->
                 dialog.dismiss()
                 val ownerUid = SessionManager(requireContext()).getUid()
                 sharedViewModel.submitFinalStaffData(
                     ownerUid = ownerUid,
-                    documentType = "National Identity Card Bundle",
-                    documentNumber = "VERIFIED_AT_SUBMIT",
+                    documentType = if (isEditMode) sharedViewModel.currentStaffData.value.documentType else "National Identity Card Bundle",
+                    documentNumber = if (isEditMode) sharedViewModel.currentStaffData.value.documentNumber else "VERIFIED_AT_SUBMIT",
                     permission = selectedPermissions
                 )
             }
@@ -139,17 +168,31 @@ class PermissionsAndDocumentsFragment : Fragment() {
     }
 
     private fun showSuccessDialog(staffId: String, pass: String) {
+        val isEditMode = sharedViewModel.isEditMode.value
+        val title = if (isEditMode) "Update Successful!" else "Registration Successful!"
+        val message = if (isEditMode) "Staff profile has been updated successfully."
+                     else "Staff account created successfully. Please share these login credentials with the employee:\n\n" +
+                          "👤 Staff Login ID: $staffId\n" +
+                          "🔑 Password PIN : $pass\n\n" +
+                          "Make sure they save these details securely."
+
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Registration Successful!")
-            .setMessage("Staff account created successfully. Please share these login credentials with the employee:\n\n" +
-                    "👤 Staff Login ID: $staffId\n" +
-                    "🔑 Password PIN : $pass\n\n" +
-                    "Make sure they save these details securely.")
+            .setTitle(title)
+            .setMessage(message)
             .setCancelable(false)
             .setPositiveButton("Done") { dialog, _ ->
                 dialog.dismiss()
+                val wasEdit = sharedViewModel.isEditMode.value
                 sharedViewModel.clearFormData()
-                parentFragmentManager.popBackStack(AppConstants.BACKSTACK_ADD_STAFF, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                if (wasEdit) {
+                    // If editing, pop back twice to reach list (or pop back once to reach detail which will reload)
+                    // Better to pop back to the list to see the update
+                    parentFragmentManager.popBackStack(AppConstants.BACKSTACK_ADD_STAFF, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                    // Detail view is also in backstack, we might want to pop it too or let it stay.
+                    // popBackStack("staff_detail_view", FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                } else {
+                    parentFragmentManager.popBackStack(AppConstants.BACKSTACK_ADD_STAFF, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                }
             }
             .show()
     }

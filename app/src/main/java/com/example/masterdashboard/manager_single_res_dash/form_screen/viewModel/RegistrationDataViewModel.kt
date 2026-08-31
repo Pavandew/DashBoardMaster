@@ -21,6 +21,13 @@ class RegistrationDataViewModel : ViewModel() {
     private var _registrationData = RegistrationDataModel()
     val registrationData: RegistrationDataModel get() = _registrationData
 
+    private var _isEditMode = false
+    val isEditMode: Boolean get() = _isEditMode
+
+    fun setEditMode(isEdit: Boolean) {
+        _isEditMode = isEdit
+    }
+
     /**
      * Replaces current data with a restored draft.
      */
