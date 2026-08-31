@@ -53,11 +53,11 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
      */
     val cartSummary: StateFlow<CartSummaryState> = _cartSummary.asStateFlow()
 
-    private val _orderUploadStatus = MutableStateFlow<ResourceUiState<Boolean>?>(null)
+    private val _orderUploadStatus = MutableStateFlow<ResourceUiState<String>?>(null)
     /**
      * Tracks the status of the order submission to Firestore.
      */
-    val orderUploadStatus: StateFlow<ResourceUiState<Boolean>?> = _orderUploadStatus.asStateFlow()
+    val orderUploadStatus: StateFlow<ResourceUiState<String>?> = _orderUploadStatus.asStateFlow()
 
     private val _originalFoodList = MutableStateFlow<List<FoodItemData>>(emptyList())
     /**
@@ -73,13 +73,14 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
 
     // --- Session Meta Data ---
     var currentTableId: String? = null
+    var currentFloorId: String? = null
     var currentTableName: String = ""
     var existingOrderDocId: String? = null
     var existingOrderId: String? = null
     var isViewingCart: Boolean = false
     var lastOrderId: String? = null
     var customerName: String = ""
-    var customerPhone: String = ""
+    var customerMobile: String = ""
     var orderType: String = "DINE_IN"
     var selectedPaymentMethod: String = ""
 
@@ -122,7 +123,7 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
     /**
      * Prepares the shared session for a specific table.
      */
-    fun startOrderSession(tableId: String, tableName: String, status: String, orderDocId: String? = null, orderId: String? = null) {
+    fun startOrderSession(tableId: String, floorId: String, tableName: String, status: String, orderDocId: String? = null, orderId: String? = null) {
         Log.i(TAG, "Session: Starting for Table $tableName ($tableId). Status: $status, DocId: $orderDocId")
         
         // Prevent clearing if we are just returning to the same active session
@@ -133,6 +134,7 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
         }
 
         currentTableId = tableId
+        currentFloorId = floorId
         currentTableName = tableName
         existingOrderDocId = orderDocId
         existingOrderId = orderId
@@ -179,7 +181,7 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
             if (existingOrder != null) {
                 Log.i(TAG, "Session: Merging Firestore order data into local state.")
                 customerName = existingOrder.customerName
-                customerPhone = existingOrder.customerPhone
+                customerMobile = existingOrder.customerMobile
                 orderType = existingOrder.orderType
                 currentTableName = existingOrder.tableName.ifEmpty { currentTableName }
                 
@@ -191,6 +193,7 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
                         item.copy(
                             currentQuantity = existing.quantity, 
                             previousQuantity = existing.quantity, 
+                            readyQuantity = existing.readyQuantity,
                             itemStatus = existing.itemStatus, 
                             variantName = existing.variantName,
                             price = existing.price
@@ -229,6 +232,9 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
                     // Preserve local state if item was already modified in cart
                     newItem.copy(
                         currentQuantity = local.currentQuantity, 
+                        previousQuantity = local.previousQuantity,
+                        readyQuantity = local.readyQuantity,
+                        itemStatus = local.itemStatus,
                         variantName = local.variantName,
                         price = local.price // CRITICAL: Preserve the price selected by user for this session
                     )
@@ -311,7 +317,17 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
         Log.i(TAG, "Submission: Placing order for $currentTableName. Target Status: $initialStatus")
 
         val payload = activeItems.map { 
-            OrderItemModel(it.id, it.name, it.variantName, it.price, it.currentQuantity, it.price * it.currentQuantity, it.previousQuantity, it.itemStatus) 
+            OrderItemModel(
+                it.id, 
+                it.name, 
+                it.variantName, 
+                it.price, 
+                it.currentQuantity, 
+                it.price * it.currentQuantity, 
+                it.previousQuantity, 
+                it.readyQuantity,
+                it.itemStatus
+            ) 
         }
         
         val finalOrderId = existingOrderId ?: "#ORD-${(1000..9999).random()}"
@@ -320,9 +336,11 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
         val subtotal = _cartSummary.value.totalPrice.toDouble()
         val orderData = OrderDataModel(
             orderId = finalOrderId, 
+            tableId = currentTableId ?: "",
+            floorId = currentFloorId ?: "",
             tableName = currentTableName, 
             customerName = customerName, 
-            customerPhone = customerPhone, 
+            customerMobile = customerMobile, 
             orderType = orderType, 
             items = payload, 
             specialNotes = notes, 
@@ -343,14 +361,14 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
                     _orderUploadStatus.value = ResourceUiState.Error(e.message ?: "Firestore failure") 
                 }
                 .collect { status ->
-                    // Map results for UI observation
+                    // Map results for UI observation, preserving the Doc Path string on success
                     val uiStatus = when(status) {
-                        is ResourceUiState.Success -> ResourceUiState.Success(true)
+                        is ResourceUiState.Success -> ResourceUiState.Success(status.data)
                         is ResourceUiState.Error -> ResourceUiState.Error(status.message)
                         is ResourceUiState.Loading -> ResourceUiState.Loading
                         else -> ResourceUiState.Idle
                     }
-                    _orderUploadStatus.value = uiStatus
+                    _orderUploadStatus.value = uiStatus as ResourceUiState<String>
                     
                     if (status is ResourceUiState.Success && managerId != null) {
                         Log.i(TAG, "Submission: Successful. Saved at: ${status.data}")
@@ -372,7 +390,7 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
     }
 
     // --- Helper Utilities ---
-    fun setCustomerDetails(name: String, phone: String, type: String) { customerName = name; customerPhone = phone; orderType = type }
+    fun setCustomerDetails(name: String, phone: String, type: String) { customerName = name; customerMobile = phone; orderType = type }
     fun setPaymentMethod(method: String) { selectedPaymentMethod = method }
     fun resetUploadStatus() { _orderUploadStatus.value = null }
 }

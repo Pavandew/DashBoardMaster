@@ -18,9 +18,13 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentOrderPaymentBinding
 import com.example.masterdashboard.databinding.LayoutPaymentMethodItemBinding
+import com.example.masterdashboard.staff_dash.billing_screens.model.CashierBillingOrderModel
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.OrderItemModel
 import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
+import com.example.masterdashboard.staff_dash.utils.PaymentDialogHelper
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -78,8 +82,8 @@ class OrderPaymentFragment : Fragment() {
 
         // Set default icons
         binding.layoutCash.ivPaymentIcon.setImageResource(R.drawable.ic_payments_24dp)
-        binding.layoutUpi.ivPaymentIcon.setImageResource(R.drawable.ic_payments_24dp)
-        binding.layoutCard.ivPaymentIcon.setImageResource(R.drawable.ic_payments_24dp)
+        binding.layoutUpi.ivPaymentIcon.setImageResource(R.drawable.ic_upi_pay_24dp)
+        binding.layoutCard.ivPaymentIcon.setImageResource(R.drawable.ic_card_payment_24dp)
         binding.layoutWallet.ivPaymentIcon.setImageResource(R.drawable.ic_inventory_24dp)
 
         // Register click listeners for mode selection
@@ -101,8 +105,8 @@ class OrderPaymentFragment : Fragment() {
         
         // Reset all cards to standard state
         resetMethodUI(binding.layoutCash, R.drawable.ic_payments_24dp)
-        resetMethodUI(binding.layoutUpi, R.drawable.ic_payments_24dp)
-        resetMethodUI(binding.layoutCard, R.drawable.ic_payments_24dp)
+        resetMethodUI(binding.layoutUpi, R.drawable.ic_upi_pay_24dp)
+        resetMethodUI(binding.layoutCard, R.drawable.ic_card_payment_24dp)
         resetMethodUI(binding.layoutWallet, R.drawable.ic_inventory_24dp)
 
         // Show/Hide cash-specific "Amount Received" input
@@ -183,15 +187,21 @@ class OrderPaymentFragment : Fragment() {
                                 totalAmount
                             }
                             
-                            // Open Receipt Summary Fragment
+                            // Build the order model to get formatted data
+                            val cashierOrder = buildCashierOrderModel()
+                            val sdf = java.text.SimpleDateFormat("dd MMM yyyy, hh:mm a", java.util.Locale.getDefault())
+
+                            // Open Receipt Summary Fragment with primitive arguments to avoid Serialization crash
                             val summaryFragment = CashierBillSummaryFragment.newInstance(
-                                orderId = viewModel.lastOrderId ?: "N/A",
-                                totalItems = viewModel.cartSummary.value.totalItems,
+                                orderDocPath = (resource as ResourceUiState.Success).data, 
+                                orderId = cashierOrder.orderId,
                                 totalAmount = totalAmount,
-                                method = selectedMethod,
                                 received = receivedAmount,
                                 change = maxOf(0.0, receivedAmount - totalAmount),
-                                paidAtMillis = System.currentTimeMillis()
+                                discount = cashierOrder.discountAmount,
+                                itemCount = cashierOrder.items.sumOf { it.quantity },
+                                method = selectedMethod,
+                                dateTime = sdf.format(java.util.Date())
                             )
 
                             parentFragmentManager.beginTransaction()
@@ -226,28 +236,49 @@ class OrderPaymentFragment : Fragment() {
     }
 
     /**
-     * Logic for UPI/Card/Wallet confirmation.
+     * Logic for UPI/Card/Wallet confirmation using central helper.
      */
     private fun showPaymentConfirmationDialog() {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_payment_qr, null)
-        val tvAmount = dialogView.findViewById<android.widget.TextView>(R.id.tvAmountToPay)
-        val btnCancel = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancelPayment)
-        val btnConfirm = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnConfirmPayment)
+        PaymentDialogHelper.showPaymentConfirmation(
+            context = requireContext(),
+            amount = totalAmount,
+            paymentMethod = selectedMethod,
+            onConfirm = {
+                Log.i(TAG, "Digital Payment: User confirmed transaction success.")
+                proceedWithOrderFinalization()
+            }
+        )
+    }
 
-        tvAmount.text = String.format("₹ %.2f", totalAmount)
-        
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext(), R.style.CustomDialogTheme)
-            .setView(dialogView)
-            .setCancelable(false)
-            .create()
-
-        btnCancel.setOnClickListener { dialog.dismiss() }
-        btnConfirm.setOnClickListener {
-            Log.i(TAG, "Digital Payment: User confirmed transaction success.")
-            dialog.dismiss()
-            proceedWithOrderFinalization()
+    /**
+     * Builds a CashierBillingOrderModel from the current ViewModel state.
+     */
+    private fun buildCashierOrderModel(): CashierBillingOrderModel {
+        val cartItems = viewModel.originalFoodList.value.filter { it.currentQuantity > 0 }
+        val orderItems = cartItems.map { 
+            OrderItemModel(
+                itemId = it.id,
+                itemName = it.name,
+                variantName = it.variantName,
+                price = it.price,
+                quantity = it.currentQuantity,
+                rowTotal = it.price * it.currentQuantity
+            )
         }
-        dialog.show()
+
+        return CashierBillingOrderModel(
+            orderId = viewModel.lastOrderId ?: "N/A",
+            tableName = viewModel.currentTableName,
+            orderType = viewModel.orderType,
+            orderStatus = "PAID",
+            items = orderItems,
+            subtotal = viewModel.cartSummary.value.totalPrice.toDouble(),
+            taxAmount = viewModel.cartSummary.value.totalPrice * 0.05,
+            grandTotal = totalAmount,
+            paymentMethod = selectedMethod,
+            timestamp = Timestamp.now(),
+            paidAt = Timestamp.now()
+        )
     }
 
     /**
