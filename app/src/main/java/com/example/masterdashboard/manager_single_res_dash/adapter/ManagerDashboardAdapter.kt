@@ -24,24 +24,29 @@ class ManagerDashboardAdapter (
     private var metricsList: List<StatMetric>,
     private var summaryData: DashboardSummary,
     private var topSellingItems: List<TopSellingFoodItem>,
+    private var isQuickActionsExpanded: Boolean = false,
     private val onQuickActionClicked: (actionType: QuickActionType) -> Unit,
+    private val onToggleQuickActions: () -> Unit = {},
     private val onSummaryClicked: (status: String) -> Unit = {}
 ): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     fun updateData(
         newMetrics: List<StatMetric>,
         newSummary: DashboardSummary,
-        newTopSelling: List<TopSellingFoodItem>
+        newTopSelling: List<TopSellingFoodItem>,
+        isExpanded: Boolean
     ) {
         this.metricsList = newMetrics
         this.summaryData = newSummary
         this.topSellingItems = newTopSelling
+        this.isQuickActionsExpanded = isExpanded
         notifyDataSetChanged()
     }
 
     // Enum representing your distinct quick action options cleanly
     enum class QuickActionType {
-        WAITER, KITCHEN, BILLING, ADD_STAFF, MENU, FLOOR_TABLE, REPORTS
+        WAITER_TABLES, WAITER_ORDERS, KITCHEN_ORDERS, KITCHEN_PREP, BILLING_MAIN, BILLING_ORDERS,
+        ADD_STAFF, MENU, FLOOR_TABLE, REPORTS, CUSTOMERS
     }
 
     companion object {
@@ -81,7 +86,7 @@ class ManagerDashboardAdapter (
         when (holder) {
             is OverviewViewHolder -> holder.bind(metricsList)
             is SummaryViewHolder -> holder.bind(summaryData, onSummaryClicked)
-            is QuickActionsViewHolder -> holder.bind(onQuickActionClicked)
+            is QuickActionsViewHolder -> holder.bind(isQuickActionsExpanded, onToggleQuickActions, onQuickActionClicked)
             is TopSellingViewHolder -> holder.bind(topSellingItems)
         }
     }
@@ -176,34 +181,50 @@ class ManagerDashboardAdapter (
     }
 
     class QuickActionsViewHolder(val binding: ItemDashQuickActionsBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(onItemAction: (QuickActionType) -> Unit) {
+
+        fun bind(
+            isExpanded: Boolean,
+            onToggle: () -> Unit,
+            onItemAction: (QuickActionType) -> Unit
+        ) {
             val context = binding.root.context
 
-            val actions = listOf(
+            val allActions = listOf(
+                // Line 1: Primary Business Operations (Most needed)
                 QuickActionModel(
-                    QuickActionType.BILLING,
-                    "Billing Screen",
+                    QuickActionType.BILLING_MAIN,
+                    "Settlement Center",
                     R.drawable.biling,
                     context.getColor(R.color.accent_blue),
                     "#1D2D4B".toColorInt(),
                     "#121826".toColorInt()
                 ),
                 QuickActionModel(
-                    QuickActionType.WAITER,
-                    "Take Orders",
-                    R.drawable.waiter,
-                    context.getColor(R.color.accent_pink),
-                    "#461F33".toColorInt(),
-                    "#1A1420".toColorInt()
+                    QuickActionType.BILLING_ORDERS,
+                    "Quick Bill Counter",
+                    R.drawable.ic_dashboard_24dp,
+                    context.getColor(R.color.accent_blue),
+                    "#1D2D4B".toColorInt(),
+                    "#121826".toColorInt()
                 ),
                 QuickActionModel(
-                    QuickActionType.KITCHEN,
-                    "Kitchen Screen",
-                    R.drawable.ic_chef_24dp,
-                    context.getColor(R.color.accent_purple),
-                    "#2B204D".toColorInt(),
-                    "#151426".toColorInt()
+                    QuickActionType.REPORTS,
+                    "Reports & Analytics",
+                    R.drawable.ic_sales_report_24dp,
+                    context.getColor(R.color.accent_blue),
+                    "#1D2D4B".toColorInt(),
+                    "#121826".toColorInt()
                 ),
+                QuickActionModel(
+                    QuickActionType.CUSTOMERS,
+                    "Customer Insights",
+                    R.drawable.ic_person_24dp,
+                    context.getColor(R.color.accent_blue),
+                    "#1D2D4B".toColorInt(),
+                    "#121826".toColorInt()
+                ),
+
+                // Line 2: Management & Configuration
                 QuickActionModel(
                     QuickActionType.ADD_STAFF,
                     "Staff Management",
@@ -228,18 +249,56 @@ class ManagerDashboardAdapter (
                     "#173B2C".toColorInt(),
                     "#111818".toColorInt()
                 ),
+
+                // Line 3: Operational Overviews (Less needed for Manager)
                 QuickActionModel(
-                    QuickActionType.REPORTS,
-                    "Reports",
-                    R.drawable.ic_sales_report_24dp,
-                    context.getColor(R.color.accent_blue),
-                    "#1D2D4B".toColorInt(),
-                    "#121826".toColorInt()
+                    QuickActionType.KITCHEN_ORDERS,
+                    "Live Order Station",
+                    R.drawable.ic_chef_24dp,
+                    context.getColor(R.color.accent_purple),
+                    "#2B204D".toColorInt(),
+                    "#151426".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.KITCHEN_PREP,
+                    "Cooking Workstation",
+                    R.drawable.ic_chef_24dp,
+                    context.getColor(R.color.accent_purple),
+                    "#2B204D".toColorInt(),
+                    "#151426".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.WAITER_ORDERS,
+                    "Track Active Orders",
+                    R.drawable.ic_waiter_24dp,
+                    context.getColor(R.color.accent_pink),
+                    "#461F33".toColorInt(),
+                    "#1A1420".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.WAITER_TABLES,
+                    "Manage Floor Tables",
+                    R.drawable.waiter,
+                    context.getColor(R.color.accent_pink),
+                    "#461F33".toColorInt(),
+                    "#1A1420".toColorInt()
                 )
             )
 
-            binding.rvQuickActions.apply {
-                adapter = QuickActionAdapter(actions, onItemAction)
+            // Update Toggle Button Text
+            binding.btnViewAllActions.text = if (isExpanded) {
+                context.getString(R.string.show_less_action)
+            } else {
+                context.getString(R.string.view_all_action)
+            }
+
+            // Update List
+            val displayedActions = if (isExpanded) allActions else allActions.take(3)
+            binding.rvQuickActions.adapter = QuickActionAdapter(displayedActions, onItemAction)
+
+            // Handle Toggle Click
+            binding.btnViewAllActions.setOnClickListener {
+                onToggle()
             }
         }
     }

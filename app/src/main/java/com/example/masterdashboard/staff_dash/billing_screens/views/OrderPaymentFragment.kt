@@ -206,7 +206,7 @@ class OrderPaymentFragment : Fragment() {
 
                             parentFragmentManager.beginTransaction()
                                 .replace(this@OrderPaymentFragment.id, summaryFragment)
-                                .addToBackStack(null)
+                                .addToBackStack("settlement_flow")
                                 .commit()
                         }
                         is ResourceUiState.Error -> {
