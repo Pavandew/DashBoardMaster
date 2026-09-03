@@ -92,6 +92,18 @@
                         android:textSize="12sp"
                         tools:text="Order Time: 12 July, 08:30 PM" />
 
+                    <TextView
+                        android:id="@+id/tvHeaderCustomerInfo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textColor="#374151"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        tools:text="👤 John Doe • 9876543210"
+                        tools:visibility="visible" />
+
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
