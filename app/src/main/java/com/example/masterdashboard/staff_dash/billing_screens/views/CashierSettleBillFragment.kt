@@ -58,8 +58,12 @@ class CashierSettleBillFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        printController = PrintBillController(this) { isLoading ->
-            mBinding.progressBar.isVisible = isLoading
+        try {
+            printController = PrintBillController(this) { isLoading ->
+                mBinding.progressBar.isVisible = isLoading
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "PrintBillController initialization error", e)
         }
     }
 
@@ -245,6 +249,21 @@ class CashierSettleBillFragment : Fragment() {
                             val sdf = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
                             mBinding.tvHeaderTimestamp.text = getString(R.string.order_time_format, sdf.format(order.timestamp.toDate()))
 
+                            val custName = order.customerName.trim()
+                            val custPhone = order.customerPhone.trim()
+                            val customerText = when {
+                                custName.isNotEmpty() && custPhone.isNotEmpty() -> "👤 $custName • $custPhone"
+                                custName.isNotEmpty() -> "👤 $custName"
+                                custPhone.isNotEmpty() -> "📞 $custPhone"
+                                else -> ""
+                            }
+                            if (customerText.isNotEmpty()) {
+                                mBinding.tvHeaderCustomerInfo.visibility = View.VISIBLE
+                                mBinding.tvHeaderCustomerInfo.text = customerText
+                            } else {
+                                mBinding.tvHeaderCustomerInfo.visibility = View.GONE
+                            }
+
                             val status = order.orderStatus.uppercase()
                             
                             // Apply centralized status styling
@@ -316,7 +335,7 @@ class CashierSettleBillFragment : Fragment() {
                                     )
                                     parentFragmentManager.beginTransaction()
                                         .replace(this@CashierSettleBillFragment.id, summaryFragment)
-                                        .addToBackStack(null)
+                                        .addToBackStack("settlement_flow")
                                         .commit()
                                 } else {
                                     parentFragmentManager.popBackStack()

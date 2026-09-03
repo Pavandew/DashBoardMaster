@@ -1,5 +1,6 @@
 package com.example.masterdashboard.staff_dash.billing_screens.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.masterdashboard.notifications.AppNotificationHelper
@@ -64,15 +65,20 @@ class CashierSettleViewModel(
                 _settleState.value = status
                 
                 if (status is ResourceUiState.Success) {
-                    // Notify Manager (Revenue), Waiter (Table Free), and Billing (Log)
-                    AppNotificationHelper.notifyPaymentSuccess(
-                        managerId = managerId,
-                        tableName = order.tableName,
-                        orderId = order.orderId,
-                        amount = order.grandTotal,
-                        waiterId = order.waiterId,
-                        orderDocPath = order.docPath
-                    )
+                    try {
+                        val completedDocPath = "users/$managerId/completed_orders/${order.orderId}"
+                        // Notify Manager (Revenue), Waiter (Table Free), and Billing (Log)
+                        AppNotificationHelper.notifyPaymentSuccess(
+                            managerId = managerId,
+                            tableName = order.tableName,
+                            orderId = order.orderId,
+                            amount = order.grandTotal,
+                            waiterId = order.waiterId,
+                            orderDocPath = completedDocPath
+                        )
+                    } catch (e: Exception) {
+                        Log.e("CashierSettleVM", "Error sending notifications post payment", e)
+                    }
                 }
             }
         }

@@ -160,10 +160,10 @@ object AppConstants {
     const val KEY_IS_RESTAURANT_SETUP = "is_restaurant_setup"
     const val KEY_REGISTRATION_DRAFT = "registration_draft"
 
-    // Others
-    const val PHONE_PREFIX_INDIA = "+91"
-    const val FIELD_IS_VERIFIED = "isVerified"
-    
+    // Intent Extras
+    const val EXTRA_EDIT_MODE = "extra_edit_mode"
+    const val EXTRA_START_STEP = "extra_start_step"
+
     // UI Strings & Tags
     const val TITLE_MENU_MANAGEMENT = "Menu Management"
     const val BTN_ADD_CATEGORY = "+ Add Category"
