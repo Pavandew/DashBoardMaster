@@ -156,7 +156,7 @@ class CashierBillingFragment : Fragment() {
         if (containerId != 0) {
             parentFragmentManager.beginTransaction()
                 .replace(containerId, settlementFragment)
-                .addToBackStack(null)
+                .addToBackStack("settlement_flow")
                 .commit()
         }
     }

@@ -19,10 +19,9 @@ import com.example.masterdashboard.print_bill.PrintBillController
 import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.billing_screens.viewmodel.CashierBillSummaryViewModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
+import com.example.masterdashboard.utils.NavigationUtils
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class CashierBillSummaryFragment : Fragment() {
 
@@ -170,8 +169,27 @@ class CashierBillSummaryFragment : Fragment() {
     }
 
     private fun startNewBill() {
-        parentFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        (activity as? CashierHomeActivity)?.openBills()
+        val manager = parentFragmentManager
+        val cashierActivity = activity as? CashierHomeActivity
+
+        if (cashierActivity != null) {
+            manager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            cashierActivity.openBills()
+        } else {
+            // Returning from ManagerHomeActivity or SingleResOwnerHomeActivity
+            val popped = manager.popBackStackImmediate("settlement_flow", FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            if (!popped) {
+                val containerId = NavigationUtils.getHostContainerId(activity)
+                if (containerId != 0) {
+                    manager.popBackStack()
+                    manager.beginTransaction()
+                        .replace(containerId, CashierBillingFragment())
+                        .commit()
+                } else {
+                    manager.popBackStack()
+                }
+            }
+        }
     }
 
     override fun onDestroyView() {

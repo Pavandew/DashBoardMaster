@@ -26,7 +26,7 @@ class CashierBillingRepository(
     }
 
     /**
-     * Streams active orders live from Firestore across all active floor tables
+     * Streams active orders and completed/paid orders live from Firestore for the Cashier
      */
     fun streamBillingOrders(managerId: String): Flow<List<CashierBillingOrderModel>> = callbackFlow {
         Log.d(TAG, "streamBillingOrders: Fetching orders restricted to Manager: $managerId")
@@ -37,117 +37,152 @@ class CashierBillingRepository(
             return@callbackFlow
         }
 
-        // Listens to all active_orders across table subcollections
-        val registration = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
+        var activeOrdersList = listOf<CashierBillingOrderModel>()
+        var completedOrdersList = listOf<CashierBillingOrderModel>()
+
+        fun emitCombinedList() {
+            val combined = (activeOrdersList + completedOrdersList)
+                .distinctBy { if (it.orderId.isNotEmpty() && it.orderId != "N/A") it.orderId else it.docPath }
+            trySend(combined)
+        }
+
+        val targetPrefix = "users/$managerId/"
+
+        // 1. Listen to active_orders across table subcollections
+        val activeRegistration = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
             .orderBy(AppConstants.FIELD_TIMESTAMP, Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Log.e(TAG, "Error fetching billing orders snapshot", error)
-                    close(error)
+                    Log.e(TAG, "Error fetching active billing orders snapshot", error)
                     return@addSnapshotListener
                 }
 
                 val allDocs = snapshot?.documents ?: emptyList()
-                
-                // Use path-based filtering to ensure we capture all orders (old and new)
-                // for this specific manager without needing a composite index or the new 'restaurantId' field.
-                val targetPrefix = "users/$managerId/"
                 val documents = allDocs.filter { it.reference.path.contains(targetPrefix) }
-                
-                Log.d(TAG, "streamBillingOrders: Found ${documents.size} valid orders for Manager: $managerId")
 
-                // Process documents in parallel to fetch parent table names if missing in the child doc
                 launch(Dispatchers.IO) {
-                    val ordersList = documents.map { doc ->
-                        async {
-                            val orderId = doc.getString(AppConstants.FIELD_ORDER_ID) ?: doc.id
-                            val tableId = doc.getString(AppConstants.FIELD_TABLE_ID) ?: ""
-                            val orderType = doc.getString(AppConstants.FIELD_ORDER_TYPE)?.ifEmpty { AppConstants.ORDER_TYPE_DINE_IN } ?: AppConstants.ORDER_TYPE_DINE_IN
-                            
-                            // 1. Try to get tableName from the order document itself first
-                            var tableName = doc.getString(AppConstants.FIELD_TABLE_NAME)?.ifEmpty { null }
-                            
-                            // 2. CRITICAL: If empty it's a Dine-In order, fetch the parent Table document
-                            if (tableName == null && orderType == AppConstants.ORDER_TYPE_DINE_IN) {
-                                try {
-                                    val tableDoc = doc.reference.parent.parent?.get()?.await()
-                                    tableName = tableDoc?.getString(AppConstants.FIELD_TABLE_NAME)?.ifEmpty { null }
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "Failed to fetch parent table name for path: ${doc.reference.path}", e)
-                                }
-                            }
-                            
-                            // 3. Robust Display Name Selection
-                            val finalDisplayName = when {
-                                orderType == AppConstants.ORDER_TYPE_TAKE_AWAY -> "TAKE AWAY"
-                                orderType == AppConstants.ORDER_TYPE_DELIVERY -> "DELIVERY"
-                                !tableName.isNullOrEmpty() -> {
-                                    if (tableName!!.startsWith("Table", true)) tableName!! else "Table $tableName"
-                                }
-                                else -> "Counter Order"
-                            }
-
-                            val orderStatus = doc.getString(AppConstants.FIELD_ORDER_STATUS) ?: AppConstants.STATUS_SERVED
-                            val subtotal = doc.getDouble(AppConstants.FIELD_SUBTOTAL) ?: 0.0
-                            val taxAmount = doc.getDouble(AppConstants.FIELD_GST) ?: 0.0
-                            val grandTotal = doc.getDouble(AppConstants.FIELD_GRAND_TOTAL) ?: 0.0
-                            val discountAmount = doc.getDouble(AppConstants.FIELD_DISCOUNT_AMOUNT) ?: 0.0
-                            val timestamp = doc.getTimestamp(AppConstants.FIELD_TIMESTAMP) ?: Timestamp.now()
-                            val paidAt = doc.getTimestamp(AppConstants.FIELD_PAID_AT)
-                            val paymentMethod = doc.getString(AppConstants.FIELD_PAYMENT_METHOD) ?: doc.getString("paymentMode") ?: ""
-                            val waiterId = doc.getString(AppConstants.FIELD_WAITER_ID) ?: ""
-                            val customerName = doc.getString(AppConstants.FIELD_CUSTOMER_NAME) ?: ""
-                            val customerPhone = doc.getString(AppConstants.FIELD_CUSTOMER_MOBILE) ?: ""
-
-                            // Convert Firestore list to OrderItemModel list
-                            val rawItems = doc.get(AppConstants.FIELD_ORDER_ITEMS) as? List<Map<String, Any>>
-                            val itemsList = rawItems?.map { item ->
-                                OrderItemModel(
-                                    itemId = item[AppConstants.FIELD_ITEM_ID] as? String ?: "",
-                                    itemName = item[AppConstants.FIELD_ITEM_NAME] as? String ?: "Item",
-                                        variantName = item[AppConstants.FIELD_VARIANT_NAME] as? String ?: "",
-                                    price = (item[AppConstants.FIELD_ITEM_PRICE] as? Number)?.toInt() ?: 0,
-                                    quantity = (item[AppConstants.FIELD_QUANTITY] as? Number)?.toInt() ?: 1,
-                                    rowTotal = (item[AppConstants.FIELD_ROW_TOTAL] as? Number)?.toInt() ?: 0,
-                                    orderedQuantity = (item[AppConstants.FIELD_ORDERED_QTY] as? Number)?.toInt() ?: 0
-                                )
-                            } ?: emptyList()
-
-                            val summaryStr = itemsList.joinToString(", ") { "${it.quantity}x ${it.itemName}" }
-
-                            CashierBillingOrderModel(
-                                orderId = orderId,
-                                tableId = tableId,
-                                tableName = finalDisplayName,
-                                orderType = orderType,
-                                orderStatus = orderStatus,
-                                itemsSummary = summaryStr,
-                                items = itemsList,
-                                subtotal = subtotal,
-                                taxAmount = taxAmount,
-                                discountAmount = discountAmount,
-                                grandTotal = grandTotal,
-                                timestamp = timestamp,
-                                paidAt = paidAt,
-                                paymentMethod = paymentMethod,
-                                customerName = customerName,
-                                customerPhone = customerPhone,
-                                waiterId = waiterId,
-                                docPath = doc.reference.path
-                            )
-                        }
+                    activeOrdersList = documents.map { doc ->
+                        async { parseOrderDocument(doc) }
                     }.awaitAll()
 
-                    Log.i(TAG, "📊 [REPO] Successfully fetched ${ordersList.size} billing orders with proper table names.")
-                    trySend(ordersList)
+                    emitCombinedList()
+                }
+            }
+
+        // 2. Listen to completed_orders collection for this manager
+        val completedRegistration = firestore.collection(AppConstants.COLLECTION_USERS)
+            .document(managerId)
+            .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
+            .orderBy(AppConstants.FIELD_TIMESTAMP, Query.Direction.DESCENDING)
+            .limit(50)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e(TAG, "Error fetching completed billing orders snapshot", error)
+                    return@addSnapshotListener
+                }
+
+                val documents = snapshot?.documents ?: emptyList()
+
+                launch(Dispatchers.IO) {
+                    completedOrdersList = documents.map { doc ->
+                        async { parseOrderDocument(doc) }
+                    }.awaitAll()
+
+                    emitCombinedList()
                 }
             }
 
         awaitClose {
-            Log.d(TAG, "Dismantling billing orders snapshot listener")
-            registration.remove()
+            Log.d(TAG, "Dismantling billing orders snapshot listeners")
+            activeRegistration.remove()
+            completedRegistration.remove()
         }
     }
+
+    private suspend fun parseOrderDocument(doc: com.google.firebase.firestore.DocumentSnapshot): CashierBillingOrderModel {
+        return try {
+            val orderId = doc.getString(AppConstants.FIELD_ORDER_ID) ?: doc.id
+            val tableId = doc.getString(AppConstants.FIELD_TABLE_ID) ?: ""
+            val orderType = doc.getString(AppConstants.FIELD_ORDER_TYPE)?.ifEmpty { AppConstants.ORDER_TYPE_DINE_IN } ?: AppConstants.ORDER_TYPE_DINE_IN
+
+            var tableName = doc.getString(AppConstants.FIELD_TABLE_NAME)?.ifEmpty { null }
+
+            if (tableName == null && orderType == AppConstants.ORDER_TYPE_DINE_IN) {
+                try {
+                    val tableDoc = doc.reference.parent.parent?.get()?.await()
+                    tableName = tableDoc?.getString(AppConstants.FIELD_TABLE_NAME)?.ifEmpty { null }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to fetch parent table name for path: ${doc.reference.path}", e)
+                }
+            }
+
+            val finalDisplayName = when {
+                orderType == AppConstants.ORDER_TYPE_TAKE_AWAY -> "TAKE AWAY"
+                orderType == AppConstants.ORDER_TYPE_DELIVERY -> "DELIVERY"
+                !tableName.isNullOrEmpty() -> {
+                    if (tableName.startsWith("Table", true)) tableName else "Table $tableName"
+                }
+                else -> "Counter Order"
+            }
+
+            val orderStatus = doc.getString(AppConstants.FIELD_ORDER_STATUS) ?: AppConstants.STATUS_SERVED
+            val subtotal = (doc.get(AppConstants.FIELD_SUBTOTAL) as? Number)?.toDouble() ?: 0.0
+            val taxAmount = (doc.get(AppConstants.FIELD_GST) as? Number)?.toDouble() ?: 0.0
+            val grandTotal = (doc.get(AppConstants.FIELD_GRAND_TOTAL) as? Number)?.toDouble() ?: 0.0
+            val discountAmount = (doc.get(AppConstants.FIELD_DISCOUNT_AMOUNT) as? Number)?.toDouble() ?: 0.0
+            val timestamp = doc.getTimestamp(AppConstants.FIELD_TIMESTAMP) ?: Timestamp.now()
+            val paidAt = doc.getTimestamp(AppConstants.FIELD_PAID_AT)
+            val paymentMethod = doc.getString(AppConstants.FIELD_PAYMENT_METHOD) ?: ""
+            val waiterId = doc.getString(AppConstants.FIELD_WAITER_ID) ?: ""
+            val customerName = doc.getString(AppConstants.FIELD_CUSTOMER_NAME) ?: ""
+            val customerPhone = doc.getString(AppConstants.FIELD_CUSTOMER_MOBILE) ?: ""
+
+            val rawItems = doc.get(AppConstants.FIELD_ORDER_ITEMS) as? List<Map<String, Any>>
+            val itemsList = rawItems?.map { item ->
+                OrderItemModel(
+                    itemId = item[AppConstants.FIELD_ITEM_ID] as? String ?: "",
+                    itemName = item[AppConstants.FIELD_ITEM_NAME] as? String ?: "Item",
+                    variantName = item[AppConstants.FIELD_VARIANT_NAME] as? String ?: "",
+                    price = (item[AppConstants.FIELD_ITEM_PRICE] as? Number)?.toInt() ?: 0,
+                    quantity = (item[AppConstants.FIELD_QUANTITY] as? Number)?.toInt() ?: 1,
+                    rowTotal = (item[AppConstants.FIELD_ROW_TOTAL] as? Number)?.toInt() ?: 0,
+                    orderedQuantity = (item[AppConstants.FIELD_ORDERED_QTY] as? Number)?.toInt() ?: 0
+                )
+            } ?: emptyList()
+
+            val summaryStr = itemsList.joinToString(", ") { "${it.quantity}x ${it.itemName}" }
+
+            CashierBillingOrderModel(
+                orderId = orderId,
+                tableId = tableId,
+                tableName = finalDisplayName,
+                orderType = orderType,
+                orderStatus = orderStatus,
+                itemsSummary = summaryStr,
+                items = itemsList,
+                subtotal = subtotal,
+                taxAmount = taxAmount,
+                discountAmount = discountAmount,
+                grandTotal = grandTotal,
+                timestamp = timestamp,
+                paidAt = paidAt,
+                paymentMethod = paymentMethod,
+                customerName = customerName,
+                customerPhone = customerPhone,
+                waiterId = waiterId,
+                docPath = doc.reference.path
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing order document: ${doc.id}", e)
+            CashierBillingOrderModel(
+                orderId = doc.id,
+                tableName = "Order",
+                orderStatus = AppConstants.STATUS_SERVED,
+                docPath = doc.reference.path
+            )
+        }
+    }
+
 
     /**
      * Fetches a single order's full details using its Firestore document path.
@@ -155,56 +190,26 @@ class CashierBillingRepository(
     fun fetchOrderDetails(docPath: String): Flow<ResourceUiState<CashierBillingOrderModel>> = flow {
         emit(ResourceUiState.Loading)
         try {
-            val doc = firestore.document(docPath).get().await()
+            var doc = firestore.document(docPath).get().await()
+            if (!doc.exists()) {
+                // If deleted from active_orders, check completed_orders
+                val pathSegments = docPath.split("/")
+                if (pathSegments.size >= 2 && pathSegments[0] == "users") {
+                    val managerId = pathSegments[1]
+                    val orderId = docPath.substringAfterLast("/")
+                    val completedRef = firestore.collection(AppConstants.COLLECTION_USERS)
+                        .document(managerId)
+                        .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
+                        .document(orderId)
+                    val completedDoc = completedRef.get().await()
+                    if (completedDoc.exists()) {
+                        doc = completedDoc
+                    }
+                }
+            }
+
             if (doc.exists()) {
-                val orderId = doc.getString(AppConstants.FIELD_ORDER_ID) ?: doc.id
-                val tableId = doc.getString(AppConstants.FIELD_TABLE_ID) ?: ""
-                val orderType = doc.getString(AppConstants.FIELD_ORDER_TYPE) ?: AppConstants.ORDER_TYPE_DINE_IN
-                
-                var tableName = doc.getString(AppConstants.FIELD_TABLE_NAME)
-                if (tableName.isNullOrEmpty() && orderType == AppConstants.ORDER_TYPE_DINE_IN) {
-                    val tableDoc = doc.reference.parent.parent?.get()?.await()
-                    tableName = tableDoc?.getString(AppConstants.FIELD_TABLE_NAME)
-                }
-
-                val finalDisplayName = when {
-                    orderType == AppConstants.ORDER_TYPE_TAKE_AWAY -> "TAKE AWAY"
-                    orderType == AppConstants.ORDER_TYPE_DELIVERY -> "DELIVERY"
-                    !tableName.isNullOrEmpty() -> if (tableName.startsWith("Table", true)) tableName else "Table $tableName"
-                    else -> "Counter Order"
-                }
-
-                val rawItems = doc.get(AppConstants.FIELD_ORDER_ITEMS) as? List<Map<String, Any>>
-                val itemsList = rawItems?.map { item ->
-                    OrderItemModel(
-                        itemId = item[AppConstants.FIELD_ITEM_ID] as? String ?: "",
-                        itemName = item[AppConstants.FIELD_ITEM_NAME] as? String ?: "Item",
-                        variantName = item[AppConstants.FIELD_VARIANT_NAME] as? String ?: "",
-                        price = (item[AppConstants.FIELD_ITEM_PRICE] as? Number)?.toInt() ?: 0,
-                        quantity = (item[AppConstants.FIELD_QUANTITY] as? Number)?.toInt() ?: 1,
-                        rowTotal = (item[AppConstants.FIELD_ROW_TOTAL] as? Number)?.toInt() ?: 0,
-                        orderedQuantity = (item[AppConstants.FIELD_ORDERED_QTY] as? Number)?.toInt() ?: 0
-                    )
-                } ?: emptyList()
-
-                val model = CashierBillingOrderModel(
-                    orderId = orderId,
-                    tableId = tableId,
-                    tableName = finalDisplayName,
-                    orderType = orderType,
-                    orderStatus = doc.getString(AppConstants.FIELD_ORDER_STATUS) ?: AppConstants.STATUS_SERVED,
-                    items = itemsList,
-                    subtotal = doc.getDouble(AppConstants.FIELD_SUBTOTAL) ?: 0.0,
-                    taxAmount = doc.getDouble(AppConstants.FIELD_GST) ?: 0.0,
-                    discountAmount = doc.getDouble(AppConstants.FIELD_DISCOUNT_AMOUNT) ?: 0.0,
-                    grandTotal = doc.getDouble(AppConstants.FIELD_GRAND_TOTAL) ?: 0.0,
-                    timestamp = doc.getTimestamp(AppConstants.FIELD_TIMESTAMP) ?: Timestamp.now(),
-                    paidAt = doc.getTimestamp(AppConstants.FIELD_PAID_AT),
-                    paymentMethod = doc.getString(AppConstants.FIELD_PAYMENT_METHOD) ?: "",
-                    customerName = doc.getString(AppConstants.FIELD_CUSTOMER_NAME) ?: "",
-                    customerPhone = doc.getString(AppConstants.FIELD_CUSTOMER_MOBILE) ?: "",
-                    docPath = doc.reference.path
-                )
+                val model = parseOrderDocument(doc)
                 emit(ResourceUiState.Success(model))
             } else {
                 emit(ResourceUiState.Error("Order not found"))
@@ -243,17 +248,38 @@ class CashierBillingRepository(
 
         val finalGrandTotal = (order.subtotal + order.taxAmount - discount)
 
-        val orderUpdates = mapOf(
+        val fullCompletedOrderData = mapOf(
+            AppConstants.FIELD_ORDER_ID to order.orderId,
+            AppConstants.FIELD_TABLE_ID to order.tableId,
+            AppConstants.FIELD_TABLE_NAME to order.tableName,
+            AppConstants.FIELD_CUSTOMER_NAME to order.customerName,
+            AppConstants.FIELD_CUSTOMER_MOBILE to order.customerPhone,
+            AppConstants.FIELD_ORDER_TYPE to order.orderType,
             AppConstants.FIELD_ORDER_STATUS to AppConstants.STATUS_PAID,
-            AppConstants.FIELD_PAYMENT_METHOD to paymentMode,
+            AppConstants.FIELD_ORDER_ITEMS to order.items.map { item ->
+                mapOf(
+                    AppConstants.FIELD_ITEM_ID to item.itemId,
+                    AppConstants.FIELD_ITEM_NAME to item.itemName,
+                    AppConstants.FIELD_VARIANT_NAME to item.variantName,
+                    AppConstants.FIELD_ITEM_PRICE to item.price,
+                    AppConstants.FIELD_QUANTITY to item.quantity,
+                    AppConstants.FIELD_ROW_TOTAL to item.rowTotal,
+                    AppConstants.FIELD_ORDERED_QTY to item.orderedQuantity
+                )
+            },
+            AppConstants.FIELD_SUBTOTAL to order.subtotal,
+            AppConstants.FIELD_GST to order.taxAmount,
             AppConstants.FIELD_DISCOUNT_AMOUNT to discount,
             AppConstants.FIELD_GRAND_TOTAL to finalGrandTotal,
+            AppConstants.FIELD_TIMESTAMP to order.timestamp,
             AppConstants.FIELD_PAID_AT to currentTime,
+            AppConstants.FIELD_PAYMENT_METHOD to paymentMode,
+            AppConstants.FIELD_WAITER_ID to order.waiterId,
             AppConstants.FIELD_BILLING_MONTH to monthYear,
             AppConstants.FIELD_BILLING_DATE to exactDate
         )
 
-        // 2. Store a copy in a central 'completed_orders' collection
+        // 2. Store full copy in a central 'completed_orders' collection
         val pathSegments = order.docPath.split("/")
         if (pathSegments.size >= 2 && pathSegments[0] == "users") {
             val managerId = pathSegments[1]
@@ -262,16 +288,12 @@ class CashierBillingRepository(
                 .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
                 .document(order.orderId)
             
-            // Map the full order data plus the new payment fields
-            batch.set(completedOrderRef, orderUpdates, com.google.firebase.firestore.SetOptions.merge())
+            batch.set(completedOrderRef, fullCompletedOrderData, com.google.firebase.firestore.SetOptions.merge())
         }
 
         // 3. Reset the table status to FREE
-        // We identify if it's a table order by checking the document path segments
         if (pathSegments.contains(AppConstants.COLLECTION_TABLES) && pathSegments.size >= 6) {
             try {
-                // Precise path reconstruction for the table document:
-                // users/{uid}/res_floors/{floorId}/floor_tables/{tableId}
                 val tableRef = firestore.collection(pathSegments[0])
                     .document(pathSegments[1])
                     .collection(pathSegments[2])
@@ -281,18 +303,20 @@ class CashierBillingRepository(
 
                 Log.d(TAG, "settleOrder: Releasing table. Path: ${tableRef.path}")
                 
-                batch.update(tableRef, mapOf(
+                // Use set with merge instead of update so it won't fail with NOT_FOUND if table doc doesn't exist
+                batch.set(tableRef, mapOf(
                     AppConstants.FIELD_STATUS to AppConstants.STATUS_FREE,
-                    AppConstants.FIELD_CUSTOMER_NAME_TABLE to null,
-                    AppConstants.FIELD_CURRENT_BILL to null
-                ))
+                    AppConstants.FIELD_CUSTOMER_NAME_TABLE to "",
+                    AppConstants.FIELD_CURRENT_BILL to 0.0
+                ), com.google.firebase.firestore.SetOptions.merge())
             } catch (e: Exception) {
                 Log.e(TAG, "settleOrder: Error reconstructing table path", e)
             }
         }
 
-        // 4. Delete the active order document (Crucial: Delete instead of update in active_orders)
+        // 4. Delete the active order document
         batch.delete(orderRef)
+
 
         // 5. Update CRM (Customer Relationship Management)
         if (order.customerPhone.isNotEmpty()) {
@@ -343,7 +367,7 @@ class CashierBillingRepository(
         }
 
         val orderRef = firestore.document(order.docPath)
-        orderRef.update(AppConstants.FIELD_ORDER_STATUS, AppConstants.STATUS_COMPLETED)
+        orderRef.set(mapOf(AppConstants.FIELD_ORDER_STATUS to AppConstants.STATUS_COMPLETED), com.google.firebase.firestore.SetOptions.merge())
             .addOnSuccessListener {
                 Log.i(TAG, "📦 [REPO] Takeaway order ${order.orderId} marked as COMPLETED (Handed Over).")
                 trySend(ResourceUiState.Success("Order Handed Over"))

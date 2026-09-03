@@ -82,11 +82,9 @@ class CashierBillingAdapter(
                 }
             }
 
-            // Click on entire card to navigate to settlement (if not completed)
+            // Click on entire card to navigate to settlement / view details / reprint
             binding.root.setOnClickListener {
-                if (status != "COMPLETED") {
-                    onGenerateBillClicked(item)
-                }
+                onGenerateBillClicked(item)
             }
         }
     }
