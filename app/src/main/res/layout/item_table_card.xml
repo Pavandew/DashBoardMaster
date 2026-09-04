@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://tools.android.com/tools"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/cvTableCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -28,15 +28,31 @@
                 android:layout_width="@dimen/table_icon_size"
                 android:layout_height="@dimen/table_icon_size"
                 android:src="@android:drawable/ic_menu_gallery"
-                app:tint="@color/status_free" />
+                app:tint="@color/status_free"
+                tools:ignore="ContentDescription" />
 
-            <TextView
-                android:id="@+id/tvTableName"
-                style="@style/TextAppearance.MyApp.TableId"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/margin_tiny"
-                android:text="T-01" />
+                android:orientation="vertical"
+                android:layout_marginStart="@dimen/margin_tiny">
+
+                <TextView
+                    android:id="@+id/tvTableName"
+                    style="@style/TextAppearance.MyApp.TableId"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="T-01" />
+
+                <TextView
+                    android:id="@+id/tvFloorName"
+                    style="@style/TextAppearance.MyApp.TableFloor"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ground Floor"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+            </LinearLayout>
         </LinearLayout>
 
         <TextView
@@ -58,6 +74,18 @@
             tools:background="@drawable/bg_status_free"
             android:text="Free"
             tools:textColor="@color/status_free" />
+
+        <TextView
+            android:id="@+id/tvCustomerName"
+            style="@style/TextAppearance.MyApp.TableCustomer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_tiny"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:visibility="gone"
+            tools:text="Mr. Sharma"
+            tools:visibility="visible" />
 
         <TextView
             android:id="@+id/tvTablePrice"
