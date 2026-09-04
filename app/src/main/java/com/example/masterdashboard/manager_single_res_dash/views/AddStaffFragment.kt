@@ -62,7 +62,11 @@ class AddStaffFragment : Fragment() {
         val whiteColor = ContextCompat.getColor(context, android.R.color.white)
 
         toolbar.customToolbar.setBackgroundColor(ContextCompat.getColor(context, R.color.bg_main))
-        toolbar.tvToolbarTitle.text = getString(R.string.add_staff)
+        
+        // Dynamically set title based on Edit Mode
+        val isEditMode = sharedViewModel.isEditMode.value
+        toolbar.tvToolbarTitle.text = if (isEditMode) "Edit Staff Profile" else getString(R.string.add_staff)
+        
         toolbar.tvToolbarTitle.setTextColor(whiteColor)
 
         toolbar.toolbarImgMenu.setColorFilter(whiteColor)

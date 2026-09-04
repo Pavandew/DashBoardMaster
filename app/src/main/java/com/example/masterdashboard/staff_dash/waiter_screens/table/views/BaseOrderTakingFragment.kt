@@ -85,12 +85,13 @@ abstract class BaseOrderTakingFragment : Fragment() {
         
         // 1. Initialize session meta-data in the Activity-scoped ViewModel
         val tableId = arguments?.getString("tableId") ?: ""
+        val floorId = arguments?.getString("floorId") ?: ""
         val tableName = arguments?.getString("tableName") ?: "Order"
         val status = arguments?.getString("status") ?: "FREE"
         val existingDocId = arguments?.getString("existingOrderDocId")
         val existingOrderId = arguments?.getString("existingOrderId")
         
-        sessionViewModel.startOrderSession(tableId, tableName, status, existingDocId, existingOrderId)
+        sessionViewModel.startOrderSession(tableId, floorId, tableName, status, existingDocId, existingOrderId)
 
         // 2. Fetch or Resume active order if the table is already occupied
         if (managerId.isNotEmpty()) {
