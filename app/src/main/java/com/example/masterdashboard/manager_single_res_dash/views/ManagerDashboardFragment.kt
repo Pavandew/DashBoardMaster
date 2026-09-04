@@ -18,7 +18,6 @@ import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
 import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeActivity
 import com.example.masterdashboard.manager_single_res_dash.adapter.ManagerDashboardAdapter
 import com.example.masterdashboard.manager_single_res_dash.models.DrawerMenuItem
-import com.example.masterdashboard.manager_single_res_dash.models.StatMetric
 import com.example.masterdashboard.manager_single_res_dash.models.TopSellingFoodItem
 import com.example.masterdashboard.manager_single_res_dash.utils.DrawerNavigationHelper
 import com.example.masterdashboard.manager_single_res_dash.viewModel.ManagerDashboardViewModel
@@ -33,7 +32,6 @@ import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenPrepa
 import com.example.masterdashboard.staff_dash.waiter_screens.order.views.WaiterActiveOrdersFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.table.views.WaiterTablesFragment
 import kotlinx.coroutines.launch
-import kotlin.getValue
 
 class ManagerDashboardFragment : Fragment() {
 
@@ -67,7 +65,7 @@ class ManagerDashboardFragment : Fragment() {
         
         navigationHelper.initDrawerMenu()
         
-        // 3. Start real-time order status tracking
+        // 3. Start real-time tracking for status badges and today's sales overview
         val managerId = sessionManager.getUid()
         viewModel.startRealTimeOrderStatusTracking(managerId)
         viewModel.loadRestaurantDetails(managerId, sessionManager)
@@ -82,12 +80,25 @@ class ManagerDashboardFragment : Fragment() {
     private fun subscribeToDashboardData() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observe Today's Financial & Overview Stat Metrics
+                launch {
+                    viewModel.todayMetrics.collect { metrics ->
+                        Log.d("ManagerDashboard", "UI Update: Today's live overview metrics refreshed: $metrics")
+                        dashboardAdapter.updateData(
+                            newMetrics = metrics, 
+                            newSummary = viewModel.orderStatusSummary.value,
+                            newTopSelling = getDummyTopSelling(),
+                            isExpanded = viewModel.isQuickActionsExpanded.value
+                        )
+                    }
+                }
+
                 // Observe Order Status Summary
                 launch {
                     viewModel.orderStatusSummary.collect { summary ->
                         Log.d("ManagerDashboard", "UI Update: Order status counts refreshed")
                         dashboardAdapter.updateData(
-                            newMetrics = getDummyMetrics(), 
+                            newMetrics = viewModel.todayMetrics.value, 
                             newSummary = summary,
                             newTopSelling = getDummyTopSelling(),
                             isExpanded = viewModel.isQuickActionsExpanded.value
@@ -99,7 +110,7 @@ class ManagerDashboardFragment : Fragment() {
                 launch {
                     viewModel.isQuickActionsExpanded.collect { isExpanded ->
                         dashboardAdapter.updateData(
-                            newMetrics = getDummyMetrics(),
+                            newMetrics = viewModel.todayMetrics.value,
                             newSummary = viewModel.orderStatusSummary.value,
                             newTopSelling = getDummyTopSelling(),
                             isExpanded = isExpanded
@@ -144,7 +155,6 @@ class ManagerDashboardFragment : Fragment() {
             Log.i("ManagerDashboard", "Action: Restaurant Name/Profile clicked - Opening Bottom Sheet")
             val ownerUid = sessionManager.getUid() 
             if (ownerUid.isNotEmpty()) {
-                // 🛡️ Guard against double-tap: only show if not already showing
                 if (childFragmentManager.findFragmentByTag("ResDetails") == null) {
                     RestaurantDetailsBottomSheet.newInstance(ownerUid).show(childFragmentManager, "ResDetails")
                 }
@@ -161,9 +171,8 @@ class ManagerDashboardFragment : Fragment() {
      * Configures the main RecyclerView and its multi-view adapter.
      */
     private fun initializeMainDashboardAdapter() {
-        // Initial setup with current (empty/default) summary
         dashboardAdapter = ManagerDashboardAdapter(
-            getDummyMetrics(), 
+            viewModel.todayMetrics.value, 
             viewModel.orderStatusSummary.value, 
             getDummyTopSelling(),
             viewModel.isQuickActionsExpanded.value,
@@ -188,7 +197,7 @@ class ManagerDashboardFragment : Fragment() {
                     ManagerDashboardAdapter.QuickActionType.FLOOR_TABLE ->
                         DrawerMenuItem(3, "Table Management", 0, fragmentClass = TableManagementFragment::class.java)
                     ManagerDashboardAdapter.QuickActionType.REPORTS -> 
-                        DrawerMenuItem(11, "Reports & Analytics", 0, fragmentClass = ManagerDashboardFragment::class.java)
+                        DrawerMenuItem(11, "Reports & Analytics", 0, fragmentClass = ReportsAnalyticsFragment::class.java)
                     ManagerDashboardAdapter.QuickActionType.CUSTOMERS -> 
                         DrawerMenuItem(12, "Customer Insights", 0, fragmentClass = CustomerManagementFragment::class.java)
                 }
@@ -217,15 +226,6 @@ class ManagerDashboardFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = dashboardAdapter
         }
-    }
-
-    private fun getDummyMetrics(): List<StatMetric> {
-        return listOf(
-            StatMetric("Total Sales", "₹ 45,670", "↑ 18.6%", true),
-            StatMetric("Total Orders", "86", "↑ 12.4%", true),
-            StatMetric("Active Orders", "24", "↑ 15.3%", true),
-            StatMetric("Avg. Order Time", "18 mins", "↑ 2.2 mins", false)
-        )
     }
 
     private fun getDummyTopSelling(): List<TopSellingFoodItem> {

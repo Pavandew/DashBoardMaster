@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.manager_single_res_dash.adapter.DrawerMenuAdapter
 import com.example.masterdashboard.manager_single_res_dash.models.DrawerMenuItem
+import com.example.masterdashboard.manager_single_res_dash.settings.ManagerSettingsFragment
 import com.example.masterdashboard.manager_single_res_dash.views.*
 import com.example.masterdashboard.manager_single_res_dash.views.MenuManagementFragment
 import com.example.masterdashboard.manager_single_res_dash.views.StaffManagementFragment
@@ -120,11 +121,11 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
             8 -> CashierOrderFragment()
             9 -> MenuManagementFragment()
             10 -> StaffManagementFragment()
-            11 -> ManagerDashboardFragment() // Reports
+            11 -> ReportsAnalyticsFragment() // Reports
             12 -> CustomerManagementFragment()
             13 -> ManagerDashboardFragment() // Offers
             14 -> NotificationFragment()
-            15 -> ManagerDashboardFragment() // Settings
+            15 -> ManagerSettingsFragment() // Settings
             else -> null
         }
 
@@ -195,11 +196,11 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
             DrawerMenuItem(9, "Menu Management", R.drawable.ic_menu_24dp, fragmentClass = MenuManagementFragment::class.java),
             DrawerMenuItem(3, "Table Management", R.drawable.ic_table_24dp, fragmentClass = TableManagementFragment::class.java),
             DrawerMenuItem(6, "Inventory", R.drawable.ic_inventory_24dp, fragmentClass = KitchenInventoryFragment::class.java),
-            DrawerMenuItem(11, "Reports & Analytics", R.drawable.ic_sales_report_24dp, fragmentClass = ManagerDashboardFragment::class.java),
+            DrawerMenuItem(11, "Reports & Analytics", R.drawable.ic_sales_report_24dp, fragmentClass = ReportsAnalyticsFragment::class.java),
             DrawerMenuItem(12, "Customers", R.drawable.ic_person_24dp, fragmentClass = CustomerManagementFragment::class.java),
             DrawerMenuItem(13, "Offers & Discounts", R.drawable.ic_discount_24dp, fragmentClass = ManagerDashboardFragment::class.java),
             DrawerMenuItem(14, "Notifications", R.drawable.ic_notifications_24dp, fragmentClass = NotificationFragment::class.java),
-            DrawerMenuItem(15, "Settings", R.drawable.ic_settings_24dp, fragmentClass = ManagerDashboardFragment::class.java),
+            DrawerMenuItem(15, "Settings", R.drawable.ic_settings_24dp, fragmentClass = ManagerSettingsFragment::class.java),
             DrawerMenuItem(16, "Logout", R.drawable.ic_logout_24dp, isLogout = true)
         )
 
