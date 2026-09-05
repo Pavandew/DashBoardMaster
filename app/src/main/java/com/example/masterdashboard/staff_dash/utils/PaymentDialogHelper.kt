@@ -1,10 +1,12 @@
 package com.example.masterdashboard.staff_dash.utils
 
 import android.content.Context
-import androidx.core.graphics.toColorInt
 import android.view.LayoutInflater
+import androidx.core.graphics.toColorInt
+import coil.load
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.DialogPaymentQrBinding
+import com.example.masterdashboard.utils.SessionManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.util.Locale
 
@@ -32,9 +34,28 @@ object PaymentDialogHelper {
         // Configure Subtitle and Icon based on payment type
         when (paymentMethod.uppercase(Locale.US)) {
             "UPI" -> {
-                binding.tvPaymentSubtitle.text = context.getString(R.string.payment_scan_qr)
-                binding.ivPaymentQr.setImageResource(R.drawable.ic_upi_pay_24dp)
-                binding.ivPaymentQr.colorFilter = null
+                val sessionManager = SessionManager(context)
+                val upiId = sessionManager.getUpiId()
+                val upiQrUrl = sessionManager.getUpiQrUrl()
+
+                if (upiId.isNotEmpty()) {
+                    binding.tvPaymentSubtitle.text = "Scan QR or pay to: $upiId"
+                } else {
+                    binding.tvPaymentSubtitle.text = context.getString(R.string.payment_scan_qr)
+                }
+
+                if (upiQrUrl.isNotEmpty()) {
+                    binding.ivPaymentQr.setPadding(0, 0, 0, 0)
+                    binding.ivPaymentQr.colorFilter = null
+                    binding.ivPaymentQr.load(upiQrUrl) {
+                        crossfade(true)
+                        placeholder(R.drawable.ic_upi_pay_24dp)
+                        error(R.drawable.ic_upi_pay_24dp)
+                    }
+                } else {
+                    binding.ivPaymentQr.setImageResource(R.drawable.ic_upi_pay_24dp)
+                    binding.ivPaymentQr.colorFilter = null
+                }
             }
             "CASH" -> {
                 binding.tvPaymentSubtitle.text = context.getString(R.string.payment_confirm_cash)

@@ -103,7 +103,7 @@ class OrderDetailViewModel(
         updateStatus(repository.updateOrderStatusToBilling(managerId, floorId, tableId, orderDocId)) {
             Log.d(TAG, "finalizeOrderAsBilling: Status updated to BILLING. Triggering notification logic.")
             
-            val isCounter = tableId == "COUNTER_ORDER" || floorId == "N/A"
+            val isCounter = tableId.isEmpty() || tableId == "COUNTER_ORDER" || tableId == "N/A" || floorId.isEmpty() || floorId == "N/A"
             val docPath = if (isCounter) {
                 "users/$managerId/active_orders/$orderDocId"
             } else {

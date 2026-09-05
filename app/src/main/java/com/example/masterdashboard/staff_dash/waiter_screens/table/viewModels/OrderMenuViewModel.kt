@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.*
 import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderTakingRepository
+import com.example.masterdashboard.utils.AppConstants
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -195,11 +196,14 @@ class OrderMenuViewModel(private val repository: OrderTakingRepository) : ViewMo
             if (cartItem != null) {
                 item.copy(
                     currentQuantity = cartItem.currentQuantity, 
+                    previousQuantity = cartItem.previousQuantity,
+                    readyQuantity = cartItem.readyQuantity,
+                    itemStatus = cartItem.itemStatus,
                     variantName = cartItem.variantName,
                     price = cartItem.price
                 )
             } else {
-                item.copy(currentQuantity = 0)
+                item.copy(currentQuantity = 0, previousQuantity = 0, readyQuantity = 0, itemStatus = AppConstants.STATUS_PENDING)
             }
         }
 
