@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.form_screen.views
+package com.example.masterdashboard.manager_single_res_dash.registration_form_screen.views
 
 import android.os.Bundle
 import android.util.Log
@@ -13,11 +13,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentFormStep4Binding
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.adapter.FormAdapter
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.uiState.RegistrationUiState
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.viewModel.RegistrationDataViewModel
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.viewModel.Step4ViewModel
 import com.example.masterdashboard.utils.SessionManager
-import com.example.masterdashboard.manager_single_res_dash.form_screen.adapter.FormAdapter
-import com.example.masterdashboard.manager_single_res_dash.form_screen.uiState.RegistrationUiState
-import com.example.masterdashboard.manager_single_res_dash.form_screen.viewModel.RegistrationDataViewModel
-import com.example.masterdashboard.manager_single_res_dash.form_screen.viewModel.Step4ViewModel
 import kotlinx.coroutines.launch
 
 class FormStep4Fragment : Fragment() {
@@ -42,20 +42,19 @@ class FormStep4Fragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.i("FormStep4Fragment", "Navigation: FormStep 4 Screen Opened")
+        Log.i("FormStep4Fragment", "Navigation: Step 4 Screen Opened")
+
         sessionManager = SessionManager(requireContext())
-        
-        stepViewModel.initFields(dataViewModel.registrationData)
-        
+
         setupRecyclerView()
         setupListeners()
         observeViewModel()
+
+        stepViewModel.initFields(dataViewModel.registrationData)
     }
 
     private fun setupRecyclerView() {
         binding.rvFormStep4.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvFormStep4.setHasFixedSize(true)
-        formAdapter?.let { binding.rvFormStep4.adapter = it }
     }
 
     private fun setupListeners() {
@@ -65,7 +64,7 @@ class FormStep4Fragment : Fragment() {
         }
 
         binding.btnContinue.setOnClickListener {
-            Log.i("FormStep4Fragment", "Action: Continue (Billing) button clicked")
+            Log.i("FormStep4Fragment", "Action: Continue (Branding & Operations) button clicked")
             stepViewModel.validate()
         }
     }
@@ -97,7 +96,7 @@ class FormStep4Fragment : Fragment() {
             stepViewModel.formFields.collect { fields ->
                 if (formAdapter == null) {
                     formAdapter = FormAdapter(fields) { key, value ->
-                        updateBank(key, value)
+                        updateData(key, value)
                     }
                     binding.rvFormStep4.adapter = formAdapter
                 } else {
@@ -107,15 +106,18 @@ class FormStep4Fragment : Fragment() {
         }
     }
 
-    private fun updateBank(key: String, value: Any) {
+    private fun updateData(key: String, value: Any) {
         val data = dataViewModel.registrationData
         when (key) {
-            "currency" -> data.currency = value as String
-            "currency_symbol" -> data.currencySymbol = value as String
-            "language" -> data.language = value as String
-            "invoice_prefix" -> data.invoicePrefix = value as String
-            "invoice_start" -> data.startingInvoiceNumber = value as String
-            "print_size" -> data.printSize = value as String
+            "logo" -> {
+                data.restaurantLogoUri = "logo_uploaded"
+                Toast.makeText(requireContext(), "Logo Upload Simulated", Toast.LENGTH_SHORT).show()
+                stepViewModel.initFields(data)
+            }
+            "show_logo" -> data.showLogoOnReceipts = value as Boolean
+            "seating" -> data.seatingCapacity = value as String
+            "open_days" -> data.openDays = value as String
+            "timezone" -> data.timezone = value as String
         }
     }
 

@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.form_screen.views
+package com.example.masterdashboard.manager_single_res_dash.registration_form_screen.views
 
 import android.os.Bundle
 import android.util.Log
@@ -12,21 +12,24 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
-import com.example.masterdashboard.databinding.FragmentFormStep5Binding
+import com.example.masterdashboard.databinding.FragmentFormStep2Binding
 import com.example.masterdashboard.utils.SessionManager
-import com.example.masterdashboard.manager_single_res_dash.form_screen.adapter.FormAdapter
-import com.example.masterdashboard.manager_single_res_dash.form_screen.uiState.RegistrationUiState
-import com.example.masterdashboard.manager_single_res_dash.form_screen.viewModel.RegistrationDataViewModel
-import com.example.masterdashboard.manager_single_res_dash.form_screen.viewModel.Step5ViewModel
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.adapter.FormAdapter
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.uiState.RegistrationUiState
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.viewModel.RegistrationDataViewModel
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.viewModel.Step2ViewModel
 import kotlinx.coroutines.launch
 
-class FormStep5Fragment : Fragment() {
+class FormStep2Fragment : Fragment() {
 
-    private var _binding: FragmentFormStep5Binding? = null
+    private var _binding: FragmentFormStep2Binding? = null
     private val binding get() = _binding!!
 
+    // Scoped to Activity (Bank)
     private val dataViewModel: RegistrationDataViewModel by activityViewModels()
-    private val stepViewModel: Step5ViewModel by viewModels()
+    
+    // Scoped to Fragment (Worker)
+    private val stepViewModel: Step2ViewModel by viewModels()
 
     private var formAdapter: FormAdapter? = null
     private lateinit var sessionManager: SessionManager
@@ -36,13 +39,13 @@ class FormStep5Fragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentFormStep5Binding.inflate(inflater, container, false)
+        _binding = FragmentFormStep2Binding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.i("FormStep5Fragment", "Navigation: FormStep 5 Screen Opened")
+        Log.i("FormStep2Fragment", "Navigation: Step 2 (Address & Contact) Opened")
         sessionManager = SessionManager(requireContext())
         
         stepViewModel.initFields(dataViewModel.registrationData)
@@ -53,53 +56,60 @@ class FormStep5Fragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        binding.rvFormStep5.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvFormStep5.setHasFixedSize(true)
-        formAdapter?.let { binding.rvFormStep5.adapter = it }
+        binding.rvFormStep2.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvFormStep2.setHasFixedSize(true)
+        
+        // CRITICAL FIX: Attach adapter if it already exists (back navigation)
+        formAdapter?.let { binding.rvFormStep2.adapter = it }
     }
 
     private fun setupListeners() {
         binding.btnBack.setOnClickListener {
-            Log.d("FormStep5Fragment", "Action: Back button clicked")
+            Log.d("FormStep2Fragment", "Action: Back button clicked")
             parentFragmentManager.popBackStack()
         }
 
         binding.btnContinue.setOnClickListener {
-            Log.i("FormStep5Fragment", "Action: Continue (Branding) button clicked")
+            Log.i("FormStep2Fragment", "Action: Continue button clicked")
             stepViewModel.validate()
         }
     }
 
     private fun observeViewModel() {
+        // 1. Observe UI State
         viewLifecycleOwner.lifecycleScope.launch {
             stepViewModel.uiState.collect { state ->
                 when (state) {
                     is RegistrationUiState.Success -> {
-                        Log.i("FormStep5Fragment", "Step 5 Validation Passed. Navigating to Step 6.")
+                        Log.i("FormStep2Fragment", "Step 2 Validation Passed. Navigating to Step 3.")
                         stepViewModel.setIdle()
+                        
+                        // Save local draft to SharedPreferences
                         sessionManager.saveRegistrationDraft(dataViewModel.registrationData)
+                        dataViewModel.logCurrentData()
                         
                         parentFragmentManager.beginTransaction()
-                            .replace(R.id.single_owner_fragmentContainer, FormStep6Fragment())
+                            .replace(R.id.single_owner_fragmentContainer, FormStep3Fragment())
                             .addToBackStack(null)
                             .commit()
                     }
                     is RegistrationUiState.Error -> {
                         Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
-                        binding.rvFormStep5.smoothScrollToPosition(0)
+                        binding.rvFormStep2.smoothScrollToPosition(0)
                     }
                     else -> {}
                 }
             }
         }
 
+        // 2. Observe Form Fields
         viewLifecycleOwner.lifecycleScope.launch {
             stepViewModel.formFields.collect { fields ->
                 if (formAdapter == null) {
                     formAdapter = FormAdapter(fields) { key, value ->
-                        updateBank(key, value)
+                        updateBank(key, value as String)
                     }
-                    binding.rvFormStep5.adapter = formAdapter
+                    binding.rvFormStep2.adapter = formAdapter
                 } else {
                     formAdapter?.updateData(fields)
                 }
@@ -107,15 +117,22 @@ class FormStep5Fragment : Fragment() {
         }
     }
 
-    private fun updateBank(key: String, value: Any) {
+    /**
+     * Updates the central "Bank" whenever the user types in Step 2.
+     */
+    private fun updateBank(key: String, value: String) {
         val data = dataViewModel.registrationData
         when (key) {
-            "logo" -> {
-                data.restaurantLogoUri = "logo_uploaded" 
-                Toast.makeText(requireContext(), "Logo Upload Simulated", Toast.LENGTH_SHORT).show()
-                stepViewModel.initFields(data)
-            }
-            "show_logo" -> data.showLogoOnReceipts = value as Boolean
+            "address" -> data.address = value
+            "landmark" -> data.landmark = value
+            "pin_code" -> data.pinCode = value
+            "city" -> data.city = value
+            "state" -> data.state = value
+            "country" -> data.country = value
+            "contact_number" -> data.contactNumber = value
+            "contact_email" -> data.contactEmail = value
+            "whatsapp" -> data.whatsappNumber = value
+            "website" -> data.website = value
         }
     }
 

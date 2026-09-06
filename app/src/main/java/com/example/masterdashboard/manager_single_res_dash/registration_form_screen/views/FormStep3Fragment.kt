@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.form_screen.views
+package com.example.masterdashboard.manager_single_res_dash.registration_form_screen.views
 
 import android.os.Bundle
 import android.util.Log
@@ -14,10 +14,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentFormStep3Binding
 import com.example.masterdashboard.utils.SessionManager
-import com.example.masterdashboard.manager_single_res_dash.form_screen.adapter.FormAdapter
-import com.example.masterdashboard.manager_single_res_dash.form_screen.uiState.RegistrationUiState
-import com.example.masterdashboard.manager_single_res_dash.form_screen.viewModel.RegistrationDataViewModel
-import com.example.masterdashboard.manager_single_res_dash.form_screen.viewModel.Step3ViewModel
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.adapter.FormAdapter
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.uiState.RegistrationUiState
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.viewModel.RegistrationDataViewModel
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.viewModel.Step3ViewModel
 import kotlinx.coroutines.launch
 
 class FormStep3Fragment : Fragment() {
@@ -89,7 +89,7 @@ class FormStep3Fragment : Fragment() {
                         dataViewModel.logCurrentData()
 
                         parentFragmentManager.beginTransaction()
-                            .replace(R.id.single_owner_fragmentContainer, FormStep4Fragment())
+                            .replace(R.id.single_owner_fragmentContainer, FormStep5Fragment())
                             .addToBackStack(null)
                             .commit()
                     }
