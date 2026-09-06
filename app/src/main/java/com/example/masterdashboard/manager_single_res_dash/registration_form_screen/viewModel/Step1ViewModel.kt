@@ -1,12 +1,12 @@
-package com.example.masterdashboard.manager_single_res_dash.form_screen.viewModel
+package com.example.masterdashboard.manager_single_res_dash.registration_form_screen.viewModel
 
 import android.text.InputType
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.example.masterdashboard.manager_single_res_dash.form_screen.model.FormItem
-import com.example.masterdashboard.manager_single_res_dash.form_screen.model.RegistrationDataModel
-import com.example.masterdashboard.manager_single_res_dash.form_screen.uiState.RegistrationUiState
-import com.example.masterdashboard.manager_single_res_dash.form_screen.utils.FormValidator
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.model.FormItem
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.model.RegistrationDataModel
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.uiState.RegistrationUiState
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.utils.FormValidator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
