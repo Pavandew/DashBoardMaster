@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.form_screen.uiState
+package com.example.masterdashboard.manager_single_res_dash.registration_form_screen.uiState
 
 sealed class RegistrationUiState {
     object Idle : RegistrationUiState()

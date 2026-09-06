@@ -1,8 +1,8 @@
-package com.example.masterdashboard.manager_single_res_dash.form_screen.repository
+package com.example.masterdashboard.manager_single_res_dash.registration_form_screen.repository
 
 import android.util.Log
 import com.example.masterdashboard.utils.AppConstants
-import com.example.masterdashboard.manager_single_res_dash.form_screen.model.RegistrationDataModel
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.model.RegistrationDataModel
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
