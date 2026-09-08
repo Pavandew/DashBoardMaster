@@ -9,10 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/**
- * STEP 5 VIEWMODEL (THE "WORKER")
- * Purpose: Handles logic for Step 5 (Branding).
- */
 class Step5ViewModel : ViewModel() {
 
     companion object {
@@ -25,46 +21,73 @@ class Step5ViewModel : ViewModel() {
     private val _formFields = MutableStateFlow<List<FormItem>>(emptyList())
     val formFields: StateFlow<List<FormItem>> = _formFields.asStateFlow()
 
-    /**
-     * Initializes the form fields for Step 5.
-     */
-    fun initFields(data: RegistrationDataModel) {
+    fun initReviewData(data: RegistrationDataModel, onEditStep: (Int) -> Unit) {
         try {
-            Log.d(TAG, "Initializing fields for Step 5.")
+            Log.i(TAG, "Step 5: Compiling registration summary...")
+
             _formFields.value = listOf(
-                FormItem.StepProgress("STEP 5 OF 6", "Branding", "Logo, primary colour and theme."),
-                
-                FormItem.UploadField(
-                    "logo", 
-                    "RESTAURANT LOGO", 
-                    "PNG or JPG - up to 2 MB - resized automatically.",
-                    imageUri = data.restaurantLogoUri
+                FormItem.StepProgress("STEP 5 OF 5", "Review & Launch", "Verify everything, then go live."),
+
+                FormItem.ReviewHeader(
+                    name = data.restaurantName,
+                    type = data.businessType
                 ),
-                
-                FormItem.SwitchField(
-                    "show_logo", 
-                    "Show logo on printed receipts", 
-                    "Logo will be printed", 
-                    isChecked = data.showLogoOnReceipts
-                )
+
+                FormItem.ReviewCard(
+                    title = "OWNER & RESTAURANT",
+                    details = listOf(
+                        "Owner" to "${data.ownerFullName} (${data.ownerMobile})",
+                        "Restaurant" to data.restaurantName,
+                        "Type" to data.businessType
+                    ),
+                    onEditClick = {
+                        Log.d(TAG, "Review: Edit Owner/Restaurant clicked")
+                        onEditStep(1)
+                    }
+                ),
+
+                FormItem.ReviewCard(
+                    title = "LOCATION & CONTACT",
+                    details = listOf(
+                        "Address" to "${data.address}, ${data.city}, ${data.state}, ${data.pinCode}",
+                        "Contact" to data.contactNumber
+                    ),
+                    onEditClick = {
+                        Log.d(TAG, "Review: Edit Location clicked")
+                        onEditStep(2)
+                    }
+                ),
+
+                FormItem.ReviewCard(
+                    title = "TAX & COMPLIANCE",
+                    details = listOf(
+                        "GST" to data.gstNumber.ifEmpty { "Not Added" },
+                        "FSSAI" to data.fssaiNumber.ifEmpty { "Not Added" },
+                        "Tax" to "${data.defaultTaxRate}% (${if (data.chargeTaxOnBills) "added" else "none"})"
+                    ),
+                    onEditClick = {
+                        Log.d(TAG, "Review: Edit Tax clicked")
+                        onEditStep(3)
+                    }
+                ),
+
+                FormItem.ReviewCard(
+                    title = "BRANDING & OPERATIONS",
+                    details = listOf(
+                        "Logo" to if (data.restaurantLogoUri != null) "Uploaded" else "Default",
+                        "Seating" to data.seatingCapacity,
+                        "Open days" to data.openDays
+                    ),
+                    onEditClick = {
+                        Log.d(TAG, "Review: Edit Operations clicked")
+                        onEditStep(4)
+                    }
+                ),
+
+                FormItem.InfoCard("Bank details, UPI QR, receipt format and thermal printer settings can be customized anytime from Settings.")
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Error initializing Step 5 fields", e)
-        }
-    }
-
-    /**
-     * Validates branding information.
-     */
-    fun validate(): Boolean {
-        try {
-            Log.d(TAG, "Executing Step 5 validation...")
-            _uiState.value = RegistrationUiState.Success("Step 5 Validated", "")
-            return true
-        } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error during Step 5 validation", e)
-            _uiState.value = RegistrationUiState.Error("An error occurred during validation")
-            return false
+            Log.e(TAG, "Error initializing Step 5 review data", e)
         }
     }
 

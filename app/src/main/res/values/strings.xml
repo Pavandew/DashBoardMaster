@@ -187,4 +187,49 @@
 
     <string name="view_all_action">View All</string>
     <string name="show_less_action">Show Less</string>
+
+    <!-- Settings & Bottom Sheets Strings -->
+    <string name="settings_title">Settings</string>
+    <string name="title_tax_config">Tax Configuration (GST / VAT)</string>
+    <string name="subtitle_tax_config">Configure tax rates, GSTIN registration &amp; receipt tax rules</string>
+    <string name="title_charge_tax">Charge Tax on Bills</string>
+    <string name="subtitle_charge_tax">Calculate tax line automatically on every order</string>
+    <string name="hint_gstin">GSTIN Number (Optional)</string>
+    <string name="title_tax_system">Tax System / Region</string>
+    <string name="hint_tax_rate">Default Tax Rate (%)</string>
+    <string name="title_price_includes_tax">Prices Include Tax (Tax Inclusive)</string>
+    <string name="subtitle_price_includes_tax">Menu item prices already include tax</string>
+    <string name="btn_save_tax_settings">Save Tax Settings</string>
+
+    <string name="title_service_charge">Service Charge Settings</string>
+    <string name="subtitle_service_charge">Configure automatic service charge rules for customer bills</string>
+    <string name="title_enable_service_charge">Enable Service Charge</string>
+    <string name="subtitle_enable_service_charge">Add service charge on customer orders</string>
+    <string name="hint_service_charge_rate">Service Charge Rate (%)</string>
+    <string name="hint_service_charge_label">Display Name on Bill</string>
+    <string name="title_dine_in_only">Dine-In Orders Only</string>
+    <string name="subtitle_dine_in_only">Exclude takeaway and delivery orders</string>
+    <string name="title_calculate_tax_sc">Calculate Tax on Service Charge</string>
+    <string name="subtitle_calculate_tax_sc">Apply GST percentage on top of service fee</string>
+    <string name="btn_save_service_charge">Save Service Charge Rules</string>
+
+    <string name="title_upi_settings">UPI &amp; Payment QR Settings</string>
+    <string name="subtitle_upi_settings">Set your UPI ID &amp; QR Code for Cashier Billing Screens</string>
+    <string name="hint_upi_id">Enter UPI ID (VPA)</string>
+    <string name="title_upi_qr_image">UPI Payment QR Code Image</string>
+    <string name="btn_upload_qr_image">Upload QR Code Image</string>
+    <string name="btn_save_upi">Save UPI Settings</string>
+
+    <string name="title_receipt_settings">Receipt &amp; Bill Layout Settings</string>
+    <string name="subtitle_receipt_settings">Configure invoice prefix, paper size, and receipt options</string>
+    <string name="hint_invoice_prefix">Invoice Prefix (e.g. INV-, BILL/)</string>
+    <string name="hint_starting_invoice">Starting Invoice Number</string>
+    <string name="title_paper_width">Printer Paper Width</string>
+    <string name="title_show_logo">Show Restaurant Logo</string>
+    <string name="subtitle_show_logo">Print logo on top of paper bills</string>
+    <string name="btn_save_receipt_settings">Save Receipt Settings</string>
+
+    <string name="tax_explanation_gst_format">ℹ️ For %1$.1f%% GST in India, bills will split tax into State GST @ %2$.1f%% + Central GST @ %3$.1f%%.</string>
+    <string name="tax_explanation_vat_format">ℹ️ Receipts will display a single VAT tax line @ %1$.1f%%.</string>
+    <string name="tax_explanation_sales_tax_format">ℹ️ Receipts will display a single Sales Tax line @ %1$.1f%%.</string>
 </resources>

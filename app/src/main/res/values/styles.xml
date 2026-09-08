@@ -247,11 +247,34 @@
     <style name="ShapeAppearance.MyApp.Squircle" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">18dp</item>
-
         <item name="cornerSizeTopLeft">20dp</item>
         <item name="cornerSizeTopRight">8dp</item>
         <item name="cornerSizeBottomLeft">8dp</item>
         <item name="cornerSizeBottomRight">20dp</item>
+    </style>
+
+    <!-- Settings Reusable Component Styles -->
+    <style name="SettingsTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/mid_app_color</item>
+        <item name="hintTextColor">@color/mid_app_color</item>
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+    </style>
+
+    <style name="SettingsChipAction" parent="Widget.MaterialComponents.Chip.Action">
+        <item name="chipBackgroundColor">@color/bg_card</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="chipStrokeColor">#2C2E3B</item>
+        <item name="chipStrokeWidth">1dp</item>
+    </style>
+
+    <style name="SettingsChipChoice" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="chipBackgroundColor">@color/bg_card</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="chipStrokeColor">#2C2E3B</item>
+        <item name="chipStrokeWidth">1dp</item>
     </style>
 
     <!-- Table Card Styles -->

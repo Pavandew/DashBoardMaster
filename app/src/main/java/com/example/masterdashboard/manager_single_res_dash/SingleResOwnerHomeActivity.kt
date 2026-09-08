@@ -12,13 +12,12 @@ import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ActivitySingleResOwnerHomeBinding
 import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.utils.AppConstants
-import com.example.masterdashboard.manager_single_res_dash.form_screen.viewModel.RegistrationDataViewModel
-import com.example.masterdashboard.manager_single_res_dash.form_screen.views.FormStep1Fragment
-import com.example.masterdashboard.manager_single_res_dash.form_screen.views.FormStep2Fragment
-import com.example.masterdashboard.manager_single_res_dash.form_screen.views.FormStep3Fragment
-import com.example.masterdashboard.manager_single_res_dash.form_screen.views.FormStep4Fragment
-import com.example.masterdashboard.manager_single_res_dash.form_screen.views.FormStep5Fragment
-import com.example.masterdashboard.manager_single_res_dash.form_screen.views.FormStep6Fragment
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.viewModel.RegistrationDataViewModel
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.views.FormStep1Fragment
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.views.FormStep2Fragment
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.views.FormStep3Fragment
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.views.FormStep4Fragment
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.views.FormStep5Fragment
 import com.example.masterdashboard.notifications.NotificationPermissionHelper
 
 class SingleResOwnerHomeActivity : AppCompatActivity() {
@@ -79,7 +78,6 @@ class SingleResOwnerHomeActivity : AppCompatActivity() {
             3 -> FormStep3Fragment()
             4 -> FormStep4Fragment()
             5 -> FormStep5Fragment()
-            6 -> FormStep6Fragment()
             else -> FormStep1Fragment()
         }
 
