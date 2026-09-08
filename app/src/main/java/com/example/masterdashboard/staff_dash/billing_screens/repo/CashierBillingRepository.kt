@@ -127,6 +127,7 @@ class CashierBillingRepository(
 
             val orderStatus = doc.getString(AppConstants.FIELD_ORDER_STATUS) ?: AppConstants.STATUS_SERVED
             val subtotal = (doc.get(AppConstants.FIELD_SUBTOTAL) as? Number)?.toDouble() ?: 0.0
+            val serviceChargeAmount = (doc.get(AppConstants.FIELD_SERVICE_CHARGE) as? Number)?.toDouble() ?: 0.0
             val taxAmount = (doc.get(AppConstants.FIELD_GST) as? Number)?.toDouble() ?: 0.0
             val grandTotal = (doc.get(AppConstants.FIELD_GRAND_TOTAL) as? Number)?.toDouble() ?: 0.0
             val discountAmount = (doc.get(AppConstants.FIELD_DISCOUNT_AMOUNT) as? Number)?.toDouble() ?: 0.0
@@ -161,6 +162,7 @@ class CashierBillingRepository(
                 itemsSummary = summaryStr,
                 items = itemsList,
                 subtotal = subtotal,
+                serviceChargeAmount = serviceChargeAmount,
                 taxAmount = taxAmount,
                 discountAmount = discountAmount,
                 grandTotal = grandTotal,
@@ -246,7 +248,7 @@ class CashierBillingRepository(
         val monthYear = sdfMonth.format(currentTime.toDate())
         val exactDate = sdfDate.format(currentTime.toDate())
 
-        val finalGrandTotal = (order.subtotal + order.taxAmount - discount)
+        val finalGrandTotal = (order.subtotal + order.serviceChargeAmount + order.taxAmount - discount)
 
         val fullCompletedOrderData = mapOf(
             AppConstants.FIELD_ORDER_ID to order.orderId,
@@ -268,6 +270,7 @@ class CashierBillingRepository(
                 )
             },
             AppConstants.FIELD_SUBTOTAL to order.subtotal,
+            AppConstants.FIELD_SERVICE_CHARGE to order.serviceChargeAmount,
             AppConstants.FIELD_GST to order.taxAmount,
             AppConstants.FIELD_DISCOUNT_AMOUNT to discount,
             AppConstants.FIELD_GRAND_TOTAL to finalGrandTotal,

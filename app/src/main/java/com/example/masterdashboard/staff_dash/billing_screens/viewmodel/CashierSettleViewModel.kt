@@ -51,10 +51,20 @@ class CashierSettleViewModel(
 
     fun applyDiscount(amount: Double) {
         discountAmount = amount
-        _activeBillingOrder.value = _activeBillingOrder.value?.copy(
+        val current = _activeBillingOrder.value ?: return
+        val newGrandTotal = current.subtotal + current.serviceChargeAmount + current.taxAmount - amount
+        _activeBillingOrder.value = current.copy(
             discountAmount = amount,
-            grandTotal = (_activeBillingOrder.value?.subtotal ?: 0.0) + 
-                         (_activeBillingOrder.value?.taxAmount ?: 0.0) - amount
+            grandTotal = newGrandTotal
+        )
+    }
+
+    fun updateServiceCharge(serviceChargeAmount: Double) {
+        val current = _activeBillingOrder.value ?: return
+        val newGrandTotal = current.subtotal + serviceChargeAmount + current.taxAmount - current.discountAmount
+        _activeBillingOrder.value = current.copy(
+            serviceChargeAmount = serviceChargeAmount,
+            grandTotal = newGrandTotal
         )
     }
 

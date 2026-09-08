@@ -25,6 +25,7 @@ import com.example.masterdashboard.staff_dash.billing_screens.viewmodel.CashierS
 import com.example.masterdashboard.staff_dash.utils.PaymentDialogHelper
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.staff_dash.utils.StatusUIUtils
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -52,6 +53,7 @@ class CashierSettleBillFragment : Fragment() {
     private val viewModel: CashierSettleViewModel by viewModels()
     private val sessionManager by lazy { SessionManager(requireContext()) }
     private lateinit var itemsAdapter: BillingItemsAdapter
+    private var hasUserToggledServiceCharge = false
 
     // Printer Orchestrator
     private lateinit var printController: PrintBillController
@@ -78,6 +80,7 @@ class CashierSettleBillFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        hasUserToggledServiceCharge = false
 
         val order = arguments?.getSerializable(ARG_ORDER) as? CashierBillingOrderModel
         if (order != null) {
@@ -129,6 +132,15 @@ class CashierSettleBillFragment : Fragment() {
 
         mBinding.btnHandOver.setOnClickListener {
             viewModel.confirmPickup()
+        }
+
+        mBinding.btnPrintProvisionalBill.setOnClickListener {
+            val order = viewModel.activeBillingOrder.value
+            if (order != null) {
+                Log.d(TAG, "Printing provisional bill for Table: ${order.tableName}")
+                printController.checkAndPrint(order)
+                Toast.makeText(requireContext(), "Bill printed for Table ${order.tableName}", Toast.LENGTH_SHORT).show()
+            }
         }
 
         mBinding.btnSettleAndPrint.setOnClickListener {
@@ -271,6 +283,7 @@ class CashierSettleBillFragment : Fragment() {
 
                             when (status) {
                                 "COMPLETED" -> {
+                                    mBinding.btnPrintProvisionalBill.isVisible = false
                                     mBinding.btnSettleAndPrint.text = getString(R.string.reprint_bill)
                                     mBinding.btnHandOver.isVisible = false
                                     disableInteraction()
@@ -278,19 +291,16 @@ class CashierSettleBillFragment : Fragment() {
                                 }
                                 "PAID" -> {
                                     val isCounterOrder = order.orderType == "TAKE_AWAY" || order.orderType == "DELIVERY"
+                                    mBinding.btnPrintProvisionalBill.isVisible = false
                                     mBinding.btnHandOver.isVisible = isCounterOrder
                                     mBinding.btnSettleAndPrint.text = getString(R.string.reprint_bill)
                                     
                                     disableInteraction()
                                     showPaidInfo(order)
                                 }
-                                "BILLING" -> {
-                                    mBinding.btnSettleAndPrint.text = getString(R.string.settle_and_print_bill)
-                                    mBinding.btnHandOver.isVisible = false
-                                    enableInteraction()
-                                }
                                 else -> {
-                                    mBinding.btnSettleAndPrint.text = getString(R.string.settle_and_print_bill)
+                                    mBinding.btnPrintProvisionalBill.isVisible = true
+                                    mBinding.btnSettleAndPrint.text = "Settle & Pay"
                                     mBinding.btnHandOver.isVisible = false
                                     enableInteraction()
                                 }
@@ -298,10 +308,95 @@ class CashierSettleBillFragment : Fragment() {
 
                             itemsAdapter.submitList(order.items)
 
+                            val sessionManager = SessionManager(requireContext())
+                            val isConfiguredInSettings = sessionManager.isServiceChargeEnabled()
+                            val rate = sessionManager.getServiceChargePercent()
+
+                            // Automatically initialize default Service Charge on initial load if enabled in settings
+                            if (isConfiguredInSettings && order.serviceChargeAmount == 0.0 && !hasUserToggledServiceCharge) {
+                                val isDineInOnly = sessionManager.isServiceChargeDineInOnly()
+                                val isDineIn = order.orderType.equals("DINE_IN", ignoreCase = true) || order.orderType.contains("DINE", ignoreCase = true) || order.orderType.contains("TABLE", ignoreCase = true)
+                                if (!isDineInOnly || isDineIn) {
+                                    val defaultCharge = order.subtotal * (rate / 100.0)
+                                    if (defaultCharge > 0) {
+                                        hasUserToggledServiceCharge = true
+                                        viewModel.updateServiceCharge(defaultCharge)
+                                        return@collectLatest
+                                    }
+                                }
+                            }
+
+                            if (isConfiguredInSettings || order.serviceChargeAmount > 0) {
+                                mBinding.llServiceChargeRow.isVisible = true
+                                val label = sessionManager.getServiceChargeLabel().ifEmpty { "Service Charge" }
+                                mBinding.tvServiceChargeLabel.text = "$label (${String.format("%.1f", rate)}%)"
+
+                                if (order.serviceChargeAmount > 0) {
+                                    mBinding.tvServiceChargeValue.text = getString(R.string.amount_format, String.format("%.2f", order.serviceChargeAmount))
+                                    mBinding.tvBtnRemoveServiceCharge.text = "Remove"
+                                    mBinding.tvBtnRemoveServiceCharge.setTextColor(Color.parseColor("#EF4444"))
+
+                                    mBinding.tvBtnRemoveServiceCharge.setOnClickListener {
+                                        Log.d(TAG, "Action: Cashier removing service charge for Order ${order.orderId}")
+                                        hasUserToggledServiceCharge = true
+                                        viewModel.updateServiceCharge(0.0)
+                                        Toast.makeText(requireContext(), "Service charge removed for this bill", Toast.LENGTH_SHORT).show()
+                                    }
+                                } else {
+                                    mBinding.tvServiceChargeValue.text = getString(R.string.amount_format, String.format("%.2f", 0.0))
+                                    mBinding.tvBtnRemoveServiceCharge.text = "Add Back"
+                                    mBinding.tvBtnRemoveServiceCharge.setTextColor(Color.parseColor("#3554FF"))
+
+                                    mBinding.tvBtnRemoveServiceCharge.setOnClickListener {
+                                        val defaultCharge = order.subtotal * (rate / 100.0)
+                                        Log.d(TAG, "Action: Cashier re-adding service charge (₹$defaultCharge) for Order ${order.orderId}")
+                                        hasUserToggledServiceCharge = true
+                                        viewModel.updateServiceCharge(defaultCharge)
+                                        Toast.makeText(requireContext(), "Service charge re-added to bill", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            } else {
+                                mBinding.llServiceChargeRow.isVisible = false
+                            }
+
+                            val unroundedGross = order.subtotal + order.serviceChargeAmount + order.taxAmount - order.discountAmount
+                            val roundedGross = Math.round(unroundedGross).toDouble()
+                            val roundOff = roundedGross - unroundedGross
+
                             mBinding.tvSubtotalValue.text = getString(R.string.amount_format, String.format("%.2f", order.subtotal))
-                            mBinding.tvTaxValue.text = getString(R.string.amount_format, String.format("%.2f", order.taxAmount))
-                            mBinding.tvDiscountValue.text = getString(R.string.discount_format, String.format("%.2f", order.discountAmount))
-                            mBinding.tvGrandTotalValue.text = getString(R.string.amount_format, String.format("%.2f", order.grandTotal))
+
+                            val gstRate = sessionManager.getGstRate()
+                            val halfRate = gstRate / 2.0
+                            val halfTax = order.taxAmount / 2.0
+
+                            if (order.taxAmount > 0) {
+                                mBinding.llSgstRow.isVisible = true
+                                mBinding.llCgstRow.isVisible = true
+                                mBinding.tvSgstLabel.text = String.format(Locale.US, "State GST @ %.1f%%", halfRate)
+                                mBinding.tvCgstLabel.text = String.format(Locale.US, "Central GST @ %.1f%%", halfRate)
+                                mBinding.tvSgstValue.text = getString(R.string.amount_format, String.format("%.2f", halfTax))
+                                mBinding.tvCgstValue.text = getString(R.string.amount_format, String.format("%.2f", halfTax))
+                            } else {
+                                mBinding.llSgstRow.isVisible = false
+                                mBinding.llCgstRow.isVisible = false
+                            }
+
+                            if (order.discountAmount > 0) {
+                                mBinding.llDiscountRow.isVisible = true
+                                mBinding.tvDiscountValue.text = getString(R.string.discount_format, String.format("%.2f", order.discountAmount))
+                            } else {
+                                mBinding.llDiscountRow.isVisible = false
+                            }
+
+                            if (Math.abs(roundOff) > 0.001) {
+                                mBinding.llRoundOffRow.isVisible = true
+                                val sign = if (roundOff > 0) "+" else ""
+                                mBinding.tvRoundOffValue.text = "₹ ${String.format(Locale.US, "%s%.2f", sign, roundOff)}"
+                            } else {
+                                mBinding.llRoundOffRow.isVisible = false
+                            }
+
+                            mBinding.tvGrandTotalValue.text = getString(R.string.amount_format, String.format("%.2f", roundedGross))
                         }
                     }
                 }

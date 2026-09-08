@@ -1,4 +1,4 @@
-package com.example.masterdashboard.manager_single_res_dash.form_screen.adapter
+package com.example.masterdashboard.manager_single_res_dash.registration_form_screen.adapter
 
 import android.app.DatePickerDialog
 import android.text.Editable
@@ -9,7 +9,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.masterdashboard.databinding.*
-import com.example.masterdashboard.manager_single_res_dash.form_screen.model.FormItem
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.model.FormItem
 import com.google.android.material.textfield.TextInputLayout
 import java.util.Calendar
 
