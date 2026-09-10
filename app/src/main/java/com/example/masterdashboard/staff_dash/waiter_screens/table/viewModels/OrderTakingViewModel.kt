@@ -9,6 +9,8 @@ import com.example.masterdashboard.staff_dash.waiter_screens.table.repo.OrderTak
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.example.masterdashboard.notifications.AppNotificationHelper
 import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.SessionManager
+import com.example.masterdashboard.utils.TaxCalculator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -307,7 +309,15 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
     /**
      * Finalizes the cart and pushes it to Firestore.
      */
-    fun submitActiveOrderToKitchen(managerId: String?, floorId: String?, tableId: String?, notes: String, initialStatus: String = "PENDING", waiterId: String = "") {
+    fun submitActiveOrderToKitchen(
+        managerId: String?,
+        floorId: String?,
+        tableId: String?,
+        notes: String,
+        initialStatus: String = "PENDING",
+        waiterId: String = "",
+        sessionManager: SessionManager? = null
+    ) {
         val activeItems = _originalFoodList.value.filter { it.currentQuantity > 0 }
         if (activeItems.isEmpty()) {
             Log.w(TAG, "Submission: Blocked. Cart is empty.")
@@ -334,6 +344,11 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
         lastOrderId = finalOrderId
 
         val subtotal = _cartSummary.value.totalPrice.toDouble()
+        val taxCalculator = sessionManager?.let { TaxCalculator(it) }
+        val taxInfo = taxCalculator?.calculateTax(subtotal)
+        val calculatedGst = taxInfo?.taxAmount ?: (subtotal * 0.05)
+        val calculatedGrandTotal = taxInfo?.grandTotal ?: (subtotal * 1.05)
+
         val orderData = OrderDataModel(
             orderId = finalOrderId, 
             tableId = currentTableId ?: "",
@@ -345,8 +360,8 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
             items = payload, 
             specialNotes = notes, 
             subtotal = subtotal, 
-            gst = subtotal * 0.05, 
-            grandTotal = subtotal * 1.05, 
+            gst = calculatedGst, 
+            grandTotal = calculatedGrandTotal, 
             orderStatus = initialStatus, 
             paymentMethod = selectedPaymentMethod, 
             restaurantId = managerId ?: "", 

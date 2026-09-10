@@ -61,6 +61,28 @@ class OrderDetailRowAdapter : ListAdapter<OrderExpandedItemData, OrderDetailRowA
         // If the whole order is SERVED, override item status display
         val effectiveStatus = if (currentOrderStatus == ActiveOrderStatus.SERVED) "SERVED" else item.status
 
+        // Visual distinction for the waiter:
+        when {
+            effectiveStatus.equals("SERVED", true) -> {
+                // Already delivered to table - Show in Light Purple/Grey
+                binding.cardItemRoot.setCardBackgroundColor(ContextCompat.getColor(context, R.color.bg_light_purple))
+                binding.viewStatusStrip.setBackgroundColor(ContextCompat.getColor(context, R.color.accent_purple))
+                binding.cardItemRoot.alpha = 0.8f
+            }
+            effectiveStatus.equals("READY", true) || (item.readyQuantity >= item.quantity && item.quantity > 0) -> {
+                // Kitchen finished it - Highlight in Green for the waiter to pick up
+                binding.cardItemRoot.setCardBackgroundColor(ContextCompat.getColor(context, R.color.status_free_bg))
+                binding.viewStatusStrip.setBackgroundColor(ContextCompat.getColor(context, R.color.status_free))
+                binding.cardItemRoot.alpha = 1.0f
+            }
+            else -> {
+                // Still in kitchen (Preparing/Pending)
+                binding.cardItemRoot.setCardBackgroundColor(ContextCompat.getColor(context, R.color.white))
+                binding.viewStatusStrip.setBackgroundColor(ContextCompat.getColor(context, R.color.search_bar_hint))
+                binding.cardItemRoot.alpha = 1.0f
+            }
+        }
+
         StatusUIUtils.applyItemStatusUI(
             context = context,
             textView = binding.tvItemStatusLabel,

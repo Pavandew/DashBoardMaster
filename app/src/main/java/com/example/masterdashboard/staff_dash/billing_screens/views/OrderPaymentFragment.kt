@@ -24,6 +24,7 @@ import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
 import com.example.masterdashboard.staff_dash.utils.PaymentDialogHelper
+import com.example.masterdashboard.utils.TaxCalculator
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -159,9 +160,13 @@ class OrderPaymentFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.cartSummary.collectLatest { summary ->
                     val subtotal = summary.totalPrice.toDouble()
-                    // Total = Subtotal + 5% GST
-                    totalAmount = subtotal * 1.05
-                    Log.d(TAG, "Sync: Bill total updated to ₹$totalAmount")
+                    val sessionManager = SessionManager(requireContext())
+                    val serviceCharge = if (sessionManager.isServiceChargeEnabled()) {
+                        subtotal * (sessionManager.getServiceChargePercent() / 100.0)
+                    } else 0.0
+                    val taxInfo = TaxCalculator(sessionManager).calculateTax(subtotal, serviceCharge)
+                    totalAmount = taxInfo.grandTotal
+                    Log.d(TAG, "Sync: Bill total updated to ₹$totalAmount (Subtotal: ₹$subtotal, Service Charge: ₹$serviceCharge, Tax: ₹${taxInfo.taxAmount})")
                     binding.tvTotalPayable.text = String.format("₹ %.2f", totalAmount)
                 }
             }
@@ -266,14 +271,23 @@ class OrderPaymentFragment : Fragment() {
             )
         }
 
+        val subtotal = viewModel.cartSummary.value.totalPrice.toDouble()
+        val sessionManager = SessionManager(requireContext())
+        val serviceCharge = if (sessionManager.isServiceChargeEnabled()) {
+            subtotal * (sessionManager.getServiceChargePercent() / 100.0)
+        } else 0.0
+
+        val taxInfo = com.example.masterdashboard.utils.TaxCalculator(sessionManager).calculateTax(subtotal, serviceCharge)
+
         return CashierBillingOrderModel(
             orderId = viewModel.lastOrderId ?: "N/A",
             tableName = viewModel.currentTableName,
             orderType = viewModel.orderType,
             orderStatus = "PAID",
             items = orderItems,
-            subtotal = viewModel.cartSummary.value.totalPrice.toDouble(),
-            taxAmount = viewModel.cartSummary.value.totalPrice * 0.05,
+            subtotal = subtotal,
+            serviceChargeAmount = serviceCharge,
+            taxAmount = taxInfo.taxAmount,
             grandTotal = totalAmount,
             paymentMethod = selectedMethod,
             timestamp = Timestamp.now(),
@@ -292,7 +306,7 @@ class OrderPaymentFragment : Fragment() {
 
         Log.i(TAG, "Process: Finalizing PAID order for $tableId")
         viewModel.setPaymentMethod(selectedMethod)
-        viewModel.submitActiveOrderToKitchen(managerId, floorId, tableId, "", "PAID", waiterId = waiterId)
+        viewModel.submitActiveOrderToKitchen(managerId, floorId, tableId, "", "PAID", waiterId = waiterId, sessionManager = sessionManager)
     }
 
     override fun onDestroyView() {

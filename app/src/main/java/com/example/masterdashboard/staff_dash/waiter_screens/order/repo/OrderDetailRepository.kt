@@ -61,6 +61,7 @@ class OrderDetailRepository {
                             unitPrice = item.price,
                             totalPrice = if (item.rowTotal > 0) item.rowTotal else item.price * item.quantity,
                             orderedQuantity = item.orderedQuantity,
+                            readyQuantity = item.readyQuantity,
                             status = item.itemStatus
                         )
                     }
@@ -153,14 +154,23 @@ class OrderDetailRepository {
         emit(ResourceUiState.Loading)
 
         try {
-            val orderRef = firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(managerId)
-                .collection(AppConstants.COLLECTION_RES_FLOORS)
-                .document(floorId)
-                .collection(AppConstants.COLLECTION_TABLES)
-                .document(tableId)
-                .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
-                .document(orderDocId)
+            val isCounterOrder = tableId.isEmpty() || tableId == "COUNTER_ORDER" || tableId == "N/A" || floorId.isEmpty() || floorId == "N/A"
+
+            val orderRef = if (isCounterOrder) {
+                firestore.collection(AppConstants.COLLECTION_USERS)
+                    .document(managerId)
+                    .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                    .document(orderDocId)
+            } else {
+                firestore.collection(AppConstants.COLLECTION_USERS)
+                    .document(managerId)
+                    .collection(AppConstants.COLLECTION_RES_FLOORS)
+                    .document(floorId)
+                    .collection(AppConstants.COLLECTION_TABLES)
+                    .document(tableId)
+                    .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                    .document(orderDocId)
+            }
 
             val snapshot = orderRef.get().await()
             val orderModel = snapshot.toObject(OrderDataModel::class.java)
@@ -201,28 +211,38 @@ class OrderDetailRepository {
 
         try {
             val batch = firestore.batch()
+            val isCounterOrder = tableId.isEmpty() || tableId == "COUNTER_ORDER" || tableId == "N/A" || floorId.isEmpty() || floorId == "N/A"
 
             // 1. Update Order Status
-            val orderRef = firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(managerId)
-                .collection(AppConstants.COLLECTION_RES_FLOORS)
-                .document(floorId)
-                .collection(AppConstants.COLLECTION_TABLES)
-                .document(tableId)
-                .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
-                .document(orderDocId)
-            
+            val orderRef = if (isCounterOrder) {
+                firestore.collection(AppConstants.COLLECTION_USERS)
+                    .document(managerId)
+                    .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                    .document(orderDocId)
+            } else {
+                firestore.collection(AppConstants.COLLECTION_USERS)
+                    .document(managerId)
+                    .collection(AppConstants.COLLECTION_RES_FLOORS)
+                    .document(floorId)
+                    .collection(AppConstants.COLLECTION_TABLES)
+                    .document(tableId)
+                    .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                    .document(orderDocId)
+            }
+
             batch.update(orderRef, AppConstants.FIELD_ORDER_STATUS, ActiveOrderStatus.BILLING.name)
 
-            // 2. Update Table Status to BILLING
-            val tableRef = firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(managerId)
-                .collection(AppConstants.COLLECTION_RES_FLOORS)
-                .document(floorId)
-                .collection(AppConstants.COLLECTION_TABLES)
-                .document(tableId)
+            // 2. Update Table Status to BILLING (Only for table orders)
+            if (!isCounterOrder) {
+                val tableRef = firestore.collection(AppConstants.COLLECTION_USERS)
+                    .document(managerId)
+                    .collection(AppConstants.COLLECTION_RES_FLOORS)
+                    .document(floorId)
+                    .collection(AppConstants.COLLECTION_TABLES)
+                    .document(tableId)
 
-            batch.update(tableRef, AppConstants.FIELD_STATUS, AppConstants.STATUS_BILLING)
+                batch.update(tableRef, AppConstants.FIELD_STATUS, AppConstants.STATUS_BILLING)
+            }
 
             batch.commit().await()
             Log.i(TAG, "📦 [REPO] Successfully updated Order and Table to BILLING in Firestore.")
