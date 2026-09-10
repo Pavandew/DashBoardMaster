@@ -21,12 +21,16 @@ class Step5ViewModel : ViewModel() {
     private val _formFields = MutableStateFlow<List<FormItem>>(emptyList())
     val formFields: StateFlow<List<FormItem>> = _formFields.asStateFlow()
 
-    fun initReviewData(data: RegistrationDataModel, onEditStep: (Int) -> Unit) {
+    fun initReviewData(data: RegistrationDataModel, isEditMode: Boolean = false, onEditStep: (Int) -> Unit) {
         try {
-            Log.i(TAG, "Step 5: Compiling registration summary...")
+            Log.i(TAG, "Step 5: Compiling summary (isEditMode: $isEditMode)...")
+
+            val progressStep = if (isEditMode) "REVIEW CHANGES" else "STEP 5 OF 5"
+            val progressTitle = if (isEditMode) "Update Business Profile" else "Review & Launch"
+            val progressSub = if (isEditMode) "Review changes before saving back to Settings." else "Verify everything, then go live."
 
             _formFields.value = listOf(
-                FormItem.StepProgress("STEP 5 OF 5", "Review & Launch", "Verify everything, then go live."),
+                FormItem.StepProgress(progressStep, progressTitle, progressSub),
 
                 FormItem.ReviewHeader(
                     name = data.restaurantName,

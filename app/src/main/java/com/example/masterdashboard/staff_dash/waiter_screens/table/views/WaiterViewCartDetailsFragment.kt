@@ -34,7 +34,7 @@ class WaiterViewCartDetailsFragment : BaseViewCartFragment() {
             val notes = binding.etOrderNotes.text.toString().trim()
 
             Log.i("WaiterViewCart", "User action: Sending order for Table $tableId to Kitchen.")
-            viewModel.submitActiveOrderToKitchen(managerId, floorId, tableId, notes, waiterId = waiterId)
+            viewModel.submitActiveOrderToKitchen(managerId, floorId, tableId, notes, waiterId = waiterId, sessionManager = sessionManager)
         }
 
         observeUploadStatus()

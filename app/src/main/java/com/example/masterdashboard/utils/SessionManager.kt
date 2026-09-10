@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
-import com.example.masterdashboard.manager_single_res_dash.form_screen.model.RegistrationDataModel
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.model.RegistrationDataModel
 import com.google.gson.Gson
 import org.json.JSONArray
 
@@ -178,6 +178,72 @@ class SessionManager(context: Context) {
         Log.d(TAG, "clearRegistrationDraft: Local cache cleared")
         prefs.edit { remove(AppConstants.KEY_REGISTRATION_DRAFT) }
     }
+
+    // 💳 UPI & PAYMENT SETTINGS PERSISTENCE
+    fun saveUpiDetails(upiId: String, upiQrUrl: String) {
+        Log.d(TAG, "saveUpiDetails: upiId=$upiId, upiQrUrl=$upiQrUrl")
+        prefs.edit {
+            putString(AppConstants.KEY_UPI_ID, upiId)
+            putString(AppConstants.KEY_UPI_QR_URL, upiQrUrl)
+        }
+    }
+
+    fun getUpiId(): String {
+        return prefs.getString(AppConstants.KEY_UPI_ID, "") ?: ""
+    }
+
+    fun getUpiQrUrl(): String {
+        return prefs.getString(AppConstants.KEY_UPI_QR_URL, "") ?: ""
+    }
+
+    // 🧾 SERVICE CHARGE SETTINGS PERSISTENCE
+    fun saveServiceChargeSettings(
+        enabled: Boolean,
+        percent: Double,
+        label: String,
+        dineInOnly: Boolean,
+        applyTax: Boolean
+    ) {
+        Log.d(TAG, "saveServiceChargeSettings: enabled=$enabled, percent=$percent, label=$label, dineInOnly=$dineInOnly, applyTax=$applyTax")
+        prefs.edit {
+            putBoolean(AppConstants.KEY_SERVICE_CHARGE_ENABLED, enabled)
+            putFloat(AppConstants.KEY_SERVICE_CHARGE_PERCENT, percent.toFloat())
+            putString(AppConstants.KEY_SERVICE_CHARGE_LABEL, label)
+            putBoolean(AppConstants.KEY_SERVICE_CHARGE_DINE_IN_ONLY, dineInOnly)
+            putBoolean(AppConstants.KEY_SERVICE_CHARGE_APPLY_TAX, applyTax)
+        }
+    }
+
+    fun isServiceChargeEnabled(): Boolean = prefs.getBoolean(AppConstants.KEY_SERVICE_CHARGE_ENABLED, true)
+    fun getServiceChargePercent(): Double = prefs.getFloat(AppConstants.KEY_SERVICE_CHARGE_PERCENT, 5.0f).toDouble()
+    fun getServiceChargeLabel(): String = prefs.getString(AppConstants.KEY_SERVICE_CHARGE_LABEL, "Service Charge") ?: "Service Charge"
+    fun isServiceChargeDineInOnly(): Boolean = prefs.getBoolean(AppConstants.KEY_SERVICE_CHARGE_DINE_IN_ONLY, false)
+    fun isServiceChargeApplyTax(): Boolean = prefs.getBoolean(AppConstants.KEY_SERVICE_CHARGE_APPLY_TAX, false)
+
+    // 🏷️ TAX (GST / VAT) RATE SETTINGS
+    fun saveTaxSettings(
+        enabled: Boolean,
+        rate: Double,
+        label: String,
+        priceIncludesTax: Boolean
+    ) {
+        Log.d(TAG, "saveTaxSettings: enabled=$enabled, rate=$rate, label=$label, inclusive=$priceIncludesTax")
+        prefs.edit {
+            putBoolean(AppConstants.KEY_TAX_ENABLED, enabled)
+            putFloat(AppConstants.KEY_GST_RATE, rate.toFloat())
+            putString(AppConstants.KEY_TAX_LABEL, label)
+            putBoolean(AppConstants.KEY_TAX_PRICE_INCLUSIVE, priceIncludesTax)
+        }
+    }
+
+    fun saveGstRate(rate: Double) {
+        prefs.edit { putFloat(AppConstants.KEY_GST_RATE, rate.toFloat()) }
+    }
+
+    fun isTaxEnabled(): Boolean = prefs.getBoolean(AppConstants.KEY_TAX_ENABLED, true)
+    fun getGstRate(): Double = prefs.getFloat(AppConstants.KEY_GST_RATE, 5.0f).toDouble()
+    fun getTaxLabel(): String = prefs.getString(AppConstants.KEY_TAX_LABEL, "GST") ?: "GST"
+    fun isPriceIncludesTax(): Boolean = prefs.getBoolean(AppConstants.KEY_TAX_PRICE_INCLUSIVE, false)
 
     // 🛡️ NEW: DYNAMIC PERMISSIONS ARRAY LIST CACHE CONTROL LOGIC
     /**
