@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 sealed class ChangePasswordState {
     object Idle : ChangePasswordState()
     object Loading : ChangePasswordState()
+    object CurrentPasswordVerified : ChangePasswordState()
     object OtpSent : ChangePasswordState()
     object OtpVerified : ChangePasswordState()
     object Success : ChangePasswordState()
@@ -34,6 +35,49 @@ class ChangePasswordViewModel(private val repository: ChangePasswordRepository) 
     val uiState: StateFlow<ChangePasswordState> = _uiState
 
     private var storedVerificationId: String? = null
+
+    fun verifyCurrentPassword(
+        currentPassword: String,
+        role: String,
+        uid: String,
+        staffDocId: String? = null
+    ) {
+        if (currentPassword.isBlank()) {
+            _uiState.value = ChangePasswordState.Error("Please enter your current password")
+            return
+        }
+
+        Log.i(TAG, "verifyCurrentPassword: Verifying password. Role: $role, UID: $uid")
+        _uiState.value = ChangePasswordState.Loading
+
+        viewModelScope.launch {
+            val isOwnerOrManager = role == AppConstants.ROLE_MANAGER || 
+                role == AppConstants.ROLE_OWNER_SINGLE || 
+                role == AppConstants.ROLE_OWNER_MULTI
+
+            val result = if (isOwnerOrManager) {
+                repository.verifyOwnerCurrentPassword(uid, currentPassword)
+            } else {
+                if (staffDocId.isNullOrEmpty()) {
+                    Log.e(TAG, "verifyCurrentPassword: staffDocId missing for staff role")
+                    _uiState.value = ChangePasswordState.Error("Staff account error: Document ID missing")
+                    return@launch
+                }
+                repository.verifyStaffCurrentPassword(uid, staffDocId, currentPassword)
+            }
+
+            result.fold(
+                onSuccess = {
+                    Log.i(TAG, "verifyCurrentPassword: Verified successfully")
+                    _uiState.value = ChangePasswordState.CurrentPasswordVerified
+                },
+                onFailure = {
+                    Log.e(TAG, "verifyCurrentPassword: Verification failed", it)
+                    _uiState.value = ChangePasswordState.Error(it.message ?: "Current password verification failed")
+                }
+            )
+        }
+    }
 
     fun sendOtp(phone: String, activity: Activity) {
         val formattedPhone = if (phone.startsWith("+91")) phone else "+91$phone"
@@ -71,6 +115,7 @@ class ChangePasswordViewModel(private val repository: ChangePasswordRepository) 
         Log.i(TAG, "verifyOtp: Manually verifying code: $code")
         val verificationId = storedVerificationId ?: run {
             Log.w(TAG, "verifyOtp: verificationId is null")
+            _uiState.value = ChangePasswordState.Error("Verification session expired. Please resend OTP.")
             return
         }
         val credential = PhoneAuthProvider.getCredential(verificationId, code)
@@ -129,6 +174,10 @@ class ChangePasswordViewModel(private val repository: ChangePasswordRepository) 
                 }
             )
         }
+    }
+
+    fun resetState() {
+        _uiState.value = ChangePasswordState.Idle
     }
 }
 

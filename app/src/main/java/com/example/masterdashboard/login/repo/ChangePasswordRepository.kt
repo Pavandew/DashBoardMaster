@@ -12,6 +12,63 @@ class ChangePasswordRepository {
     private val db = FirebaseFirestore.getInstance()
     private val TAG = "ChangePasswordRepo"
 
+    suspend fun verifyOwnerCurrentPassword(uid: String, currentPassword: String): Result<Boolean> {
+        return try {
+            Log.d(TAG, "verifyOwnerCurrentPassword: Verifying password for Owner UID: $uid")
+            val doc = db.collection(AppConstants.COLLECTION_USERS)
+                .document(uid)
+                .get()
+                .await()
+
+            if (!doc.exists()) {
+                return Result.failure(Exception("User account not found"))
+            }
+
+            val storedHash = doc.getString(AppConstants.FIELD_PASSWORD_HASH) ?: ""
+            val inputHash = currentPassword.hashCode().toString()
+
+            if (storedHash == inputHash) {
+                Log.i(TAG, "verifyOwnerCurrentPassword: Password match verified")
+                Result.success(true)
+            } else {
+                Log.w(TAG, "verifyOwnerCurrentPassword: Password mismatch")
+                Result.failure(Exception("Current password is incorrect"))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "verifyOwnerCurrentPassword: Error verifying owner password", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun verifyStaffCurrentPassword(ownerUid: String, staffDocId: String, currentPassword: String): Result<Boolean> {
+        return try {
+            Log.d(TAG, "verifyStaffCurrentPassword: Verifying password for StaffDocId: $staffDocId under Owner: $ownerUid")
+            val doc = db.collection(AppConstants.COLLECTION_USERS)
+                .document(ownerUid)
+                .collection(AppConstants.COLLECTION_STAFF)
+                .document(staffDocId)
+                .get()
+                .await()
+
+            if (!doc.exists()) {
+                return Result.failure(Exception("Staff account not found"))
+            }
+
+            val storedPassword = doc.getString(AppConstants.FIELD_PASSWORD) ?: ""
+
+            if (storedPassword == currentPassword) {
+                Log.i(TAG, "verifyStaffCurrentPassword: Password match verified")
+                Result.success(true)
+            } else {
+                Log.w(TAG, "verifyStaffCurrentPassword: Password mismatch")
+                Result.failure(Exception("Current password is incorrect"))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "verifyStaffCurrentPassword: Error verifying staff password", e)
+            Result.failure(e)
+        }
+    }
+
     suspend fun signInWithCredential(credential: PhoneAuthCredential): Result<Boolean> {
         return try {
             Log.d(TAG, "signInWithCredential: Attempting sign-in with OTP credential")

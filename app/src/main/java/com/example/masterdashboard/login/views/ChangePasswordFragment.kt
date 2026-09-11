@@ -16,9 +16,6 @@ import com.example.masterdashboard.login.repo.ChangePasswordRepository
 import com.example.masterdashboard.login.viewmodel.ChangePasswordState
 import com.example.masterdashboard.login.viewmodel.ChangePasswordViewModel
 import com.example.masterdashboard.login.viewmodel.ChangePasswordViewModelFactory
-import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
-import com.example.masterdashboard.staff_dash.kitchen_screens.KitchenHomeActivity
-import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.flow.collectLatest
@@ -37,7 +34,7 @@ class ChangePasswordFragment : Fragment() {
     companion object {
         /**
          * Use this factory method to create a new instance of this fragment
-         * for Forgot Password flow.
+         * for Forgot Password flow or explicit user arguments.
          */
         fun newInstance(phone: String, ownerUid: String, staffDocId: String, role: String): ChangePasswordFragment {
             val fragment = ChangePasswordFragment()
@@ -84,23 +81,59 @@ class ChangePasswordFragment : Fragment() {
 
     private fun setupToolbar() {
         binding.settingsToolbar.toolbarTvTitle.text = getString(R.string.change_password)
+        binding.settingsToolbar.toolbarImgMenu.setImageResource(R.drawable.ic_arrow_back_24dp)
         binding.settingsToolbar.toolbarImgMenu.visibility = View.VISIBLE
         binding.settingsToolbar.toolbarImgProfile.visibility = View.GONE
         binding.settingsToolbar.toolbarImgNotification.visibility = View.GONE
 
         binding.settingsToolbar.toolbarImgMenu.setOnClickListener {
-            Log.d(TAG, "Toolbar: Menu icon clicked")
+            Log.d(TAG, "Toolbar: Back/Menu icon clicked")
             when (val act = activity) {
                 is MasterHomeActivity -> act.openDrawer()
-                is WaiterHomeActivity -> act.onBackPressedDispatcher.onBackPressed()
-                is CashierHomeActivity -> act.onBackPressedDispatcher.onBackPressed()
-                is KitchenHomeActivity -> act.onBackPressedDispatcher.onBackPressed()
                 else -> act?.onBackPressedDispatcher?.onBackPressed()
             }
         }
     }
 
     private fun setupClickListeners() {
+        // Option 1: Current Password Verification
+        binding.btnVerifyCurrentPassword.setOnClickListener {
+            val currentPass = binding.etCurrentPassword.text.toString().trim()
+            binding.layoutCurrentPassword.error = null
+
+            if (currentPass.isEmpty()) {
+                binding.layoutCurrentPassword.error = "Enter current password"
+                return@setOnClickListener
+            }
+
+            val uid = arguments?.getString(AppConstants.FIELD_UID) ?: sessionManager.getUid()
+            val staffDocId = arguments?.getString(AppConstants.KEY_STAFF_DOC_ID) ?: sessionManager.getStaffDocId()
+            val role = arguments?.getString(AppConstants.FIELD_ROLE) ?: sessionManager.getRole()
+
+            Log.i(TAG, "btnVerifyCurrentPassword clicked. Verifying current password for role: $role, UID: $uid")
+            viewModel.verifyCurrentPassword(
+                currentPassword = currentPass,
+                role = role,
+                uid = uid,
+                staffDocId = staffDocId
+            )
+        }
+
+        // Toggle to Option 2: Mobile OTP
+        binding.btnForgotCurrentPassword.setOnClickListener {
+            Log.i(TAG, "btnForgotCurrentPassword clicked. Switching to Mobile OTP section.")
+            binding.sectionCurrentPassword.visibility = View.GONE
+            binding.sectionOtp.visibility = View.VISIBLE
+        }
+
+        // Toggle back to Option 1: Current Password
+        binding.btnUseCurrentPassword.setOnClickListener {
+            Log.i(TAG, "btnUseCurrentPassword clicked. Switching to Current Password section.")
+            binding.sectionOtp.visibility = View.GONE
+            binding.sectionCurrentPassword.visibility = View.VISIBLE
+        }
+
+        // Send Mobile OTP
         binding.btnSendOtp.setOnClickListener {
             val argPhone = arguments?.getString(AppConstants.KEY_MOBILE)
             val phone = argPhone ?: sessionManager.getPhone()
@@ -114,6 +147,7 @@ class ChangePasswordFragment : Fragment() {
             }
         }
 
+        // Verify Mobile OTP
         binding.btnVerifyOtp.setOnClickListener {
             val code = binding.etOtp.text.toString().trim()
             Log.i(TAG, "btnVerifyOtp clicked. Entered code: $code")
@@ -125,6 +159,7 @@ class ChangePasswordFragment : Fragment() {
             }
         }
 
+        // Submit New Password
         binding.btnChangePassword.setOnClickListener {
             val newPass = binding.etNewPassword.text.toString().trim()
             val confirmPass = binding.etConfirmPassword.text.toString().trim()
@@ -144,7 +179,6 @@ class ChangePasswordFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // Get IDs from arguments if it's Forgot Password flow
             val uid = arguments?.getString(AppConstants.FIELD_UID) ?: sessionManager.getUid()
             val staffDocId = arguments?.getString(AppConstants.KEY_STAFF_DOC_ID) ?: sessionManager.getStaffDocId()
             val role = arguments?.getString(AppConstants.FIELD_ROLE) ?: sessionManager.getRole()
@@ -165,10 +199,26 @@ class ChangePasswordFragment : Fragment() {
                 Log.d(TAG, "New ViewModel State: ${state::class.java.simpleName}")
                 when (state) {
                     is ChangePasswordState.Idle -> {
+                        binding.btnVerifyCurrentPassword.isEnabled = true
                         binding.btnSendOtp.isEnabled = true
+                        binding.btnVerifyOtp.isEnabled = true
+                        binding.btnChangePassword.isEnabled = true
                     }
                     is ChangePasswordState.Loading -> {
                         Log.d(TAG, "State: Loading...")
+                        binding.btnVerifyCurrentPassword.isEnabled = false
+                        binding.btnSendOtp.isEnabled = false
+                        binding.btnVerifyOtp.isEnabled = false
+                        binding.btnChangePassword.isEnabled = false
+                    }
+                    is ChangePasswordState.CurrentPasswordVerified,
+                    is ChangePasswordState.OtpVerified -> {
+                        Log.i(TAG, "State: Verified! Showing New Password Section.")
+                        binding.sectionCurrentPassword.visibility = View.GONE
+                        binding.sectionOtp.visibility = View.GONE
+                        binding.sectionNewPassword.visibility = View.VISIBLE
+                        binding.btnChangePassword.isEnabled = true
+                        Toast.makeText(requireContext(), "Identity Verified Successfully", Toast.LENGTH_SHORT).show()
                     }
                     is ChangePasswordState.OtpSent -> {
                         Log.i(TAG, "State: OtpSent. Updating UI to Verification mode.")
@@ -178,13 +228,6 @@ class ChangePasswordFragment : Fragment() {
                         binding.btnVerifyOtp.isEnabled = true
                         Toast.makeText(requireContext(), "OTP Sent Successfully", Toast.LENGTH_SHORT).show()
                     }
-                    is ChangePasswordState.OtpVerified -> {
-                        Log.i(TAG, "State: OtpVerified. Updating UI to Password Entry mode.")
-                        binding.sectionOtp.visibility = View.GONE
-                        binding.sectionNewPassword.visibility = View.VISIBLE
-                        binding.btnChangePassword.isEnabled = true
-                        Toast.makeText(requireContext(), "Identity Verified", Toast.LENGTH_SHORT).show()
-                    }
                     is ChangePasswordState.Success -> {
                         Log.i(TAG, "State: Success! Password updated. Closing fragment.")
                         Toast.makeText(requireContext(), "Password Updated Successfully", Toast.LENGTH_LONG).show()
@@ -192,6 +235,7 @@ class ChangePasswordFragment : Fragment() {
                     }
                     is ChangePasswordState.Error -> {
                         Log.e(TAG, "State: Error -> ${state.message}")
+                        binding.btnVerifyCurrentPassword.isEnabled = true
                         binding.btnSendOtp.isEnabled = true
                         binding.btnVerifyOtp.isEnabled = true
                         binding.btnChangePassword.isEnabled = true
