@@ -111,13 +111,39 @@ class PrintBillController(
     }
 
     private fun executePrint(order: CashierBillingOrderModel, device: BluetoothDevice) {
-        val restaurantName = sessionManager.getUserName() ?: "My Restaurant"
+        val cachedDetails = sessionManager.getCachedRestaurantDetails()
+        val restaurantName = sessionManager.getRestaurantName().ifEmpty { sessionManager.getUserName() ?: "Restaurant" }
+        
+        val addressStr = cachedDetails?.let {
+            val parts = listOf(it.address, it.landmark, "${it.city} ${it.pinCode}".trim()).filter { p -> p.isNotEmpty() }
+            parts.joinToString(", ")
+        } ?: ""
 
-        // Logcat Preview for debugging without printer
-        Log.i(TAG, "Generating Preview for Logcat...")
-        Log.d(TAG, printHelper.getLoggablePreview(restaurantName, order))
+        val gstin = cachedDetails?.gstNumber ?: ""
+        val fssai = cachedDetails?.fssaiNumber ?: ""
+        val cashierName = sessionManager.getUserName() ?: "Cashier"
+        val gstRate = sessionManager.getGstRate()
 
-        val printBytes = printHelper.generateBillBytes(restaurantName, order)
+        // Logcat Preview for debugging without physical printer
+        Log.i(TAG, "Generating Print Preview...")
+        Log.d(TAG, printHelper.getLoggablePreview(
+            restaurantName = restaurantName,
+            address = addressStr,
+            gstin = gstin,
+            fssai = fssai,
+            cashierName = cashierName,
+            order = order
+        ))
+
+        val printBytes = printHelper.generateBillBytes(
+            restaurantName = restaurantName,
+            address = addressStr,
+            gstin = gstin,
+            fssai = fssai,
+            cashierName = cashierName,
+            gstRate = gstRate,
+            order = order
+        )
 
         fragment.lifecycleScope.launch {
             printerManager.printData(device, printBytes, object : BluetoothPrinterManager.PrintListener {

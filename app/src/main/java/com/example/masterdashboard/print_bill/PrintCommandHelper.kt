@@ -7,7 +7,7 @@ import java.util.Locale
 
 /**
  * Helper class to generate ESC/POS byte commands for thermal printers.
- * This class handles formatting the text, alignment, and styling.
+ * Formats restaurant bills adhering to Indian GST standards and real-world POS layout.
  */
 class PrintCommandHelper {
 
@@ -31,134 +31,212 @@ class PrintCommandHelper {
         val FEED_LINE = byteArrayOf(0x0A)
         val PAPER_CUT = GS + byteArrayOf(0x56, 0x41, 0x00)
         
-        const val LINE_WIDTH = 32 // Standard for 58mm printers
+        const val LINE_WIDTH = 32 // Standard for 58mm thermal printers
     }
 
     /**
-     * Generates a byte array for a complete bill based on the order data.
+     * Generates a byte array for a complete bill matching professional restaurant receipts.
      */
-    fun generateBillBytes(restaurantName: String, order: CashierBillingOrderModel): ByteArray {
+    fun generateBillBytes(
+        restaurantName: String,
+        address: String = "",
+        gstin: String = "",
+        fssai: String = "",
+        cashierName: String = "Cashier",
+        gstRate: Double = 5.0,
+        order: CashierBillingOrderModel
+    ): ByteArray {
         val bytes = mutableListOf<Byte>()
 
         Log.d(TAG, "Generating print bytes for Order: ${order.orderId}")
 
-        // 1. Header (Restaurant Name)
+        // 1. Header (Restaurant Name & Registration Details)
         bytes.addAll(ALIGN_CENTER.toList())
         bytes.addAll(TEXT_SIZE_LARGE.toList())
         bytes.addAll(BOLD_ON.toList())
         bytes.addAll(restaurantName.toByteArray().toList())
         bytes.addAll(FEED_LINE.toList())
         
-        // 2. Subheader (Order Info)
         bytes.addAll(TEXT_SIZE_NORMAL.toList())
         bytes.addAll(BOLD_OFF.toList())
-        bytes.addAll("Order: #${order.orderId.takeLast(6)}".toByteArray().toList())
-        bytes.addAll(FEED_LINE.toList())
-        bytes.addAll("Table: ${order.tableName}".toByteArray().toList())
-        bytes.addAll(FEED_LINE.toList())
-        
-        val sdf = SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.getDefault())
-        val dateStr = sdf.format(order.timestamp.toDate())
-        bytes.addAll("Date: $dateStr".toByteArray().toList())
-        bytes.addAll(FEED_LINE.toList())
-        
-        bytes.addAll(createSeparator().toByteArray().toList())
+
+        if (address.isNotEmpty()) {
+            bytes.addAll(address.toByteArray().toList())
+            bytes.addAll(FEED_LINE.toList())
+        }
+
+        if (gstin.isNotEmpty()) {
+            bytes.addAll("GSTIN : $gstin".toByteArray().toList())
+            bytes.addAll(FEED_LINE.toList())
+        }
+
+        if (fssai.isNotEmpty()) {
+            bytes.addAll("FSSAI : $fssai".toByteArray().toList())
+            bytes.addAll(FEED_LINE.toList())
+        }
+
+        // 2. Order Metadata Block
+        bytes.addAll(createDoubleSeparator().toByteArray().toList())
         bytes.addAll(FEED_LINE.toList())
 
-        // 3. Table Header
+        val sdfDate = SimpleDateFormat("dd-MMM-yy HH.mm", Locale.US)
+        val formattedDate = sdfDate.format(order.timestamp.toDate())
+        val orderNum = if (order.orderId.length > 6) order.orderId.takeLast(6) else order.orderId
+
         bytes.addAll(ALIGN_LEFT.toList())
-        bytes.addAll(formatLine("Item", "Qty", "Total").toByteArray().toList())
+        bytes.addAll(formatTwoColumns("Bill No: $orderNum", "Date: $formattedDate").toByteArray().toList())
         bytes.addAll(FEED_LINE.toList())
-        bytes.addAll(createSeparator('-').toByteArray().toList())
+
+        val stewardName = order.waiterId.ifEmpty { "Cashier" }
+        bytes.addAll(formatTwoColumns("TableNo: ${order.tableName}", "Steward: $stewardName").toByteArray().toList())
+        bytes.addAll(FEED_LINE.toList())
+
+        // 3. Items Table Header
+        bytes.addAll(createDoubleSeparator().toByteArray().toList())
+        bytes.addAll(FEED_LINE.toList())
+        bytes.addAll("SNo. Description     Qty   Amount".toByteArray().toList())
+        bytes.addAll(FEED_LINE.toList())
+        bytes.addAll(createDoubleSeparator().toByteArray().toList())
         bytes.addAll(FEED_LINE.toList())
 
         // 4. Items List
-        order.items.forEach { item ->
+        var totalItemCount = 0
+        order.items.forEachIndexed { index, item ->
+            val sno = (index + 1).toString().padStart(2, ' ')
+            val qtyStr = item.quantity.toString()
+            val amountStr = String.format(Locale.US, "%.2f", item.rowTotal.toDouble())
             val name = if (item.variantName.isNotEmpty()) "${item.itemName} (${item.variantName})" else item.itemName
-            
-            // If name is too long, it might wrap. For now, let's just print it.
-            bytes.addAll(formatLine(name, "x${item.quantity}", "₹${item.rowTotal}").toByteArray().toList())
+            totalItemCount += item.quantity
+
+            bytes.addAll(formatItemLine(sno, name, qtyStr, amountStr).toByteArray().toList())
             bytes.addAll(FEED_LINE.toList())
         }
 
-        bytes.addAll(createSeparator('-').toByteArray().toList())
+        bytes.addAll(createSingleSeparator().toByteArray().toList())
         bytes.addAll(FEED_LINE.toList())
 
-        // 5. Totals
-        bytes.addAll(ALIGN_RIGHT.toList())
-        bytes.addAll("Subtotal: ₹${order.subtotal}".toByteArray().toList())
+        // 5. Totals & Tax Breakdown Section
+        bytes.addAll(ALIGN_LEFT.toList())
+        bytes.addAll(formatTwoColumns("Total Amount", String.format(Locale.US, "%.2f", order.subtotal)).toByteArray().toList())
         bytes.addAll(FEED_LINE.toList())
-        bytes.addAll("Tax: ₹${order.taxAmount}".toByteArray().toList())
+        bytes.addAll(createSingleSeparator().toByteArray().toList())
         bytes.addAll(FEED_LINE.toList())
-        
+
+        // Service Charge
+        val sc = order.serviceChargeAmount
+        val scText = if (sc > 0) "SERVICE CHARGE" else "SERVICE CHARGE@0%"
+        bytes.addAll(formatTwoColumns(scText, String.format(Locale.US, "%.2f", sc)).toByteArray().toList())
+        bytes.addAll(FEED_LINE.toList())
+
+        // GST Tax Breakdown (SGST & CGST split dynamically based on configured gstRate)
+        if (order.taxAmount > 0) {
+            val halfRate = gstRate / 2.0
+            val halfTax = order.taxAmount / 2.0
+            val sgstLabel = String.format(Locale.US, "State Gst@%.1f%%", halfRate)
+            val cgstLabel = String.format(Locale.US, "Central Gst@%.1f%%", halfRate)
+
+            bytes.addAll(formatTwoColumns(sgstLabel, String.format(Locale.US, "%.2f", halfTax)).toByteArray().toList())
+            bytes.addAll(FEED_LINE.toList())
+            bytes.addAll(formatTwoColumns(cgstLabel, String.format(Locale.US, "%.2f", halfTax)).toByteArray().toList())
+            bytes.addAll(FEED_LINE.toList())
+        }
+
         if (order.discountAmount > 0) {
-            bytes.addAll("Discount: -₹${order.discountAmount}".toByteArray().toList())
+            bytes.addAll(formatTwoColumns("Discount", String.format(Locale.US, "-%.2f", order.discountAmount)).toByteArray().toList())
             bytes.addAll(FEED_LINE.toList())
         }
-        
+
+        // Round Off Adjustment
+        val unroundedGross = order.subtotal + order.serviceChargeAmount + order.taxAmount - order.discountAmount
+        val roundedGross = Math.round(unroundedGross).toDouble()
+        val roundOff = roundedGross - unroundedGross
+
+        if (Math.abs(roundOff) > 0.001) {
+            val roundOffStr = String.format(Locale.US, "%+.2f", roundOff)
+            bytes.addAll(formatTwoColumns("Round Off", roundOffStr).toByteArray().toList())
+            bytes.addAll(FEED_LINE.toList())
+        }
+
+        bytes.addAll(createDoubleSeparator().toByteArray().toList())
+        bytes.addAll(FEED_LINE.toList())
+
+        // Gross Amount (Grand Total)
         bytes.addAll(BOLD_ON.toList())
-        bytes.addAll("GRAND TOTAL: ₹${order.grandTotal}".toByteArray().toList())
+        bytes.addAll(formatTwoColumns("Gross Amount", String.format(Locale.US, "%.2f", roundedGross)).toByteArray().toList())
         bytes.addAll(BOLD_OFF.toList())
         bytes.addAll(FEED_LINE.toList())
-        
-        bytes.addAll(createSeparator().toByteArray().toList())
+        bytes.addAll(createDoubleSeparator().toByteArray().toList())
         bytes.addAll(FEED_LINE.toList())
 
-        // 6. Footer
+        // 6. Footer Info Block
+        bytes.addAll("Total Items    : $totalItemCount".toByteArray().toList())
+        bytes.addAll(FEED_LINE.toList())
+        bytes.addAll("UserID/Cashier : $cashierName".toByteArray().toList())
+        bytes.addAll(FEED_LINE.toList())
+        bytes.addAll(FEED_LINE.toList())
+
         bytes.addAll(ALIGN_CENTER.toList())
-        bytes.addAll("Thank you! Visit Again".toByteArray().toList())
+        bytes.addAll("Thank You visit again".toByteArray().toList())
+        bytes.addAll(FEED_LINE.toList())
+
+        bytes.addAll(ALIGN_RIGHT.toList())
+        bytes.addAll("Guest Copy".toByteArray().toList())
         bytes.addAll(FEED_LINE.toList())
         bytes.addAll(FEED_LINE.toList())
-        bytes.addAll(FEED_LINE.toList()) // Extra space before cutting
+        bytes.addAll(FEED_LINE.toList())
         bytes.addAll(PAPER_CUT.toList())
 
         Log.i(TAG, "Print bytes generated. Total size: ${bytes.size} bytes")
         return bytes.toByteArray()
     }
 
-    /**
-     * Helper to create a line with left, center (optional), and right aligned text.
-     */
-    private fun formatLine(left: String, center: String, right: String): String {
-        val totalWidth = LINE_WIDTH
-        val leftPart = if (left.length > 15) left.substring(0, 12) + ".." else left
-        val rightPart = right
-        
-        val spaceNeeded = totalWidth - leftPart.length - rightPart.length - center.length
-        val spaceBetweenLeftAndCenter = spaceNeeded / 2
-        val spaceBetweenCenterAndRight = spaceNeeded - spaceBetweenLeftAndCenter
-        
-        val sb = StringBuilder()
-        sb.append(leftPart)
-        repeat(maxOf(1, spaceBetweenLeftAndCenter)) { sb.append(" ") }
-        sb.append(center)
-        repeat(maxOf(1, spaceBetweenCenterAndRight)) { sb.append(" ") }
-        sb.append(rightPart)
-        
-        return sb.toString()
+    private fun formatTwoColumns(left: String, right: String): String {
+        val spaceNeeded = LINE_WIDTH - left.length - right.length
+        return if (spaceNeeded > 0) {
+            left + " ".repeat(spaceNeeded) + right
+        } else {
+            left + "\n" + " ".repeat(Math.max(1, LINE_WIDTH - right.length)) + right
+        }
     }
 
-    private fun createSeparator(char: Char = '='): String {
-        return char.toString().repeat(LINE_WIDTH)
+    private fun formatItemLine(sno: String, name: String, qty: String, amount: String): String {
+        val maxNameLen = 14
+        val trimmedName = if (name.length > maxNameLen) name.substring(0, maxNameLen) else name
+        return "$sno $trimmedName".padEnd(19) + qty.padStart(3) + amount.padStart(10)
     }
-    
+
+    private fun createDoubleSeparator(): String = "=".repeat(LINE_WIDTH)
+    private fun createSingleSeparator(): String = "-".repeat(LINE_WIDTH)
+
     /**
-     * Generates a plain text version for debugging in Logcat.
+     * Generates a loggable plain-text preview for debugging.
      */
-    fun getLoggablePreview(restaurantName: String, order: CashierBillingOrderModel): String {
+    fun getLoggablePreview(
+        restaurantName: String,
+        address: String = "",
+        gstin: String = "",
+        fssai: String = "",
+        cashierName: String = "Cashier",
+        order: CashierBillingOrderModel
+    ): String {
         val sb = StringBuilder()
         sb.append("\n----------- PRINTER PREVIEW -----------\n")
         sb.append(restaurantName.uppercase().padStart((LINE_WIDTH + restaurantName.length) / 2)).append("\n")
-        sb.append("Order: #${order.orderId.takeLast(6)}".padStart((LINE_WIDTH + 14) / 2)).append("\n")
-        sb.append("Table: ${order.tableName}".padStart((LINE_WIDTH + 7 + order.tableName.length) / 2)).append("\n")
-        sb.append("=".repeat(LINE_WIDTH)).append("\n")
-        sb.append(formatLine("Item", "Qty", "Total")).append("\n")
-        sb.append("-".repeat(LINE_WIDTH)).append("\n")
-        order.items.forEach { 
-            sb.append(formatLine(it.itemName, "x${it.quantity}", "₹${it.rowTotal}")).append("\n")
+        if (address.isNotEmpty()) sb.append(address).append("\n")
+        if (gstin.isNotEmpty()) sb.append("GSTIN : $gstin\n")
+        if (fssai.isNotEmpty()) sb.append("FSSAI : $fssai\n")
+        sb.append(createDoubleSeparator()).append("\n")
+        sb.append("Bill No: #${order.orderId.takeLast(6)}".padEnd(16)).append("Table: ${order.tableName}\n")
+        sb.append(createDoubleSeparator()).append("\n")
+        sb.append("SNo. Description     Qty   Amount\n")
+        sb.append(createDoubleSeparator()).append("\n")
+        order.items.forEachIndexed { i, it ->
+            sb.append(formatItemLine((i + 1).toString(), it.itemName, "x${it.quantity}", String.format(Locale.US, "%.2f", it.rowTotal.toDouble()))).append("\n")
         }
-        sb.append("-".repeat(LINE_WIDTH)).append("\n")
-        sb.append("GRAND TOTAL: ₹${order.grandTotal}".padStart(LINE_WIDTH)).append("\n")
+        sb.append(createSingleSeparator()).append("\n")
+        val gross = Math.round(order.subtotal + order.serviceChargeAmount + order.taxAmount - order.discountAmount).toDouble()
+        sb.append(formatTwoColumns("Gross Amount", String.format(Locale.US, "%.2f", gross))).append("\n")
+        sb.append("UserID/Cashier : $cashierName\n")
         sb.append("---------------------------------------\n")
         return sb.toString()
     }

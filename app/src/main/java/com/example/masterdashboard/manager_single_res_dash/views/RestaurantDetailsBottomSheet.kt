@@ -10,9 +10,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.databinding.BottomSheetRestaurantDetailsBinding
-import com.example.masterdashboard.manager_single_res_dash.form_screen.adapter.FormAdapter
-import com.example.masterdashboard.manager_single_res_dash.form_screen.model.FormItem
-import com.example.masterdashboard.manager_single_res_dash.form_screen.model.RegistrationDataModel
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.adapter.FormAdapter
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.model.FormItem
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.model.RegistrationDataModel
 import com.example.masterdashboard.manager_single_res_dash.uistate.RestaurantDetailsUiState
 import com.example.masterdashboard.manager_single_res_dash.viewModel.RestaurantDetailsViewModel
 import com.example.masterdashboard.utils.AppConstants
@@ -137,13 +137,16 @@ class RestaurantDetailsBottomSheet : BottomSheetDialogFragment() {
             onEditClick = { startEditAction(1) }
         ))
 
+        val effectiveAddress = data.getEffectiveAddressInfo()
+        val effectiveTax = data.getEffectiveTaxSettings()
+
         // 3. LOCATION CARD
         reviewItems.add(FormItem.ReviewCard(
             title = "LOCATION",
             details = listOf(
-                "Address" to "${data.address}, ${data.city}, ${data.state}",
-                "PIN Code" to data.pinCode,
-                "Contact" to data.contactNumber
+                "Address" to "${effectiveAddress.address}, ${effectiveAddress.city}, ${effectiveAddress.state}",
+                "PIN Code" to effectiveAddress.pinCode,
+                "Contact" to effectiveAddress.contactNumber
             ),
             onEditClick = { startEditAction(2) }
         ))
@@ -152,13 +155,13 @@ class RestaurantDetailsBottomSheet : BottomSheetDialogFragment() {
         reviewItems.add(FormItem.ReviewCard(
             title = "TAX & BILLING",
             details = listOf(
-                "GST Number" to data.gstNumber,
+                "GST Number" to effectiveTax.gstNumber,
                 "FSSAI No." to data.fssaiNumber,
                 "Inv Prefix" to data.invoicePrefix,
-                "Tax Rate" to "${data.defaultTaxRate}%"
+                "Tax Rate" to "${effectiveTax.defaultTaxRate}%"
             ),
             onEditClick = { startEditAction(3) }
-        ))
+        )	)
 
         binding.rvDetails.adapter = FormAdapter(reviewItems) { _, _ -> }
     }

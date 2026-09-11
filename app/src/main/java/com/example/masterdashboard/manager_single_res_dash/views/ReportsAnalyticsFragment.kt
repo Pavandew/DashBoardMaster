@@ -18,9 +18,9 @@ import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentReportsAnalyticsBinding
 import com.example.masterdashboard.manager_single_res_dash.adapter.ReportKpiAdapter
 import com.example.masterdashboard.manager_single_res_dash.models.ReportKpiModel
-import com.example.masterdashboard.manager_single_res_dash.repo.ReportsRepository
+import com.example.masterdashboard.manager_single_res_dash.settings.repo.ReportsRepository
 import com.example.masterdashboard.manager_single_res_dash.utils.DateFilterBottomSheet
-import com.example.masterdashboard.manager_single_res_dash.viewModel.ReportsViewModel
+import com.example.masterdashboard.manager_single_res_dash.settings.viewModel.ReportsViewModel
 import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
