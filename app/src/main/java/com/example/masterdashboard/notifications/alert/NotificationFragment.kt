@@ -78,9 +78,37 @@ class NotificationFragment : Fragment() {
 
         setupToolbar()
         setupRecyclerView()
+        applyThemeBasedOnRole()
         observeViewModel()
 
         checkNotificationPermission()
+    }
+
+    private fun applyThemeBasedOnRole() {
+        val sessionManager = SessionManager(requireContext())
+        val role = sessionManager.getRole().lowercase().trim()
+        val isManager = role == "manager" || role == "owner_single" || role == "owner_multi"
+
+        notificationAdapter.setDarkTheme(isManager)
+
+        val context = requireContext()
+        val toolbar = binding.staffAlertToolbar
+
+        if (isManager) {
+            val bgMain = ContextCompat.getColor(context, R.color.bg_main)
+            val whiteColor = ContextCompat.getColor(context, R.color.white)
+
+            binding.root.setBackgroundColor(bgMain)
+            toolbar.customToolbar.setBackgroundColor(bgMain)
+            toolbar.tvToolbarTitle.setTextColor(whiteColor)
+        } else {
+            val whiteColor = ContextCompat.getColor(context, R.color.white)
+            val darkText = ContextCompat.getColor(context, R.color.text_form_primary)
+
+            binding.root.setBackgroundColor(whiteColor)
+            toolbar.customToolbar.setBackgroundColor(whiteColor)
+            toolbar.tvToolbarTitle.setTextColor(darkText)
+        }
     }
 
     private fun checkNotificationPermission() {

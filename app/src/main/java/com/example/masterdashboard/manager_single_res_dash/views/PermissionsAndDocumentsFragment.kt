@@ -17,7 +17,7 @@ import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentPermissionsAndDocumentsBinding
 import com.example.masterdashboard.manager_single_res_dash.uistate.FirebaseUiState
 import com.example.masterdashboard.manager_single_res_dash.adapter.PermissionsDocumentsAdapter
-import com.example.masterdashboard.manager_single_res_dash.form_screen.model.Step2FormItem
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.model.Step2FormItem
 import com.example.masterdashboard.utils.DocumentUploadManager
 import com.example.masterdashboard.manager_single_res_dash.viewModel.StaffFormViewModel
 import com.example.masterdashboard.utils.AppConstants

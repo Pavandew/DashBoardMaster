@@ -39,9 +39,24 @@ class OrderDetailRepository {
 
             Log.d(TAG, "📦 [REPO] Query completed. Total documents checked across collectionGroup: ${querySnapshot.size()}")
 
-            val document = querySnapshot.documents.firstOrNull { doc ->
+            var document = querySnapshot.documents.firstOrNull { doc ->
                 (doc.id == orderId || doc.getString(AppConstants.FIELD_ORDER_ID) == orderId) &&
                         doc.reference.path.contains("users/$managerId")
+            }
+
+            // Fallback: If not found in active_orders (e.g. order was paid/settled), check completed_orders collection
+            if (document == null || !document.exists()) {
+                Log.d(TAG, "📦 [REPO] Order '$orderId' not found in active_orders. Checking completed_orders...")
+                val completedRef = firestore.collection(AppConstants.COLLECTION_USERS)
+                    .document(managerId)
+                    .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
+                    .document(orderId)
+
+                val completedSnap = completedRef.get().await()
+                if (completedSnap.exists()) {
+                    Log.i(TAG, "📦 [REPO] Target order found in completed_orders at path: ${completedSnap.reference.path}")
+                    document = completedSnap
+                }
             }
 
             if (document != null && document.exists()) {

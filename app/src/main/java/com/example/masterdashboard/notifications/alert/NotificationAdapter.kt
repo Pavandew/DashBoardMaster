@@ -11,13 +11,21 @@ import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.ItemAlertCardBinding
 
 /**
- * Adapter for rendering the notification feed with dynamic status-based styling.
+ * Adapter for rendering the notification feed with dynamic status-based and theme-based styling.
  */
 class NotificationAdapter(
+    private var isDarkTheme: Boolean = false,
     private val onCardClicked: (AppNotificationModel) -> Unit,
     private val onAcceptClicked: (AppNotificationModel) -> Unit,
     private val onDoneClicked: (AppNotificationModel) -> Unit
 ) : ListAdapter<AppNotificationModel, NotificationAdapter.NotificationViewHolder>(NotificationDiffCallback()) {
+
+    fun setDarkTheme(dark: Boolean) {
+        if (this.isDarkTheme != dark) {
+            this.isDarkTheme = dark
+            notifyDataSetChanged()
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NotificationViewHolder {
         val binding = ItemAlertCardBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -36,6 +44,17 @@ class NotificationAdapter(
             binding.tvAlertTitle.text = item.title
             binding.tvAlertMessage.text = item.message
             binding.tvAlertTime.text = item.timeStamp
+
+            // Theme-based Card Background & Text Colors
+            if (isDarkTheme) {
+                binding.cvAlertRoot.setCardBackgroundColor(ContextCompat.getColor(context, R.color.bg_card))
+                binding.tvAlertTitle.setTextColor(ContextCompat.getColor(context, R.color.white))
+                binding.tvAlertMessage.setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
+            } else {
+                binding.cvAlertRoot.setCardBackgroundColor(ContextCompat.getColor(context, R.color.bg_form_light))
+                binding.tvAlertTitle.setTextColor(ContextCompat.getColor(context, R.color.text_form_primary))
+                binding.tvAlertMessage.setTextColor(ContextCompat.getColor(context, R.color.text_form_secondary))
+            }
 
             // Unread State UI Styling
             if (item.isRead) {
