@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.googleid)
     implementation(libs.material)
     implementation(libs.glide)
+    implementation(libs.coil)
     implementation("com.google.code.gson:gson:2.10.1")
     annotationProcessor(libs.glide.compiler)
     testImplementation(libs.junit)

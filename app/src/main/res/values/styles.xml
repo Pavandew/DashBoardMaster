@@ -255,8 +255,10 @@
 
     <!-- Settings Reusable Component Styles -->
     <style name="SettingsTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxBackgroundColor">#1C1E28</item>
         <item name="boxStrokeColor">@color/mid_app_color</item>
         <item name="hintTextColor">@color/mid_app_color</item>
+        <item name="android:textColorHint">@color/text_secondary</item>
         <item name="boxCornerRadiusTopStart">12dp</item>
         <item name="boxCornerRadiusTopEnd">12dp</item>
         <item name="boxCornerRadiusBottomStart">12dp</item>
@@ -264,17 +266,21 @@
     </style>
 
     <style name="SettingsChipAction" parent="Widget.MaterialComponents.Chip.Action">
-        <item name="chipBackgroundColor">@color/bg_card</item>
-        <item name="android:textColor">@color/text_primary</item>
-        <item name="chipStrokeColor">#2C2E3B</item>
-        <item name="chipStrokeWidth">1dp</item>
+        <item name="chipBackgroundColor">@color/chip_background_selector</item>
+        <item name="chipStrokeColor">@color/chip_stroke_selector</item>
+        <item name="android:textColor">@color/chip_text_selector</item>
+        <item name="chipStrokeWidth">1.5dp</item>
     </style>
 
     <style name="SettingsChipChoice" parent="Widget.MaterialComponents.Chip.Choice">
-        <item name="chipBackgroundColor">@color/bg_card</item>
-        <item name="android:textColor">@color/text_primary</item>
-        <item name="chipStrokeColor">#2C2E3B</item>
-        <item name="chipStrokeWidth">1dp</item>
+        <item name="chipBackgroundColor">@color/chip_background_selector</item>
+        <item name="chipStrokeColor">@color/chip_stroke_selector</item>
+        <item name="android:textColor">@color/chip_text_selector</item>
+        <item name="chipIconTint">@color/white</item>
+        <item name="checkedIconVisible">true</item>
+        <item name="checkedIconTint">@color/white</item>
+        <item name="chipStrokeWidth">1.5dp</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Table Card Styles -->
