@@ -4,9 +4,11 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.masterdashboard.manager_single_res_dash.models.DashboardSummary
+import com.example.masterdashboard.manager_single_res_dash.models.ShiftSales
 import com.example.masterdashboard.manager_single_res_dash.models.StatMetric
+import com.example.masterdashboard.manager_single_res_dash.models.TopSellingFoodItem
 import com.example.masterdashboard.manager_single_res_dash.repo.ManagerDashboardRepository
-import com.example.masterdashboard.manager_single_res_dash.repo.ReportsRepository
+import com.example.masterdashboard.manager_single_res_dash.settings.repo.ReportsRepository
 import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,6 +32,12 @@ class ManagerDashboardViewModel(
     private val _todayMetrics = MutableStateFlow<List<StatMetric>>(getInitialEmptyMetrics())
     val todayMetrics: StateFlow<List<StatMetric>> = _todayMetrics.asStateFlow()
 
+    private val _topSellingItems = MutableStateFlow<List<TopSellingFoodItem>>(emptyList())
+    val topSellingItems: StateFlow<List<TopSellingFoodItem>> = _topSellingItems.asStateFlow()
+
+    private val _todaySalesTrend = MutableStateFlow(ShiftSales())
+    val todaySalesTrend: StateFlow<ShiftSales> = _todaySalesTrend.asStateFlow()
+
     private val _restaurantName = MutableStateFlow("")
     val restaurantName: StateFlow<String> = _restaurantName.asStateFlow()
 
@@ -40,7 +48,7 @@ class ManagerDashboardViewModel(
     private var isListeningToUpdates = false
 
     /**
-     * Initiates real-time tracking of active order status counts AND today's financial metrics.
+     * Initiates real-time tracking of active order status counts, today's financial metrics, top selling dishes, and shift sales trend.
      */
     fun startRealTimeOrderStatusTracking(managerId: String) {
         if (managerId.isEmpty()) return
@@ -57,14 +65,13 @@ class ManagerDashboardViewModel(
                         newCount = String.format(Locale.getDefault(), "%02d", counts["PENDING"] ?: 0),
                         kitchenCount = String.format(Locale.getDefault(), "%02d", counts["PREPARING"] ?: 0),
                         readyCount = String.format(Locale.getDefault(), "%02d", counts["READY"] ?: 0),
-                        servedCount = String.format(Locale.getDefault(), "%02d", (counts["SERVED"] ?: 0) + (counts["PAID"] ?: 0)),
+                        servedCount = String.format(Locale.getDefault(), "%02d", counts["SERVED"] ?: 0),
                         cancelledCount = String.format(Locale.getDefault(), "%02d", counts["REJECTED"] ?: 0)
                     )
 
                     _orderStatusSummary.value = newSummary
                     Log.d(TAG, "Order status summary recalculated: $newSummary")
 
-                    // Re-calculate active order count for overview metrics
                     val activeCount = (counts["PENDING"] ?: 0) + (counts["PREPARING"] ?: 0) + (counts["READY"] ?: 0)
                     updateActiveOrdersInMetrics(activeCount)
                 }
@@ -99,6 +106,22 @@ class ManagerDashboardViewModel(
                             StatMetric("Avg Order Value", avgVal, avgSub, todaySummary.avgOrderValue > 0)
                         )
                     }
+            }
+
+            // 3. Listen to Top Selling Food Items
+            viewModelScope.launch {
+                reportsRepository.getTopSellingItemsStream(managerId).collect { topItems ->
+                    Log.d(TAG, "Top selling items updated: ${topItems.size} items")
+                    _topSellingItems.value = topItems
+                }
+            }
+
+            // 4. Listen to Today's Sales Trend by Shift
+            viewModelScope.launch {
+                reportsRepository.getTodaySalesTrendStream(managerId).collect { trend ->
+                    Log.d(TAG, "Today's sales trend updated: $trend")
+                    _todaySalesTrend.value = trend
+                }
             }
         }
     }

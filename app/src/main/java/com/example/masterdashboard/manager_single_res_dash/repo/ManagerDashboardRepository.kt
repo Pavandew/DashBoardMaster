@@ -7,25 +7,51 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ManagerDashboardRepository {
 
     private val db = FirebaseFirestore.getInstance()
 
     /**
-     * Streams all active orders for the given manager to allow real-time status aggregation.
+     * Streams all active orders across all floors, tables, and counter orders for the given manager for TODAY,
+     * allowing real-time status aggregation (New, Kitchen, Ready, Served, Cancelled).
      */
     fun getActiveOrdersStream(managerId: String): Flow<List<String>> = callbackFlow {
-        val registration = db.collection(AppConstants.COLLECTION_USERS)
-            .document(managerId)
-            .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
+        if (managerId.isEmpty()) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+
+        Log.d("ManagerRepo", "Starting collectionGroup active_orders listener for managerId: $managerId")
+
+        val registration = db.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
-                    close(error)
+                    Log.e("ManagerRepo", "Error listening to active orders collectionGroup", error)
+                    trySend(emptyList())
                     return@addSnapshotListener
                 }
 
-                val statuses = snapshots?.mapNotNull { it.getString(AppConstants.FIELD_ORDER_STATUS) } ?: emptyList()
+                val sdfDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val todayStr = sdfDate.format(Date())
+
+                val statuses = snapshots?.documents
+                    ?.filter { doc ->
+                        val pathMatches = doc.reference.path.contains("users/$managerId")
+                        val timestamp = doc.getTimestamp(AppConstants.FIELD_TIMESTAMP)?.toDate()
+                            ?: doc.getTimestamp(AppConstants.FIELD_PAID_AT)?.toDate()
+                        val docDate = if (timestamp != null) sdfDate.format(timestamp) else todayStr
+                        
+                        // Count active orders belonging to manager created today
+                        pathMatches && docDate == todayStr
+                    }
+                    ?.mapNotNull { it.getString(AppConstants.FIELD_ORDER_STATUS) } ?: emptyList()
+
+                Log.d("ManagerRepo", "Active orders snapshot received for TODAY ($todayStr): ${statuses.size} active orders for manager $managerId")
                 trySend(statuses)
             }
 

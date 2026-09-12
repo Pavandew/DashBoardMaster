@@ -15,6 +15,7 @@ import com.example.masterdashboard.databinding.ItemDashboardOverviewBinding
 import com.example.masterdashboard.databinding.ItemDashboardSummaryBinding
 import com.example.masterdashboard.databinding.ItemTopSellingCardsBinding
 import com.example.masterdashboard.manager_single_res_dash.models.DashboardSummary
+import com.example.masterdashboard.manager_single_res_dash.models.ShiftSales
 import com.example.masterdashboard.manager_single_res_dash.models.TopSellingFoodItem
 import com.example.masterdashboard.manager_single_res_dash.models.StatMetric
 import com.example.masterdashboard.manager_single_res_dash.models.QuickActionModel
@@ -25,6 +26,7 @@ class ManagerDashboardAdapter (
     private var summaryData: DashboardSummary,
     private var topSellingItems: List<TopSellingFoodItem>,
     private var isQuickActionsExpanded: Boolean = false,
+    private var trendData: ShiftSales = ShiftSales(),
     private val onQuickActionClicked: (actionType: QuickActionType) -> Unit,
     private val onToggleQuickActions: () -> Unit = {},
     private val onSummaryClicked: (status: String) -> Unit = {}
@@ -34,12 +36,14 @@ class ManagerDashboardAdapter (
         newMetrics: List<StatMetric>,
         newSummary: DashboardSummary,
         newTopSelling: List<TopSellingFoodItem>,
-        isExpanded: Boolean
+        isExpanded: Boolean,
+        newTrend: ShiftSales = this.trendData
     ) {
         this.metricsList = newMetrics
         this.summaryData = newSummary
         this.topSellingItems = newTopSelling
         this.isQuickActionsExpanded = isExpanded
+        this.trendData = newTrend
         notifyDataSetChanged()
     }
 
@@ -87,6 +91,7 @@ class ManagerDashboardAdapter (
             is OverviewViewHolder -> holder.bind(metricsList)
             is SummaryViewHolder -> holder.bind(summaryData, onSummaryClicked)
             is QuickActionsViewHolder -> holder.bind(isQuickActionsExpanded, onToggleQuickActions, onQuickActionClicked)
+            is TrendViewHolder -> holder.bind(trendData)
             is TopSellingViewHolder -> holder.bind(topSellingItems)
         }
     }
@@ -303,7 +308,26 @@ class ManagerDashboardAdapter (
         }
     }
 
-    class TrendViewHolder(val binding: ItemDahsCardTrendBinding) : RecyclerView.ViewHolder(binding.root)
+    class TrendViewHolder(val binding: ItemDahsCardTrendBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(trend: ShiftSales) {
+            binding.tvPeakHourTag.text = trend.peakShiftName
+
+            val maxSales = maxOf(trend.morningSales, trend.lunchSales, trend.eveningSales, trend.dinnerSales)
+            val maxBase = if (maxSales > 0) maxSales else 1.0
+
+            binding.tvMorningSales.text = "₹ ${trend.morningSales.toInt()} (${trend.morningOrders} orders)"
+            binding.pbMorning.progress = ((trend.morningSales / maxBase) * 100).toInt()
+
+            binding.tvLunchSales.text = "₹ ${trend.lunchSales.toInt()} (${trend.lunchOrders} orders)"
+            binding.pbLunch.progress = ((trend.lunchSales / maxBase) * 100).toInt()
+
+            binding.tvEveningSales.text = "₹ ${trend.eveningSales.toInt()} (${trend.eveningOrders} orders)"
+            binding.pbEvening.progress = ((trend.eveningSales / maxBase) * 100).toInt()
+
+            binding.tvDinnerSales.text = "₹ ${trend.dinnerSales.toInt()} (${trend.dinnerOrders} orders)"
+            binding.pbDinner.progress = ((trend.dinnerSales / maxBase) * 100).toInt()
+        }
+    }
 
     class TopSellingViewHolder(val binding: ItemTopSellingCardsBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(items: List<TopSellingFoodItem>) {
@@ -328,4 +352,3 @@ class ManagerDashboardAdapter (
         }
     }
 }
-

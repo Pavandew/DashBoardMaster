@@ -18,10 +18,8 @@ import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
 import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeActivity
 import com.example.masterdashboard.manager_single_res_dash.adapter.ManagerDashboardAdapter
 import com.example.masterdashboard.manager_single_res_dash.models.DrawerMenuItem
-import com.example.masterdashboard.manager_single_res_dash.models.TopSellingFoodItem
 import com.example.masterdashboard.manager_single_res_dash.utils.DrawerNavigationHelper
 import com.example.masterdashboard.manager_single_res_dash.viewModel.ManagerDashboardViewModel
-import com.example.masterdashboard.manager_single_res_dash.views.MenuManagementFragment
 import com.example.masterdashboard.manager_single_res_dash.views.StaffManagementFragment
 import com.example.masterdashboard.manager_single_res_dash.views.TableManagementFragment
 import com.example.masterdashboard.manager_single_res_dash.views.CustomerManagementFragment
@@ -65,7 +63,7 @@ class ManagerDashboardFragment : Fragment() {
         
         navigationHelper.initDrawerMenu()
         
-        // 3. Start real-time tracking for status badges and today's sales overview
+        // 3. Start real-time tracking for status badges, today's sales overview, top selling dishes, and shift sales trend
         val managerId = sessionManager.getUid()
         viewModel.startRealTimeOrderStatusTracking(managerId)
         viewModel.loadRestaurantDetails(managerId, sessionManager)
@@ -87,8 +85,9 @@ class ManagerDashboardFragment : Fragment() {
                         dashboardAdapter.updateData(
                             newMetrics = metrics, 
                             newSummary = viewModel.orderStatusSummary.value,
-                            newTopSelling = getDummyTopSelling(),
-                            isExpanded = viewModel.isQuickActionsExpanded.value
+                            newTopSelling = viewModel.topSellingItems.value,
+                            isExpanded = viewModel.isQuickActionsExpanded.value,
+                            newTrend = viewModel.todaySalesTrend.value
                         )
                     }
                 }
@@ -100,8 +99,37 @@ class ManagerDashboardFragment : Fragment() {
                         dashboardAdapter.updateData(
                             newMetrics = viewModel.todayMetrics.value, 
                             newSummary = summary,
-                            newTopSelling = getDummyTopSelling(),
-                            isExpanded = viewModel.isQuickActionsExpanded.value
+                            newTopSelling = viewModel.topSellingItems.value,
+                            isExpanded = viewModel.isQuickActionsExpanded.value,
+                            newTrend = viewModel.todaySalesTrend.value
+                        )
+                    }
+                }
+
+                // Observe Top Selling Food Items
+                launch {
+                    viewModel.topSellingItems.collect { topItems ->
+                        Log.d("ManagerDashboard", "UI Update: Top selling items refreshed: ${topItems.size} items")
+                        dashboardAdapter.updateData(
+                            newMetrics = viewModel.todayMetrics.value,
+                            newSummary = viewModel.orderStatusSummary.value,
+                            newTopSelling = topItems,
+                            isExpanded = viewModel.isQuickActionsExpanded.value,
+                            newTrend = viewModel.todaySalesTrend.value
+                        )
+                    }
+                }
+
+                // Observe Today's Sales Shift Trend
+                launch {
+                    viewModel.todaySalesTrend.collect { trend ->
+                        Log.d("ManagerDashboard", "UI Update: Today's sales trend refreshed: $trend")
+                        dashboardAdapter.updateData(
+                            newMetrics = viewModel.todayMetrics.value,
+                            newSummary = viewModel.orderStatusSummary.value,
+                            newTopSelling = viewModel.topSellingItems.value,
+                            isExpanded = viewModel.isQuickActionsExpanded.value,
+                            newTrend = trend
                         )
                     }
                 }
@@ -112,8 +140,9 @@ class ManagerDashboardFragment : Fragment() {
                         dashboardAdapter.updateData(
                             newMetrics = viewModel.todayMetrics.value,
                             newSummary = viewModel.orderStatusSummary.value,
-                            newTopSelling = getDummyTopSelling(),
-                            isExpanded = isExpanded
+                            newTopSelling = viewModel.topSellingItems.value,
+                            isExpanded = isExpanded,
+                            newTrend = viewModel.todaySalesTrend.value
                         )
                     }
                 }
@@ -138,9 +167,10 @@ class ManagerDashboardFragment : Fragment() {
     private fun configureHeaderNavigationAndProfile() {
         val header = binding.masterDashHeader
         
-        // 1. Set personalized greeting
+        // 1. Set personalized time-based greeting
         val userName = sessionManager.getUserName() ?: "Manager"
-        header.txtGreeting.text = "Good Morning, $userName 👋"
+        val greeting = getTimeBasedGreeting()
+        header.txtGreeting.text = "$greeting, $userName 👋"
 
         header.btnDrawerMenu.setOnClickListener {
             Log.d("ManagerDashboard", "Action: Drawer Menu button clicked")
@@ -174,8 +204,9 @@ class ManagerDashboardFragment : Fragment() {
         dashboardAdapter = ManagerDashboardAdapter(
             viewModel.todayMetrics.value, 
             viewModel.orderStatusSummary.value, 
-            getDummyTopSelling(),
+            viewModel.topSellingItems.value,
             viewModel.isQuickActionsExpanded.value,
+            viewModel.todaySalesTrend.value,
             onQuickActionClicked = { actionType ->
                 val simulatedItem = when (actionType) {
                     ManagerDashboardAdapter.QuickActionType.WAITER_TABLES -> 
@@ -228,12 +259,14 @@ class ManagerDashboardFragment : Fragment() {
         }
     }
 
-    private fun getDummyTopSelling(): List<TopSellingFoodItem> {
-        return listOf(
-            TopSellingFoodItem("1", "Paneer Butter Masala", 120, "₹ 18,240", R.drawable.shield),
-            TopSellingFoodItem("2", "Veg Biryani", 98, "₹ 14,700", R.drawable.shield),
-            TopSellingFoodItem("3", "Chili Paneer", 80, "₹ 12,450", R.drawable.shield)
-        )
+    private fun getTimeBasedGreeting(): String {
+        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        return when (hour) {
+            in 5..11 -> "Good Morning"
+            in 12..16 -> "Good Afternoon"
+            in 17..21 -> "Good Evening"
+            else -> "Good Evening"
+        }
     }
 
     override fun onDestroyView() {
