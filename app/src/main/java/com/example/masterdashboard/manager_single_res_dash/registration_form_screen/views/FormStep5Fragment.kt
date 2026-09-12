@@ -46,7 +46,8 @@ class FormStep5Fragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.i("FormStep5Fragment", "Navigation: Review & Launch Screen Opened")
+        val isEdit = dataViewModel.isEditMode
+        Log.i("FormStep5Fragment", "Navigation: Review Screen Opened (isEditMode: $isEdit)")
 
         sessionManager = SessionManager(requireContext())
 
@@ -57,7 +58,13 @@ class FormStep5Fragment : Fragment() {
         val currentData = dataViewModel.registrationData
         Log.d("FormStep5Fragment", "Compiling data for restaurant: ${currentData.restaurantName}")
 
-        stepViewModel.initReviewData(currentData) { stepNumber ->
+        if (isEdit) {
+            binding.btnContinue.text = "Save & Return to Settings"
+        } else {
+            binding.btnContinue.text = "Launch Restaurant"
+        }
+
+        stepViewModel.initReviewData(currentData, isEdit) { stepNumber ->
             Log.d("FormStep5Fragment", "Action: Edit Step $stepNumber clicked")
             navigateToStep(stepNumber)
         }
@@ -74,7 +81,8 @@ class FormStep5Fragment : Fragment() {
         }
 
         binding.btnContinue.setOnClickListener {
-            Log.i("FormStep5Fragment", "Action: Launch Restaurant button clicked")
+            val isEdit = dataViewModel.isEditMode
+            Log.i("FormStep5Fragment", "Action: Submit button clicked (isEditMode: $isEdit)")
             val finalData = dataViewModel.registrationData
 
             if (finalData.ownerUid.isEmpty()) {
@@ -88,7 +96,7 @@ class FormStep5Fragment : Fragment() {
             }
 
             binding.btnContinue.isEnabled = false
-            binding.btnContinue.text = "Creating Restaurant Profile..."
+            binding.btnContinue.text = if (isEdit) "Saving Changes..." else "Creating Restaurant Profile..."
 
             lifecycleScope.launch {
                 val repository = RegistrationRepository()
@@ -96,23 +104,28 @@ class FormStep5Fragment : Fragment() {
 
                 result.fold(
                     onSuccess = { restaurantId ->
-                        Log.i("FormStep5Fragment", "Success: Restaurant Transaction Complete. ID: $restaurantId")
+                        Log.i("FormStep5Fragment", "Success: Transaction Complete. ID: $restaurantId (isEditMode: $isEdit)")
                         sessionManager.setRestaurantSetup(true)
                         sessionManager.saveRestaurantId(restaurantId)
                         sessionManager.saveRestaurantName(finalData.restaurantName)
+                        sessionManager.saveRestaurantDetails(finalData)
                         sessionManager.clearRegistrationDraft()
 
-                        Toast.makeText(requireContext(), "Restaurant Setup Complete!", Toast.LENGTH_LONG).show()
-
-                        val intent = Intent(requireContext(), ManagerHomeActivity::class.java)
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        startActivity(intent)
-                        activity?.finish()
+                        if (isEdit) {
+                            Toast.makeText(requireContext(), "Restaurant details updated successfully!", Toast.LENGTH_SHORT).show()
+                            activity?.finish()
+                        } else {
+                            Toast.makeText(requireContext(), "Restaurant Setup Complete!", Toast.LENGTH_LONG).show()
+                            val intent = Intent(requireContext(), ManagerHomeActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            startActivity(intent)
+                            activity?.finish()
+                        }
                     },
                     onFailure = { e ->
                         binding.btnContinue.isEnabled = true
-                        binding.btnContinue.text = "Launch Restaurant"
-                        Toast.makeText(requireContext(), e.localizedMessage ?: "Registration failed", Toast.LENGTH_SHORT).show()
+                        binding.btnContinue.text = if (isEdit) "Save & Return to Settings" else "Launch Restaurant"
+                        Toast.makeText(requireContext(), e.localizedMessage ?: "Save failed", Toast.LENGTH_SHORT).show()
                     }
                 )
             }
