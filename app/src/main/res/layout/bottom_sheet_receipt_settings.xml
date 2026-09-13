@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/bg_main"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Top Drag Handle -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_search_bar" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Receipt &amp; Bill Layout Settings"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Configure invoice prefix, paper size, and printed bill customization"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
+
+        <!-- Invoice Prefix Input -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilInvoicePrefix"
+            style="@style/SettingsTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:hint="Invoice Prefix (e.g. INV-, BILL/)"
+            app:boxBackgroundColor="#1C1E28"
+            app:boxStrokeColor="@color/mid_app_color"
+            app:hintTextColor="@color/mid_app_color">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etInvoicePrefix"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapCharacters"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                tools:text="INV-" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Starting Invoice Number Input -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilInvoiceNumber"
+            style="@style/SettingsTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:hint="Starting Invoice Number"
+            app:boxBackgroundColor="#1C1E28"
+            app:boxStrokeColor="@color/mid_app_color"
+            app:hintTextColor="@color/mid_app_color">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etInvoiceNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                tools:text="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Custom Header Tagline Input -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilHeaderTagline"
+            style="@style/SettingsTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:hint="Custom Header Tagline (e.g. Pure Veg)"
+            app:boxBackgroundColor="#1C1E28"
+            app:boxStrokeColor="@color/mid_app_color"
+            app:hintTextColor="@color/mid_app_color">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etHeaderTagline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapWords"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                tools:text="100% Pure Veg Restaurant" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Custom Footer Message Input -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilFooterMessage"
+            style="@style/SettingsTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:hint="Custom Footer Message"
+            app:boxBackgroundColor="#1C1E28"
+            app:boxStrokeColor="@color/mid_app_color"
+            app:hintTextColor="@color/mid_app_color">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etFooterMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapSentences"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                tools:text="Thank You Visit Again!" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Thermal Paper Size Selection -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Printer Paper Width"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/cgPrintSize"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip80mm"
+                style="@style/SettingsChipChoice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="80 mm Thermal (Standard)" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip58mm"
+                style="@style/SettingsChipChoice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="58 mm Thermal (Small)" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipA4"
+                style="@style/SettingsChipChoice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="A4 Standard Paper" />
+        </com.google.android.material.chip.ChipGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Bill Display Options"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <!-- Switch 1: Show Logo -->
+        <include
+            android:id="@+id/cardSwitchShowLogo"
+            layout="@layout/layout_settings_master_switch" />
+
+        <!-- Switch 2: Show GSTIN -->
+        <include
+            android:id="@+id/cardSwitchShowGstin"
+            layout="@layout/layout_settings_master_switch" />
+
+        <!-- Switch 3: Show FSSAI -->
+        <include
+            android:id="@+id/cardSwitchShowFssai"
+            layout="@layout/layout_settings_master_switch" />
+
+        <!-- Switch 4: Show Customer Info -->
+        <include
+            android:id="@+id/cardSwitchShowCustomerInfo"
+            layout="@layout/layout_settings_master_switch" />
+
+        <!-- Progress Indicator -->
+        <ProgressBar
+            android:id="@+id/progressBarReceiptSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
+
+        <!-- Save Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveReceiptSettings"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="20dp"
+            android:text="Save Receipt Settings"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/mid_app_color"
+            app:cornerRadius="12dp" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
