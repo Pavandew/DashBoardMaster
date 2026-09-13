@@ -6,12 +6,15 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.core.widget.doOnTextChanged
 import com.example.masterdashboard.R
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.appcompat.app.AlertDialog
 import com.example.masterdashboard.databinding.ActivityLoginBinding
+import com.example.masterdashboard.databinding.DialogForgotPasswordStaffBinding
 import com.example.masterdashboard.master_dash.MasterHomeActivity
 import com.example.masterdashboard.login.uistate.LoginUiState
 import com.example.masterdashboard.login.viewmodel.LoginViewModel
@@ -66,6 +69,14 @@ class LoginActivity : AppCompatActivity() {
             binding.root.setBackgroundResource(R.drawable.app_backround_blue)
         }
 
+        binding.loginItem.loginPhoneEt.doOnTextChanged { _, _, _, _ ->
+            binding.loginItem.loginPhoneLayout.error = null
+        }
+
+        binding.loginItem.loginPasswordEt.doOnTextChanged { _, _, _, _ ->
+            binding.loginItem.loginPasswordLayout.error = null
+        }
+
         binding.loginItem.loginCreateAccTv.setOnClickListener {
             val selectedPortal = sessionManager.getSelectedPortal()
             Log.d(TAG, "Navigating to SignUpActivity. Current portal in session: $selectedPortal")
@@ -73,6 +84,8 @@ class LoginActivity : AppCompatActivity() {
         }
 
         binding.loginItem.loginBtn.setOnClickListener {
+            binding.loginItem.loginPhoneLayout.error = null
+            binding.loginItem.loginPasswordLayout.error = null
 
             val phone =
                 binding.loginItem.loginPhoneEt.text.toString().trim()
@@ -82,6 +95,15 @@ class LoginActivity : AppCompatActivity() {
 
             Log.i(TAG, "Attempting login for phone: $phone")
             viewModel.loginUser(phone, password)
+        }
+
+        binding.loginItem.loginTvForgotPassword.setOnClickListener {
+            val phone = binding.loginItem.loginPhoneEt.text.toString().trim()
+            if (phone.isNotEmpty()) {
+                viewModel.findUserByPhoneForReset(phone)
+            } else {
+                showForgotPasswordDialog()
+            }
         }
     }
 
@@ -122,6 +144,7 @@ class LoginActivity : AppCompatActivity() {
                                 )
 
                             if (!isValidPortal) {
+                                binding.loginItem.loginPhoneLayout.error = "Access denied for this portal"
 
                                 Toast.makeText(
                                     this@LoginActivity,
@@ -163,23 +186,95 @@ class LoginActivity : AppCompatActivity() {
                             navigateToDashboard(state.role, state.isRestaurantSetup)
                         }
 
+                        is LoginUiState.ResetUserFound -> {
+                            Log.i(TAG, "ResetUserFound: user found for phone ${state.phone}")
+                            binding.loginItem.loginBtn.isEnabled = true
+                            binding.loginItem.loginBtn.text = "Login"
+
+                            viewModel.reset()
+
+                            openResetPasswordFragment(
+                                phone = state.phone,
+                                ownerUid = state.uid,
+                                role = state.role
+                            )
+                        }
+
                         is LoginUiState.Error -> {
                             Log.e(TAG, "Login Error: ${state.message}")
 
                             binding.loginItem.loginBtn.isEnabled = true
                             binding.loginItem.loginBtn.text = "Login"
 
-                            Toast.makeText(
-                                this@LoginActivity,
-                                state.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            binding.loginItem.loginPhoneLayout.error = null
+                            binding.loginItem.loginPasswordLayout.error = null
+
+                            when (state.field) {
+                                "BOTH" -> {
+                                    binding.loginItem.loginPhoneLayout.error = "Phone number required"
+                                    binding.loginItem.loginPasswordLayout.error = "Password required"
+                                }
+                                "PHONE" -> {
+                                    binding.loginItem.loginPhoneLayout.error = state.message
+                                }
+                                "PASSWORD" -> {
+                                    binding.loginItem.loginPasswordLayout.error = state.message
+                                }
+                                else -> {
+                                    if (state.message.contains("phone", ignoreCase = true) || state.message.contains("user", ignoreCase = true) || state.message.contains("mobile", ignoreCase = true)) {
+                                        binding.loginItem.loginPhoneLayout.error = state.message
+                                    } else if (state.message.contains("password", ignoreCase = true)) {
+                                        binding.loginItem.loginPasswordLayout.error = state.message
+                                    } else {
+                                        Toast.makeText(
+                                            this@LoginActivity,
+                                            state.message,
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }
                         }
                     }
                 }
 
             }
         }
+    }
+
+    private fun showForgotPasswordDialog() {
+        val dialogBinding = DialogForgotPasswordStaffBinding.inflate(layoutInflater)
+        dialogBinding.etStaffId.hint = "Enter Registered Mobile Number"
+
+        AlertDialog.Builder(this)
+            .setTitle("Forgot Password")
+            .setMessage("Enter your registered mobile number to reset your password.")
+            .setView(dialogBinding.root)
+            .setPositiveButton("Verify Mobile") { _, _ ->
+                val mobileInput = dialogBinding.etStaffId.text.toString().trim()
+                if (mobileInput.isNotEmpty()) {
+                    viewModel.findUserByPhoneForReset(mobileInput)
+                } else {
+                    Toast.makeText(this, "Please enter mobile number", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun openResetPasswordFragment(phone: String, ownerUid: String, role: String) {
+        val fragment = ChangePasswordFragment.newInstance(
+            phone = phone,
+            ownerUid = ownerUid,
+            staffDocId = "",
+            role = role,
+            isForgotPassword = true
+        )
+
+        supportFragmentManager.beginTransaction()
+            .replace(android.R.id.content, fragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun validatePortalAccess(

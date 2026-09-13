@@ -19,11 +19,27 @@ class LoginViewModel: ViewModel() {
 
     fun loginUser(phone: String, password: String) {
 
-        if(phone.isBlank() || password.isBlank()) {
-            _loginState.value =
-                LoginUiState.Error(
-                    message = "All fields required"
-                )
+        if (phone.isBlank() && password.isBlank()) {
+            _loginState.value = LoginUiState.Error(
+                field = "BOTH",
+                message = "Phone number and password are required"
+            )
+            return
+        }
+
+        if (phone.isBlank()) {
+            _loginState.value = LoginUiState.Error(
+                field = "PHONE",
+                message = "Phone number is required"
+            )
+            return
+        }
+
+        if (password.isBlank()) {
+            _loginState.value = LoginUiState.Error(
+                field = "PASSWORD",
+                message = "Password is required"
+            )
             return
         }
 
@@ -35,7 +51,10 @@ class LoginViewModel: ViewModel() {
                 onSuccess = { user ->
                     if (user == null) {
                         Log.w("LoginVM", "User not found for: $phone")
-                        _loginState.value = LoginUiState.Error(message = "User not found")
+                        _loginState.value = LoginUiState.Error(
+                            field = "PHONE",
+                            message = "Mobile number not registered"
+                        )
                         return@launch
                     }
 
@@ -44,13 +63,19 @@ class LoginViewModel: ViewModel() {
 
                     // password check
                     if (user.passwordHash != repository.hashPassword(password)) {
-                        _loginState.value = LoginUiState.Error(field = "", "Wrong password")
+                        _loginState.value = LoginUiState.Error(
+                            field = "PASSWORD",
+                            message = "Incorrect password"
+                        )
                         return@launch
                     }
 
                     // OTP Verification check
                     if (!user.isVerified) {
-                        _loginState.value = LoginUiState.Error(field = "", "Account not verified")
+                        _loginState.value = LoginUiState.Error(
+                            field = "PHONE",
+                            message = "Account not verified"
+                        )
                         return@launch
                     }
 
@@ -66,6 +91,40 @@ class LoginViewModel: ViewModel() {
                 },
                 onFailure = { e ->
                     _loginState.value = LoginUiState.Error(message = e.message ?: "Login failed")
+                }
+            )
+        }
+    }
+
+    fun findUserByPhoneForReset(phone: String) {
+        val cleanPhone = phone.trim()
+        if (cleanPhone.isBlank()) {
+            _loginState.value = LoginUiState.Error(message = "Enter Mobile Number")
+            return
+        }
+
+        _loginState.value = LoginUiState.Loading
+
+        viewModelScope.launch {
+            repository.findUserByPhone(cleanPhone).fold(
+                onSuccess = { user ->
+                    if (user == null) {
+                        Log.w("LoginVM", "User not found for reset: $cleanPhone")
+                        _loginState.value = LoginUiState.Error(message = "Mobile number not registered")
+                        return@launch
+                    }
+
+                    Log.d("LoginVM", "User found for reset: ${user.uid}")
+                    val formattedPhone = if (cleanPhone.startsWith("+91")) cleanPhone else "+91$cleanPhone"
+                    _loginState.value = LoginUiState.ResetUserFound(
+                        uid = user.uid,
+                        role = user.role,
+                        phone = formattedPhone,
+                        fullName = user.fullName
+                    )
+                },
+                onFailure = { e ->
+                    _loginState.value = LoginUiState.Error(message = e.message ?: "User lookup failed")
                 }
             )
         }

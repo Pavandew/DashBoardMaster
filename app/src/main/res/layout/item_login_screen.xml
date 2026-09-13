@@ -39,9 +39,10 @@
             style="@style/TextAppearance.MyApp.TitleSmall" />
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/login_phone_layout"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             app:boxBackgroundMode="outline"
             app:boxCornerRadiusTopStart="10dp"
@@ -51,6 +52,7 @@
             app:boxStrokeWidth="1dp"
             app:boxStrokeWidthFocused="1dp"
             app:boxStrokeColor="#E3E5EF"
+            app:errorEnabled="true"
             app:startIconDrawable="@drawable/ic_person_24dp"
             app:startIconTint="@color/black"
             app:hintTextColor="#8A8FA8">
@@ -58,14 +60,14 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/login_Phone_et"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:paddingTop="0dp"
-                android:paddingBottom="0dp"
+                android:layout_height="wrap_content"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
                 android:gravity="center_vertical"
                 android:textColor="#111111"
                 android:textSize="18sp"
                 android:background="@null"
-                android:inputType="textPersonName" />
+                android:inputType="phone" />
 
         </com.google.android.material.textfield.TextInputLayout>
         <!-- Password Label -->
@@ -78,6 +80,7 @@
 
         <!-- Password Field -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/login_password_layout"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -89,6 +92,7 @@
             app:boxCornerRadiusBottomEnd="8dp"
             app:boxStrokeColor="#E3E5EF"
             app:endIconMode="password_toggle"
+            app:errorEnabled="true"
             app:startIconTint="@color/black"
             app:endIconTint="@color/black"
             app:startIconDrawable="@drawable/ic_passkey_24dp">
@@ -98,34 +102,29 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="#111111"
-                android:paddingTop="0dp"
-                android:paddingBottom="0dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
                 android:gravity="center_vertical"
                 android:textSize="18sp"
                 android:textAllCaps="false"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Remember + Forgot -->
+        <!-- Forgot Password -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="12dp"
+            android:gravity="end"
             android:orientation="horizontal">
-
-            <CheckBox
-                android:id="@+id/login_cbRemember"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:buttonTint="#4B35FF"
-                android:text="Remember me"
-                style="@style/TextAppearance.MyApp.CaptionSmall" />
 
             <TextView
                 android:id="@+id/login_tvForgotPassword"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
                 android:text="Forgot Password?"
                 android:textColor="#4B35FF"
                 style="@style/TextAppearance.MyApp.CaptionSmall" />
