@@ -34,7 +34,7 @@ class Step1ViewModel : ViewModel() {
         try {
             Log.d(TAG, "Initializing fields for Step 1 with current data: ${data.restaurantName}")
             _formFields.value = listOf(
-                FormItem.StepProgress("STEP 1 OF 6", "Owner & Restaurant", "Who runs it and what it's called."),
+                FormItem.StepProgress("STEP 1 OF 5", "Owner & Restaurant", "Who runs it and what it's called."),
                 FormItem.InfoCard("The owner is shown on invoices and internal reports — never to customers."),
                 FormItem.SectionHeader("OWNER INFORMATION", sectionNumber = "1"),
                 FormItem.InputField("owner_name", "Owner full name *", "e.g. John Doe", InputType.TYPE_CLASS_TEXT, value = data.ownerFullName),

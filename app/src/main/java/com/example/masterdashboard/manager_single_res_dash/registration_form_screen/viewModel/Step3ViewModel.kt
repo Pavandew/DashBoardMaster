@@ -34,7 +34,7 @@ class Step3ViewModel : ViewModel() {
         try {
             Log.d(TAG, "Initializing fields for Step 3. Current GST: ${data.gstNumber}")
             _formFields.value = listOf(
-                FormItem.StepProgress("STEP 3 OF 6", "Tax & Compliance", "GST, PAN, FSSAI and bill tax."),
+                FormItem.StepProgress("STEP 3 OF 5", "Tax & Compliance", "GST, PAN, FSSAI and bill tax."),
                 
                 FormItem.SectionHeader("TAX REGISTRATION", isOptional = true, sectionNumber = "1"),
                 FormItem.InputField("gst_number", "GST number", "e.g. 29ABCDE1234F1Z5", InputType.TYPE_CLASS_TEXT, value = data.gstNumber),

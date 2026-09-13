@@ -60,7 +60,7 @@ class Step2ViewModel : ViewModel() {
             val selectedCountry = if (data.country.isEmpty()) "India" else data.country
 
             _formFields.value = listOf(
-                FormItem.StepProgress("STEP 2 OF 6", "Address & Contact", "Where you are and how to reach you."),
+                FormItem.StepProgress("STEP 2 OF 5", "Address & Contact", "Where you are and how to reach you."),
                 
                 FormItem.SectionHeader("RESTAURANT ADDRESS", sectionNumber = "1"),
                 FormItem.InputField("address", "Address *", "e.g. Street, Area, Building", InputType.TYPE_CLASS_TEXT, value = data.address),
