@@ -15,6 +15,7 @@ import com.bumptech.glide.Glide
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentStaffProfileBinding
 import com.example.masterdashboard.login.views.ChangePasswordFragment
+import com.example.masterdashboard.manager_single_res_dash.views.MenuManagementFragment
 import com.example.masterdashboard.utils.LogoutManager
 import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.launch
@@ -64,6 +65,21 @@ class StaffProfileFragment : Fragment() {
     private fun setupListeners() {
         binding.waiterLogoutBtn.setOnClickListener {
             logoutManager.showLogoutConfirmation()
+        }
+
+        val hasMenuAccess = sessionManager.hasPermission("menu_access")
+        Log.d(TAG, "Permissions check: has 'menu_access' = $hasMenuAccess")
+        if (hasMenuAccess) {
+            binding.cardMenuManagement.visibility = View.VISIBLE
+            binding.btnMenuManagement.setOnClickListener {
+                val containerId = (view?.parent as? View)?.id ?: return@setOnClickListener
+                parentFragmentManager.beginTransaction()
+                    .replace(containerId, MenuManagementFragment())
+                    .addToBackStack(null)
+                    .commit()
+            }
+        } else {
+            binding.cardMenuManagement.visibility = View.GONE
         }
 
         binding.btnForgotPassword.setOnClickListener {

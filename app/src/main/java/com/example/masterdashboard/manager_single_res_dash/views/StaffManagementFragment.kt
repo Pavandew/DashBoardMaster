@@ -179,6 +179,7 @@ class StaffManagementFragment : Fragment() {
     }
     private fun setupOnClick() {
         binding.fabAddStaffBtn.setOnClickListener {
+            staffViewModel.clearFormData()
             parentFragmentManager.beginTransaction()
                 .replace(R.id.manager_fragmentContainer, AddStaffFragment())
                 .addToBackStack(AppConstants.BACKSTACK_ADD_STAFF)

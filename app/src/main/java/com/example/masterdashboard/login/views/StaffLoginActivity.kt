@@ -169,7 +169,8 @@ class StaffLoginActivity : AppCompatActivity() {
             phone = state.mobile,
             ownerUid = state.restaurantOwnerUid,
             staffDocId = state.staffDocId,
-            role = state.role
+            role = state.role,
+            isForgotPassword = true
         )
         
         supportFragmentManager.beginTransaction()

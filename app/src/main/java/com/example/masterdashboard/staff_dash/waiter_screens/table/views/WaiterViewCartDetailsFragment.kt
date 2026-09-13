@@ -6,10 +6,9 @@ import android.widget.Toast
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.example.masterdashboard.R
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
-import kotlinx.coroutines.flow.collectLatest
+import com.example.masterdashboard.utils.TaxCalculator
 import kotlinx.coroutines.launch
 
 /**
@@ -73,12 +72,15 @@ class WaiterViewCartDetailsFragment : BaseViewCartFragment() {
     }
 
     private fun navigateToSuccess() {
+        val subtotal = viewModel.cartSummary.value.totalPrice.toDouble()
+        val taxInfo = TaxCalculator(sessionManager).calculateTax(subtotal)
+
         val bundle = Bundle().apply {
             putString("tableId", arguments?.getString("tableId"))
             putString("tableName", arguments?.getString("tableName"))
             putString("orderId", viewModel.lastOrderId)
             putInt("totalItems", viewModel.cartSummary.value.totalItems)
-            putDouble("totalPrice", viewModel.cartSummary.value.totalPrice * 1.05)
+            putDouble("totalPrice", taxInfo.grandTotal)
             putBoolean("isCashier", false)
         }
         

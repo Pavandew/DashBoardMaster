@@ -178,9 +178,10 @@ class WaiterTableRepository {
             AppConstants.FIELD_STATUS to newStatus.name
         )
         
-        // If table is being made FREE, clear the customer name
+        // If table is being made FREE, clear the customer name and current bill
         if (newStatus == TableStatus.FREE) {
             updates[AppConstants.FIELD_CUSTOMER_NAME_TABLE] = null
+            updates[AppConstants.FIELD_CURRENT_BILL] = null
         } else if (customerName != null) {
             updates[AppConstants.FIELD_CUSTOMER_NAME_TABLE] = customerName
         }
