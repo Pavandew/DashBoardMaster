@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/bg_main"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_search_bar" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Service Charge Settings"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Configure automatic service charge rules for customer bills"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
+
+        <!-- Reusable Master Switch Card -->
+        <include
+            android:id="@+id/cardSwitchServiceCharge"
+            layout="@layout/layout_settings_master_switch" />
+
+        <!-- Config Details Panel -->
+        <LinearLayout
+            android:id="@+id/llServiceChargeConfig"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical">
+
+            <!-- Percentage Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPercent"
+                style="@style/SettingsTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Service Charge Rate (%)"
+                app:suffixText="%">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etServiceChargePercent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp"
+                    tools:text="5.0" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Preset Percent Chips -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/cgPresetPercent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip5"
+                    style="@style/SettingsChipAction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="5%" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip7_5"
+                    style="@style/SettingsChipAction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="7.5%" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip10"
+                    style="@style/SettingsChipAction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="10%" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip12_5"
+                    style="@style/SettingsChipAction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="12.5%" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <!-- Bill Display Label -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilLabel"
+                style="@style/SettingsTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="Display Name on Bill">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etServiceChargeLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapWords"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp"
+                    tools:text="Service Charge" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Reusable Dine-In Only Switch Card -->
+            <include
+                android:id="@+id/cardSwitchDineInOnly"
+                layout="@layout/layout_settings_master_switch" />
+
+            <!-- Reusable Calculate Tax Switch Card -->
+            <include
+                android:id="@+id/cardSwitchApplyTax"
+                layout="@layout/layout_settings_master_switch" />
+
+        </LinearLayout>
+
+        <!-- Progress Indicator -->
+        <ProgressBar
+            android:id="@+id/progressBarServiceCharge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
+
+        <!-- Save Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveServiceCharge"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="20dp"
+            android:text="Save Service Charge Rules"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/mid_app_color"
+            app:cornerRadius="12dp" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

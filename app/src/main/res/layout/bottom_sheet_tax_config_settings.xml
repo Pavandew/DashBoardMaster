@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/bg_main"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_search_bar" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tax Configuration (GST / VAT)"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Configure tax rates, GSTIN registration &amp; receipt tax rules"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
+
+        <!-- Reusable Master Switch Card -->
+        <include
+            android:id="@+id/cardSwitchTax"
+            layout="@layout/layout_settings_master_switch" />
+
+        <!-- Config Details Panel -->
+        <LinearLayout
+            android:id="@+id/llTaxConfigPanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical">
+
+            <!-- GSTIN Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilGstNumber"
+                style="@style/SettingsTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="GSTIN Number (Optional)">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etGstNumber"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapCharacters"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp"
+                    tools:text="29AANCC4762F1ZC" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Tax System Choice -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Tax System / Region"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/cgTaxLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipGst"
+                    style="@style/SettingsChipChoice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="GST (India - SGST/CGST)" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipVat"
+                    style="@style/SettingsChipChoice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="VAT (Single Line)" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSalesTax"
+                    style="@style/SettingsChipChoice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sales Tax (USA)" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <!-- Tax Rate Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilTaxRate"
+                style="@style/SettingsTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="Default Tax Rate (%)"
+                app:suffixText="%">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etTaxRate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp"
+                    tools:text="5.0" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Preset Rate Chips -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/cgPresetTax"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipRate5"
+                    style="@style/SettingsChipAction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="5% (Restaurant Standard)" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipRate12"
+                    style="@style/SettingsChipAction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="12%" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipRate18"
+                    style="@style/SettingsChipAction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="18%" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <!-- Dynamic Explanation Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="#1A2130"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#21C7DC"
+                app:strokeWidth="1dp">
+
+                <TextView
+                    android:id="@+id/tvTaxExplanation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="14dp"
+                    android:textColor="@color/super_light_app_color"
+                    android:textSize="12sp"
+                    tools:text="ℹ️ For 5.0% GST in India, receipts automatically split tax into State GST @ 2.5% + Central GST @ 2.5%." />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Reusable Price Includes Tax Switch Card -->
+            <include
+                android:id="@+id/cardSwitchPriceIncludesTax"
+                layout="@layout/layout_settings_master_switch" />
+
+        </LinearLayout>
+
+        <!-- Progress Indicator -->
+        <ProgressBar
+            android:id="@+id/progressBarTaxConfig"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
+
+        <!-- Save Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveTaxConfig"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="20dp"
+            android:text="Save Tax Settings"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/mid_app_color"
+            app:cornerRadius="12dp" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
