@@ -36,6 +36,7 @@ class PrintCommandHelper {
 
     /**
      * Generates a byte array for a complete bill matching professional restaurant receipts.
+     * Respects customized header tagline, footer message, and GSTIN/FSSAI toggles.
      */
     fun generateBillBytes(
         restaurantName: String,
@@ -44,6 +45,9 @@ class PrintCommandHelper {
         fssai: String = "",
         cashierName: String = "Cashier",
         gstRate: Double = 5.0,
+        headerTagline: String = "",
+        footerMessage: String = "Thank You Visit Again",
+        showCustomerInfo: Boolean = true,
         order: CashierBillingOrderModel
     ): ByteArray {
         val bytes = mutableListOf<Byte>()
@@ -59,6 +63,11 @@ class PrintCommandHelper {
         
         bytes.addAll(TEXT_SIZE_NORMAL.toList())
         bytes.addAll(BOLD_OFF.toList())
+
+        if (headerTagline.isNotEmpty()) {
+            bytes.addAll(headerTagline.toByteArray().toList())
+            bytes.addAll(FEED_LINE.toList())
+        }
 
         if (address.isNotEmpty()) {
             bytes.addAll(address.toByteArray().toList())
@@ -90,6 +99,11 @@ class PrintCommandHelper {
         val stewardName = order.waiterId.ifEmpty { "Cashier" }
         bytes.addAll(formatTwoColumns("TableNo: ${order.tableName}", "Steward: $stewardName").toByteArray().toList())
         bytes.addAll(FEED_LINE.toList())
+
+        if (showCustomerInfo && order.customerName.isNotEmpty()) {
+            bytes.addAll("Customer: ${order.customerName}".toByteArray().toList())
+            bytes.addAll(FEED_LINE.toList())
+        }
 
         // 3. Items Table Header
         bytes.addAll(createDoubleSeparator().toByteArray().toList())
@@ -128,7 +142,7 @@ class PrintCommandHelper {
         bytes.addAll(formatTwoColumns(scText, String.format(Locale.US, "%.2f", sc)).toByteArray().toList())
         bytes.addAll(FEED_LINE.toList())
 
-        // GST Tax Breakdown (SGST & CGST split dynamically based on configured gstRate)
+        // GST Tax Breakdown
         if (order.taxAmount > 0) {
             val halfRate = gstRate / 2.0
             val halfTax = order.taxAmount / 2.0
@@ -175,8 +189,9 @@ class PrintCommandHelper {
         bytes.addAll(FEED_LINE.toList())
         bytes.addAll(FEED_LINE.toList())
 
+        val activeFooter = footerMessage.ifEmpty { "Thank You Visit Again" }
         bytes.addAll(ALIGN_CENTER.toList())
-        bytes.addAll("Thank You visit again".toByteArray().toList())
+        bytes.addAll(activeFooter.toByteArray().toList())
         bytes.addAll(FEED_LINE.toList())
 
         bytes.addAll(ALIGN_RIGHT.toList())
@@ -217,11 +232,14 @@ class PrintCommandHelper {
         gstin: String = "",
         fssai: String = "",
         cashierName: String = "Cashier",
+        headerTagline: String = "",
+        footerMessage: String = "Thank You Visit Again",
         order: CashierBillingOrderModel
     ): String {
         val sb = StringBuilder()
         sb.append("\n----------- PRINTER PREVIEW -----------\n")
         sb.append(restaurantName.uppercase().padStart((LINE_WIDTH + restaurantName.length) / 2)).append("\n")
+        if (headerTagline.isNotEmpty()) sb.append(headerTagline).append("\n")
         if (address.isNotEmpty()) sb.append(address).append("\n")
         if (gstin.isNotEmpty()) sb.append("GSTIN : $gstin\n")
         if (fssai.isNotEmpty()) sb.append("FSSAI : $fssai\n")
@@ -237,6 +255,7 @@ class PrintCommandHelper {
         val gross = Math.round(order.subtotal + order.serviceChargeAmount + order.taxAmount - order.discountAmount).toDouble()
         sb.append(formatTwoColumns("Gross Amount", String.format(Locale.US, "%.2f", gross))).append("\n")
         sb.append("UserID/Cashier : $cashierName\n")
+        sb.append(footerMessage.ifEmpty { "Thank You Visit Again" }).append("\n")
         sb.append("---------------------------------------\n")
         return sb.toString()
     }

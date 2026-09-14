@@ -84,38 +84,54 @@ class PermissionsAndDocumentsFragment : Fragment() {
 
     private fun setupFormItemsList() {
         val currentPermissions = sharedViewModel.currentStaffData.value.permissions
+        val staffRole = sharedViewModel.currentStaffData.value.role.lowercase()
         val isEditMode = sharedViewModel.isEditMode.value
+
+        fun hasPerm(key: String): Boolean {
+            if (currentPermissions.isNotEmpty()) {
+                return currentPermissions.contains(key)
+            }
+            // Smart defaults for NEW staff based on selected Role
+            return when (key) {
+                "order_access" -> true // All staff need order access
+                "billing_access" -> staffRole.contains("cashier") || staffRole.contains("manager") || staffRole.contains("billing")
+                "menu_access" -> staffRole.contains("manager") || staffRole.contains("chef") || staffRole.contains("head")
+                "staff_access" -> staffRole.contains("manager")
+                "dash_access" -> staffRole.contains("manager")
+                else -> false
+            }
+        }
 
         formItems = listOf(
             Step2FormItem.Header,
             Step2FormItem.SectionTitle("Set Permissions", "Choose the access level for this staff member"),
-            Step2FormItem.PermissionItem("dash_access", "Dashboard Access", "View dashboard and reports", R.drawable.person).apply {
-                isChecked = currentPermissions.contains("dash_access")
+            Step2FormItem.PermissionItem("dash_access", "Dashboard Access", "View dashboard and sales reports", R.drawable.ic_dashboard_24dp).apply {
+                isChecked = hasPerm("dash_access")
             },
-            Step2FormItem.PermissionItem("menu_access", "Menu Management", "Add / Edit menu items", R.drawable.person).apply {
-                isChecked = currentPermissions.contains("menu_access")
+            Step2FormItem.PermissionItem("menu_access", "Menu Management", "Add / Edit dishes and prices", R.drawable.ic_restaurant_24dp).apply {
+                isChecked = hasPerm("menu_access")
             },
-            Step2FormItem.PermissionItem("order_access", "Order Management", "Manage customer orders", R.drawable.person).apply {
-                isChecked = currentPermissions.contains("order_access")
+            Step2FormItem.PermissionItem("order_access", "Order Management", "Take orders and manage tables", R.drawable.ic_order_approve_24dp).apply {
+                isChecked = hasPerm("order_access")
             },
-            Step2FormItem.PermissionItem("staff_access", "Staff Management", "Add / Edit staff details", R.drawable.person).apply {
-                isChecked = currentPermissions.contains("staff_access")
+            Step2FormItem.PermissionItem("staff_access", "Staff Management", "Add / Edit staff and roles", R.drawable.ic_staffs_24dp).apply {
+                isChecked = hasPerm("staff_access")
             },
-            Step2FormItem.PermissionItem("billing_access", "Billing & Payments", "Manage bills and payments", R.drawable.person).apply {
-                isChecked = currentPermissions.contains("billing_access")
+            Step2FormItem.PermissionItem("billing_access", "Billing & Payments", "Generate bills and collect payments", R.drawable.ic_payments_24dp).apply {
+                isChecked = hasPerm("billing_access")
             },
 
             Step2FormItem.SectionTitle("Upload Documents", "Upload necessary documents for verification"),
-            Step2FormItem.DocumentItem("aadhar", "Identity Verification Document *", "Upload Verification Copy", R.drawable.person).apply {
-                if (isEditMode) isUploaded = true // Assume already uploaded in edit mode for simplicity, or we'd need to fetch URLs
-            },
-            Step2FormItem.DocumentItem("pan", "Tax Card (Optional)", "Upload Identification Copy", R.drawable.person).apply {
+            Step2FormItem.DocumentItem("aadhar", "Identity Verification Document *", "Upload Verification Copy", R.drawable.ic_badge_24dp).apply {
                 if (isEditMode) isUploaded = true
             },
-            Step2FormItem.DocumentItem("photo", "Photo *", "Upload Profile Photo", R.drawable.person).apply {
+            Step2FormItem.DocumentItem("pan", "Tax Card (Optional)", "Upload Identification Copy", R.drawable.ic_logs_24dp).apply {
                 if (isEditMode) isUploaded = true
             },
-            Step2FormItem.DocumentItem("address", "Address Proof (Optional)", "Upload Address Proof", R.drawable.person).apply {
+            Step2FormItem.DocumentItem("photo", "Photo *", "Upload Profile Photo", R.drawable.ic_person_24dp).apply {
+                if (isEditMode) isUploaded = true
+            },
+            Step2FormItem.DocumentItem("address", "Address Proof (Optional)", "Upload Address Proof", R.drawable.ic_inventory_24dp).apply {
                 if (isEditMode) isUploaded = true
             }
         )

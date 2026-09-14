@@ -319,8 +319,15 @@ class OrderTakingRepository {
                 .collection(AppConstants.COLLECTION_TABLES)
                 .document(tableId)
 
-            // Stage table status update only for real table orders
-            batch.update(tableRef, AppConstants.FIELD_STATUS, AppConstants.STATUS_OCCUPIED)
+            // Stage table status, customer name, and bill amount updates for table orders
+            val tableUpdates = mutableMapOf<String, Any>(
+                AppConstants.FIELD_STATUS to AppConstants.STATUS_OCCUPIED,
+                AppConstants.FIELD_CURRENT_BILL to "₹ ${orderData.grandTotal.toInt()}"
+            )
+            if (orderData.customerName.isNotEmpty()) {
+                tableUpdates[AppConstants.FIELD_CUSTOMER_NAME_TABLE] = orderData.customerName
+            }
+            batch.update(tableRef, tableUpdates)
 
             tableRef.collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
                 .let { if (existingOrderDocId.isNullOrEmpty()) it.document() else it.document(existingOrderDocId) }

@@ -14,7 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.example.masterdashboard.print_bill.BluetoothPrinterManager
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.model.BillingPrinterSettings
 import com.example.masterdashboard.staff_dash.billing_screens.model.CashierBillingOrderModel
 import com.example.masterdashboard.utils.SessionManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -112,15 +112,19 @@ class PrintBillController(
 
     private fun executePrint(order: CashierBillingOrderModel, device: BluetoothDevice) {
         val cachedDetails = sessionManager.getCachedRestaurantDetails()
+        val receiptSettings = cachedDetails?.getEffectiveBillingPrinterSettings() ?: BillingPrinterSettings()
+
         val restaurantName = sessionManager.getRestaurantName().ifEmpty { sessionManager.getUserName() ?: "Restaurant" }
-        
+
         val addressStr = cachedDetails?.let {
             val parts = listOf(it.address, it.landmark, "${it.city} ${it.pinCode}".trim()).filter { p -> p.isNotEmpty() }
             parts.joinToString(", ")
         } ?: ""
 
-        val gstin = cachedDetails?.gstNumber ?: ""
-        val fssai = cachedDetails?.fssaiNumber ?: ""
+        val gstin = if (receiptSettings.showGstin) (cachedDetails?.gstNumber ?: "") else ""
+        val fssai = if (receiptSettings.showFssai) (cachedDetails?.fssaiNumber ?: "") else ""
+        val tagline = receiptSettings.customHeaderTagline
+        val footerMsg = receiptSettings.customFooterMessage.ifEmpty { "Thank You Visit Again" }
         val cashierName = sessionManager.getUserName() ?: "Cashier"
         val gstRate = sessionManager.getGstRate()
 
@@ -132,6 +136,8 @@ class PrintBillController(
             gstin = gstin,
             fssai = fssai,
             cashierName = cashierName,
+            headerTagline = tagline,
+            footerMessage = footerMsg,
             order = order
         ))
 
@@ -142,6 +148,9 @@ class PrintBillController(
             fssai = fssai,
             cashierName = cashierName,
             gstRate = gstRate,
+            headerTagline = tagline,
+            footerMessage = footerMsg,
+            showCustomerInfo = receiptSettings.showCustomerInfo,
             order = order
         )
 

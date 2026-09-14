@@ -173,7 +173,22 @@ data class BillingPrinterSettings(
     var restaurantLogoUri: String? = null,
 
     @get:PropertyName("showLogoOnReceipts") @set:PropertyName("showLogoOnReceipts")
-    var showLogoOnReceipts: Boolean = true
+    var showLogoOnReceipts: Boolean = true,
+
+    @get:PropertyName("customHeaderTagline") @set:PropertyName("customHeaderTagline")
+    var customHeaderTagline: String = "",
+
+    @get:PropertyName("customFooterMessage") @set:PropertyName("customFooterMessage")
+    var customFooterMessage: String = "Thank You Visit Again",
+
+    @get:PropertyName("showGstin") @set:PropertyName("showGstin")
+    var showGstin: Boolean = true,
+
+    @get:PropertyName("showFssai") @set:PropertyName("showFssai")
+    var showFssai: Boolean = true,
+
+    @get:PropertyName("showCustomerInfo") @set:PropertyName("showCustomerInfo")
+    var showCustomerInfo: Boolean = true
 ) : Serializable {
     fun toMap(): Map<String, Any?> {
         return mapOf(
@@ -184,7 +199,12 @@ data class BillingPrinterSettings(
             "startingInvoiceNumber" to startingInvoiceNumber,
             "printSize" to printSize,
             "restaurantLogoUri" to restaurantLogoUri,
-            "showLogoOnReceipts" to showLogoOnReceipts
+            "showLogoOnReceipts" to showLogoOnReceipts,
+            "customHeaderTagline" to customHeaderTagline,
+            "customFooterMessage" to customFooterMessage,
+            "showGstin" to showGstin,
+            "showFssai" to showFssai,
+            "showCustomerInfo" to showCustomerInfo
         )
     }
 }
