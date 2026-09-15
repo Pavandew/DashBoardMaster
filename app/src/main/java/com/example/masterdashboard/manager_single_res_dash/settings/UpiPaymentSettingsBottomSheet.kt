@@ -12,10 +12,10 @@ import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.BottomSheetUpiPaymentSettingsBinding
-import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.example.masterdashboard.utils.SessionManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -30,7 +30,6 @@ class UpiPaymentSettingsBottomSheet : BottomSheetDialogFragment() {
     private val binding get() = _binding!!
 
     private lateinit var sessionManager: SessionManager
-    private val firestore = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance("gs://masterdashboard-836dd.firebasestorage.app")
 
     private var selectedImageUri: Uri? = null
@@ -42,7 +41,6 @@ class UpiPaymentSettingsBottomSheet : BottomSheetDialogFragment() {
         uri?.let {
             selectedImageUri = it
             Log.d(TAG, "Image selected from gallery: $it")
-            // Load selected image preview using Coil
             binding.ivQrPreview.load(it) {
                 crossfade(true)
                 placeholder(R.drawable.ic_upi_pay_24dp)
@@ -84,7 +82,6 @@ class UpiPaymentSettingsBottomSheet : BottomSheetDialogFragment() {
         }
 
         if (currentQrUrl.isNotEmpty()) {
-            // Load existing QR image using Coil
             binding.ivQrPreview.load(currentQrUrl) {
                 crossfade(true)
                 placeholder(R.drawable.ic_upi_pay_24dp)
@@ -108,26 +105,21 @@ class UpiPaymentSettingsBottomSheet : BottomSheetDialogFragment() {
             try {
                 var updatedQrUrl = currentQrUrl
 
-                // 1. Upload new image if user picked one from gallery
-                selectedImageUri?.let { uri ->
+                if (selectedImageUri != null) {
                     Log.d(TAG, "Uploading new QR image to Firebase Storage...")
                     val storageRef = storage.reference.child("upi_qr/$ownerUid.jpg")
-                    storageRef.putFile(uri).await()
+                    storageRef.putFile(selectedImageUri!!).await()
                     updatedQrUrl = storageRef.downloadUrl.await().toString()
                     Log.i(TAG, "Uploaded QR image URL: $updatedQrUrl")
                 }
 
-                // 2. Update Firestore user document
                 val updates = mapOf(
                     "upiId" to upiId,
                     "upiQrUrl" to updatedQrUrl
                 )
-                firestore.collection(AppConstants.COLLECTION_USERS)
-                    .document(ownerUid)
-                    .update(updates)
-                    .await()
+                val docRef = RestaurantPathHelper.getRestaurantDocRef(ownerUid)
+                docRef.set(updates, SetOptions.merge()).await()
 
-                // 3. Update local SessionManager cache
                 sessionManager.saveUpiDetails(upiId, updatedQrUrl)
 
                 Toast.makeText(requireContext(), "UPI Settings saved successfully!", Toast.LENGTH_SHORT).show()

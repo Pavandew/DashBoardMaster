@@ -27,6 +27,7 @@ import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.Resou
 import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.staff_dash.utils.StatusUIUtils
+import com.example.masterdashboard.utils.TaxCalculator
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -365,15 +366,14 @@ class CashierSettleBillFragment : Fragment() {
 
                             mBinding.tvSubtotalValue.text = getString(R.string.amount_format, String.format("%.2f", order.subtotal))
 
-                            val gstRate = sessionManager.getGstRate()
-                            val halfRate = gstRate / 2.0
+                            val taxCalculator = TaxCalculator(sessionManager)
                             val halfTax = order.taxAmount / 2.0
 
                             if (order.taxAmount > 0) {
                                 mBinding.llSgstRow.isVisible = true
                                 mBinding.llCgstRow.isVisible = true
-                                mBinding.tvSgstLabel.text = String.format(Locale.US, "State GST @ %.1f%%", halfRate)
-                                mBinding.tvCgstLabel.text = String.format(Locale.US, "Central GST @ %.1f%%", halfRate)
+                                mBinding.tvSgstLabel.text = taxCalculator.getSgstLabel()
+                                mBinding.tvCgstLabel.text = taxCalculator.getCgstLabel()
                                 mBinding.tvSgstValue.text = getString(R.string.amount_format, String.format("%.2f", halfTax))
                                 mBinding.tvCgstValue.text = getString(R.string.amount_format, String.format("%.2f", halfTax))
                             } else {

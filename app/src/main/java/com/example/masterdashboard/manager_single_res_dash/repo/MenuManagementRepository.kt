@@ -7,6 +7,7 @@ import com.example.masterdashboard.manager_single_res_dash.models.MenuCategory
 import com.example.masterdashboard.manager_single_res_dash.models.MenuFoodItemsData
 import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.utils.ImageUtils
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
@@ -22,12 +23,11 @@ class MenuManagementRepository {
     }
 
     private val firestore = FirebaseFirestore.getInstance()
-    // Explicitly initialize with bucket name to avoid 404 mismatch
     private val storage = FirebaseStorage.getInstance("gs://masterdashboard-836dd.firebasestorage.app")
 
     /**
      * Uploads a menu item image to Firebase Storage after compression.
-     * Uses the itemId as the filename to handle "Replace" logic cleanly.
+     * Uses the ownerUid/restaurantId in the storage child path.
      */
     suspend fun uploadMenuImage(context: Context, ownerUid: String, imageUri: Uri, itemId: String): Result<String> {
         if (ownerUid.isEmpty() || itemId.isEmpty()) {
@@ -35,7 +35,7 @@ class MenuManagementRepository {
         }
 
         return try {
-            val fullPath = "users/$ownerUid/menu_images/item_${itemId}.jpg"
+            val fullPath = "restaurants/$ownerUid/menu_images/item_${itemId}.jpg"
             Log.i(TAG, "Initiating compressed upload to path: $fullPath")
             
             val compressedBytes = ImageUtils.compressImage(context, imageUri)
@@ -62,43 +62,40 @@ class MenuManagementRepository {
     // listens to real-time additions/removals of menu categories from firebase
     fun getLiveMenuCategories(ownerUid: String) : Flow<List<MenuCategory>> = callbackFlow {
 
-        val query = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(ownerUid)
+        val query = RestaurantPathHelper.getOutletDocRef(ownerUid)
             .collection(AppConstants.COLLECTION_MENU_CATEGORIES)
             .orderBy("menuCategoryName", Query.Direction.ASCENDING)
 
         val listener = query.addSnapshotListener { snapshots, exception ->
-            if(exception != null) {
+            if (exception != null) {
                 close(exception)
                 return@addSnapshotListener
             }
 
-            if( snapshots != null) {
+            if (snapshots != null) {
                 val categories = snapshots.toObjects(MenuCategory::class.java)
                 trySend(categories)
             }
         }
 
-        // keep the channel open until the view's coroutine lifecycle scope is destroyed
         awaitClose { listener.remove() }
     }
 
     fun getLiveFoodItems(ownerUid: String, categoryId: String): Flow<List<MenuFoodItemsData>> = callbackFlow {
 
-        val query = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(ownerUid)
+        val query = RestaurantPathHelper.getOutletDocRef(ownerUid)
             .collection(AppConstants.COLLECTION_MENU_CATEGORIES)
             .document(categoryId)
             .collection(AppConstants.COLLECTION_FOOD_ITEMS)
             .orderBy("itemName", Query.Direction.ASCENDING)
 
         val listener = query.addSnapshotListener { snapshots, exception ->
-            if(exception != null) {
+            if (exception != null) {
                 close(exception)
                 return@addSnapshotListener
             }
 
-            if(snapshots != null) {
+            if (snapshots != null) {
                 val items = snapshots.toObjects(MenuFoodItemsData::class.java)
                 trySend(items)
             }
@@ -113,8 +110,7 @@ class MenuManagementRepository {
     suspend fun removeCategoryCascading(ownerUid: String, categoryId: String) {
         Log.i(TAG, "removeCategoryCascading transaction initiated for Category ID: $categoryId")
 
-        val categoryDocRef = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(ownerUid)
+        val categoryDocRef = RestaurantPathHelper.getOutletDocRef(ownerUid)
             .collection(AppConstants.COLLECTION_MENU_CATEGORIES)
             .document(categoryId)
 
@@ -142,8 +138,7 @@ class MenuManagementRepository {
     suspend fun removeFoodItemTransactional(ownerUid: String, categoryId: String, foodItemId: String) {
         Log.i(TAG, "removeFoodItemTransactional initiated for Item ID: $foodItemId under Category ID: $categoryId")
 
-        val categoryDocRef = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(ownerUid)
+        val categoryDocRef = RestaurantPathHelper.getOutletDocRef(ownerUid)
             .collection(AppConstants.COLLECTION_MENU_CATEGORIES)
             .document(categoryId)
 
@@ -176,8 +171,7 @@ class MenuManagementRepository {
     ) {
         Log.i(TAG, "saveMenuFoodItemTransactional initiated for item: ${item.itemName} (New: $isNewItem)")
 
-        val categoryDocRef = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(ownerUid)
+        val categoryDocRef = RestaurantPathHelper.getOutletDocRef(ownerUid)
             .collection(AppConstants.COLLECTION_MENU_CATEGORIES)
             .document(categoryId)
 
@@ -198,4 +192,3 @@ class MenuManagementRepository {
         Log.i(TAG, "✅ saveMenuFoodItemTransactional completed successfully.")
     }
 }
-

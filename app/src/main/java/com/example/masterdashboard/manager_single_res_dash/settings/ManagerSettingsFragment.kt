@@ -14,10 +14,11 @@ import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentManagerSettingsBinding
 import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
 import com.example.masterdashboard.manager_single_res_dash.SingleResOwnerHomeActivity
-import com.example.masterdashboard.manager_single_res_dash.adapter.SettingsAdapter
-import com.example.masterdashboard.manager_single_res_dash.models.SettingsCategory
-import com.example.masterdashboard.manager_single_res_dash.models.SettingsOption
+import com.example.masterdashboard.manager_single_res_dash.settings.adapter.SettingsAdapter
+import com.example.masterdashboard.manager_single_res_dash.settings.model.SettingsCategory
+import com.example.masterdashboard.manager_single_res_dash.settings.model.SettingsOption
 import com.example.masterdashboard.manager_single_res_dash.repo.RestaurantDetailsRepository
+import com.example.masterdashboard.subscription.views.SubscriptionPlansFragment
 import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.utils.LogoutManager
 import com.example.masterdashboard.utils.SessionManager
@@ -90,7 +91,10 @@ class ManagerSettingsFragment : Fragment() {
         when (option.id) {
             "res_details" -> openRegistrationEditStep(1)
             "documents" -> openRegistrationEditStep(2)
-            "tax_config" -> openRegistrationEditStep(4)
+            "tax_config" -> {
+                val taxSheet = TaxConfigSettingsBottomSheet()
+                taxSheet.show(childFragmentManager, TaxConfigSettingsBottomSheet.TAG)
+            }
             "operating_hours" -> openRegistrationEditStep(5)
             "payment_methods" -> {
                 val upiSheet = UpiPaymentSettingsBottomSheet()
@@ -99,6 +103,38 @@ class ManagerSettingsFragment : Fragment() {
             "service_charge" -> {
                 val serviceChargeSheet = ServiceChargeSettingsBottomSheet()
                 serviceChargeSheet.show(childFragmentManager, ServiceChargeSettingsBottomSheet.TAG)
+            }
+            "receipt_layout" -> {
+                val receiptSheet = ReceiptSettingsBottomSheet()
+                receiptSheet.show(childFragmentManager, ReceiptSettingsBottomSheet.TAG)
+            }
+            "change_password" -> {
+                val containerId = com.example.masterdashboard.utils.NavigationUtils.getHostContainerId(activity)
+                val targetContainer = if (containerId != 0) containerId else R.id.manager_fragmentContainer
+                parentFragmentManager.beginTransaction()
+                    .replace(targetContainer, ManagerChangePasswordFragment())
+                    .addToBackStack(null)
+                    .commit()
+            }
+            "profile_info" -> {
+                val profileSheet = ProfileInfoSettingsBottomSheet()
+                profileSheet.show(childFragmentManager, ProfileInfoSettingsBottomSheet.TAG)
+            }
+            "app_version" -> {
+                val helpSheet = HelpSupportSettingsBottomSheet()
+                helpSheet.show(childFragmentManager, HelpSupportSettingsBottomSheet.TAG)
+            }
+            "manager_pin" -> {
+                val pinSheet = ManagerPinSettingsBottomSheet()
+                pinSheet.show(childFragmentManager, ManagerPinSettingsBottomSheet.TAG)
+            }
+            "subscription_plan" -> {
+                val containerId = com.example.masterdashboard.utils.NavigationUtils.getHostContainerId(activity)
+                val targetContainer = if (containerId != 0) containerId else R.id.manager_fragmentContainer
+                parentFragmentManager.beginTransaction()
+                    .replace(targetContainer, SubscriptionPlansFragment())
+                    .addToBackStack(null)
+                    .commit()
             }
             "logout" -> logoutManager.showLogoutConfirmation()
             else -> Toast.makeText(requireContext(), "${option.title} clicked", Toast.LENGTH_SHORT).show()
@@ -240,6 +276,12 @@ class ManagerSettingsFragment : Fragment() {
                         title = "Profile Information",
                         subtitle = "$userName • $displayRole",
                         iconRes = R.drawable.ic_person_24dp
+                    ),
+                    SettingsOption(
+                        id = "subscription_plan",
+                        title = "Subscription & Billing Plans",
+                        subtitle = "Manage 30-day free trial & owner pass plans",
+                        iconRes = R.drawable.ic_card_payment_24dp
                     ),
                     SettingsOption(
                         id = "change_password",

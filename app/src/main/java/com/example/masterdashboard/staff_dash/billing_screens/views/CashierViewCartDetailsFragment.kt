@@ -64,7 +64,7 @@ class CashierViewCartDetailsFragment : BaseViewCartFragment() {
         val notes = binding.etOrderNotes.text.toString().trim()
 
         Log.i("CashierViewCart", "Process: Executing Pay Later for $tableId.")
-        viewModel.submitActiveOrderToKitchen(managerId, floorId, tableId, notes, waiterId = waiterId)
+        viewModel.submitActiveOrderToKitchen(managerId, floorId, tableId, notes, waiterId = waiterId, sessionManager = sessionManager)
     }
 
     private fun navigateToPayment() {

@@ -100,6 +100,12 @@ class MenuItemListFragment : Fragment() {
         foodItemListAdapter = FoodItemListAdapter(
             onItemClick = { selectedFoodItem ->
                 Log.d(TAG, "Selected food item: ${selectedFoodItem.itemName} -> ID: ${selectedFoodItem.id}")
+                val hasMenuPermission = sessionManager.hasPermission("menu_access")
+                val canManageMenu = (userRole != AppConstants.ROLE_STAFF) || hasMenuPermission
+
+                if (!canManageMenu) {
+                    return@FoodItemListAdapter
+                }
                 
                 // Navigate to Edit mode
                 val editMenuItemFragment = AddMenuItemFragment().apply {
@@ -110,14 +116,15 @@ class MenuItemListFragment : Fragment() {
                     }
                 }
 
+                val containerId = (view?.parent as? View)?.id ?: R.id.manager_fragmentContainer
                 parentFragmentManager.beginTransaction()
-                    .replace(R.id.manager_fragmentContainer, editMenuItemFragment)
+                    .replace(containerId, editMenuItemFragment)
                     .addToBackStack(null)
                     .commit()
             },
             onItemLongClick = { targetFoodItem ->
-                // triggers when user hold down on any dish item card row
-                if(userRole != AppConstants.ROLE_STAFF) {
+                val hasMenuPermission = sessionManager.hasPermission("menu_access")
+                if (userRole != AppConstants.ROLE_STAFF || hasMenuPermission) {
                     showDeleteConfirmationPopup(targetFoodItem)
                 } else {
                     Log.w(TAG, "Action Denied: Staff roles are unauthorized to delete menu items.")
@@ -133,19 +140,21 @@ class MenuItemListFragment : Fragment() {
     }
 
     private fun setupRoleBasedAccess() {
-        // hide add button  at runtime if accessed via Staff Profile
-        if(userRole == AppConstants.ROLE_STAFF) {
-            Log.i(TAG, "Staff member role detected. Applying layout view restrictions.")
+        val hasMenuPermission = sessionManager.hasPermission("menu_access")
+        val canManageMenu = (userRole != AppConstants.ROLE_STAFF) || hasMenuPermission
+
+        if (!canManageMenu) {
+            Log.i(TAG, "Staff member without menu permission detected. Hiding add item button.")
             binding.btnAddNewItem.visibility = View.GONE
+        } else {
+            binding.btnAddNewItem.visibility = View.VISIBLE
         }
     }
 
     private fun setupOnClickActions() {
-        // fetch the user's role from SessionManager
         binding.btnAddNewItem.setOnClickListener {
             Log.d(TAG, "🔘 '+ Add New Item' button clicked. Forwarding keys to AddMenuItemFragment")
 
-            // FIXED: Creating a brand new argument bundle to pass data downstream to the creation form screen
             val addMenuItemFragment = AddMenuItemFragment().apply {
                 arguments = Bundle().apply {
                     putString("CATEGORY_ID", categoryId)
@@ -155,9 +164,9 @@ class MenuItemListFragment : Fragment() {
 
             Log.i(TAG, "Navigation: Transitioning to AddMenuItemFragment for Category: $categoryName")
 
-            // UNCOMMENTED: Triggering transaction to display Screen 3 layout
+            val containerId = (view?.parent as? View)?.id ?: R.id.manager_fragmentContainer
             parentFragmentManager.beginTransaction()
-                .replace(R.id.manager_fragmentContainer, addMenuItemFragment)
+                .replace(containerId, addMenuItemFragment)
                 .addToBackStack(null)
                 .commit()
         }

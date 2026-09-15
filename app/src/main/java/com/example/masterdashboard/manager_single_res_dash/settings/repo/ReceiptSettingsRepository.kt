@@ -3,8 +3,9 @@ package com.example.masterdashboard.manager_single_res_dash.settings.repo
 import android.util.Log
 import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.model.BillingPrinterSettings
 import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.model.RegistrationDataModel
-import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 
 class ReceiptSettingsRepository(
@@ -15,16 +16,13 @@ class ReceiptSettingsRepository(
     }
 
     /**
-     * Fetches Receipt/Billing Printer Settings from Firestore for a given owner.
-     * Uses fallback to legacy flat fields if billingPrinterSettings map is not populated yet.
+     * Fetches Receipt/Billing Printer Settings from Firestore for a given owner/restaurant ID.
      */
     suspend fun getReceiptSettings(ownerUid: String): Result<BillingPrinterSettings> {
         return try {
-            Log.d(TAG, "Fetching receipt settings for user: $ownerUid")
-            val doc = firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(ownerUid)
-                .get()
-                .await()
+            Log.d(TAG, "Fetching receipt settings for restaurant/user: $ownerUid")
+            val docRef = RestaurantPathHelper.getRestaurantDocRef(ownerUid)
+            val doc = docRef.get().await()
 
             val regModel = doc.toObject(RegistrationDataModel::class.java)
             val settings = regModel?.getEffectiveBillingPrinterSettings() ?: BillingPrinterSettings()
@@ -42,7 +40,7 @@ class ReceiptSettingsRepository(
      */
     suspend fun saveReceiptSettings(ownerUid: String, settings: BillingPrinterSettings): Result<Unit> {
         return try {
-            Log.d(TAG, "Saving billingPrinterSettings map to Firestore for user: $ownerUid")
+            Log.d(TAG, "Saving billingPrinterSettings map to Firestore for restaurant/user: $ownerUid")
             val updates = mapOf(
                 "billingPrinterSettings" to settings.toMap(),
                 "invoicePrefix" to settings.invoicePrefix,
@@ -53,12 +51,10 @@ class ReceiptSettingsRepository(
                 "showLogoOnReceipts" to settings.showLogoOnReceipts
             )
 
-            firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(ownerUid)
-                .update(updates)
-                .await()
+            val docRef = RestaurantPathHelper.getRestaurantDocRef(ownerUid)
+            docRef.set(updates, SetOptions.merge()).await()
 
-            Log.i(TAG, "Receipt settings map saved successfully to Firestore.")
+            Log.i(TAG, "Receipt settings map saved successfully to ${docRef.path}")
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Error updating billingPrinterSettings map in Firestore", e)

@@ -23,6 +23,7 @@ import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.launch
 
 import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.repository.RegistrationRepository
+import com.example.masterdashboard.subscription.views.SubscriptionPlansFragment
 
 class FormStep5Fragment : Fragment() {
 
@@ -115,11 +116,12 @@ class FormStep5Fragment : Fragment() {
                             Toast.makeText(requireContext(), "Restaurant details updated successfully!", Toast.LENGTH_SHORT).show()
                             activity?.finish()
                         } else {
-                            Toast.makeText(requireContext(), "Restaurant Setup Complete!", Toast.LENGTH_LONG).show()
-                            val intent = Intent(requireContext(), ManagerHomeActivity::class.java)
-                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                            startActivity(intent)
-                            activity?.finish()
+                            Toast.makeText(requireContext(), "Restaurant Setup Complete!", Toast.LENGTH_SHORT).show()
+                            Log.i("FormStep5Fragment", "Navigating to SubscriptionPlansFragment after registration complete")
+                            parentFragmentManager.beginTransaction()
+                                .replace(R.id.single_owner_fragmentContainer, SubscriptionPlansFragment()
+                                )
+                                .commit()
                         }
                     },
                     onFailure = { e ->

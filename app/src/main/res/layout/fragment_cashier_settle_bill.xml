@@ -171,29 +171,94 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/llServiceChargeRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:orientation="horizontal">
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone">
                 <TextView
+                    android:id="@+id/tvServiceChargeLabel"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="GST (5%)"
+                    android:text="Service Charge"
                     android:textColor="#6B7280" />
                 <TextView
-                    android:id="@+id/tvTaxValue"
+                    android:id="@+id/tvBtnRemoveServiceCharge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="12dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:text="Remove"
+                    android:textColor="#EF4444"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/tvServiceChargeValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="#111827"
-                    tools:text="₹40.00" />
+                    tools:text="₹0.00" />
             </LinearLayout>
 
+            <!-- State GST (SGST @ 2.5%) -->
             <LinearLayout
+                android:id="@+id/llSgstRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/tvSgstLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="State GST @ 2.5%"
+                    android:textColor="#6B7280" />
+                <TextView
+                    android:id="@+id/tvSgstValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#111827"
+                    tools:text="₹20.00" />
+            </LinearLayout>
+
+            <!-- Central GST (CGST @ 2.5%) -->
+            <LinearLayout
+                android:id="@+id/llCgstRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/tvCgstLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Central GST @ 2.5%"
+                    android:textColor="#6B7280" />
+                <TextView
+                    android:id="@+id/tvCgstValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#111827"
+                    tools:text="₹20.00" />
+            </LinearLayout>
+
+            <!-- Discount Row -->
+            <LinearLayout
+                android:id="@+id/llDiscountRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:visibility="gone">
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -206,6 +271,28 @@
                     android:layout_height="wrap_content"
                     android:textColor="#EF4444"
                     tools:text="- ₹0.00" />
+            </LinearLayout>
+
+            <!-- Round Off Adjustment -->
+            <LinearLayout
+                android:id="@+id/llRoundOffRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:visibility="gone">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Round Off"
+                    android:textColor="#6B7280" />
+                <TextView
+                    android:id="@+id/tvRoundOffValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#6B7280"
+                    tools:text="- ₹0.28" />
             </LinearLayout>
 
             <View
@@ -237,28 +324,53 @@
                     tools:text="₹840.00" />
             </LinearLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSettleAndPrint"
+            <LinearLayout
+                android:id="@+id/llActionButtonsRow"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="20dp"
-                android:text="Settle &amp; Print Bill"
-                android:textAllCaps="false"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:backgroundTint="#3554FF"
-                app:cornerRadius="12dp" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPrintProvisionalBill"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:text="Print Bill"
+                    android:textAllCaps="false"
+                    android:textColor="#3554FF"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="#3554FF" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSettleAndPrint"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:text="Settle &amp; Pay"
+                    android:textAllCaps="false"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#3554FF"
+                    app:cornerRadius="12dp" />
+
+            </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnHandOver"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="12dp"
+                android:layout_height="52dp"
+                android:layout_marginTop="10dp"
                 android:text="Confirm Hand Over"
                 android:textAllCaps="false"
                 android:textColor="#16A34A"
-                android:textSize="16sp"
+                android:textSize="14sp"
                 android:textStyle="bold"
                 android:visibility="gone"
                 app:cornerRadius="12dp"

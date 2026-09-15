@@ -46,7 +46,7 @@ class CashierBillingRepository(
             trySend(combined)
         }
 
-        val targetPrefix = "users/$managerId/"
+        val targetPrefix = "restaurants/$managerId/"
 
         // 1. Listen to active_orders across table subcollections
         val activeRegistration = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
@@ -70,8 +70,7 @@ class CashierBillingRepository(
             }
 
         // 2. Listen to completed_orders collection for this manager
-        val completedRegistration = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(managerId)
+        val completedRegistration = com.example.masterdashboard.utils.RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
             .orderBy(AppConstants.FIELD_TIMESTAMP, Query.Direction.DESCENDING)
             .limit(50)

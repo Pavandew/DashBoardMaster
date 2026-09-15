@@ -7,6 +7,7 @@ import com.example.masterdashboard.staff_dash.waiter_screens.order.models.OrderD
 import com.example.masterdashboard.staff_dash.waiter_screens.order.models.OrderExpandedItemData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.OrderDataModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -41,14 +42,13 @@ class OrderDetailRepository {
 
             var document = querySnapshot.documents.firstOrNull { doc ->
                 (doc.id == orderId || doc.getString(AppConstants.FIELD_ORDER_ID) == orderId) &&
-                        doc.reference.path.contains("users/$managerId")
+                        doc.reference.path.contains("restaurants/$managerId")
             }
 
             // Fallback: If not found in active_orders (e.g. order was paid/settled), check completed_orders collection
             if (document == null || !document.exists()) {
                 Log.d(TAG, "📦 [REPO] Order '$orderId' not found in active_orders. Checking completed_orders...")
-                val completedRef = firestore.collection(AppConstants.COLLECTION_USERS)
-                    .document(managerId)
+                val completedRef = RestaurantPathHelper.getOutletDocRef(managerId)
                     .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
                     .document(orderId)
 

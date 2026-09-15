@@ -2,6 +2,7 @@ package com.example.masterdashboard.staff_dash.profile
 
 import android.util.Log
 import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.example.masterdashboard.utils.SessionManager
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
@@ -21,7 +22,7 @@ class StaffProfileRepository(
         val managerId = sessionManager.getUid().trim()
         val customStaffId = sessionManager.getStaffId().trim()
 
-        Log.d(TAG, "📦 [REPO] Querying subcollection for ManagerUID='$managerId', searching StaffID='$customStaffId'")
+        Log.d(TAG, "📦 [REPO] Querying staff profile for ManagerUID/RestaurantID='$managerId', StaffID='$customStaffId'")
 
         if (managerId.isEmpty() || customStaffId.isEmpty()) {
             Log.e(TAG, "📦 [REPO] Error: UID or StaffID is empty in SessionManager.")
@@ -30,9 +31,8 @@ class StaffProfileRepository(
             return@callbackFlow
         }
 
-        // Reference to subcollection: users/{managerId}/staff
-        val collectionRef = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(managerId)
+        // Reference to outlet staff subcollection: restaurants/{restaurantId}/staff
+        val collectionRef = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_STAFF)
 
         val listenerRegistration = collectionRef.addSnapshotListener { querySnapshot, error ->
@@ -43,7 +43,7 @@ class StaffProfileRepository(
             }
 
             if (querySnapshot != null && !querySnapshot.isEmpty) {
-                Log.d(TAG, "📦 [REPO] Found ${querySnapshot.size()} total staff documents under manager.")
+                Log.d(TAG, "📦 [REPO] Found ${querySnapshot.size()} total staff documents under restaurant.")
 
                 var matchedProfile: StaffProfileModel? = null
 
@@ -51,7 +51,6 @@ class StaffProfileRepository(
                     val dataMap = doc.data
                     Log.d(TAG, "📄 [DOC] ID='${doc.id}' -> Fields=$dataMap")
 
-                    // Flexible match checking across common field keys
                     val fieldId = dataMap?.get("id")?.toString()?.trim()
                     val fieldStaffId = dataMap?.get("staffId")?.toString()?.trim()
                     val fieldEmpId = dataMap?.get("empId")?.toString()?.trim()
@@ -76,8 +75,8 @@ class StaffProfileRepository(
                     trySend(Result.failure(Exception("Staff member '$customStaffId' not found.")))
                 }
             } else {
-                Log.w(TAG, "📦 [REPO] Subcollection 'staff' under manager '$managerId' is completely empty.")
-                trySend(Result.failure(Exception("No staff records exist under manager.")))
+                Log.w(TAG, "📦 [REPO] Subcollection 'staff' under restaurant '$managerId' is completely empty.")
+                trySend(Result.failure(Exception("No staff records exist under restaurant outlet.")))
             }
         }
 

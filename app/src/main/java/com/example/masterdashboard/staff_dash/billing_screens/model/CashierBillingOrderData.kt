@@ -15,6 +15,7 @@ data class CashierBillingOrderModel(
     val itemsSummary: String = "",
     val items: List<OrderItemModel> = emptyList(),
     val subtotal: Double = 0.0,
+    val serviceChargeAmount: Double = 0.0,
     val taxAmount: Double = 0.0,
     val discountAmount: Double = 0.0,
     val grandTotal: Double = 0.0,

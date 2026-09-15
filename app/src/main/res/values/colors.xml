@@ -123,4 +123,14 @@
     <color name="accent_orange">#F59E0B</color>
     <color name="accent_pink">#EC4899</color>
     <color name="accent_purple">#8B5CF6</color>
+
+    <!-- Subscription Colors -->
+    <color name="sub_green_primary">#2E7D32</color>
+    <color name="sub_green_light_bg">#E8F5E9</color>
+    <color name="sub_purple_primary">#7B1FA2</color>
+    <color name="sub_purple_light_bg">#F3E5F5</color>
+    <color name="sub_gray_border">#E0E0E0</color>
+    <color name="sub_dark_text">#1F2937</color>
+    <color name="sub_muted_text">#9CA3AF</color>
+    <color name="sub_red_expired">#D32F2F</color>
 </resources>

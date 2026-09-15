@@ -59,17 +59,10 @@ class MenuManagementViewModel : ViewModel(){
         viewModelScope.launch {
             // determine a matching drawable asset string key based on what they typed
             val lowCaseName = categoryName.lowercase()
-            val mappedIconAsset = when{
-
-                lowCaseName.contains("pizza") -> "person"
-                lowCaseName.contains("pizza") -> "person"
-                lowCaseName.contains("burger") -> "person"
-                lowCaseName.contains("pasta") -> "person"
-                lowCaseName.contains("salad") -> "person"
-                lowCaseName.contains("drink") || lowCaseName.contains("beverage") -> "person"
-                lowCaseName.contains("sweet") || lowCaseName.contains("desert") -> "person"
-                else -> "app_logo"
-
+            val mappedIconAsset = when {
+                lowCaseName.contains("pizza") || lowCaseName.contains("burger") || lowCaseName.contains("pasta") -> "ic_restaurant_24dp"
+                lowCaseName.contains("drink") || lowCaseName.contains("beverage") || lowCaseName.contains("juice") -> "ic_restaurant_24dp"
+                else -> "ic_restaurant_24dp"
             }
 
             // Generate a clean Firestore ID path entry reference pointer

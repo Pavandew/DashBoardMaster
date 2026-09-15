@@ -3,6 +3,7 @@ package com.example.masterdashboard.staff_dash.kitchen_screens.repo
 import android.util.Log
 import com.example.masterdashboard.staff_dash.kitchen_screens.model.InventoryItem
 import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -24,8 +25,7 @@ class KitchenInventoryRepository(private val firestore: FirebaseFirestore = Fire
         }
 
         Log.d(TAG, "getInventoryItems: Fetching for $restaurantId")
-        val listenerRegistration = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(restaurantId)
+        val listenerRegistration = RestaurantPathHelper.getOutletDocRef(restaurantId)
             .collection(AppConstants.COLLECTION_INVENTORY)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -51,8 +51,7 @@ class KitchenInventoryRepository(private val firestore: FirebaseFirestore = Fire
         
         try {
             Log.d(TAG, "addInventoryItem: Adding ${item.itemName} to $restaurantId")
-            firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(restaurantId)
+            RestaurantPathHelper.getOutletDocRef(restaurantId)
                 .collection(AppConstants.COLLECTION_INVENTORY)
                 .add(item)
                 .await()
@@ -71,8 +70,7 @@ class KitchenInventoryRepository(private val firestore: FirebaseFirestore = Fire
 
         try {
             Log.d(TAG, "updateInventoryItem: Updating ${item.itemName} ($restaurantId)")
-            firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(restaurantId)
+            RestaurantPathHelper.getOutletDocRef(restaurantId)
                 .collection(AppConstants.COLLECTION_INVENTORY)
                 .document(item.inventoryId)
                 .set(item)
@@ -92,8 +90,7 @@ class KitchenInventoryRepository(private val firestore: FirebaseFirestore = Fire
 
         try {
             Log.d(TAG, "deleteInventoryItem: Deleting $inventoryId from $restaurantId")
-            firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(restaurantId)
+            RestaurantPathHelper.getOutletDocRef(restaurantId)
                 .collection(AppConstants.COLLECTION_INVENTORY)
                 .document(inventoryId)
                 .delete()

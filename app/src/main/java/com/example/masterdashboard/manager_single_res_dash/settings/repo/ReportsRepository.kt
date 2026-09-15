@@ -6,6 +6,7 @@ import com.example.masterdashboard.manager_single_res_dash.models.ReportSummaryM
 import com.example.masterdashboard.manager_single_res_dash.models.ShiftSales
 import com.example.masterdashboard.manager_single_res_dash.models.TopSellingFoodItem
 import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -41,8 +42,7 @@ class ReportsRepository {
 
         Log.i(TAG, "Starting real-time listener for managerId: $managerId, filter: $filter")
 
-        val registration = db.collection(AppConstants.COLLECTION_USERS)
-            .document(managerId)
+        val registration = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
@@ -176,8 +176,7 @@ class ReportsRepository {
             return@callbackFlow
         }
 
-        val registration = db.collection(AppConstants.COLLECTION_USERS)
-            .document(managerId)
+        val registration = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
             .addSnapshotListener { snapshots, error ->
                 if (error != null || snapshots == null || snapshots.isEmpty) {
@@ -241,7 +240,6 @@ class ReportsRepository {
                     }
                 }
 
-                // Determine Peak Shift
                 val shifts = listOf(
                     "Peak: Morning" to morningSales,
                     "Peak: Lunch" to lunchSales,
@@ -283,8 +281,7 @@ class ReportsRepository {
 
         Log.d(TAG, "Starting Top Selling Items stream for managerId: $managerId")
 
-        val registration = db.collection(AppConstants.COLLECTION_USERS)
-            .document(managerId)
+        val registration = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
             .addSnapshotListener { snapshots, error ->
                 if (error != null || snapshots == null || snapshots.isEmpty) {
@@ -340,7 +337,6 @@ class ReportsRepository {
                     }
                 }
 
-                // If Today has sales, show Today's top items. Otherwise fallback to This Week's top items.
                 val targetQtyMap = if (todayQtyMap.isNotEmpty()) todayQtyMap else weekQtyMap
                 val targetRevMap = if (todayQtyMap.isNotEmpty()) todayRevenueMap else weekRevenueMap
                 val periodTag = if (todayQtyMap.isNotEmpty()) "Today" else "This Week"

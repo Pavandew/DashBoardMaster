@@ -36,13 +36,20 @@ class ChangePasswordFragment : Fragment() {
          * Use this factory method to create a new instance of this fragment
          * for Forgot Password flow or explicit user arguments.
          */
-        fun newInstance(phone: String, ownerUid: String, staffDocId: String, role: String): ChangePasswordFragment {
+        fun newInstance(
+            phone: String,
+            ownerUid: String,
+            staffDocId: String,
+            role: String,
+            isForgotPassword: Boolean = false
+        ): ChangePasswordFragment {
             val fragment = ChangePasswordFragment()
             val args = Bundle()
             args.putString(AppConstants.KEY_MOBILE, phone)
             args.putString(AppConstants.FIELD_UID, ownerUid)
             args.putString(AppConstants.KEY_STAFF_DOC_ID, staffDocId)
             args.putString(AppConstants.FIELD_ROLE, role)
+            args.putBoolean("is_forgot_password", isForgotPassword)
             fragment.arguments = args
             return fragment
         }
@@ -63,6 +70,14 @@ class ChangePasswordFragment : Fragment() {
         setupToolbar()
         setupClickListeners()
         observeViewModel()
+
+        val isForgotPassword = arguments?.getBoolean("is_forgot_password", false) == true
+        if (isForgotPassword) {
+            binding.settingsToolbar.toolbarTvTitle.text = "Reset Password"
+            binding.sectionCurrentPassword.visibility = View.GONE
+            binding.sectionOtp.visibility = View.VISIBLE
+            binding.btnUseCurrentPassword.visibility = View.GONE
+        }
 
         // Get phone from arguments (Forgot Password flow) or Session (Change Password flow)
         val argPhone = arguments?.getString(AppConstants.KEY_MOBILE)

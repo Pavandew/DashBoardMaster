@@ -16,6 +16,7 @@ import com.example.masterdashboard.databinding.FragmentViewCartDetailsBinding
 import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.ViewCartDetailAdapter
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
+import com.example.masterdashboard.utils.TaxCalculator
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -98,14 +99,15 @@ abstract class BaseViewCartFragment : Fragment() {
                     val itemsInCart = viewModel.originalFoodList.value.filter { it.currentQuantity > 0 }
                     cartAdapter.submitList(itemsInCart)
 
-                    // Financial Calculations (Base Price + 5% GST)
-                    val subtotal = summary.totalPrice
-                    val gst = subtotal * 0.05
-                    val total = subtotal + gst
+                    // Financial Calculations (Base Price + Configured Tax)
+                    val subtotal = summary.totalPrice.toDouble()
+                    val sessionManager = SessionManager(requireContext())
+                    val taxInfo = TaxCalculator(sessionManager).calculateTax(subtotal)
 
-                    binding.tvSubtotalPrice.text = "₹ $subtotal"
-                    binding.tvGstPrice.text = "₹ ${String.format("%.2f", gst)}"
-                    binding.tvGrandTotalPrice.text = "₹ ${String.format("%.2f", total)}"
+                    binding.tvSubtotalPrice.text = "₹ ${subtotal.toInt()}"
+                    binding.tvGstLabel.text = "${taxInfo.taxLabel} (${String.format("%.1f", taxInfo.taxRate)}%)"
+                    binding.tvGstPrice.text = "₹ ${String.format("%.2f", taxInfo.taxAmount)}"
+                    binding.tvGrandTotalPrice.text = "₹ ${String.format("%.2f", taxInfo.grandTotal)}"
                 }
             }
         }

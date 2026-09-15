@@ -14,26 +14,30 @@ object FormValidator {
     }
 
     fun validatePhone(phone: String): String? {
-        if (phone.trim().isEmpty()) return "Mobile number is required"
+        val cleanPhone = phone.replace("\\s+".toRegex(), "").replace("-", "")
+        if (cleanPhone.isEmpty()) return "Mobile number is required"
         val phonePattern = "^[6-9]\\d{9}$"
-        return if (!phone.matches(Regex(phonePattern))) "Invalid 10-digit mobile number" else null
+        return if (!cleanPhone.matches(Regex(phonePattern))) "Invalid 10-digit mobile number" else null
     }
 
     fun validatePinCode(pin: String): String? {
-        if (pin.trim().isEmpty()) return "PIN code is required"
-        return if (pin.length != 6) "PIN code must be 6 digits" else null
+        val cleanPin = pin.trim()
+        if (cleanPin.isEmpty()) return "PIN code is required"
+        return if (cleanPin.length != 6) "PIN code must be 6 digits" else null
     }
 
     fun validateGst(gst: String): String? {
-        if (gst.isEmpty()) return null // Optional field
+        val cleanGst = gst.trim().uppercase()
+        if (cleanGst.isEmpty()) return null // Optional field
         val gstPattern = "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$"
-        return if (!gst.matches(Regex(gstPattern))) "Invalid GST format" else null
+        return if (!cleanGst.matches(Regex(gstPattern))) "Invalid GST format" else null
     }
 
     fun validatePan(pan: String): String? {
-        if (pan.isEmpty()) return null // Optional field
+        val cleanPan = pan.trim().uppercase()
+        if (cleanPan.isEmpty()) return null // Optional field
         val panPattern = "[A-Z]{5}[0-9]{4}[A-Z]{1}"
-        return if (!pan.matches(Regex(panPattern))) "Invalid PAN format" else null
+        return if (!cleanPan.matches(Regex(panPattern))) "Invalid PAN format" else null
     }
 
     fun validateFssai(fssai: String): String? {

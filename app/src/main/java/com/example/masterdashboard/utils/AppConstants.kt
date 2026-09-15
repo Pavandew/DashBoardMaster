@@ -17,12 +17,13 @@ object AppConstants {
 
     // Firestore Collections
     const val COLLECTION_USERS = "users"
+    const val COLLECTION_RESTAURANTS = "restaurants"
     const val COLLECTION_STAFF = "staff"
     const val COLLECTION_MENU_CATEGORIES = "menu_categories"
     const val COLLECTION_FOOD_ITEMS = "menu_food_items"
     const val COLLECTION_ADDONS = "addons"
     const val COLLECTION_RES_FLOORS = "res_floors"
-    const val COLLECTION_RESTAURANTS = "restaurants_details"
+    const val COLLECTION_RESTAURANTS_DETAILS = "restaurants_details"
     const val COLLECTION_TABLES = "floor_tables"
     const val COLLECTION_ACTIVE_ORDERS = "active_orders"
     const val COLLECTION_COMPLETED_ORDERS = "completed_orders"

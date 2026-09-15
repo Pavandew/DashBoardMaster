@@ -9,7 +9,7 @@ import com.example.masterdashboard.manager_single_res_dash.models.MenuFoodItemsD
 import com.example.masterdashboard.manager_single_res_dash.models.ItemVariant
 import com.example.masterdashboard.manager_single_res_dash.repo.MenuManagementRepository
 import com.example.masterdashboard.manager_single_res_dash.uistate.MenuItemUiState
-import com.example.masterdashboard.manager_single_res_dash.form_screen.uiState.RegistrationUiState
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.uiState.RegistrationUiState
 import com.example.masterdashboard.utils.AppConstants
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow

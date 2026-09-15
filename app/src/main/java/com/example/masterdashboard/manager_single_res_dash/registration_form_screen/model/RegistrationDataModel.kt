@@ -112,7 +112,7 @@ data class AddressInfo(
 @IgnoreExtraProperties
 data class TaxSettings(
     @get:PropertyName("chargeTaxOnBills") @set:PropertyName("chargeTaxOnBills")
-    var chargeTaxOnBills: Boolean = true,
+    var chargeTaxOnBills: Boolean = false,
 
     @get:PropertyName("defaultTaxRate") @set:PropertyName("defaultTaxRate")
     var defaultTaxRate: Double = 5.0,
@@ -427,63 +427,21 @@ data class RegistrationDataModel(
         val effectiveBilling = getEffectiveBillingPrinterSettings()
 
         return mapOf(
-            // Flat Root Fields (for backward compatibility)
-            "ownerFullName" to effectiveOwner.ownerFullName,
-            "ownerEmail" to effectiveOwner.ownerEmail,
-            "ownerMobile" to effectiveOwner.ownerMobile,
-            
-            AppConstants.FIELD_FULL_NAME to effectiveOwner.ownerFullName,
-            AppConstants.FIELD_EMAIL to effectiveOwner.ownerEmail,
-            AppConstants.FIELD_MOBILE to effectiveOwner.ownerMobile,
+            // Top-Level Restaurant Identifiers
             AppConstants.FIELD_RESTAURANT_NAME to effectiveRestaurant.restaurantName,
+            "ownerName" to effectiveOwner.ownerFullName,
+            AppConstants.FIELD_UID to ownerUid,
+            "restaurantId" to if (restaurantId.isNotEmpty()) restaurantId else ownerUid,
+            "updatedAt" to System.currentTimeMillis(),
 
-            "businessType" to effectiveRestaurant.businessType,
-            "legalName" to effectiveRestaurant.legalName,
-            "displayName" to effectiveRestaurant.displayName,
-
-            "address" to effectiveAddress.address,
-            "landmark" to effectiveAddress.landmark,
-            "pinCode" to effectiveAddress.pinCode,
-            "city" to effectiveAddress.city,
-            "state" to effectiveAddress.state,
-            "country" to effectiveAddress.country,
-            "contactNumber" to effectiveAddress.contactNumber,
-            "contactEmail" to effectiveAddress.contactEmail,
-            "whatsappNumber" to effectiveAddress.whatsappNumber,
-            "website" to effectiveAddress.website,
-
-            "gstNumber" to effectiveTax.gstNumber,
-            "panNumber" to effectiveTax.panNumber,
-            "chargeTaxOnBills" to effectiveTax.chargeTaxOnBills,
-            "defaultTaxRate" to effectiveTax.defaultTaxRate.toString(),
-            "priceIncludesTax" to effectiveTax.priceIncludesTax,
-            "fssaiNumber" to effectiveTax.fssaiNumber,
-            "fssaiExpiryDate" to effectiveTax.fssaiExpiryDate,
-
-            "currency" to effectiveBilling.currency,
-            "currencySymbol" to effectiveBilling.currencySymbol,
-            "language" to effectiveBilling.language,
-            "invoicePrefix" to effectiveBilling.invoicePrefix,
-            "startingInvoiceNumber" to effectiveBilling.startingInvoiceNumber,
-            "printSize" to effectiveBilling.printSize,
-            "restaurantLogoUri" to effectiveBilling.restaurantLogoUri,
-            "showLogoOnReceipts" to effectiveBilling.showLogoOnReceipts,
-
-            "seatingCapacity" to effectiveRestaurant.seatingCapacity,
-            "openDays" to effectiveRestaurant.openDays,
-            "timezone" to effectiveRestaurant.timezone,
-
-            // --- GROUPED NESTED MAPS IN FIRESTORE ---
+            // --- CLEAN GROUPED NESTED MAPS IN FIRESTORE ---
             "ownerProfile" to effectiveOwner.toMap(),
             "restaurantProfile" to effectiveRestaurant.toMap(),
             "addressInfo" to effectiveAddress.toMap(),
             "taxSettings" to effectiveTax.toMap(),
             "billingPrinterSettings" to effectiveBilling.toMap(),
             "serviceChargeSettings" to serviceChargeSettings.toMap(),
-            "upiSettings" to upiSettings.toMap(),
-
-            AppConstants.FIELD_UID to ownerUid,
-            "updatedAt" to System.currentTimeMillis()
+            "upiSettings" to upiSettings.toMap()
         )
     }
 }

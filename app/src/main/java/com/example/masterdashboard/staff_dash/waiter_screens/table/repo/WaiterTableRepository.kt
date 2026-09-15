@@ -2,6 +2,7 @@ package com.example.masterdashboard.staff_dash.waiter_screens.table.repo
 
 import android.util.Log
 import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableCardData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.TableFilterData
@@ -32,8 +33,7 @@ class WaiterTableRepository {
             return@callbackFlow
         }
 
-        val floorsRef = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(managerId)
+        val floorsRef = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_RES_FLOORS)
             .orderBy("displayFloor", Query.Direction.ASCENDING)
 
@@ -59,7 +59,7 @@ class WaiterTableRepository {
         awaitClose { listener.remove() }
     }.flowOn(Dispatchers.IO)
 
-    // 2. Simple, direct fetch for tables using explicit sub-collections
+    // 2. Fetch tables using outlet sub-collections
     fun getTables(managerId: String?): Flow<ResourceUiState<List<TableCardData>>> = callbackFlow {
         Log.d(TAG, "📦 [REPO] getTables() initiated for Manager ID: $managerId")
         trySend(ResourceUiState.Loading)
@@ -70,15 +70,10 @@ class WaiterTableRepository {
             return@callbackFlow
         }
 
-        // Keep track of active sub-collection listeners so we can clear them later
         val activeListeners = mutableListOf<ListenerRegistration>()
-
-        // A map to hold table arrays grouped by their floorId
         val tablesMap = mutableMapOf<String, List<TableCardData>>()
 
-        // Step A: First, get the floors so we know exactly which sub-collections exist
-        val floorsRef = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(managerId)
+        val floorsRef = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_RES_FLOORS)
 
         val masterFloorsListener = floorsRef.addSnapshotListener { floorSnapshots, floorException ->
@@ -87,7 +82,6 @@ class WaiterTableRepository {
                 return@addSnapshotListener
             }
 
-            // Clear old sub-listeners if the floor structure changes
             activeListeners.forEach { it.remove() }
             activeListeners.clear()
 
@@ -97,12 +91,10 @@ class WaiterTableRepository {
                 return@addSnapshotListener
             }
 
-            // Step B: Loop through every single floor document found
             floorDocs.forEach { floorDoc ->
                 val floorId = floorDoc.id
                 val floorName = floorDoc.getString(AppConstants.FIELD_FLOOR_NAME) ?: "Unknown Floor"
 
-                // Point directly to the nested sub-collection: users -> {uid} -> res_floors -> {floorId} -> floor_tables
                 val tablesRef = floorsRef.document(floorId).collection(AppConstants.COLLECTION_TABLES)
 
                 val tableListener = tablesRef.addSnapshotListener { tableSnapshots, tableException ->
@@ -120,14 +112,13 @@ class WaiterTableRepository {
                             val totalSeats = doc.getLong(AppConstants.FIELD_TOTAL_SEATS)?.toInt() ?: 4
                             val statusString = doc.getString(AppConstants.FIELD_STATUS) ?: AppConstants.STATUS_FREE
                             
-                            // Defensive Status Mapping: If it's a success status, treat as FREE
                             val normalized = statusString.uppercase().trim()
                             val status = when (normalized) {
                                 "FREE", "AVAILABLE" -> TableStatus.FREE
                                 "OCCUPIED", "BUSY" -> TableStatus.OCCUPIED
                                 "RESERVED", "BOOKED" -> TableStatus.RESERVED
                                 "BILLING", "CHECKOUT" -> TableStatus.BILLING
-                                "PAID", "SUCCESS", "COMPLETED" -> TableStatus.FREE // Automatically show as free if paid
+                                "PAID", "SUCCESS", "COMPLETED" -> TableStatus.FREE
                                 else -> TableStatus.FREE
                             }
 
@@ -142,10 +133,8 @@ class WaiterTableRepository {
                         }
                     }
 
-                    // Save this floor's loaded tables into our map tracking structure
                     tablesMap[floorId] = singleFloorTablesList
 
-                    // Step C: Flatten the map into one combined list and send it to the UI Fragment!
                     val combinedMasterList = tablesMap.values.flatten()
                     Log.i(TAG, "📦 [REPO] Pushing updated flattened master list size: ${combinedMasterList.size} items to UI.")
                     trySend(ResourceUiState.Success(combinedMasterList))
@@ -155,7 +144,6 @@ class WaiterTableRepository {
             }
         }
 
-        // Clean up everything when the user leaves the fragment screen
         awaitClose {
             Log.d(TAG, "📦 [REPO] Removing all active nested sub-collection table snapshot listeners.")
             masterFloorsListener.remove()
@@ -167,8 +155,7 @@ class WaiterTableRepository {
      * Updates the status and customer name of a specific table.
      */
     fun updateTableStatus(managerId: String, floorId: String, tableId: String, newStatus: TableStatus, customerName: String? = null) {
-        val tableRef = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(managerId)
+        val tableRef = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_RES_FLOORS)
             .document(floorId)
             .collection(AppConstants.COLLECTION_TABLES)
@@ -178,7 +165,6 @@ class WaiterTableRepository {
             AppConstants.FIELD_STATUS to newStatus.name
         )
         
-        // If table is being made FREE, clear the customer name and current bill
         if (newStatus == TableStatus.FREE) {
             updates[AppConstants.FIELD_CUSTOMER_NAME_TABLE] = null
             updates[AppConstants.FIELD_CURRENT_BILL] = null

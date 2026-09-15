@@ -2,6 +2,7 @@ package com.example.masterdashboard.notifications
 
 import android.util.Log
 import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -13,7 +14,7 @@ object AppNotificationHelper {
     private const val TAG = "AppNotificationHelper"
 
     /**
-     * Saves a notification record to the Firestore history.
+     * Saves a notification record to the Firestore history inside restaurants/{restaurantId}/notifications.
      */
     private suspend fun saveToHistory(
         managerId: String,
@@ -47,12 +48,11 @@ object AppNotificationHelper {
         )
 
         try {
-            FirebaseFirestore.getInstance().collection(AppConstants.COLLECTION_USERS)
-                .document(managerId)
+            RestaurantPathHelper.getOutletDocRef(managerId)
                 .collection(AppConstants.COLLECTION_NOTIFICATIONS)
                 .add(notificationData)
                 .await()
-            Log.d(TAG, "✅ Notification history record created for: $targetRole")
+            Log.d(TAG, "✅ Notification history record created for: $targetRole at restaurants/$managerId/notifications")
         } catch (e: Exception) {
             Log.e(TAG, "❌ Error saving notification history for $targetRole", e)
         }
@@ -78,10 +78,8 @@ object AppNotificationHelper {
         val title = "Inventory $type: $itemName"
         val message = "$staffName $type $quantity $unit of $itemName in the kitchen."
 
-        // 1. Target: Manager ONLY (As requested: Inventory updates go to manager only)
         saveToHistory(managerId, title, message, "INFORMATIONAL", "manager")
 
-        // 2. Push Alert to Manager (Critical Only)
         if (type.contains("Stock", true)) {
             Log.d(TAG, "notifyInventoryUpdate: Stock level critical, sending push to manager")
             sendPush(managerId, title, message, "INVENTORY_UPDATE")
@@ -103,10 +101,8 @@ object AppNotificationHelper {
         val title = "New Order Received"
         val body = "New order for $tableName (#${orderId.takeLast(4)})."
 
-        // 1. Target: Kitchen ONLY (As requested: Kitchen notifications go to chef staff only)
         saveToHistory(managerId, title, body, "ACTIONABLE_REQUEST", "kitchen", tableName = tableName, orderId = orderId, orderDocPath = orderDocPath)
 
-        // 2. Push to Kitchen
         if (chefTokens.isNotEmpty()) {
             Log.d(TAG, "notifyKitchenOfNewOrder: Sending push to ${chefTokens.size} chef devices")
             FcmNotificationSender.sendNotification(chefTokens, title, body, mapOf("type" to "NEW_ORDER"))
@@ -129,10 +125,8 @@ object AppNotificationHelper {
         val title = "Bill Requested: $tableName"
         val body = "Bill requested for Table $tableName."
 
-        // 1. Target: Billing ONLY (As requested: Bill generation goes to cashier only)
         saveToHistory(managerId, title, body, "ACTIONABLE_REQUEST", "billing", tableName = tableName, orderId = orderId, orderDocPath = orderDocPath)
         
-        // 2. Push to Billing
         if (cashierTokens.isNotEmpty()) {
             Log.d(TAG, "notifyCashierOfBillRequest: Sending push to ${cashierTokens.size} cashier devices")
             FcmNotificationSender.sendNotification(cashierTokens, title, body, mapOf("type" to "BILL_REQUESTED"))
@@ -156,10 +150,8 @@ object AppNotificationHelper {
         val title = "Order Ready!"
         val body = "Order for Table $tableName is ready for pick-up"
 
-        // 1. Target: Waiter (Alert)
         saveToHistory(managerId, title, body, "INFORMATIONAL", "waiter", waiterId, tableName, orderId, orderDocPath)
         
-        // 2. Push to Waiter
         if (!waiterToken.isNullOrEmpty()) {
             Log.d(TAG, "notifyWaiterOrderReady: Sending push to waiter token: ${waiterToken.take(10)}...")
             FcmNotificationSender.sendNotification(listOf(waiterToken), title, body, mapOf("type" to "ORDER_READY"))
@@ -183,18 +175,14 @@ object AppNotificationHelper {
         val title = "Payment Received: $tableName"
         val body = "Bill of ₹$amount for $tableName has been paid."
 
-        // 1. Notify Manager
         saveToHistory(managerId, title, body, "INFORMATIONAL", "manager", tableName = tableName, orderId = orderId, orderDocPath = orderDocPath)
-        
-        // 2. Notify Waiter (Table Release)
         saveToHistory(managerId, "Table Free: $tableName", "$tableName is now free.", "INFORMATIONAL", "waiter", targetStaffId = waiterId, tableName = tableName, orderId = orderId, orderDocPath = orderDocPath)
     }
 
     private suspend fun sendPush(managerId: String, title: String, body: String, type: String) {
         Log.d(TAG, "sendPush: Fetching manager token for managerId=$managerId type=$type")
         try {
-            val db = FirebaseFirestore.getInstance()
-            val doc = db.collection(AppConstants.COLLECTION_USERS).document(managerId).get().await()
+            val doc = RestaurantPathHelper.getRestaurantDocRef(managerId).get().await()
             val token = doc.getString(AppConstants.FIELD_FCM_TOKEN)
             if (!token.isNullOrEmpty()) {
                 Log.d(TAG, "sendPush: Manager token found, sending push alert")

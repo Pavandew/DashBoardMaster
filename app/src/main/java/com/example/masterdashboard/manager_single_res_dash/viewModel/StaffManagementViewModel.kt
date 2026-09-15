@@ -5,16 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.masterdashboard.manager_single_res_dash.repo.StaffManagementRepository
 import com.example.masterdashboard.manager_single_res_dash.uistate.StaffListUiState
-import com.example.masterdashboard.utils.AppConstants
-import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class StaffManagementViewModel: ViewModel() {
-    companion object{
-        private const val TAG = "StaffManagementViewModel ----> "
+    companion object {
+        private const val TAG = "StaffManagementVM"
     }
 
     private val repository = StaffManagementRepository()
@@ -42,28 +40,21 @@ class StaffManagementViewModel: ViewModel() {
     }
 
     /**
-     * Deletes a specific staff member from the restaurant's staff sub-collection.
+     * Deletes a specific staff member from the restaurant's staff sub-collection and user login accounts.
      */
     fun deleteStaffMember(ownerUid: String, staffId: String, staffName: String) {
         Log.i(TAG, "Initiating deletion sequence for staff member: '$staffName' (ID: $staffId)")
 
         viewModelScope.launch {
-            val firestore = FirebaseFirestore.getInstance()
-
-            val staffDocRef = firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(ownerUid)
-                .collection(AppConstants.COLLECTION_STAFF)
-                .document(staffId)
-
-            staffDocRef.delete()
-                .addOnSuccessListener {
+            repository.deleteStaffMember(ownerUid, staffId).fold(
+                onSuccess = {
                     Log.i(TAG, "Successfully deleted staff: '$staffName'")
-                    // Refresh the staff list to reflect changes in the UI
                     loadStaffMembers(ownerUid)
-                }
-                .addOnFailureListener { exception ->
+                },
+                onFailure = { exception ->
                     Log.e(TAG, "Failure during staff removal from Firestore", exception)
                 }
+            )
         }
     }
 }

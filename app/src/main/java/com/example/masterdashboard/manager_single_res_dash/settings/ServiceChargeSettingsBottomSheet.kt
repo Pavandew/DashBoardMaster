@@ -9,10 +9,10 @@ import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.BottomSheetServiceChargeSettingsBinding
-import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.example.masterdashboard.utils.SessionManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -26,7 +26,6 @@ class ServiceChargeSettingsBottomSheet : BottomSheetDialogFragment() {
     private val binding get() = _binding!!
 
     private lateinit var sessionManager: SessionManager
-    private val firestore = FirebaseFirestore.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,12 +54,10 @@ class ServiceChargeSettingsBottomSheet : BottomSheetDialogFragment() {
         binding.cardSwitchApplyTax.tvSwitchTitle.text = getString(R.string.title_calculate_tax_sc)
         binding.cardSwitchApplyTax.tvSwitchSubtitle.text = getString(R.string.subtitle_calculate_tax_sc)
 
-        // Toggle configuration panel visibility based on master switch
         binding.cardSwitchServiceCharge.switchMaster.setOnCheckedChangeListener { _, isChecked ->
             binding.llServiceChargeConfig.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
 
-        // Preset Percentage Chips Click Listeners
         binding.chip5.setOnClickListener { binding.etServiceChargePercent.setText("5") }
         binding.chip75.setOnClickListener { binding.etServiceChargePercent.setText("7.5") }
         binding.chip10.setOnClickListener { binding.etServiceChargePercent.setText("10") }
@@ -125,11 +122,9 @@ class ServiceChargeSettingsBottomSheet : BottomSheetDialogFragment() {
                     "serviceChargeApplyTax" to isApplyTax
                 )
 
-                // 1. Update Firestore user document
-                firestore.collection(AppConstants.COLLECTION_USERS)
-                    .document(ownerUid)
-                    .update(serviceChargeUpdates)
-                    .await()
+                // 1. Update Firestore restaurant document using RestaurantPathHelper
+                val docRef = RestaurantPathHelper.getRestaurantDocRef(ownerUid)
+                docRef.set(serviceChargeUpdates, SetOptions.merge()).await()
 
                 // 2. Update local SessionManager cache
                 sessionManager.saveServiceChargeSettings(

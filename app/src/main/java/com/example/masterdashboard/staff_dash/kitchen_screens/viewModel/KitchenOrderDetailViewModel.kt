@@ -71,13 +71,14 @@ class KitchenOrderDetailViewModel(
     fun rejectSpecificItems(
         docPath: String,
         remainingItems: List<com.example.masterdashboard.staff_dash.kitchen_screens.model.OrderDetailItem>,
-        reason: String
+        reason: String,
+        taxRate: Double = 5.0
     ) {
         viewModelScope.launch {
             try {
-                // Recalculate totals
+                // Recalculate totals using configured tax rate
                 val newSubtotal = remainingItems.sumOf { it.price.toDouble() * it.quantity }
-                val newGst = newSubtotal * 0.05
+                val newGst = newSubtotal * (taxRate / 100.0)
                 val newGrandTotal = newSubtotal + newGst
 
                 // Convert items to Map for Firestore

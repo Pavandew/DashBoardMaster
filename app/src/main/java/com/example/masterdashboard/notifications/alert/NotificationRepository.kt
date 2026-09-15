@@ -3,6 +3,7 @@ package com.example.masterdashboard.notifications.alert
 import android.util.Log
 import com.example.masterdashboard.staff_dash.utils.TimeUtils
 import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
@@ -21,14 +22,13 @@ class NotificationRepository {
     private val db = FirebaseFirestore.getInstance()
 
     /**
-     * Streams real-time notifications for a specific manager, filtered by role for efficiency.
+     * Streams real-time notifications for a specific manager/outlet, filtered by role for efficiency.
      */
     fun getNotificationsStream(managerId: String, role: String, staffId: String): Flow<List<AppNotificationModel>> = callbackFlow {
         val userRole = role.lowercase().trim()
         val isManager = userRole == "manager" || userRole == "owner_single" || userRole == "owner_multi"
         Log.d(TAG, "Starting notifications stream for managerId=$managerId role=$userRole staffId=$staffId isManager=$isManager")
 
-        // Build role-based filter list for server-side filtering
         val roleTargets = mutableListOf("all", userRole)
         when (userRole) {
             "waiter", "waiter_staff" -> roleTargets.addAll(listOf("waiter", "waiter_staff"))
@@ -37,17 +37,13 @@ class NotificationRepository {
         }
         val distinctRoleTargets = roleTargets.distinct()
 
-        val query = db.collection(AppConstants.COLLECTION_USERS)
-            .document(managerId)
+        val query = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_NOTIFICATIONS)
             .orderBy(AppConstants.FIELD_TIMESTAMP, Query.Direction.DESCENDING)
 
-        // Apply server-side filtering for efficiency
         val targets = if (isManager) {
-            // Managers/Owners only need to see alerts for themselves or global broadcasts
             listOf("all", "manager")
         } else {
-            // Staff roles (waiter, kitchen, billing)
             distinctRoleTargets
         }
 
@@ -65,11 +61,10 @@ class NotificationRepository {
                 val target = doc.getString(AppConstants.FIELD_TARGET_ROLE)?.lowercase()?.trim() ?: ""
                 val tStaffId = doc.getString(AppConstants.FIELD_TARGET_STAFF_ID) ?: ""
 
-                // Local filtering for Staff-specific alerts (e.g. alerts sent to a specific waiter ID)
                 val shouldShow = when {
-                    isManager -> true // Managers see everything
+                    isManager -> true
                     tStaffId.isNotEmpty() -> tStaffId == staffId
-                    else -> true // Already filtered by role in query for non-managers
+                    else -> true
                 }
 
                 if (!shouldShow) return@mapNotNull null
@@ -109,8 +104,7 @@ class NotificationRepository {
     suspend fun updateNotificationStatus(managerId: String, alertId: String, status: RequestStatus) {
        Log.d(TAG, "Updating notification status: managerId=$managerId alertId=$alertId status=${status.name}")
        try {
-           db.collection(AppConstants.COLLECTION_USERS)
-               .document(managerId)
+           RestaurantPathHelper.getOutletDocRef(managerId)
                .collection(AppConstants.COLLECTION_NOTIFICATIONS)
                .document(alertId)
                .update(AppConstants.FIELD_STATUS, status.name, AppConstants.FIELD_IS_READ, true)
@@ -128,8 +122,7 @@ class NotificationRepository {
     suspend fun markAsRead(managerId: String, alertId: String) {
        Log.d(TAG, "Marking notification as read: managerId=$managerId alertId=$alertId")
        try {
-           db.collection(AppConstants.COLLECTION_USERS)
-               .document(managerId)
+           RestaurantPathHelper.getOutletDocRef(managerId)
                .collection(AppConstants.COLLECTION_NOTIFICATIONS)
                .document(alertId)
                .update(AppConstants.FIELD_IS_READ, true)

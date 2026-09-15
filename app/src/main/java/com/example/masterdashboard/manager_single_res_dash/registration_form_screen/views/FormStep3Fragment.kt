@@ -89,7 +89,7 @@ class FormStep3Fragment : Fragment() {
                         dataViewModel.logCurrentData()
 
                         parentFragmentManager.beginTransaction()
-                            .replace(R.id.single_owner_fragmentContainer, FormStep5Fragment())
+                            .replace(R.id.single_owner_fragmentContainer, FormStep4Fragment())
                             .addToBackStack(null)
                             .commit()
                     }

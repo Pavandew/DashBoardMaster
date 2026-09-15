@@ -3,6 +3,7 @@ package com.example.masterdashboard.staff_dash.waiter_screens.table.repo
 import android.util.Log
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.AddonItem
 import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
@@ -15,8 +16,7 @@ class ItemCustomizationRepository {
      */
     suspend fun getAddonsForItem(managerId: String, categoryId: String, itemId: String): List<AddonItem> {
         return try {
-            val snapshot = firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(managerId)
+            val snapshot = RestaurantPathHelper.getOutletDocRef(managerId)
                 .collection(AppConstants.COLLECTION_MENU_CATEGORIES)
                 .document(categoryId)
                 .collection(AppConstants.COLLECTION_FOOD_ITEMS)

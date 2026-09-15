@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.masterdashboard.manager_single_res_dash.models.FloorDataModel
 import com.example.masterdashboard.manager_single_res_dash.models.TableData
 import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
@@ -14,40 +15,36 @@ import kotlinx.coroutines.tasks.await
 class TableManagementRepository {
 
     companion object {
-        private const val TAG = "TableManagementRepository ----> "
+        private const val TAG = "TableManagementRepo"
     }
 
     private val firestore = FirebaseFirestore.getInstance()
 
     /**
-     * Streams top-level restaurant floors in real-time.
+     * Streams top-level restaurant floors in real-time from restaurants/{restaurantId}/res_floors.
      */
     fun getFloors(ownerUid: String): Flow<List<FloorDataModel>> = callbackFlow {
-        Log.d(TAG, "getFloors stream initiated for Owner: $ownerUid")
+        Log.d(TAG, "getFloors stream initiated for Outlet: $ownerUid")
 
-        val query = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(ownerUid)
+        val query = RestaurantPathHelper.getOutletDocRef(ownerUid)
             .collection(AppConstants.COLLECTION_RES_FLOORS)
             .orderBy("displayFloor", Query.Direction.ASCENDING)
 
-        val listeners = query.addSnapshotListener { snapshots, exception ->
+        val listener = query.addSnapshotListener { snapshots, exception ->
             if (exception != null) {
-                Log.e(TAG, "Firestore error encountered inside getFloors snapshot block: ${exception.message}", exception)
+                Log.e(TAG, "Firestore error in getFloors: ${exception.message}", exception)
                 close(exception)
                 return@addSnapshotListener
             }
 
             if (snapshots != null) {
                 val floors = snapshots.toObjects(FloorDataModel::class.java)
-                Log.i(TAG, "getFloors snapshot processed. Deserialized ${floors.size} Floor entries.")
+                Log.i(TAG, "getFloors loaded ${floors.size} entries for $ownerUid")
                 trySend(floors)
             }
         }
 
-        awaitClose {
-            Log.d(TAG, "getFloors real-time flow listener detached safely.")
-            listeners.remove()
-        }
+        awaitClose { listener.remove() }
     }
 
     /**
@@ -56,8 +53,7 @@ class TableManagementRepository {
     suspend fun storeNewFloor(ownerUid: String, floorName: String, nextDisplayOrder: Int) {
         Log.i(TAG, "storeNewFloor task triggered for Floor: '$floorName'")
 
-        val floorCollectionRef = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(ownerUid)
+        val floorCollectionRef = RestaurantPathHelper.getOutletDocRef(ownerUid)
             .collection(AppConstants.COLLECTION_RES_FLOORS)
 
         val newDocRef = floorCollectionRef.document()
@@ -81,8 +77,7 @@ class TableManagementRepository {
     suspend fun removeFloorCascading(ownerUid: String, floorId: String) {
         Log.i(TAG, "removeFloorCascading transaction initiated for Floor ID: $floorId")
 
-        val floorDocRef = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(ownerUid)
+        val floorDocRef = RestaurantPathHelper.getOutletDocRef(ownerUid)
             .collection(AppConstants.COLLECTION_RES_FLOORS)
             .document(floorId)
 
@@ -109,8 +104,7 @@ class TableManagementRepository {
     fun getLiveTables(ownerUid: String, floorId: String): Flow<List<TableData>> = callbackFlow {
         Log.d(TAG, "getLiveTables stream initiated for Floor ID: $floorId")
 
-        val query = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(ownerUid)
+        val query = RestaurantPathHelper.getOutletDocRef(ownerUid)
             .collection(AppConstants.COLLECTION_RES_FLOORS)
             .document(floorId)
             .collection(AppConstants.COLLECTION_TABLES)
@@ -118,22 +112,19 @@ class TableManagementRepository {
 
         val listener = query.addSnapshotListener { snapshots, exception ->
             if (exception != null) {
-                Log.e(TAG, "Firestore error encountered inside getLiveTables snapshot block: ${exception.message}", exception)
+                Log.e(TAG, "Firestore error in getLiveTables: ${exception.message}", exception)
                 close(exception)
                 return@addSnapshotListener
             }
 
             if (snapshots != null) {
                 val tables = snapshots.toObjects(TableData::class.java)
-                Log.i(TAG, "getLiveTables snapshot processed. Deserialized ${tables.size} Table entries.")
+                Log.i(TAG, "getLiveTables loaded ${tables.size} entries.")
                 trySend(tables)
             }
         }
 
-        awaitClose {
-            Log.d(TAG, "getLiveTables real-time flow listener detached safely.")
-            listener.remove()
-        }
+        awaitClose { listener.remove() }
     }
 
     /**
@@ -142,8 +133,7 @@ class TableManagementRepository {
     suspend fun storeNewTable(ownerUid: String, floorId: String, tableName: String, capacity: Int, tableStatus: String) {
         Log.i(TAG, "storeNewTable transaction initiated for Table: '$tableName' [Status: $tableStatus]")
 
-        val floorDocRef = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(ownerUid)
+        val floorDocRef = RestaurantPathHelper.getOutletDocRef(ownerUid)
             .collection(AppConstants.COLLECTION_RES_FLOORS)
             .document(floorId)
 
@@ -174,13 +164,11 @@ class TableManagementRepository {
 
     /**
      * Deletes a single table document from a floor's nested subcollection.
-     * Uses a Firestore Transaction to safely decrement the parent floor's tableCount.
      */
     suspend fun removeTableTransactional(ownerUid: String, floorId: String, tableId: String) {
         Log.i(TAG, "removeTableTransactional initiated for Table ID: $tableId under Floor ID: $floorId")
 
-        val floorDocRef = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(ownerUid)
+        val floorDocRef = RestaurantPathHelper.getOutletDocRef(ownerUid)
             .collection(AppConstants.COLLECTION_RES_FLOORS)
             .document(floorId)
 
@@ -188,11 +176,9 @@ class TableManagementRepository {
             .document(tableId)
 
         firestore.runTransaction { transaction ->
-            // Reads first
             val floorSnapshot = transaction.get(floorDocRef)
             val currentCount = floorSnapshot.getLong("tableCount") ?: 0
 
-            // Writes next
             transaction.delete(tableDocRef)
 
             val newCount = if (currentCount > 0) currentCount - 1 else 0
@@ -203,4 +189,3 @@ class TableManagementRepository {
         Log.i(TAG, "✅ removeTableTransactional completed successfully. Table deleted: $tableId")
     }
 }
-

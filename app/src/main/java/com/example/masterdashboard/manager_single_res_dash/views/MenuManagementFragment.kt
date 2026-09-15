@@ -97,15 +97,15 @@ private val userRole by lazy{ sessionManager.getRole() }
 
                 Log.i(TAG, "Navigation: Transitioning to MenuItemListFragment for Category: ${selectedCategory.menuCategoryName}")
 
-                // Navigate over to FoodItemListFragment with the data bundle attached
+                val containerId = (view?.parent as? View)?.id ?: R.id.manager_fragmentContainer
                 parentFragmentManager.beginTransaction()
-                    .replace(R.id.manager_fragmentContainer, menuItemListFragment)
+                    .replace(containerId, menuItemListFragment)
                     .addToBackStack(null)
                     .commit()
             },
             onItemLongClick = { targetFoodItem ->
-                // triggers when user hold down on any dish item card row
-                if(userRole != AppConstants.ROLE_STAFF) {
+                val hasMenuPermission = sessionManager.hasPermission("menu_access")
+                if (userRole != AppConstants.ROLE_STAFF || hasMenuPermission) {
                     showCategoryDeletePopup(targetFoodItem)
                 } else {
                     Log.w(TAG, "Action Denied: Staff roles are unauthorized to delete menu items.")
@@ -120,27 +120,20 @@ private val userRole by lazy{ sessionManager.getRole() }
         }
     }
     private fun setupRoleBasedAccess() {
-        // Renamed text to display "Add Category" dynamically matching button requirement
         binding.btnAddCategory.text = AppConstants.BTN_ADD_CATEGORY
 
-        // ROLE SECURITY: Hide the Add Button immediately if accessed via Staff Profile
-        if (userRole == AppConstants.ROLE_STAFF) {
-            Log.i(TAG, "Staff member role detected. Applying category view restrictions.")
+        val hasMenuPermission = sessionManager.hasPermission("menu_access")
+        val canManageMenu = (userRole != AppConstants.ROLE_STAFF) || hasMenuPermission
+
+        if (!canManageMenu) {
+            Log.i(TAG, "Staff member without menu permission detected. Hiding add category button.")
             binding.btnAddCategory.visibility = View.GONE
+        } else {
+            binding.btnAddCategory.visibility = View.VISIBLE
         }
     }
+
     private fun setupPermissionAndAction() {
-        // Renamed text to display "Add Category" dynamically matching button requirement
-        binding.btnAddCategory.text = AppConstants.BTN_ADD_CATEGORY
-
-        // Rule Handling: Check if logged-in session has permission to alter menu
-        val role = sessionManager.getRole()
-
-        // if it's a restricted staff member with no menu management permission, hide access buttons
-        if(role == AppConstants.ROLE_STAFF) {
-            binding.btnAddCategory.visibility = View.GONE
-        }
-
         binding.btnAddCategory.setOnClickListener {
             Log.d(TAG, "🔘 '+ Add Category' button clicked.")
             val ownerUid = sessionManager.getUid()

@@ -112,8 +112,9 @@ class SessionManager(context: Context) {
 
     fun getRestaurantId(): String {
         val id = prefs.getString(AppConstants.KEY_RESTAURANT_ID, "") ?: ""
-        Log.d(TAG, "getRestaurantId: $id")
-        return id
+        val finalId = if (id.isNotEmpty()) id else getUid()
+        Log.d(TAG, "getRestaurantId: $finalId (cached: '$id', fallback uid: '${getUid()}')")
+        return finalId
     }
 
     fun saveRestaurantName(name: String) {

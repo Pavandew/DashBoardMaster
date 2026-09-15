@@ -2,6 +2,7 @@ package com.example.masterdashboard.manager_single_res_dash.repo
 
 import android.util.Log
 import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -41,12 +42,11 @@ class ManagerDashboardRepository {
 
                 val statuses = snapshots?.documents
                     ?.filter { doc ->
-                        val pathMatches = doc.reference.path.contains("users/$managerId")
+                        val pathMatches = doc.reference.path.contains("restaurants/$managerId")
                         val timestamp = doc.getTimestamp(AppConstants.FIELD_TIMESTAMP)?.toDate()
                             ?: doc.getTimestamp(AppConstants.FIELD_PAID_AT)?.toDate()
                         val docDate = if (timestamp != null) sdfDate.format(timestamp) else todayStr
                         
-                        // Count active orders belonging to manager created today
                         pathMatches && docDate == todayStr
                     }
                     ?.mapNotNull { it.getString(AppConstants.FIELD_ORDER_STATUS) } ?: emptyList()
@@ -59,14 +59,14 @@ class ManagerDashboardRepository {
     }
 
     /**
-     * Fetches the restaurant name for the given owner UID.
+     * Fetches the restaurant name for the given owner UID/restaurant ID.
      */
     suspend fun getRestaurantName(ownerUid: String): String? {
         return try {
-            val doc = db.collection(AppConstants.COLLECTION_USERS).document(ownerUid).get().await()
+            val doc = RestaurantPathHelper.getRestaurantDocRef(ownerUid).get().await()
             doc.getString(AppConstants.FIELD_RESTAURANT_NAME)
         } catch (e: Exception) {
-            Log.e("ManagerRepo", "Error fetching restaurant name", e)
+            Log.e("ManagerRepo", "Error fetching restaurant name for $ownerUid", e)
             null
         }
     }

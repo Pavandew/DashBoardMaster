@@ -6,7 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.example.masterdashboard.databinding.BottomSheetDateFilterBinding
-import com.example.masterdashboard.manager_single_res_dash.repo.ReportsRepository
+import com.example.masterdashboard.manager_single_res_dash.settings.repo.ReportsRepository
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 class DateFilterBottomSheet(

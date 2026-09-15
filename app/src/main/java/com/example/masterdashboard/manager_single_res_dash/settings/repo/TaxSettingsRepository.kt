@@ -3,8 +3,9 @@ package com.example.masterdashboard.manager_single_res_dash.settings.repo
 import android.util.Log
 import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.model.RegistrationDataModel
 import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.model.TaxSettings
-import com.example.masterdashboard.utils.AppConstants
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 
 class TaxSettingsRepository(
@@ -15,16 +16,13 @@ class TaxSettingsRepository(
     }
 
     /**
-     * Fetches Tax Settings from Firestore for a given owner.
-     * Uses fallback to legacy flat fields if taxSettings map is not populated yet.
+     * Fetches Tax Settings from Firestore for a given owner/restaurant ID.
      */
     suspend fun getTaxSettings(ownerUid: String): Result<TaxSettings> {
         return try {
-            Log.d(TAG, "Fetching tax settings for user: $ownerUid")
-            val doc = firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(ownerUid)
-                .get()
-                .await()
+            Log.d(TAG, "Fetching tax settings for restaurant/user: $ownerUid")
+            val docRef = RestaurantPathHelper.getRestaurantDocRef(ownerUid)
+            val doc = docRef.get().await()
 
             val regModel = doc.toObject(RegistrationDataModel::class.java)
             val settings = regModel?.getEffectiveTaxSettings() ?: TaxSettings()
@@ -42,7 +40,7 @@ class TaxSettingsRepository(
      */
     suspend fun saveTaxSettings(ownerUid: String, taxSettings: TaxSettings): Result<Unit> {
         return try {
-            Log.d(TAG, "Saving taxSettings map to Firestore for user: $ownerUid")
+            Log.d(TAG, "Saving taxSettings map to Firestore for restaurant/user: $ownerUid")
             val updates = mapOf(
                 "taxSettings" to taxSettings.toMap(),
                 "chargeTaxOnBills" to taxSettings.chargeTaxOnBills,
@@ -52,12 +50,10 @@ class TaxSettingsRepository(
                 "priceIncludesTax" to taxSettings.priceIncludesTax
             )
 
-            firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(ownerUid)
-                .update(updates)
-                .await()
+            val docRef = RestaurantPathHelper.getRestaurantDocRef(ownerUid)
+            docRef.set(updates, SetOptions.merge()).await()
 
-            Log.i(TAG, "Tax settings map saved successfully to Firestore.")
+            Log.i(TAG, "Tax settings map saved successfully to ${docRef.path}")
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Error updating taxSettings map in Firestore", e)

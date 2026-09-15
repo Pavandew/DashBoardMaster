@@ -232,4 +232,28 @@
     <string name="tax_explanation_gst_format">ℹ️ For %1$.1f%% GST in India, bills will split tax into State GST @ %2$.1f%% + Central GST @ %3$.1f%%.</string>
     <string name="tax_explanation_vat_format">ℹ️ Receipts will display a single VAT tax line @ %1$.1f%%.</string>
     <string name="tax_explanation_sales_tax_format">ℹ️ Receipts will display a single Sales Tax line @ %1$.1f%%.</string>
+
+    <!-- Subscription Screen Strings -->
+    <string name="sub_pro_member_format">⭐ PRO Member (%1$s)</string>
+    <string name="sub_active_expires_format">Active • Expires in %1$d Days%2$s</string>
+    <string name="sub_valid_till_format"> (Valid till %1$s)</string>
+    <string name="sub_free_trial_expired_title">Free Trial Expired</string>
+    <string name="sub_free_trial_expired_desc">Subscribe to continue enjoying full restaurant analytics &amp; POS features</string>
+    <string name="sub_free_trial_active_title">30-Day Free Trial Active</string>
+    <string name="sub_free_trial_active_desc">%1$d Days remaining • Upgrade anytime to lock in lowest price</string>
+    <string name="sub_free_trial_title">30-Day Free Trial</string>
+    <string name="sub_free_trial_title_expired">30-Day Free Trial (Expired)</string>
+    <string name="sub_badge_expired">EXPIRED</string>
+    <string name="sub_badge_free">100% FREE</string>
+    <string name="sub_badge_current_plan">CURRENT PLAN</string>
+    <string name="sub_badge_save_16">SAVE 16%</string>
+    <string name="sub_btn_continue_trial">Continue with Free Trial (30 Days)</string>
+    <string name="sub_btn_extend_yearly_format">Extend Yearly Pass • %1$s</string>
+    <string name="sub_btn_upgrade_yearly_format">Upgrade to Yearly Pass • %1$s</string>
+    <string name="sub_btn_subscribe_yearly_format">Subscribe Now • %1$s / year</string>
+    <string name="sub_btn_extend_monthly_format">Extend Monthly Pass • %1$s</string>
+    <string name="sub_btn_subscribe_monthly_format">Subscribe Now • %1$s / month</string>
+    <string name="sub_monthly_owner_pass_current">Monthly Owner Pass (Current Plan)</string>
+    <string name="sub_monthly_owner_pass">Monthly Owner Pass</string>
+    <string name="sub_yearly_owner_pass">Yearly Owner Pass</string>
 </resources>
