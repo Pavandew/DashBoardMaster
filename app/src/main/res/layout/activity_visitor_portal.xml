@@ -7,7 +7,6 @@
     android:orientation="vertical"
     android:background="@drawable/app_background">
 
-
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -17,28 +16,29 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingHorizontal="18dp"
+            android:paddingTop="100dp"
+            android:paddingBottom="20dp">
 
             <!-- Header Section -->
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="30dp"
-                android:layout_marginTop="17dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="16dp"
                 android:gravity="center"
                 android:orientation="vertical">
 
                 <FrameLayout
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:layout_marginBottom="15dp"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="10dp"
                     android:background="@drawable/bg_circle_light_blue">
 
                     <ImageView
                         android:id="@+id/ivLockIcon"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
                         android:layout_gravity="center"
                         android:src="@drawable/shield"
                         app:tint="@color/primary_blue" />
@@ -61,7 +61,7 @@
                         android:layout_marginEnd="8dp"
                         android:text="@string/visitor"
                         android:textColor="@color/dark_text"
-                        android:textSize="32sp"
+                        android:textSize="28sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -70,17 +70,17 @@
                         android:layout_height="wrap_content"
                         android:text="@string/portal"
                         android:textColor="@color/primary_blue"
-                        android:textSize="32sp"
+                        android:textSize="28sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="4dp"
                     android:text="@string/select_login_portal"
                     android:textColor="@color/gray_text"
-                    android:textSize="14sp" />
+                    android:textSize="13sp" />
             </LinearLayout>
 
             <include
@@ -100,7 +100,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginTop="20dp">
+                android:layout_marginTop="12dp">
 
                 <!-- Security Badge -->
                 <androidx.cardview.widget.CardView
@@ -114,7 +114,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="16dp"
+                        android:padding="12dp"
                         android:gravity="center_horizontal">
 
                         <TextView

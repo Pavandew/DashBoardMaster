@@ -57,7 +57,7 @@ class ActiveOrdersRepository {
 
                 snapshots?.documents?.forEachIndexed { index, document ->
                     val docPath = document.reference.path
-                    if (!docPath.contains("users/$managerId")) {
+                    if (!docPath.contains("restaurants/$managerId")) {
                         return@forEachIndexed
                     }
 

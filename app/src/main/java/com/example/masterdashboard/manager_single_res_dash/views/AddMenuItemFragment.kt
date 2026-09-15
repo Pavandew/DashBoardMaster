@@ -3,7 +3,6 @@ package com.example.masterdashboard.manager_single_res_dash.views
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.util.Patterns
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -22,7 +21,7 @@ import com.example.masterdashboard.databinding.ItemMenuVariantBinding
 import com.example.masterdashboard.manager_single_res_dash.viewModel.MenuItemViewModel
 import com.example.masterdashboard.manager_single_res_dash.models.ItemVariant
 import com.example.masterdashboard.manager_single_res_dash.models.MenuFoodItemsData
-import com.example.masterdashboard.manager_single_res_dash.form_screen.uiState.RegistrationUiState
+import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.uiState.RegistrationUiState
 import com.example.masterdashboard.utils.DocumentUploadManager
 import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.launch
