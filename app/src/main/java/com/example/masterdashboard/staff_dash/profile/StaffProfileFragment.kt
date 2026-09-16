@@ -67,21 +67,6 @@ class StaffProfileFragment : Fragment() {
             logoutManager.showLogoutConfirmation()
         }
 
-        val hasMenuAccess = sessionManager.hasPermission("menu_access")
-        Log.d(TAG, "Permissions check: has 'menu_access' = $hasMenuAccess")
-        if (hasMenuAccess) {
-            binding.cardMenuManagement.visibility = View.VISIBLE
-            binding.btnMenuManagement.setOnClickListener {
-                val containerId = (view?.parent as? View)?.id ?: return@setOnClickListener
-                parentFragmentManager.beginTransaction()
-                    .replace(containerId, MenuManagementFragment())
-                    .addToBackStack(null)
-                    .commit()
-            }
-        } else {
-            binding.cardMenuManagement.visibility = View.GONE
-        }
-
         binding.btnForgotPassword.setOnClickListener {
             Log.d(TAG, "📱 [FRAGMENT] Navigating to Change Password.")
             
@@ -118,6 +103,34 @@ class StaffProfileFragment : Fragment() {
             tvProfileName.text = profile.staffName.ifEmpty { "N/A" }
             tvRoleBadge.text = profile.role.ifEmpty { "WAITER" }.uppercase()
             tvShiftValue.text = profile.shift.ifEmpty { "Not Assigned" }
+            tvPhoneValue.text = profile.mobile.ifEmpty { "N/A" }
+            tvEmailValue.text = profile.email.ifEmpty { "N/A" }
+            tvGenderValue.text = profile.gender.ifEmpty { "N/A" }
+            tvDateJoinedValue.text = profile.joiningDate.ifEmpty { "N/A" }
+
+            // Restrict Menu Management in Profile ONLY to Master Chef / Head Chef / Manager
+            val cleanRole = profile.role.lowercase().trim()
+            val isMasterChefOrManager = cleanRole.contains("head chef") || 
+                                        cleanRole.contains("master chef") || 
+                                        cleanRole.contains("head staff") || 
+                                        cleanRole == "manager" || 
+                                        cleanRole == "owner_single"
+
+            val hasMenuAccess = sessionManager.hasPermission("menu_access") && isMasterChefOrManager
+            Log.d(TAG, "Permissions check: role='${profile.role}', isMasterChefOrManager=$isMasterChefOrManager, hasMenuAccess=$hasMenuAccess")
+
+            if (hasMenuAccess) {
+                cardMenuManagement.visibility = View.VISIBLE
+                btnMenuManagement.setOnClickListener {
+                    val containerId = (view?.parent as? View)?.id ?: return@setOnClickListener
+                    parentFragmentManager.beginTransaction()
+                        .replace(containerId, MenuManagementFragment())
+                        .addToBackStack(null)
+                        .commit()
+                }
+            } else {
+                cardMenuManagement.visibility = View.GONE
+            }
             tvPhoneValue.text = profile.mobile.ifEmpty { "N/A" }
             tvEmailValue.text = profile.email.ifEmpty { "N/A" }
             tvGenderValue.text = profile.gender.ifEmpty { "N/A" }
