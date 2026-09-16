@@ -72,7 +72,7 @@ class AddStaffFormAdapter(
                 val context = holder.itemView.context
 
                 // 1. Set up Roles Spinner
-                val roles = listOf("Waiter", "Head Waiter", "Chef", "Head Chef", "Cashier", "Manager")
+                val roles = listOf("Waiter", "Head Waiter", "Chef", "Master Chef", "Cashier", "Manager")
                 val rolesAdapter = ArrayAdapter(context, R.layout.item_dropdown_menu_popup, roles)
                 rolesAdapter.setDropDownViewResource(R.layout.item_dropdown_menu_popup)
                 holder.binding.spinnerRole.adapter = rolesAdapter

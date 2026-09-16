@@ -95,7 +95,7 @@ class PermissionsAndDocumentsFragment : Fragment() {
             return when (key) {
                 "order_access" -> true // All staff need order access
                 "billing_access" -> staffRole.contains("cashier") || staffRole.contains("manager") || staffRole.contains("billing")
-                "menu_access" -> staffRole.contains("manager") || staffRole.contains("chef") || staffRole.contains("head")
+                "menu_access" -> staffRole.contains("manager") || staffRole.contains("master chef") || staffRole.contains("head chef") || staffRole.contains("head staff")
                 "staff_access" -> staffRole.contains("manager")
                 "dash_access" -> staffRole.contains("manager")
                 else -> false
