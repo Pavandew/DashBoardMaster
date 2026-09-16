@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.masterdashboard.subscription.models.BillingCycle
 import com.example.masterdashboard.subscription.models.SubscriptionPlan
 import com.example.masterdashboard.subscription.models.SubscriptionStatus
+import com.example.masterdashboard.subscription.models.UserSubscriptionInfo
 import com.example.masterdashboard.subscription.repo.SubscriptionRepository
 import com.example.masterdashboard.subscription.uistate.SubscriptionUiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,14 +27,23 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
     val uiState: StateFlow<SubscriptionUiState> = _uiState.asStateFlow()
 
     init {
-        Log.d(TAG, "ViewModel initialized. Loading subscription data...")
+        Log.d(TAG, "ViewModel initialized. Emitting instant local plan state...")
+        val defaultPlans = repository.getAvailablePlans()
+        val defaultTrialInfo = UserSubscriptionInfo()
+        val initialPlan = defaultPlans.find { it.billingCycle == BillingCycle.TRIAL } ?: defaultPlans.firstOrNull()
+
+        _uiState.value = SubscriptionUiState.Success(
+            plans = defaultPlans,
+            userSubscription = defaultTrialInfo,
+            selectedBillingCycle = BillingCycle.TRIAL,
+            selectedPlan = initialPlan
+        )
+
         loadSubscriptionData()
     }
 
     fun loadSubscriptionData() {
         viewModelScope.launch {
-            Log.d(TAG, "loadSubscriptionData: Setting state to Loading")
-            _uiState.value = SubscriptionUiState.Loading
             try {
                 val plans = repository.getAvailablePlans()
                 val userSub = repository.getUserSubscriptionInfo()
