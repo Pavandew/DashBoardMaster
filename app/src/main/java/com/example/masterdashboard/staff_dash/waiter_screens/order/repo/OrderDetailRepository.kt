@@ -42,7 +42,7 @@ class OrderDetailRepository {
 
             var document = querySnapshot.documents.firstOrNull { doc ->
                 (doc.id == orderId || doc.getString(AppConstants.FIELD_ORDER_ID) == orderId) &&
-                        doc.reference.path.contains("restaurants/$managerId")
+                        doc.reference.path.contains("${AppConstants.COLLECTION_RESTAURANTS}/$managerId")
             }
 
             // Fallback: If not found in active_orders (e.g. order was paid/settled), check completed_orders collection
@@ -171,14 +171,14 @@ class OrderDetailRepository {
         try {
             val isCounterOrder = tableId.isEmpty() || tableId == "COUNTER_ORDER" || tableId == "N/A" || floorId.isEmpty() || floorId == "N/A"
 
-            val orderRef = if (isCounterOrder) {
-                firestore.collection(AppConstants.COLLECTION_USERS)
-                    .document(managerId)
+            var orderRef = if (orderDocId.contains("${AppConstants.COLLECTION_RESTAURANTS}/")) {
+                firestore.document(orderDocId)
+            } else if (isCounterOrder) {
+                RestaurantPathHelper.getOutletDocRef(managerId)
                     .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
                     .document(orderDocId)
             } else {
-                firestore.collection(AppConstants.COLLECTION_USERS)
-                    .document(managerId)
+                RestaurantPathHelper.getOutletDocRef(managerId)
                     .collection(AppConstants.COLLECTION_RES_FLOORS)
                     .document(floorId)
                     .collection(AppConstants.COLLECTION_TABLES)
@@ -187,14 +187,37 @@ class OrderDetailRepository {
                     .document(orderDocId)
             }
 
-            val snapshot = orderRef.get().await()
+            var snapshot = orderRef.get().await()
+
+            // Robust Fallback: If not found at primary path, query collectionGroup across restaurants collection
+            if (!snapshot.exists()) {
+                Log.w(TAG, "📦 [REPO] Doc not found at primary path '${orderRef.path}'. Searching collectionGroup...")
+                val querySnap = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                    .get()
+                    .await()
+
+                val foundDoc = querySnap.documents.firstOrNull { doc ->
+                    (doc.id == orderDocId || doc.getString(AppConstants.FIELD_ORDER_ID) == orderDocId) &&
+                            doc.reference.path.contains("${AppConstants.COLLECTION_RESTAURANTS}/$managerId")
+                }
+
+                if (foundDoc != null) {
+                    orderRef = foundDoc.reference
+                    snapshot = foundDoc
+                }
+            }
+
             val orderModel = snapshot.toObject(OrderDataModel::class.java)
 
             if (orderModel != null) {
                 // Mark all items that are not REJECTED as SERVED
                 val updatedItems = orderModel.items.map { item ->
                     if (!item.itemStatus.equals(AppConstants.STATUS_REJECTED, ignoreCase = true)) {
-                        item.copy(itemStatus = AppConstants.STATUS_SERVED)
+                        item.copy(
+                            orderedQuantity = item.quantity,
+                            readyQuantity = item.quantity,
+                            itemStatus = AppConstants.STATUS_SERVED
+                        )
                     } else item
                 }
 
@@ -229,14 +252,14 @@ class OrderDetailRepository {
             val isCounterOrder = tableId.isEmpty() || tableId == "COUNTER_ORDER" || tableId == "N/A" || floorId.isEmpty() || floorId == "N/A"
 
             // 1. Update Order Status
-            val orderRef = if (isCounterOrder) {
-                firestore.collection(AppConstants.COLLECTION_USERS)
-                    .document(managerId)
+            var orderRef = if (orderDocId.contains("${AppConstants.COLLECTION_RESTAURANTS}/")) {
+                firestore.document(orderDocId)
+            } else if (isCounterOrder) {
+                RestaurantPathHelper.getOutletDocRef(managerId)
                     .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
                     .document(orderDocId)
             } else {
-                firestore.collection(AppConstants.COLLECTION_USERS)
-                    .document(managerId)
+                RestaurantPathHelper.getOutletDocRef(managerId)
                     .collection(AppConstants.COLLECTION_RES_FLOORS)
                     .document(floorId)
                     .collection(AppConstants.COLLECTION_TABLES)
@@ -245,12 +268,28 @@ class OrderDetailRepository {
                     .document(orderDocId)
             }
 
+            val snapshot = orderRef.get().await()
+
+            if (!snapshot.exists()) {
+                val querySnap = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                    .get()
+                    .await()
+
+                val foundDoc = querySnap.documents.firstOrNull { doc ->
+                    (doc.id == orderDocId || doc.getString(AppConstants.FIELD_ORDER_ID) == orderDocId) &&
+                            doc.reference.path.contains("${AppConstants.COLLECTION_RESTAURANTS}/$managerId")
+                }
+
+                if (foundDoc != null) {
+                    orderRef = foundDoc.reference
+                }
+            }
+
             batch.update(orderRef, AppConstants.FIELD_ORDER_STATUS, ActiveOrderStatus.BILLING.name)
 
             // 2. Update Table Status to BILLING (Only for table orders)
             if (!isCounterOrder) {
-                val tableRef = firestore.collection(AppConstants.COLLECTION_USERS)
-                    .document(managerId)
+                val tableRef = RestaurantPathHelper.getOutletDocRef(managerId)
                     .collection(AppConstants.COLLECTION_RES_FLOORS)
                     .document(floorId)
                     .collection(AppConstants.COLLECTION_TABLES)
@@ -279,14 +318,17 @@ class OrderDetailRepository {
         emit(ResourceUiState.Loading)
 
         try {
-            val orderRef = firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(managerId)
-                .collection(AppConstants.COLLECTION_RES_FLOORS)
-                .document(floorId)
-                .collection(AppConstants.COLLECTION_TABLES)
-                .document(tableId)
-                .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
-                .document(orderDocId)
+            var orderRef = if (orderDocId.contains("${AppConstants.COLLECTION_RESTAURANTS}/")) {
+                firestore.document(orderDocId)
+            } else {
+                RestaurantPathHelper.getOutletDocRef(managerId)
+                    .collection(AppConstants.COLLECTION_RES_FLOORS)
+                    .document(floorId)
+                    .collection(AppConstants.COLLECTION_TABLES)
+                    .document(tableId)
+                    .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                    .document(orderDocId)
+            }
 
             orderRef.update(AppConstants.FIELD_ORDER_STATUS, newStatus.name).await()
             Log.i(TAG, "📦 [REPO] Successfully updated order status to ${newStatus.name} in Firestore.")

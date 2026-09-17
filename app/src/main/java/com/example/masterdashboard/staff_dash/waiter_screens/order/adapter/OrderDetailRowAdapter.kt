@@ -56,13 +56,19 @@ class OrderDetailRowAdapter : ListAdapter<OrderExpandedItemData, OrderDetailRowA
 
         // Apply Item Status UI using centralized utility
         val isNewAddition = item.quantity > item.orderedQuantity
-        val delta = item.quantity - item.orderedQuantity
+        val delta = maxOf(0, item.quantity - item.orderedQuantity)
         
-        // If the whole order is SERVED, override item status display
-        val effectiveStatus = if (currentOrderStatus == ActiveOrderStatus.SERVED) "SERVED" else item.status
+        // If the whole order is SERVED and there are no new additions, override item status display
+        val effectiveStatus = if (currentOrderStatus == ActiveOrderStatus.SERVED && !isNewAddition) "SERVED" else item.status
 
         // Visual distinction for the waiter:
         when {
+            isNewAddition || delta > 0 -> {
+                // Newly added items pending in kitchen
+                binding.cardItemRoot.setCardBackgroundColor(ContextCompat.getColor(context, R.color.white))
+                binding.viewStatusStrip.setBackgroundColor(ContextCompat.getColor(context, R.color.status_occupied))
+                binding.cardItemRoot.alpha = 1.0f
+            }
             effectiveStatus.equals("SERVED", true) -> {
                 // Already delivered to table - Show in Light Purple/Grey
                 binding.cardItemRoot.setCardBackgroundColor(ContextCompat.getColor(context, R.color.bg_light_purple))
