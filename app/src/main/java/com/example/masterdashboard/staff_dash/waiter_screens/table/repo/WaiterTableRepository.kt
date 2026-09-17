@@ -123,7 +123,12 @@ class WaiterTableRepository {
                             }
 
                             val customerName = doc.getString(AppConstants.FIELD_CUSTOMER_NAME_TABLE)
-                            val currentBillAmount = doc.getString(AppConstants.FIELD_CURRENT_BILL)
+                            val rawBill = doc.get(AppConstants.FIELD_CURRENT_BILL)
+                            val currentBillAmount = when (rawBill) {
+                                is String -> rawBill
+                                is Number -> if (rawBill.toDouble() == 0.0) "" else "₹${rawBill.toInt()}"
+                                else -> null
+                            }
 
                             singleFloorTablesList.add(
                                 TableCardData(tableId, tableName, floorId, floorName, totalSeats, status, customerName, currentBillAmount)

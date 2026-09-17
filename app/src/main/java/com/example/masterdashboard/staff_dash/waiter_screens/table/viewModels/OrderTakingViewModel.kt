@@ -324,19 +324,24 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
             return
         }
 
-        Log.i(TAG, "Submission: Placing order for $currentTableName. Target Status: $initialStatus")
+        val hasNewItems = activeItems.any { it.currentQuantity > it.previousQuantity }
+        val targetOrderStatus = if (hasNewItems) AppConstants.STATUS_PENDING else initialStatus
 
-        val payload = activeItems.map { 
+        Log.i(TAG, "Submission: Placing order for $currentTableName. Target Status: $targetOrderStatus, HasNewItems: $hasNewItems")
+
+        val payload = activeItems.map { item ->
+            val isNewAddition = item.currentQuantity > item.previousQuantity
+            val effectiveStatus = if (isNewAddition) AppConstants.STATUS_PENDING else item.itemStatus
             OrderItemModel(
-                it.id, 
-                it.name, 
-                it.variantName, 
-                it.price, 
-                it.currentQuantity, 
-                it.price * it.currentQuantity, 
-                it.previousQuantity, 
-                it.readyQuantity,
-                it.itemStatus
+                itemId = item.id, 
+                itemName = item.name, 
+                variantName = item.variantName, 
+                price = item.price, 
+                quantity = item.currentQuantity, 
+                rowTotal = item.price * item.currentQuantity, 
+                orderedQuantity = item.previousQuantity, 
+                readyQuantity = item.readyQuantity,
+                itemStatus = effectiveStatus
             ) 
         }
         
@@ -362,7 +367,7 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
             subtotal = subtotal, 
             gst = calculatedGst, 
             grandTotal = calculatedGrandTotal, 
-            orderStatus = initialStatus, 
+            orderStatus = targetOrderStatus, 
             paymentMethod = selectedPaymentMethod, 
             restaurantId = managerId ?: "", 
             waiterId = waiterId
