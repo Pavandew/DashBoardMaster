@@ -75,19 +75,41 @@ class OrderSuccessFragment : Fragment() {
     }
 
     private fun populateReceiptForm() {
-        val tableName = arguments?.getString("tableName") ?: "N/A"
+        val rawTableName = arguments?.getString("tableName") ?: "N/A"
         val orderId = arguments?.getString("orderId") ?: "#ORD-0000"
         val totalItems = arguments?.getInt("totalItems") ?: 0
         val totalPrice = arguments?.getDouble("totalPrice") ?: 0.0
 
         val currentTimestamp = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date())
 
-        binding.tvSuccessTableId.text = getString(R.string.table_id_format, tableName)
+        binding.tvSuccessTableId.text = formatTableName(rawTableName)
         binding.tvSuccessOrderId.text = orderId
         binding.tvSuccessTotalItems.text = totalItems.toString()
         val currency = getString(R.string.currency_symbol)
         binding.tvSuccessTotalAmount.text = String.format(Locale.US, "%s %.2f", currency, totalPrice)
         binding.tvSuccessTimestamp.text = currentTimestamp
+    }
+
+    private fun formatTableName(rawName: String): String {
+        val trimmed = rawName.trim()
+        if (trimmed.isEmpty() || trimmed.equals("N/A", ignoreCase = true)) return "Table N/A"
+
+        var s = trimmed
+        if (s.startsWith("Table", ignoreCase = true)) {
+            s = s.substring(5).trim()
+        }
+
+        val stripped = s.replace("^([tT][-\\s]?)+".toRegex(), "").trim()
+
+        return if (stripped.isNotEmpty()) {
+            if (stripped.all { it.isDigit() }) {
+                "Table T$stripped"
+            } else {
+                "Table $stripped"
+            }
+        } else {
+            if (s.isNotEmpty()) "Table $s" else "Table $trimmed"
+        }
     }
 
     private fun setupNavigationActions() {

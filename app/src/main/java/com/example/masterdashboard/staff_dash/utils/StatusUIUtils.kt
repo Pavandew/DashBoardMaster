@@ -189,6 +189,11 @@ object StatusUIUtils {
                 colorRes = R.color.red_alert
                 textView.visibility = View.VISIBLE
             }
+            isNewAddition || delta > 0 -> {
+                label = if (delta > 1) "• $delta New Items Added" else "• New Item Added"
+                colorRes = R.color.status_occupied
+                textView.visibility = View.VISIBLE
+            }
             status.equals("SERVED", true) -> {
                 // If served, hide the label to keep the UI clean (Background color handles it)
                 textView.visibility = View.GONE
@@ -197,11 +202,6 @@ object StatusUIUtils {
             status.equals("READY", true) -> {
                 label = "• Ready to Serve"
                 colorRes = R.color.status_free
-                textView.visibility = View.VISIBLE
-            }
-            isNewAddition -> {
-                label = if (delta > 1) "• $delta New Items Added" else "• New Item Added"
-                colorRes = R.color.status_occupied
                 textView.visibility = View.VISIBLE
             }
             status.equals("PREPARING", true) -> {

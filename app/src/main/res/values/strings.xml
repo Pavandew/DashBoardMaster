@@ -132,7 +132,7 @@
     <string name="pay_later">Pay Later</string>
     <string name="view_all_bills">View All Bills</string>
     <string name="new_order">New Order</string>
-    <string name="table_id_format">T-%s</string>
+    <string name="table_id_format">%s</string>
     <string name="currency_symbol">₹</string>
     <string name="mark_as_served">Mark as Served</string>
     <string name="order_details">Order Details</string>
