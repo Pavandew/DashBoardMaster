@@ -44,9 +44,10 @@ class KitchenPreparationDetailViewModel(
         val currentData = _rawOrderData.value ?: return
         viewModelScope.launch {
             try {
-                // Ensure all items are marked as ready when the order is finalized
+                // Ensure all items are marked as ready and orderedQuantity synced when finalized
                 val updatedItemsList = currentData.items.map { item ->
                     item.copy(
+                        orderedQuantity = item.quantity,
                         readyQuantity = item.quantity,
                         itemStatus = "READY"
                     )
@@ -120,8 +121,9 @@ class KitchenPreparationDetailViewModel(
                 val updatedItemsList = currentData.items.map { originalItem ->
                     val isToMark = itemsToMark.any { it.itemId == originalItem.itemId }
                     if (isToMark) {
-                        // Mark as fully ready and update status
+                        // Mark as fully ready and update ordered quantity and status
                         originalItem.copy(
+                            orderedQuantity = originalItem.quantity,
                             readyQuantity = originalItem.quantity,
                             itemStatus = "READY"
                         )

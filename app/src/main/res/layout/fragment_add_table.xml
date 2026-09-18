@@ -46,7 +46,7 @@
                 android:layout_marginTop="8dp"
                 app:boxBackgroundColor="#111622"
                 app:counterEnabled="true"
-                app:counterMaxLength="10"
+                app:counterMaxLength="20"
                 app:counterTextColor="@android:color/darker_gray"
                 app:hintEnabled="false"
                 app:layout_constraintTop_toBottomOf="@id/lblTableName">
@@ -55,12 +55,12 @@
                     android:id="@+id/etTableNameField"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Enter Table Number (e.g. 1, 05, 10)"
-                    android:inputType="number"
-                    android:maxLength="3"
+                    android:hint="Enter Table Name (e.g. T1, VIP-1, Table 5)"
+                    android:inputType="textCapWords"
+                    android:maxLength="20"
                     android:textColor="@android:color/white"
                     android:textSize="16sp"
-                    tools:text="15" />
+                    tools:text="T-15" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
