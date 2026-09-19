@@ -224,7 +224,7 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
         if (state.menuItems.isNotEmpty()) {
             menuItems.clear()
             menuItems.addAll(state.menuItems)
-            menuAdapter?.notifyDataSetChanged()
+            menuAdapter?.updateMenuItems(menuItems)
         }
     }
 

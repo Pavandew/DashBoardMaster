@@ -8,7 +8,11 @@ data class DrawerMenuItem(
     val title: String,
     val iconRes: Int,
     val fragmentClass: Class<out Fragment>? = null,
-    val activityClass: Class<out Activity>? = null, // New field for activity navigation
+    val activityClass: Class<out Activity>? = null,
     val badgeCount: Int = 0,
-    val isLogout: Boolean = false
+    val isLogout: Boolean = false,
+    val isHeader: Boolean = false,
+    val parentHeaderId: Int? = null,
+    var isExpanded: Boolean = false,
+    val children: List<DrawerMenuItem> = emptyList()
 )

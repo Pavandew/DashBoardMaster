@@ -4,18 +4,9 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.masterdashboard.R
-import com.example.masterdashboard.manager_single_res_dash.models.DrawerMenuItem
-import com.example.masterdashboard.manager_single_res_dash.settings.ManagerSettingsFragment
+import com.example.masterdashboard.manager_single_res_dash.models.DrawerMenuFactory
 import com.example.masterdashboard.manager_single_res_dash.uistate.DrawerUiState
-import com.example.masterdashboard.manager_single_res_dash.views.*
-import com.example.masterdashboard.notifications.alert.NotificationFragment
-import com.example.masterdashboard.staff_dash.billing_screens.views.CashierBillingFragment
-import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenInventoryFragment
-import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenOrderFragment
-import com.example.masterdashboard.staff_dash.waiter_screens.table.views.WaiterTablesFragment
 import com.example.masterdashboard.subscription.repo.SubscriptionRepository
-import com.example.masterdashboard.subscription.views.SubscriptionPlansFragment
 import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.utils.SessionManager
 import com.google.firebase.firestore.FirebaseFirestore
@@ -64,7 +55,7 @@ class DrawerViewModel(application: Application) : AndroidViewModel(application) 
                     restaurantName = restaurantName ?: _uiState.value.restaurantName,
                     trialDaysRemaining = userSub.trialDaysRemaining,
                     subscriptionStatus = userSub.status,
-                    menuItems = buildMenuItems(_uiState.value.unreadNotificationsCount)
+                    menuItems = DrawerMenuFactory.getMenuItems(_uiState.value.unreadNotificationsCount)
                 )
 
                 Log.i(
@@ -80,26 +71,6 @@ class DrawerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun updateRestaurantName(name: String) {
         _uiState.value = _uiState.value.copy(restaurantName = name)
-    }
-
-    private fun buildMenuItems(unreadCount: Int): List<DrawerMenuItem> {
-        return listOf(
-            DrawerMenuItem(0, "Dashboard", R.drawable.ic_dashboard_24dp, fragmentClass = ManagerDashboardFragment::class.java),
-            DrawerMenuItem(7, "Billing Screen", R.drawable.biling, fragmentClass = CashierBillingFragment::class.java),
-            DrawerMenuItem(1, "Take Orders", R.drawable.waiter, fragmentClass = WaiterTablesFragment::class.java),
-            DrawerMenuItem(4, "Kitchen Screen", R.drawable.ic_chef_24dp, fragmentClass = KitchenOrderFragment::class.java),
-            DrawerMenuItem(10, "Staff Management", R.drawable.ic_staffs_24dp, fragmentClass = StaffManagementFragment::class.java),
-            DrawerMenuItem(9, "Menu Management", R.drawable.ic_menu_24dp, fragmentClass = MenuManagementFragment::class.java),
-            DrawerMenuItem(3, "Table Management", R.drawable.ic_table_24dp, fragmentClass = TableManagementFragment::class.java),
-            DrawerMenuItem(6, "Inventory", R.drawable.ic_inventory_24dp, fragmentClass = KitchenInventoryFragment::class.java),
-            DrawerMenuItem(11, "Reports & Analytics", R.drawable.ic_sales_report_24dp, fragmentClass = ReportsAnalyticsFragment::class.java),
-            DrawerMenuItem(12, "Customers", R.drawable.ic_person_24dp, fragmentClass = CustomerManagementFragment::class.java),
-            DrawerMenuItem(13, "Offers & Discounts", R.drawable.ic_discount_24dp, fragmentClass = null),
-            DrawerMenuItem(17, "Subscription & Plans", R.drawable.ic_card_payment_24dp, fragmentClass = SubscriptionPlansFragment::class.java),
-            DrawerMenuItem(14, "Notifications", R.drawable.ic_notifications_24dp, fragmentClass = NotificationFragment::class.java, badgeCount = unreadCount),
-            DrawerMenuItem(15, "Settings", R.drawable.ic_settings_24dp, fragmentClass = ManagerSettingsFragment::class.java),
-            DrawerMenuItem(16, "Logout", R.drawable.ic_logout_24dp, isLogout = true)
-        )
     }
 
     private fun startUnreadCountListener() {
@@ -148,7 +119,7 @@ class DrawerViewModel(application: Application) : AndroidViewModel(application) 
             Log.d(TAG, "Unread count update: $unreadCount")
             _uiState.value = _uiState.value.copy(
                 unreadNotificationsCount = unreadCount,
-                menuItems = buildMenuItems(unreadCount)
+                menuItems = DrawerMenuFactory.getMenuItems(unreadCount)
             )
         }
     }
