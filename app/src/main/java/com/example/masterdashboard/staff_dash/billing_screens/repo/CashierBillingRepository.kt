@@ -6,9 +6,11 @@ import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.staff_dash.billing_screens.model.CashierBillingOrderModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.OrderItemModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -189,17 +191,17 @@ class CashierBillingRepository(
      * Fetches a single order's full details using its Firestore document path.
      */
     fun fetchOrderDetails(docPath: String): Flow<ResourceUiState<CashierBillingOrderModel>> = flow {
+        Log.d(TAG, "fetchOrderDetails: Fetching details from path: '$docPath'")
         emit(ResourceUiState.Loading)
         try {
             var doc = firestore.document(docPath).get().await()
             if (!doc.exists()) {
                 // If deleted from active_orders, check completed_orders
                 val pathSegments = docPath.split("/")
-                if (pathSegments.size >= 2 && pathSegments[0] == "users") {
-                    val managerId = pathSegments[1]
-                    val orderId = docPath.substringAfterLast("/")
-                    val completedRef = firestore.collection(AppConstants.COLLECTION_USERS)
-                        .document(managerId)
+                val managerId = if (pathSegments.size >= 2) pathSegments[1] else ""
+                val orderId = docPath.substringAfterLast("/")
+                if (managerId.isNotEmpty()) {
+                    val completedRef = RestaurantPathHelper.getOutletDocRef(managerId)
                         .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
                         .document(orderId)
                     val completedDoc = completedRef.get().await()
@@ -239,6 +241,7 @@ class CashierBillingRepository(
 
         val batch = firestore.batch()
         val orderRef = firestore.document(order.docPath)
+        Log.d(TAG, "settleOrder: Settling active order at path: '${orderRef.path}' with mode: $paymentMode")
         
         // 1. Prepare Payment & Reporting Data
         val currentTime = Timestamp.now()
@@ -281,12 +284,12 @@ class CashierBillingRepository(
             AppConstants.FIELD_BILLING_DATE to exactDate
         )
 
-        // 2. Store full copy in a central 'completed_orders' collection
         val pathSegments = order.docPath.split("/")
-        if (pathSegments.size >= 2 && pathSegments[0] == "users") {
-            val managerId = pathSegments[1]
-            val completedOrderRef = firestore.collection(AppConstants.COLLECTION_USERS)
-                .document(managerId)
+        val managerId = if (pathSegments.size >= 2) pathSegments[1] else ""
+
+        // 2. Store full copy in a central 'completed_orders' collection
+        if (managerId.isNotEmpty()) {
+            val completedOrderRef = RestaurantPathHelper.getOutletDocRef(managerId)
                 .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
                 .document(order.orderId)
             
@@ -309,7 +312,7 @@ class CashierBillingRepository(
                 batch.set(tableRef, mapOf(
                     AppConstants.FIELD_STATUS to AppConstants.STATUS_FREE,
                     AppConstants.FIELD_CUSTOMER_NAME_TABLE to "",
-                    AppConstants.FIELD_CURRENT_BILL to 0.0
+                    AppConstants.FIELD_CURRENT_BILL to ""
                 ), com.google.firebase.firestore.SetOptions.merge())
             } catch (e: Exception) {
                 Log.e(TAG, "settleOrder: Error reconstructing table path", e)
@@ -319,26 +322,21 @@ class CashierBillingRepository(
         // 4. Delete the active order document
         batch.delete(orderRef)
 
-
         // 5. Update CRM (Customer Relationship Management)
-        if (order.customerPhone.isNotEmpty()) {
-            if (pathSegments.size >= 2 && pathSegments[0] == "users") {
-                val managerId = pathSegments[1]
-                val customerRef = firestore.collection(AppConstants.COLLECTION_USERS)
-                    .document(managerId)
-                    .collection(AppConstants.COLLECTION_CUSTOMERS)
-                    .document(order.customerPhone)
+        if (order.customerPhone.isNotEmpty() && managerId.isNotEmpty()) {
+            val customerRef = RestaurantPathHelper.getOutletDocRef(managerId)
+                .collection(AppConstants.COLLECTION_CUSTOMERS)
+                .document(order.customerPhone)
                 
-                val customerData = mapOf(
-                    "customerId" to order.customerPhone,
-                    "customerName" to order.customerName,
-                    "customerMobile" to order.customerPhone,
-                    "lastVisit" to currentTime,
-                    "visitCount" to com.google.firebase.firestore.FieldValue.increment(1),
-                    "totalSpent" to com.google.firebase.firestore.FieldValue.increment(finalGrandTotal)
-                )
-                batch.set(customerRef, customerData, com.google.firebase.firestore.SetOptions.merge())
-            }
+            val customerData = mapOf(
+                "customerId" to order.customerPhone,
+                "customerName" to order.customerName,
+                "customerMobile" to order.customerPhone,
+                "lastVisit" to currentTime,
+                "visitCount" to com.google.firebase.firestore.FieldValue.increment(1),
+                "totalSpent" to com.google.firebase.firestore.FieldValue.increment(finalGrandTotal)
+            )
+            batch.set(customerRef, customerData, SetOptions.merge())
         }
 
         batch.commit()

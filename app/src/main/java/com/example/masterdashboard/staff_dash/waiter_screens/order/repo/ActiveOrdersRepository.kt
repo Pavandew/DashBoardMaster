@@ -7,6 +7,7 @@ import com.example.masterdashboard.staff_dash.waiter_screens.order.models.Active
 import com.example.masterdashboard.staff_dash.waiter_screens.table.models.OrderDataModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.example.masterdashboard.staff_dash.utils.TimeUtils
+import com.example.masterdashboard.utils.RestaurantPathHelper
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -57,7 +58,7 @@ class ActiveOrdersRepository {
 
                 snapshots?.documents?.forEachIndexed { index, document ->
                     val docPath = document.reference.path
-                    if (!docPath.contains("restaurants/$managerId")) {
+                    if (!docPath.contains("${AppConstants.COLLECTION_RESTAURANTS}/$managerId")) {
                         return@forEachIndexed
                     }
 
@@ -152,14 +153,23 @@ class ActiveOrdersRepository {
     ): Flow<ResourceUiState<Boolean>> = callbackFlow {
         trySend(ResourceUiState.Loading)
 
-        val orderRef = firestore.collection(AppConstants.COLLECTION_USERS)
-            .document(managerId)
-            .collection(AppConstants.COLLECTION_RES_FLOORS)
-            .document(floorId)
-            .collection(AppConstants.COLLECTION_TABLES)
-            .document(tableId)
-            .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
-            .document(orderId)
+        val isCounterOrder = tableId.isEmpty() || tableId == "COUNTER_ORDER" || tableId == "N/A" || floorId.isEmpty() || floorId == "N/A"
+
+        val orderRef = if (orderId.contains("${AppConstants.COLLECTION_RESTAURANTS}/")) {
+            firestore.document(orderId)
+        } else if (isCounterOrder) {
+            RestaurantPathHelper.getOutletDocRef(managerId)
+                .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                .document(orderId)
+        } else {
+            RestaurantPathHelper.getOutletDocRef(managerId)
+                .collection(AppConstants.COLLECTION_RES_FLOORS)
+                .document(floorId)
+                .collection(AppConstants.COLLECTION_TABLES)
+                .document(tableId)
+                .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                .document(orderId)
+        }
 
         orderRef.update(AppConstants.FIELD_ORDER_STATUS, newStatus.name)
             .addOnSuccessListener {
