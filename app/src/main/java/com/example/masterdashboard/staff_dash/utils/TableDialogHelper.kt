@@ -74,7 +74,7 @@ object TableDialogHelper {
         val btnRelease = view.findViewById<MaterialButton>(R.id.btnDialogRelease)
         val btnCancel = view.findViewById<MaterialButton>(R.id.btnDialogCancel)
 
-        tvTableName.text = "Table ${table.tableName} is Reserved"
+        tvTableName.text = "${table.tableName} is Reserved"
         tvCustomerName.text = table.customerName ?: "Unknown Guest"
 
         btnStartOrder.setOnClickListener {

@@ -135,6 +135,7 @@
     <string name="table_id_format">%s</string>
     <string name="currency_symbol">₹</string>
     <string name="mark_as_served">Mark as Served</string>
+    <string name="marking_as_served">Marking as Served…</string>
     <string name="order_details">Order Details</string>
     <string name="items">Items</string>
     <string name="grand_total">Grand Total</string>

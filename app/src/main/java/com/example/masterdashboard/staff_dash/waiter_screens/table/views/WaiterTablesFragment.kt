@@ -197,7 +197,7 @@ class WaiterTablesFragment : Fragment() {
                 tableAdapter.updateList(filteredList)
             },
             filterRule = { table, query ->
-                table.tableId.contains(query, ignoreCase = true)
+                table.tableName.contains(query, ignoreCase = true) || table.tableId.contains(query, ignoreCase = true)
             }
         )
     }

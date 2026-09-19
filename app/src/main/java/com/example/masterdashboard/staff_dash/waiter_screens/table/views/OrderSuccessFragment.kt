@@ -13,7 +13,9 @@ import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.FragmentOrderSuccesBinding
 import com.example.masterdashboard.staff_dash.billing_screens.CashierHomeActivity
 import com.example.masterdashboard.staff_dash.waiter_screens.WaiterHomeActivity
+import com.example.masterdashboard.staff_dash.waiter_screens.order.views.OrderDetailExpansionFragment
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
+import com.example.masterdashboard.utils.NavigationUtils
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -114,14 +116,32 @@ class OrderSuccessFragment : Fragment() {
 
     private fun setupNavigationActions() {
         binding.btnViewActiveOrders.setOnClickListener {
-            Log.d(TAG, "Navigating to Active Orders screen.")
-            // 1. Clear out the shared cart counter state arrays
+            val orderId = arguments?.getString("orderId") ?: viewModel.lastOrderId ?: ""
+            val rawTableName = arguments?.getString("tableName") ?: ""
+            Log.d(TAG, "Navigating to Order Details Fragment for Order: $orderId, Table: $rawTableName")
+
             viewModel.clearCart()
-            // 2. Clear out the entire ordering fragment session history
-            parentFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-            // 3. Open Orders through the activity to handle bottom nav and currentTag correctly
-            (activity as? WaiterHomeActivity)?.openOrders()
-            (activity as? CashierHomeActivity)?.openBills()
+
+            val detailFragment = OrderDetailExpansionFragment().apply {
+                arguments = Bundle().apply {
+                    putString("orderId", orderId)
+                    putString("tableName", rawTableName)
+                    putString("orderStatus", "PENDING")
+                    putString("orderTime", "Just Now")
+                }
+            }
+
+            val containerId = NavigationUtils.getHostContainerId(activity)
+            if (containerId != 0) {
+                parentFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                parentFragmentManager.beginTransaction()
+                    .replace(containerId, detailFragment)
+                    .addToBackStack(null)
+                    .commit()
+            } else {
+                (activity as? WaiterHomeActivity)?.openOrders()
+                (activity as? CashierHomeActivity)?.openBills()
+            }
         }
 
         binding.btnBackToTables.setOnClickListener {
