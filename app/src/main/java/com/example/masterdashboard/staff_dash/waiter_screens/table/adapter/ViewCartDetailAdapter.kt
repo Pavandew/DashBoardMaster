@@ -22,7 +22,11 @@ class ViewCartDetailAdapter : ListAdapter<FoodItemData, ViewCartDetailAdapter.Ca
     class CartViewHolder(private val binding: ItemOrderDetailRowBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: FoodItemData) {
             val context = binding.root.context
-            val displayName = if (item.variantName.isNotEmpty()) "${item.name} (${item.variantName})" else item.name
+            val displayName = when {
+                item.variantName.isEmpty() -> item.name
+                item.name.contains("(${item.variantName})", ignoreCase = true) || item.name.contains(item.variantName, ignoreCase = true) -> item.name
+                else -> "${item.name} (${item.variantName})"
+            }
             binding.tvExpandedItemName.text = displayName
 
             // Format example output string layout cleanly: "2 x ₹199"
@@ -36,7 +40,7 @@ class ViewCartDetailAdapter : ListAdapter<FoodItemData, ViewCartDetailAdapter.Ca
             binding.cardItemRoot.alpha = 1.0f
             binding.cardItemRoot.setCardBackgroundColor(androidx.core.content.ContextCompat.getColor(context, com.example.masterdashboard.R.color.white))
 
-            // Logic to show status of item (New vs Already Served)
+            // Logic to show status of item (New vs Already Sent / Served)
             when {
                 item.previousQuantity == 0 -> {
                     // Entirely new item in the cart
@@ -48,14 +52,17 @@ class ViewCartDetailAdapter : ListAdapter<FoodItemData, ViewCartDetailAdapter.Ca
                 item.currentQuantity > item.previousQuantity -> {
                     // Some units already sent, some are new additions
                     binding.tvItemStatusLabel.visibility = android.view.View.VISIBLE
-                    binding.tvItemStatusLabel.text = "Served: ${item.previousQuantity} | New: +${item.currentQuantity - item.previousQuantity}"
+                    val prefix = if (item.itemStatus.equals("SERVED", true)) "Served" else "Previously Sent"
+                    val newDelta = item.currentQuantity - item.previousQuantity
+                    binding.tvItemStatusLabel.text = "$prefix: ${item.previousQuantity} | New: +$newDelta"
                     binding.tvItemStatusLabel.setTextColor(androidx.core.content.ContextCompat.getColor(context, com.example.masterdashboard.R.color.status_occupied))
                     binding.viewStatusStrip.setBackgroundColor(androidx.core.content.ContextCompat.getColor(context, com.example.masterdashboard.R.color.accent_orange))
                 }
                 else -> {
                     // Item was already sent to kitchen/served
                     binding.tvItemStatusLabel.visibility = android.view.View.VISIBLE
-                    binding.tvItemStatusLabel.text = "Previously Sent"
+                    val label = if (item.itemStatus.equals("SERVED", true)) "Served" else "Previously Sent"
+                    binding.tvItemStatusLabel.text = label
                     binding.tvItemStatusLabel.setTextColor(androidx.core.content.ContextCompat.getColor(context, com.example.masterdashboard.R.color.gray_text))
                     binding.viewStatusStrip.setBackgroundColor(androidx.core.content.ContextCompat.getColor(context, com.example.masterdashboard.R.color.chip_border))
                     binding.cardItemRoot.alpha = 0.8f

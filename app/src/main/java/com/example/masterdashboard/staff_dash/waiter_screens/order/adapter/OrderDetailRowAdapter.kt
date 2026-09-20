@@ -40,7 +40,11 @@ class OrderDetailRowAdapter : ListAdapter<OrderExpandedItemData, OrderDetailRowA
         val context = binding.root.context
 
         // Bind raw document structural values to text layout targets smoothly
-        val displayName = if (item.variantName.isNotEmpty()) "${item.name} (${item.variantName})" else item.name
+        val displayName = when {
+            item.variantName.isEmpty() -> item.name
+            item.name.contains("(${item.variantName})", ignoreCase = true) || item.name.contains(item.variantName, ignoreCase = true) -> item.name
+            else -> "${item.name} (${item.variantName})"
+        }
         binding.tvExpandedItemName.text = displayName
         binding.tvExpandedItemQtyPrice.text = "${item.quantity} x ₹${item.unitPrice}"
         binding.tvExpandedItemRowTotal.text = "₹${item.totalPrice}"

@@ -23,6 +23,7 @@ import com.example.masterdashboard.staff_dash.waiter_screens.order.models.Active
 import com.example.masterdashboard.staff_dash.waiter_screens.order.repo.OrderDetailRepository
 import com.example.masterdashboard.staff_dash.waiter_screens.order.viewModel.OrderDetailViewModel
 import com.example.masterdashboard.staff_dash.waiter_screens.table.views.WaiterOrderTakingFragment
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class OrderDetailExpansionFragment : Fragment() {
@@ -111,26 +112,21 @@ class OrderDetailExpansionFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
 
-                    if (state.isLoading) {
+
+
+                    if (state.isLoading && state.items.isEmpty()) {
                         Log.d(TAG, "📱 [FRAGMENT] UI State -> Loading items...")
                         binding.pbOrderDetailLoading.visibility = View.VISIBLE
                         binding.nsvContentContainer.visibility = View.INVISIBLE
-                        binding.btnMarkAsServed.visibility = View.INVISIBLE
+                        binding.layoutActionButtons.visibility = View.INVISIBLE
                     } else {
                         Log.i(TAG, "📱 [FRAGMENT] UI State -> Rendered! Displaying ${state.items.size} dish items for Table '${state.tableName}'")
 
                         binding.pbOrderDetailLoading.visibility = View.GONE
                         binding.nsvContentContainer.visibility = View.VISIBLE
-                        binding.btnMarkAsServed.visibility = View.VISIBLE
+                        binding.layoutActionButtons.visibility = View.VISIBLE
 
-                        // Table Name Formatting
-                        val formattedTable = if (state.tableName.startsWith("Table", ignoreCase = true)) {
-                            state.tableName
-                        } else {
-                            "Table ${state.tableName}"
-                        }
-
-                        binding.tvExpandedTableId.text = formattedTable
+                        binding.tvExpandedTableId.text = state.tableName
                         binding.tvExpandedOrderId.text = state.orderId
                         binding.tvExpandedTimestamp.text = state.timeStamp
 
@@ -180,15 +176,22 @@ class OrderDetailExpansionFragment : Fragment() {
                         // Mark as Served Action
                         binding.btnMarkAsServed.setOnClickListener {
                             val managerId = SessionManager(requireContext()).getUid() ?: ""
-                            viewModel.finalizeOrderAsServed(
-                                managerId = managerId,
-                                floorId = state.floorId,
-                                tableId = state.tableId,
-                                orderDocId = state.documentId
-                            ) {
-                                Toast.makeText(context, "Order marked as Served!", Toast.LENGTH_SHORT).show()
-                                // Re-load to update UI
-                                viewModel.loadOrderSpecifications(managerId, currentOrderId, passedTableName, "SERVED", passedOrderTime)
+                            
+                            // 1. Button feedback state: Change text and disable to acknowledge tap
+                            binding.btnMarkAsServed.isEnabled = false
+                            binding.btnMarkAsServed.text = getString(R.string.marking_as_served)
+                            viewLifecycleOwner.lifecycleScope.launch {
+                                delay(350) // Smooth micro-delay for clear visual acknowledgment
+                                viewModel.finalizeOrderAsServed(
+                                    managerId = managerId,
+                                    floorId = state.floorId,
+                                    tableId = state.tableId,
+                                    orderDocId = state.documentId
+                                ) {
+                                    binding.btnMarkAsServed.isEnabled = true
+                                    binding.btnMarkAsServed.text = getString(R.string.mark_as_served)
+                                    Toast.makeText(context, "Order marked as Served!", Toast.LENGTH_SHORT).show()
+                                }
                             }
                         }
 

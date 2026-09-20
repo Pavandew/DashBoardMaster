@@ -87,7 +87,35 @@ class OrderDetailViewModel(
         orderDocId: String,
         onCompletionSuccess: () -> Unit
     ) {
-        updateStatus(repository.updateOrderStatusToServed(managerId, floorId, tableId, orderDocId), onCompletionSuccess)
+        // Optimistic UI update: Instantly update local state for 0ms lag
+        val currentItems = _uiState.value.items.map { item ->
+            if (!item.status.equals("REJECTED", ignoreCase = true)) {
+                item.copy(status = "SERVED", orderedQuantity = item.quantity, readyQuantity = item.quantity)
+            } else item
+        }
+        _uiState.update {
+            it.copy(
+                status = ActiveOrderStatus.SERVED,
+                items = currentItems
+            )
+        }
+
+        // Fire background update without setting full-page isLoading = true
+        repository.updateOrderStatusToServed(managerId, floorId, tableId, orderDocId)
+            .onEach { resource ->
+                when (resource) {
+                    is ResourceUiState.Success -> {
+                        Log.i(TAG, "finalizeOrderAsServed: Firestore update confirmed.")
+                        onCompletionSuccess()
+                    }
+                    is ResourceUiState.Error -> {
+                        Log.e(TAG, "finalizeOrderAsServed: Error updating status: ${resource.message}")
+                        _uiState.update { it.copy(errorMessage = resource.message) }
+                    }
+                    else -> {}
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     fun finalizeOrderAsBilling(
