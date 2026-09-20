@@ -120,9 +120,7 @@ class CashierBillingRepository(
             val finalDisplayName = when {
                 orderType == AppConstants.ORDER_TYPE_TAKE_AWAY -> "TAKE AWAY"
                 orderType == AppConstants.ORDER_TYPE_DELIVERY -> "DELIVERY"
-                !tableName.isNullOrEmpty() -> {
-                    if (tableName.startsWith("Table", true)) tableName else "Table $tableName"
-                }
+                !tableName.isNullOrEmpty() -> tableName
                 else -> "Counter Order"
             }
 
@@ -152,7 +150,14 @@ class CashierBillingRepository(
                 )
             } ?: emptyList()
 
-            val summaryStr = itemsList.joinToString(", ") { "${it.quantity}x ${it.itemName}" }
+            val summaryStr = itemsList.joinToString(", ") { item ->
+                val name = when {
+                    item.variantName.isEmpty() -> item.itemName
+                    item.itemName.contains("(${item.variantName})", ignoreCase = true) || item.itemName.contains(item.variantName, ignoreCase = true) -> item.itemName
+                    else -> "${item.itemName} (${item.variantName})"
+                }
+                "${item.quantity}x $name"
+            }
 
             CashierBillingOrderModel(
                 orderId = orderId,

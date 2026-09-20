@@ -109,6 +109,11 @@ class CashierSettleBillFragment : Fragment() {
         mBinding.rvBillingItems.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = itemsAdapter
+            isNestedScrollingEnabled = false
+        }
+
+        mBinding.nestedScrollView.post {
+            mBinding.nestedScrollView.scrollTo(0, 0)
         }
 
         // Accessing nested binding views
@@ -307,14 +312,19 @@ class CashierSettleBillFragment : Fragment() {
                                 }
                             }
 
-                            itemsAdapter.submitList(order.items)
+                            itemsAdapter.submitList(order.items) {
+                                mBinding.nestedScrollView.post {
+                                    mBinding.nestedScrollView.scrollTo(0, 0)
+                                }
+                            }
 
+                            val isPaidOrCompleted = status == "PAID" || status == "COMPLETED"
                             val sessionManager = SessionManager(requireContext())
                             val isConfiguredInSettings = sessionManager.isServiceChargeEnabled()
                             val rate = sessionManager.getServiceChargePercent()
 
-                            // Automatically initialize default Service Charge on initial load if enabled in settings
-                            if (isConfiguredInSettings && order.serviceChargeAmount == 0.0 && !hasUserToggledServiceCharge) {
+                            // Automatically initialize default Service Charge on initial load if enabled in settings (ONLY for unpaid bills)
+                            if (!isPaidOrCompleted && isConfiguredInSettings && order.serviceChargeAmount == 0.0 && !hasUserToggledServiceCharge) {
                                 val isDineInOnly = sessionManager.isServiceChargeDineInOnly()
                                 val isDineIn = order.orderType.equals("DINE_IN", ignoreCase = true) || order.orderType.contains("DINE", ignoreCase = true) || order.orderType.contains("TABLE", ignoreCase = true)
                                 if (!isDineInOnly || isDineIn) {
@@ -327,34 +337,40 @@ class CashierSettleBillFragment : Fragment() {
                                 }
                             }
 
-                            if (isConfiguredInSettings || order.serviceChargeAmount > 0) {
+                            if (order.serviceChargeAmount > 0) {
                                 mBinding.llServiceChargeRow.isVisible = true
                                 val label = sessionManager.getServiceChargeLabel().ifEmpty { "Service Charge" }
                                 mBinding.tvServiceChargeLabel.text = "$label (${String.format("%.1f", rate)}%)"
+                                mBinding.tvServiceChargeValue.text = getString(R.string.amount_format, String.format("%.2f", order.serviceChargeAmount))
 
-                                if (order.serviceChargeAmount > 0) {
-                                    mBinding.tvServiceChargeValue.text = getString(R.string.amount_format, String.format("%.2f", order.serviceChargeAmount))
+                                if (isPaidOrCompleted) {
+                                    mBinding.tvBtnRemoveServiceCharge.isVisible = false
+                                } else {
+                                    mBinding.tvBtnRemoveServiceCharge.isVisible = true
                                     mBinding.tvBtnRemoveServiceCharge.text = "Remove"
                                     mBinding.tvBtnRemoveServiceCharge.setTextColor(Color.parseColor("#EF4444"))
-
                                     mBinding.tvBtnRemoveServiceCharge.setOnClickListener {
                                         Log.d(TAG, "Action: Cashier removing service charge for Order ${order.orderId}")
                                         hasUserToggledServiceCharge = true
                                         viewModel.updateServiceCharge(0.0)
                                         Toast.makeText(requireContext(), "Service charge removed for this bill", Toast.LENGTH_SHORT).show()
                                     }
-                                } else {
-                                    mBinding.tvServiceChargeValue.text = getString(R.string.amount_format, String.format("%.2f", 0.0))
-                                    mBinding.tvBtnRemoveServiceCharge.text = "Add Back"
-                                    mBinding.tvBtnRemoveServiceCharge.setTextColor(Color.parseColor("#3554FF"))
+                                }
+                            } else if (!isPaidOrCompleted && isConfiguredInSettings) {
+                                mBinding.llServiceChargeRow.isVisible = true
+                                val label = sessionManager.getServiceChargeLabel().ifEmpty { "Service Charge" }
+                                mBinding.tvServiceChargeLabel.text = "$label (${String.format("%.1f", rate)}%)"
+                                mBinding.tvServiceChargeValue.text = getString(R.string.amount_format, String.format("%.2f", 0.0))
 
-                                    mBinding.tvBtnRemoveServiceCharge.setOnClickListener {
-                                        val defaultCharge = order.subtotal * (rate / 100.0)
-                                        Log.d(TAG, "Action: Cashier re-adding service charge (₹$defaultCharge) for Order ${order.orderId}")
-                                        hasUserToggledServiceCharge = true
-                                        viewModel.updateServiceCharge(defaultCharge)
-                                        Toast.makeText(requireContext(), "Service charge re-added to bill", Toast.LENGTH_SHORT).show()
-                                    }
+                                mBinding.tvBtnRemoveServiceCharge.isVisible = true
+                                mBinding.tvBtnRemoveServiceCharge.text = "Add Back"
+                                mBinding.tvBtnRemoveServiceCharge.setTextColor(Color.parseColor("#3554FF"))
+                                mBinding.tvBtnRemoveServiceCharge.setOnClickListener {
+                                    val defaultCharge = order.subtotal * (rate / 100.0)
+                                    Log.d(TAG, "Action: Cashier re-adding service charge (₹$defaultCharge) for Order ${order.orderId}")
+                                    hasUserToggledServiceCharge = true
+                                    viewModel.updateServiceCharge(defaultCharge)
+                                    Toast.makeText(requireContext(), "Service charge re-added to bill", Toast.LENGTH_SHORT).show()
                                 }
                             } else {
                                 mBinding.llServiceChargeRow.isVisible = false

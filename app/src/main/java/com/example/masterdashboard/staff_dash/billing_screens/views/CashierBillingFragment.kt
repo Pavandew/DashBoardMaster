@@ -133,10 +133,14 @@ class CashierBillingFragment : Fragment() {
                         is CashierBillingUiState.Success -> {
                             Log.d(TAG, "UI State -> Success: Received ${state.orders.size} orders")
                             binding.pbBillingLoading.visibility = View.GONE
-                            ordersAdapter.submitList(state.orders)
+                            ordersAdapter.submitList(state.orders) {
+                                if (state.orders.isNotEmpty()) {
+                                    binding.rvCashierBillingList.post {
+                                        binding.rvCashierBillingList.scrollToPosition(0)
+                                    }
+                                }
+                            }
                             filterAdapter.submitList(state.filters)
-                            
-                            // Removed automatic smoothScrollToPosition to prevent "All" chip from being pushed away
                         }
                         is CashierBillingUiState.Error -> {
                             Log.e(TAG, "UI State -> Error: ${state.message}")
