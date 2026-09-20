@@ -188,18 +188,18 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
             when {
                 state.subscriptionStatus == SubscriptionStatus.EXPIRED || state.trialDaysRemaining <= 0 -> {
                     trialBadgeTv.text = "⚠️ Free Trial Expired"
-                    trialBadgeTv.setBackgroundResource(R.drawable.bg_status_occupied)
-                    trialBadgeTv.setTextColor(android.graphics.Color.parseColor("#D32F2F"))
+                    trialBadgeTv.setBackgroundResource(R.drawable.bg_expired_badge)
+                    trialBadgeTv.setTextColor(android.graphics.Color.parseColor("#EF5350"))
                 }
                 state.subscriptionStatus == SubscriptionStatus.TRIAL -> {
                     trialBadgeTv.text = "👑 ${state.trialDaysRemaining} Days Trial Left"
-                    trialBadgeTv.setBackgroundResource(R.drawable.bg_status_active)
-                    trialBadgeTv.setTextColor(android.graphics.Color.parseColor("#2E7D32"))
+                    trialBadgeTv.setBackgroundResource(R.drawable.bg_trial_badge)
+                    trialBadgeTv.setTextColor(android.graphics.Color.parseColor("#FFD54F"))
                 }
                 else -> {
                     trialBadgeTv.text = "⭐ PRO Member"
-                    trialBadgeTv.setBackgroundResource(R.drawable.bg_role_badge)
-                    trialBadgeTv.setTextColor(android.graphics.Color.parseColor("#7B1FA2"))
+                    trialBadgeTv.setBackgroundResource(R.drawable.bg_pro_badge)
+                    trialBadgeTv.setTextColor(android.graphics.Color.parseColor("#D8B4FE"))
                 }
             }
 

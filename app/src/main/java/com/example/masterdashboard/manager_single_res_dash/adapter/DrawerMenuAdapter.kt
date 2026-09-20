@@ -51,7 +51,7 @@ class DrawerMenuAdapter(
         val list = mutableListOf<DrawerMenuItem>()
         val targetList = if (items.isNotEmpty()) items else rootMenuItems
         for (item in targetList) {
-            if (item.isHeader) {
+            if (item.isHeader && item.children.isNotEmpty()) {
                 val headerCopy = item.copy(isExpanded = expandedHeaderIds.contains(item.id))
                 list.add(headerCopy)
                 if (expandedHeaderIds.contains(item.id)) {
@@ -67,7 +67,7 @@ class DrawerMenuAdapter(
     override fun getItemViewType(position: Int): Int {
         val item = displayList[position]
         return when {
-            item.isHeader -> TYPE_HEADER
+            item.isHeader && item.children.isNotEmpty() -> TYPE_HEADER
             item.parentHeaderId != null -> TYPE_CHILD
             else -> TYPE_SINGLE
         }
