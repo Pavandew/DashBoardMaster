@@ -34,14 +34,7 @@ class ActiveOrdersAdapter(
         val binding = holder.binding
         val context = binding.root.context
 
-        // Clean Table Name Formatting: Avoids duplicate "Table T-1" prefixes
-        val formattedTable = if (order.tableName.startsWith("Table", ignoreCase = true)) {
-            order.tableName
-        } else {
-            "Table ${order.tableName}"
-        }
-
-        binding.tvOrderTableName.text = formattedTable
+        binding.tvOrderTableName.text = order.tableName
         binding.tvOrderTicketId.text = order.orderId
         binding.tvOrderTotalItems.text = "${order.totalItems} Items"
         binding.tvOrderTimestamp.text = order.orderTime

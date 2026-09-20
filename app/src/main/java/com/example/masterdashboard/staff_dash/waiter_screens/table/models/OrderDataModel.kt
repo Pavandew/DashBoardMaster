@@ -4,6 +4,7 @@ import com.example.masterdashboard.utils.AppConstants
 import com.google.firebase.Timestamp
 import java.io.Serializable
 
+@com.google.firebase.firestore.IgnoreExtraProperties
 data class OrderDataModel(
     val orderId: String = "",
     val tableId: String = "",
@@ -21,7 +22,8 @@ data class OrderDataModel(
     val paymentMethod: String = "",
     val restaurantId: String = "", // Added for precise cross-collection filtering
     val waiterId: String = "", // Added to identify which waiter to notify
-    val timestamp: Timestamp = Timestamp.now()
+    val timestamp: Timestamp = Timestamp.now(),
+    val orderDocPath: String = "" // Added to resolve CustomClassMapper warning
 ) : Serializable
 
 data class OrderItemModel(

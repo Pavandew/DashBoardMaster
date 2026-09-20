@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.masterdashboard.databinding.FragmentViewCartDetailsBinding
 import com.example.masterdashboard.utils.SessionManager
 import com.example.masterdashboard.staff_dash.waiter_screens.table.adapter.ViewCartDetailAdapter
+import com.example.masterdashboard.staff_dash.waiter_screens.table.models.FoodItemData
 import com.example.masterdashboard.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
 import com.example.masterdashboard.utils.TaxCalculator
 import kotlinx.coroutines.flow.collectLatest
@@ -97,7 +98,19 @@ abstract class BaseViewCartFragment : Fragment() {
                     
                     // Filter and display only items that have a positive quantity
                     val itemsInCart = viewModel.originalFoodList.value.filter { it.currentQuantity > 0 }
-                    cartAdapter.submitList(itemsInCart)
+
+                    // Sort: New items and items with new additions float to the VERY TOP, previously sent items sit at the BOTTOM
+                    val sortedCartItems = itemsInCart.sortedWith(
+                        compareByDescending<FoodItemData> {
+                            it.currentQuantity > it.previousQuantity 
+                        }.thenByDescending { 
+                            it.previousQuantity == 0 
+                        }.thenBy { 
+                            it.name 
+                        }
+                    )
+
+                    cartAdapter.submitList(sortedCartItems)
 
                     // Financial Calculations (Base Price + Configured Tax)
                     val subtotal = summary.totalPrice.toDouble()

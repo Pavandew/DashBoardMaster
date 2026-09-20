@@ -128,11 +128,13 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
     fun startOrderSession(tableId: String, floorId: String, tableName: String, status: String, orderDocId: String? = null, orderId: String? = null) {
         Log.i(TAG, "Session: Starting for Table $tableName ($tableId). Status: $status, DocId: $orderDocId")
         
-        // Prevent clearing if we are just returning to the same active session
-        if (isViewingCart && currentTableId == tableId && existingOrderDocId == orderDocId) {
-            Log.d(TAG, "Session: Returning to active session. State preserved.")
-            isViewingCart = false
-            return
+        // Prevent clearing if we are returning to the same active session
+        if (currentTableId == tableId && (existingOrderDocId == orderDocId || (existingOrderDocId != null && orderDocId.isNullOrEmpty()))) {
+            if (_originalFoodList.value.any { it.currentQuantity > 0 }) {
+                Log.d(TAG, "Session: Returning to active session for $tableId. State preserved.")
+                isViewingCart = false
+                return
+            }
         }
 
         currentTableId = tableId
@@ -150,65 +152,82 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
     }
 
     /**
-     * Attempts to find an existing active order for the current table in Firestore.
+     * Attempts to find an existing active order for the current table in Firestore and applies it instantly.
      */
     fun findAndResumeOrderSession(managerId: String, floorId: String, tableId: String) {
+        if (currentTableId == tableId && _originalFoodList.value.any { it.currentQuantity > 0 }) {
+            Log.d(TAG, "Session: findAndResumeOrderSession skipped. Local cart already active for $tableId.")
+            return
+        }
+
         viewModelScope.launch {
             Log.d(TAG, "Session: Searching Firestore for existing order on $tableId")
             val result = repository.getActiveOrderForTable(managerId, floorId, tableId)
             if (result != null) {
                 val (docId, order) = result
-                Log.i(TAG, "Session: Found existing order ${order.orderId}. Resuming...")
+                Log.i(TAG, "Session: Found existing order ${order.orderId}. Merging instantly...")
                 existingOrderDocId = docId
                 existingOrderId = if (order.orderId.isBlank() || order.orderId == docId) null else order.orderId
-                resumeOrderSession(managerId, floorId, tableId, docId)
+                applyExistingOrder(order)
             }
         }
     }
 
     /**
-     * Fetches details of an existing order and populates the local cart quantities.
+     * Async fetches details of an existing order and populates cart quantities.
      */
     fun resumeOrderSession(managerId: String, floorId: String, tableId: String, orderDocId: String) {
+        if (currentTableId == tableId && existingOrderDocId == orderDocId && _originalFoodList.value.any { it.currentQuantity > 0 }) {
+            Log.d(TAG, "Session: resumeOrderSession skipped. Local cart already active for $tableId.")
+            return
+        }
+
         viewModelScope.launch {
-            Log.d(TAG, "Session: Resuming order from DocId: $orderDocId")
-            // Wait for menu items to be loaded
-            var attempts = 0
-            while (_originalFoodList.value.isEmpty() && attempts < 50) {
-                delay(100)
-                attempts++
-            }
+            Log.d(TAG, "Session: Async resuming order from DocId: $orderDocId")
 
             val existingOrder = repository.getExistingOrder(managerId, floorId, tableId, orderDocId)
             if (existingOrder != null) {
-                Log.i(TAG, "Session: Merging Firestore order data into local state.")
-                customerName = existingOrder.customerName
-                customerMobile = existingOrder.customerMobile
-                orderType = existingOrder.orderType
-                currentTableName = existingOrder.tableName.ifEmpty { currentTableName }
-                
-                val existingItemsMap = existingOrder.items.associateBy { it.itemId }
-                _originalFoodList.value = _originalFoodList.value.map { item ->
-                    val existing = existingItemsMap[item.id]
-                    if (existing != null) {
-                        // Sync quantities, status, variant AND the actual price from the existing order
-                        item.copy(
-                            currentQuantity = existing.quantity, 
-                            previousQuantity = existing.quantity, 
-                            readyQuantity = existing.readyQuantity,
-                            itemStatus = existing.itemStatus, 
-                            variantName = existing.variantName,
-                            price = existing.price
-                        )
-                    } else {
-                        item.copy(currentQuantity = 0, previousQuantity = 0, itemStatus = AppConstants.STATUS_PENDING)
-                    }
-                }
-                updateTotals()
+                applyExistingOrder(existingOrder)
             } else {
                 Log.e(TAG, "Session: Failed to fetch existing order document.")
             }
         }
+    }
+
+    /**
+     * Merges an existing order object directly into local cart state with 0ms delay.
+     */
+    private fun applyExistingOrder(existingOrder: OrderDataModel) {
+        Log.i(TAG, "Session: Merging Firestore order data into local state.")
+        customerName = existingOrder.customerName
+        customerMobile = existingOrder.customerMobile
+        orderType = existingOrder.orderType
+        currentTableName = existingOrder.tableName.ifEmpty { currentTableName }
+        
+        val existingItemsMap = existingOrder.items.associateBy { it.itemId }
+        _originalFoodList.value = _originalFoodList.value.map { item ->
+            val existing = existingItemsMap[item.id]
+            if (existing != null) {
+                val localQty = item.currentQuantity
+                val preservedQty = if (localQty > existing.quantity) localQty else existing.quantity
+                
+                item.copy(
+                    currentQuantity = preservedQty, 
+                    previousQuantity = existing.orderedQuantity.takeIf { it > 0 } ?: existing.quantity, 
+                    readyQuantity = existing.readyQuantity,
+                    itemStatus = existing.itemStatus, 
+                    variantName = existing.variantName,
+                    price = existing.price
+                )
+            } else {
+                if (item.currentQuantity > 0) {
+                    item
+                } else {
+                    item.copy(currentQuantity = 0, previousQuantity = 0, itemStatus = AppConstants.STATUS_PENDING)
+                }
+            }
+        }
+        updateTotals()
     }
 
     // --- Cart Actions ---
@@ -268,19 +287,74 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
 
     /**
      * Updates an item with specific variants and addons from the customization UI.
+     * Supports multiple variant line-items for the same dish (e.g. 3 Full Biryani AND 1 Half Biryani).
      */
     fun setItemCustomization(foodId: String, quantity: Int, variant: String, addons: List<String>, variantPrice: Int? = null) {
         Log.d(TAG, "Cart: Applying customization for $foodId. Qty: $quantity, Variant: $variant")
-        _originalFoodList.value = _originalFoodList.value.map { item ->
-            if (item.id == foodId) {
-                item.copy(
-                    currentQuantity = quantity, 
-                    variantName = variant, 
-                    selectedAddons = addons, 
-                    price = variantPrice ?: item.price
+        val currentList = _originalFoodList.value.toMutableList()
+        
+        val baseItemIndex = currentList.indexOfFirst { it.id == foodId }
+        val exactVariantIndex = currentList.indexOfFirst { it.id == "${foodId}_$variant" || (it.id == foodId && (it.variantName == variant || it.variantName.isEmpty())) }
+
+        if (exactVariantIndex != -1) {
+            val existing = currentList[exactVariantIndex]
+            if (existing.variantName.isEmpty() || existing.variantName == variant || existing.currentQuantity == 0) {
+                currentList[exactVariantIndex] = existing.copy(
+                    currentQuantity = quantity,
+                    variantName = variant,
+                    selectedAddons = addons,
+                    price = variantPrice ?: existing.price
                 )
-            } else item
+            } else {
+                // Different variant selected! Create/update separate variant line item (e.g. Half vs Full)
+                val variantCloneId = "${foodId}_$variant"
+                val cloneIndex = currentList.indexOfFirst { it.id == variantCloneId }
+                if (cloneIndex != -1) {
+                    currentList[cloneIndex] = currentList[cloneIndex].copy(
+                        currentQuantity = quantity,
+                        variantName = variant,
+                        selectedAddons = addons,
+                        price = variantPrice ?: currentList[cloneIndex].price
+                    )
+                } else {
+                    val baseItem = if (baseItemIndex != -1) currentList[baseItemIndex] else existing
+                    val newVariantLineItem = baseItem.copy(
+                        id = variantCloneId,
+                        currentQuantity = quantity,
+                        previousQuantity = 0,
+                        readyQuantity = 0,
+                        variantName = variant,
+                        selectedAddons = addons,
+                        price = variantPrice ?: baseItem.price
+                    )
+                    currentList.add(newVariantLineItem)
+                }
+            }
+        } else if (baseItemIndex != -1) {
+            val baseItem = currentList[baseItemIndex]
+            if (baseItem.currentQuantity == 0) {
+                currentList[baseItemIndex] = baseItem.copy(
+                    currentQuantity = quantity,
+                    variantName = variant,
+                    selectedAddons = addons,
+                    price = variantPrice ?: baseItem.price
+                )
+            } else {
+                val variantCloneId = "${foodId}_$variant"
+                val newVariantLineItem = baseItem.copy(
+                    id = variantCloneId,
+                    currentQuantity = quantity,
+                    previousQuantity = 0,
+                    readyQuantity = 0,
+                    variantName = variant,
+                    selectedAddons = addons,
+                    price = variantPrice ?: baseItem.price
+                )
+                currentList.add(newVariantLineItem)
+            }
         }
+        
+        _originalFoodList.value = currentList
         updateTotals()
     }
 
