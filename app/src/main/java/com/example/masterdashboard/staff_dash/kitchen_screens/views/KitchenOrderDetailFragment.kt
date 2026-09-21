@@ -17,8 +17,10 @@ import com.example.masterdashboard.staff_dash.kitchen_screens.utils.KitchenRejec
 import com.example.masterdashboard.staff_dash.kitchen_screens.viewModel.KitchenOrderDetailViewModel
 import com.example.masterdashboard.staff_dash.utils.StatusUIUtils
 import com.example.masterdashboard.staff_dash.utils.TimeUtils
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class KitchenOrderDetailFragment : Fragment(R.layout.fragment_kitchen_order_detail) {
 
@@ -90,9 +92,9 @@ class KitchenOrderDetailFragment : Fragment(R.layout.fragment_kitchen_order_deta
         val normalizedStatus = data.status.lowercase().trim()
         Log.d(TAG, "populateUi: status='$normalizedStatus', total items=${data.items.size}")
 
-        // Sort items: New items (qty > orderedQty) first, then processed items
+        // Sort items: Items needing preparation (quantity > readyQuantity) first, then processed items
         val sortedItems = data.items.sortedWith(compareByDescending<OrderDetailItem> { 
-            it.quantity > it.orderedQuantity 
+            it.quantity > it.readyQuantity 
         }.thenBy { it.itemName })
 
         binding.tvItemCount.text = "${sortedItems.size} Total Items"
@@ -114,7 +116,14 @@ class KitchenOrderDetailFragment : Fragment(R.layout.fragment_kitchen_order_deta
         }
 
         binding.btnAccept.setOnClickListener {
-            viewModel.updateTicketStatus(currentDocPath, "Preparing")
+            binding.btnAccept.isEnabled = false
+            binding.btnAccept.text = "Accepting..."
+            binding.btnReject.isEnabled = false
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                delay(250.milliseconds) // Smooth micro-delay for visual tactile feedback
+                viewModel.updateTicketStatus(currentDocPath, "Preparing")
+            }
         }
 
         binding.btnReject.setOnClickListener {

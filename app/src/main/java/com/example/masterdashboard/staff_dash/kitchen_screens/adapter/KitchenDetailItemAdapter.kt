@@ -25,7 +25,11 @@ class KitchenDetailItemAdapter : ListAdapter<OrderDetailItem, KitchenDetailItemA
 
     class ItemViewHolder(private val binding: ItemKitchenDetailRowBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: OrderDetailItem) {
-            val displayName = if (item.variantName.isNotEmpty()) "${item.itemName} (${item.variantName})" else item.itemName
+            val displayName = when {
+                item.variantName.isEmpty() -> item.itemName
+                item.itemName.contains("(${item.variantName})", ignoreCase = true) || item.itemName.contains(item.variantName, ignoreCase = true) -> item.itemName
+                else -> "${item.itemName} (${item.variantName})"
+            }
             binding.tvItemName.text = displayName
             
             // Format price as Integer for display (e.g. 200 instead of 200.0)
@@ -33,29 +37,34 @@ class KitchenDetailItemAdapter : ListAdapter<OrderDetailItem, KitchenDetailItemA
             
             val totalQuantity = item.quantity
             val previouslyOrdered = item.orderedQuantity
-            val newDeltaQuantity = totalQuantity - previouslyOrdered
+            val newDeltaQuantity = maxOf(0, totalQuantity - previouslyOrdered)
 
             if (newDeltaQuantity > 0) {
-                // This item has NEW quantities to be prepared
+                // This item has NEW quantities to be prepared in this KOT
                 binding.tvNewItemBadge.visibility = android.view.View.VISIBLE
                 binding.tvServedItemBadge.visibility = android.view.View.GONE
                 
-                // Emphasize the new quantity
+                // Emphasize the new quantity to prepare
                 binding.tvQuantity.text = "$newDeltaQuantity x $unitPrice"
                 binding.tvQuantity.setBackgroundColor(android.graphics.Color.parseColor("#FEE2E2"))
                 binding.tvQuantity.setTextColor(android.graphics.Color.parseColor("#EF4444"))
                 
                 binding.tvItemName.alpha = 1.0f
+
+                if (previouslyOrdered > 0) {
+                    binding.tvItemName.text = "$displayName\n(Prev Ordered: $previouslyOrdered)"
+                } else {
+                    binding.tvItemName.text = displayName
+                }
             } else {
-                // This item is already processed / sent to kitchen before
+                // This item was already accepted / ordered
                 binding.tvNewItemBadge.visibility = android.view.View.GONE
                 binding.tvServedItemBadge.visibility = android.view.View.VISIBLE
                 
                 binding.tvQuantity.text = "$totalQuantity x $unitPrice"
                 binding.tvQuantity.setBackgroundColor(android.graphics.Color.parseColor("#F3F4F6"))
                 binding.tvQuantity.setTextColor(android.graphics.Color.parseColor("#6B7280"))
-                
-                // De-emphasize processed items
+                binding.tvItemName.text = displayName
                 binding.tvItemName.alpha = 0.5f
             }
         }

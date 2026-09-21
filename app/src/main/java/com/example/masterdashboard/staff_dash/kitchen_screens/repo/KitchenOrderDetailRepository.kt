@@ -118,6 +118,45 @@ class KitchenOrderDetailsRepository(
     }
 
     /**
+     * Updates order status and syncs orderedQuantity = quantity for all items when accepted by kitchen.
+     */
+    suspend fun updateOrderItemsAndStatus(
+        docPath: String,
+        updatedItems: List<OrderDetailItem>,
+        newStatus: String,
+        reason: String = ""
+    ) {
+        if (docPath.isEmpty()) return
+        try {
+            val firestoreStatus = if (newStatus.equals("New", ignoreCase = true)) AppConstants.STATUS_PENDING else newStatus
+            val itemsMap = updatedItems.map { item ->
+                mapOf(
+                    AppConstants.FIELD_ITEM_ID to item.itemId,
+                    AppConstants.FIELD_ITEM_NAME to item.itemName,
+                    AppConstants.FIELD_VARIANT_NAME to item.variantName,
+                    AppConstants.FIELD_ITEM_PRICE to item.price,
+                    AppConstants.FIELD_QUANTITY to item.quantity,
+                    AppConstants.FIELD_ORDERED_QTY to item.quantity,
+                    AppConstants.FIELD_READY_QTY to item.readyQuantity,
+                    AppConstants.FIELD_ROW_TOTAL to item.rowTotal,
+                    AppConstants.FIELD_CATEGORY to item.category,
+                    AppConstants.FIELD_ITEM_NOTE to item.itemNote,
+                    "itemStatus" to item.itemStatus
+                )
+            }
+            val updates = mutableMapOf<String, Any>(
+                AppConstants.FIELD_ORDER_STATUS to firestoreStatus,
+                AppConstants.FIELD_ORDER_ITEMS to itemsMap
+            )
+            if (reason.isNotEmpty()) updates[AppConstants.FIELD_REJECTION_REASON] = reason
+            firestore.document(docPath).update(updates).await()
+        } catch (e: Exception) {
+            Log.e(TAG, "updateOrderItemsAndStatus failure", e)
+            throw e
+        }
+    }
+
+    /**
      * Updates the order by removing specific items and updating totals.
      */
     suspend fun updateOrderWithRejectedItems(
