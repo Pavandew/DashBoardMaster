@@ -36,13 +36,17 @@ class KitchenPreparationDetailAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: OrderDetailItem) {
-            val displayName = if (item.variantName.isNotEmpty()) "${item.itemName} (${item.variantName})" else item.itemName
+            val displayName = when {
+                item.variantName.isEmpty() -> item.itemName
+                item.itemName.contains("(${item.variantName})", ignoreCase = true) || item.itemName.contains(item.variantName, ignoreCase = true) -> item.itemName
+                else -> "${item.itemName} (${item.variantName})"
+            }
             binding.tvExpandedItemName.text = displayName
             
             val totalQuantity = item.quantity
             val readyQuantity = item.readyQuantity
             val previouslyOrdered = item.orderedQuantity
-            val newDeltaQuantity = totalQuantity - previouslyOrdered
+            val newDeltaQuantity = maxOf(0, totalQuantity - previouslyOrdered)
             
             val isFullyReady = readyQuantity >= totalQuantity && totalQuantity > 0
 
@@ -66,16 +70,21 @@ class KitchenPreparationDetailAdapter(
                 // Not ready, reset background
                 binding.layoutItemContent.setBackgroundColor(android.graphics.Color.TRANSPARENT)
                 
-                // Logic for Badges
+                // Logic for Badges: Show new delta to prepare in RED, and sub-text for previously ordered units
                 if (newDeltaQuantity > 0) {
                     binding.tvNewItemBadge.visibility = View.VISIBLE
                     binding.tvServedItemBadge.visibility = View.GONE
                     binding.tvExpandedItemName.alpha = 1.0f
                     
-                    // Emphasize the new quantity
                     binding.tvExpandedItemRowTotal.text = "$newDeltaQuantity to Prepare"
                     binding.tvExpandedItemRowTotal.setBackgroundColor(android.graphics.Color.parseColor("#FEE2E2"))
                     binding.tvExpandedItemRowTotal.setTextColor(android.graphics.Color.parseColor("#EF4444"))
+
+                    if (previouslyOrdered > 0) {
+                        binding.tvExpandedItemName.text = "$displayName\n(Prev Ordered: $previouslyOrdered)"
+                    } else {
+                        binding.tvExpandedItemName.text = displayName
+                    }
                 } else {
                     binding.tvNewItemBadge.visibility = View.GONE
                     binding.tvServedItemBadge.visibility = View.VISIBLE
@@ -85,12 +94,13 @@ class KitchenPreparationDetailAdapter(
                     binding.tvExpandedItemRowTotal.text = "x $totalQuantity"
                     binding.tvExpandedItemRowTotal.setBackgroundColor(android.graphics.Color.parseColor("#F3F4F6"))
                     binding.tvExpandedItemRowTotal.setTextColor(android.graphics.Color.parseColor("#6B7280"))
+                    binding.tvExpandedItemName.text = displayName
                 }
 
                 val normalizedStatus = orderStatus.lowercase().trim()
                 
                 if (normalizedStatus == "preparing") {
-                    // Only allow selecting items that are NEW
+                    // Allow selecting items that still have new delta quantities to prepare
                     if (newDeltaQuantity > 0) {
                         binding.cbItemSelect.visibility = View.VISIBLE
                         binding.cbItemSelect.setOnCheckedChangeListener(null)

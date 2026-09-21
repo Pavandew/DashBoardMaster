@@ -62,9 +62,7 @@ class KitchenOrderRepository(private val firestore: FirebaseFirestore = Firebase
                             val finalDisplayName = when {
                                 orderType.contains("TAKE", true) -> "TAKE AWAY"
                                 orderType.contains("DELIVERY", true) -> "DELIVERY"
-                                !tableName.isNullOrEmpty() -> {
-                                    if (tableName!!.startsWith("Table", true)) tableName!! else "Table $tableName"
-                                }
+                                !tableName.isNullOrEmpty() -> tableName!!
                                 else -> "Counter Order"
                             }
 

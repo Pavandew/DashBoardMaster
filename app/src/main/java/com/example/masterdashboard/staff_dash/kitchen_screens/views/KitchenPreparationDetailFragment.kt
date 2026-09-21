@@ -74,18 +74,30 @@ class KitchenPreparationDetailFragment : Fragment(R.layout.fragment_kitchen_prep
 
     private fun setupClickListeners() {
         binding.btnBack.setOnClickListener {
+            Log.d(TAG, "Action: Back button clicked.")
             parentFragmentManager.popBackStack()
         }
 
         binding.btnFinishReady.setOnClickListener {
             if (currentDocPath.isNotEmpty()) {
-                if (selectedItems.isNotEmpty()) {
-                    // Mark selected as ready
-                    viewModel.markItemsAsReady(currentDocPath, selectedItems.toList())
-                    selectedItems.clear()
-                } else {
-                    // Finalize whole order
-                    viewModel.finalizeOrderToServe(currentDocPath)
+                val isPartial = selectedItems.isNotEmpty()
+                Log.d(TAG, "Action: 'Finish/Ready' clicked for path: '$currentDocPath' [PartialMode: $isPartial, SelectedItems: ${selectedItems.size}]")
+
+                binding.btnFinishReady.isEnabled = false
+                binding.btnFinishReady.text = if (isPartial) "Marking Ready..." else "Finalizing..."
+
+                viewLifecycleOwner.lifecycleScope.launch {
+                    kotlinx.coroutines.delay(350) // Smooth micro-delay for visual tactile feedback
+                    if (isPartial) {
+                        // Mark selected as ready
+                        viewModel.markItemsAsReady(currentDocPath, selectedItems.toList())
+                        selectedItems.clear()
+                    } else {
+                        // Finalize whole order
+                        viewModel.finalizeOrderToServe(currentDocPath)
+                    }
+                    binding.btnFinishReady.isEnabled = true
+                    updateButtonLabel()
                 }
             }
         }
@@ -143,13 +155,12 @@ class KitchenPreparationDetailFragment : Fragment(R.layout.fragment_kitchen_prep
         }
         
         // Sort items: 
-        // 1. Items needing preparation (newly added) first
-        // 2. Previously ordered items next
-        // 3. Fully prepared items last
+        // 1. Items needing preparation (unprepared) first
+        // 2. Fully prepared items last
         val sortedItems = data.items.sortedWith(compareBy<OrderDetailItem> { 
             it.readyQuantity >= it.quantity && it.quantity > 0 // Ready items last
         }.thenByDescending { 
-            it.quantity > it.orderedQuantity // New items first
+            it.quantity > it.readyQuantity // Unprepared items first
         }.thenBy { it.itemName })
 
         preparationDetailAdapter.updateOrderStatusContext(data.status)
