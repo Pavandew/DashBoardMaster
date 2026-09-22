@@ -42,16 +42,19 @@ class KitchenPreparationDetailViewModel(
 
     fun finalizeOrderToServe(docPath: String) {
         val currentData = _rawOrderData.value ?: return
+
+        // Optimistic UI update: Instantly update local state for 0ms lag
+        val updatedItemsList = currentData.items.map { item ->
+            item.copy(
+                orderedQuantity = item.quantity,
+                readyQuantity = item.quantity,
+                itemStatus = "READY"
+            )
+        }
+        _rawOrderData.value = currentData.copy(items = updatedItemsList, status = "Ready")
+
         viewModelScope.launch {
             try {
-                // Ensure all items are marked as ready and orderedQuantity synced when finalized
-                val updatedItemsList = currentData.items.map { item ->
-                    item.copy(
-                        orderedQuantity = item.quantity,
-                        readyQuantity = item.quantity,
-                        itemStatus = "READY"
-                    )
-                }
 
                 val itemsMap = updatedItemsList.map { item ->
                     mapOf(
@@ -73,6 +76,7 @@ class KitchenPreparationDetailViewModel(
                 repository.updateItemsAsReady(docPath, itemsMap)
                 repository.updateOrderStatusToReady(docPath)
                 
+                Log.i(TAG, "✅ finalizeOrderToServe success: Order '${currentData.orderId}' marked READY for path: '$docPath'")
                 _statusUpdateAction.value = Result.success("Order Ready")
 
                 // Notify Waiter
@@ -159,6 +163,7 @@ class KitchenPreparationDetailViewModel(
                     Log.i(TAG, "markItemsAsReady: All items are ready. Auto-finalizing order status.")
                     finalizeOrderToServe(docPath)
                 } else {
+                    Log.i(TAG, "✅ markItemsAsReady success: ${itemsToMark.size} items updated to READY for path: '$docPath'")
                     _statusUpdateAction.value = Result.success("Items Prepared")
                 }
             } catch (e: Exception) {

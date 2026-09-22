@@ -26,10 +26,10 @@ class KitchenRejectionDialogHelper(
     ) {
         val binding = DialogKitchenRejectItemsBinding.inflate(layoutInflater)
 
-        // Filter out items that are already "ordered" if you only want to show "new" items to reject
-        // or show all items if you want to allow rejecting anything active.
-        // For rejection, showing all currently active items is usually better.
-        val activeItems = orderData.items.filter { it.quantity > 0 }
+        // Filter to show ONLY new / unprepared items from the current KOT that can be rejected
+        val activeItems = orderData.items.filter { 
+            it.quantity > it.orderedQuantity || it.quantity > it.readyQuantity 
+        }
 
         val adapter = KitchenRejectItemsAdapter(activeItems)
         binding.rvRejectItems.adapter = adapter
@@ -41,7 +41,24 @@ class KitchenRejectionDialogHelper(
                 val reason = binding.etRejectReason.text.toString().trim().ifEmpty { "Items unavailable" }
 
                 if (selectedForRejection.isNotEmpty()) {
-                    val remainingItems = orderData.items.filter { it !in selectedForRejection }
+                    val remainingItems = orderData.items.mapNotNull { item ->
+                        if (item in selectedForRejection) {
+                            val newDelta = maxOf(0, item.quantity - item.orderedQuantity)
+                            val remainingQty = if (newDelta > 0) item.quantity - newDelta else 0
+                            if (remainingQty > 0) {
+                                item.copy(
+                                    quantity = remainingQty,
+                                    orderedQuantity = remainingQty,
+                                    readyQuantity = minOf(item.readyQuantity, remainingQty),
+                                    rowTotal = item.price * remainingQty
+                                )
+                            } else {
+                                null // Fully rejected
+                            }
+                        } else {
+                            item // Kept as is
+                        }
+                    }
 
                     if (remainingItems.isEmpty()) {
                         listener.onFullRejection(reason)

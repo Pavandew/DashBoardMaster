@@ -45,7 +45,10 @@ class KitchenRejectItemsAdapter(
                 else -> item.itemName
             }
             tvItemName.text = displayName
-            tvQuantity.text = "x ${item.quantity}"
+
+            val newDelta = maxOf(0, item.quantity - item.orderedQuantity)
+            val rejectQty = if (newDelta > 0) newDelta else item.quantity
+            tvQuantity.text = "x $rejectQty"
             
             // Handle checkbox state correctly
             cbSelectItem.setOnCheckedChangeListener(null)
