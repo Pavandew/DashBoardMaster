@@ -40,6 +40,12 @@ class ManagerHomeActivity : AppCompatActivity() {
             insets
         }
 
+        ViewCompat.setOnApplyWindowInsetsListener(binding.navigationView) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(0, systemBars.top, 0, 0)
+            insets
+        }
+
         // CRITICAL FIX: Instantiates and displays the dashboard fragment only on fresh launch
         if (savedInstanceState == null && supportFragmentManager.findFragmentById(R.id.manager_fragmentContainer) == null) {
             Log.d("ManagerHomeActivity", "onCreate: First time launch - adding dashboard")

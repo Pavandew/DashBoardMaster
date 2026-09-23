@@ -33,13 +33,13 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var sessionManager: SessionManager
     private val TAG = "LoginActivity"
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate: Login Activity started")
 
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
 
         sessionManager = SessionManager(this)
 

@@ -68,6 +68,12 @@ class SingleResOwnerHomeActivity : AppCompatActivity() {
             insets
         }
 
+        ViewCompat.setOnApplyWindowInsetsListener(activityBinding.navigationView) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(0, systemBars.top, 0, 0)
+            insets
+        }
+
         loadRestaurantDetailsForm(startStep)
     }
 
