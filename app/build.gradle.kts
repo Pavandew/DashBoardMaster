@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.glide)
     implementation(libs.coil)
     implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.razorpay:checkout:1.6.38")
     annotationProcessor(libs.glide.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)

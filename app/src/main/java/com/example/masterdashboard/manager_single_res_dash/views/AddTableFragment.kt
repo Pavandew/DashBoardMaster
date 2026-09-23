@@ -181,17 +181,12 @@ class AddTableFragment : Fragment() {
             val ownerUid = sessionManager.getUid()
 
             if (rawInput.isEmpty()) {
-                Toast.makeText(requireContext(), "Please enter a table number.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Please enter a table name.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // Automatically format the table name to 't-01', 't-10', etc.
-            val tableNum = rawInput.toIntOrNull()
-            val tableNameInput = if (tableNum != null) {
-                "T-${String.format(java.util.Locale.US, "%02d", tableNum)}"
-            } else {
-                rawInput // Fallback
-            }
+            // Allow custom table names as entered by the user (e.g. T1, VIP-1, Table 5, Terrace 2)
+            val tableNameInput = rawInput
 
             if (ownerUid.isEmpty() || preSelectedFloorId.isEmpty()) {
                 Log.e(TAG, "Execution Blocked: Session reference paths evaluate to null entries.")

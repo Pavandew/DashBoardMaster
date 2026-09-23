@@ -1,6 +1,7 @@
 package com.example.masterdashboard.master_dash.dashboard.repo
 
 import android.util.Log
+import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.master_dash.dashboard.model.ActivityLogsModel
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -21,7 +22,7 @@ class DashboardRepository {
     ) {
         Log.i(TAG, "loadDashboardData: Fetching restaurant and admin counts")
 
-        db.collection("restaurants")
+        db.collection(AppConstants.COLLECTION_RESTAURANTS)
             .get()
             .addOnSuccessListener { result ->
                 Log.d(TAG, "Restaurants fetch success: ${result.size()} documents found")
