@@ -55,22 +55,28 @@ class KitchenOrderViewModel(private val repository: KitchenOrderRepository = Kit
             return@combine KitchenOrderUiState.Loading
         }
 
-        // 1. Pre-filter finalized or irrelevant orders
+        // 1. Pre-filter rejected or cancelled orders
         var baseOrders = rawList.filter {
             val s = it.status.uppercase()
-            s != "PAID" && s != "REJECTED"
+            s != "REJECTED" && s != "CANCELLED"
         }
 
         val computedFilters = mutableListOf<TableFilterData>()
 
         if (isWorkstation) {
-            // --- WORKSTATION CONTEXT (Preparing/Ready/Served) ---
-            val workstationBase = baseOrders.filter { it.status.uppercase() != "NEW" && it.status.uppercase() != "PENDING" }
+            // --- WORKSTATION CONTEXT (Preparing/Ready/Completed/Served/Paid) ---
+            val workstationBase = baseOrders.filter {
+                val s = it.status.uppercase()
+                s != "NEW" && s != "PENDING"
+            }
             
             val countAll = workstationBase.size
             val countPreparing = workstationBase.count { it.status.equals("Preparing", ignoreCase = true) }
             val countReady = workstationBase.count { it.status.equals("Ready", ignoreCase = true) }
-            val countCompleted = workstationBase.count { it.status.equals("Completed", ignoreCase = true) || it.status.equals("Served", ignoreCase = true) }
+            val countCompleted = workstationBase.count {
+                val s = it.status.uppercase()
+                s == "COMPLETED" || s == "SERVED" || s == "PAID"
+            }
 
             computedFilters.add(TableFilterData("1", "All ($countAll)", statusFilter == "All"))
             computedFilters.add(TableFilterData("2", "Preparing ($countPreparing)", statusFilter == "Preparing"))
@@ -78,8 +84,13 @@ class KitchenOrderViewModel(private val repository: KitchenOrderRepository = Kit
             computedFilters.add(TableFilterData("4", "Completed ($countCompleted)", statusFilter == "Completed"))
 
             // Apply active status filter
-            baseOrders = if (statusFilter != "All") {
-                baseOrders.filter { it.status.equals(statusFilter, ignoreCase = true) }
+            baseOrders = if (statusFilter == "Completed") {
+                workstationBase.filter {
+                    val s = it.status.uppercase()
+                    s == "COMPLETED" || s == "SERVED" || s == "PAID"
+                }
+            } else if (statusFilter != "All") {
+                workstationBase.filter { it.status.equals(statusFilter, ignoreCase = true) }
             } else {
                 workstationBase
             }

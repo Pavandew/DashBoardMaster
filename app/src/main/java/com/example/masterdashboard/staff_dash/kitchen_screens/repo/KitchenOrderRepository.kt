@@ -89,7 +89,9 @@ class KitchenOrderRepository(private val firestore: FirebaseFirestore = Firebase
                                 rawStatus.equals(AppConstants.STATUS_PENDING, ignoreCase = true) -> "New"
                                 (orderType.contains("TAKE", true) || orderType.contains("DELIVERY", true)) && 
                                         rawStatus.equals(AppConstants.STATUS_PAID, ignoreCase = true) -> "New"
-                                rawStatus.equals(AppConstants.STATUS_SERVED, ignoreCase = true) -> "Completed"
+                                rawStatus.equals(AppConstants.STATUS_SERVED, ignoreCase = true) ||
+                                rawStatus.equals(AppConstants.STATUS_COMPLETED, ignoreCase = true) ||
+                                rawStatus.equals(AppConstants.STATUS_PAID, ignoreCase = true) -> "Completed"
                                 else -> rawStatus
                             }
 
