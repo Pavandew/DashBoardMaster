@@ -72,6 +72,7 @@ class WaiterTableRepository {
 
         val activeListeners = mutableListOf<ListenerRegistration>()
         val tablesMap = mutableMapOf<String, List<TableCardData>>()
+        val initialLoadedFloors = mutableSetOf<String>()
 
         val floorsRef = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_RES_FLOORS)
@@ -84,12 +85,16 @@ class WaiterTableRepository {
 
             activeListeners.forEach { it.remove() }
             activeListeners.clear()
+            tablesMap.clear()
+            initialLoadedFloors.clear()
 
             val floorDocs = floorSnapshots?.documents ?: emptyList()
             if (floorDocs.isEmpty()) {
                 trySend(ResourceUiState.Success(emptyList()))
                 return@addSnapshotListener
             }
+
+            val expectedFloorIds = floorDocs.map { it.id }.toSet()
 
             floorDocs.forEach { floorDoc ->
                 val floorId = floorDoc.id
@@ -99,50 +104,55 @@ class WaiterTableRepository {
 
                 val tableListener = tablesRef.addSnapshotListener { tableSnapshots, tableException ->
                     if (tableException != null) {
-                        Log.e(TAG, "Error matching sub-collection path tables for floor: $floorId")
-                        return@addSnapshotListener
-                    }
+                        Log.e(TAG, "Error matching sub-collection path tables for floor: $floorId", tableException)
+                        tablesMap[floorId] = emptyList()
+                        initialLoadedFloors.add(floorId)
+                    } else {
+                        val singleFloorTablesList = mutableListOf<TableCardData>()
 
-                    val singleFloorTablesList = mutableListOf<TableCardData>()
+                        tableSnapshots?.documents?.forEach { doc ->
+                            try {
+                                val tableId = doc.getString(AppConstants.FIELD_TABLE_ID) ?: doc.id
+                                val tableName = doc.getString(AppConstants.FIELD_TABLE_NAME) ?: "Unknown Table"
+                                val totalSeats = doc.getLong(AppConstants.FIELD_TOTAL_SEATS)?.toInt() ?: 4
+                                val statusString = doc.getString(AppConstants.FIELD_STATUS) ?: AppConstants.STATUS_FREE
+                                
+                                val normalized = statusString.uppercase().trim()
+                                val status = when (normalized) {
+                                    "FREE", "AVAILABLE" -> TableStatus.FREE
+                                    "OCCUPIED", "BUSY" -> TableStatus.OCCUPIED
+                                    "RESERVED", "BOOKED" -> TableStatus.RESERVED
+                                    "BILLING", "CHECKOUT" -> TableStatus.BILLING
+                                    "PAID", "SUCCESS", "COMPLETED" -> TableStatus.FREE
+                                    else -> TableStatus.FREE
+                                }
 
-                    tableSnapshots?.documents?.forEach { doc ->
-                        try {
-                            val tableId = doc.getString(AppConstants.FIELD_TABLE_ID) ?: doc.id
-                            val tableName = doc.getString(AppConstants.FIELD_TABLE_NAME) ?: "Unknown Table"
-                            val totalSeats = doc.getLong(AppConstants.FIELD_TOTAL_SEATS)?.toInt() ?: 4
-                            val statusString = doc.getString(AppConstants.FIELD_STATUS) ?: AppConstants.STATUS_FREE
-                            
-                            val normalized = statusString.uppercase().trim()
-                            val status = when (normalized) {
-                                "FREE", "AVAILABLE" -> TableStatus.FREE
-                                "OCCUPIED", "BUSY" -> TableStatus.OCCUPIED
-                                "RESERVED", "BOOKED" -> TableStatus.RESERVED
-                                "BILLING", "CHECKOUT" -> TableStatus.BILLING
-                                "PAID", "SUCCESS", "COMPLETED" -> TableStatus.FREE
-                                else -> TableStatus.FREE
+                                val customerName = doc.getString(AppConstants.FIELD_CUSTOMER_NAME_TABLE)
+                                val rawBill = doc.get(AppConstants.FIELD_CURRENT_BILL)
+                                val currentBillAmount = when (rawBill) {
+                                    is String -> rawBill
+                                    is Number -> if (rawBill.toDouble() == 0.0) "" else "₹${rawBill.toInt()}"
+                                    else -> null
+                                }
+
+                                singleFloorTablesList.add(
+                                    TableCardData(tableId, tableName, floorId, floorName, totalSeats, status, customerName, currentBillAmount)
+                                )
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error parsing table object doc: ${doc.id}", e)
                             }
-
-                            val customerName = doc.getString(AppConstants.FIELD_CUSTOMER_NAME_TABLE)
-                            val rawBill = doc.get(AppConstants.FIELD_CURRENT_BILL)
-                            val currentBillAmount = when (rawBill) {
-                                is String -> rawBill
-                                is Number -> if (rawBill.toDouble() == 0.0) "" else "₹${rawBill.toInt()}"
-                                else -> null
-                            }
-
-                            singleFloorTablesList.add(
-                                TableCardData(tableId, tableName, floorId, floorName, totalSeats, status, customerName, currentBillAmount)
-                            )
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error parsing table object doc: ${doc.id}", e)
                         }
+
+                        tablesMap[floorId] = singleFloorTablesList
+                        initialLoadedFloors.add(floorId)
                     }
 
-                    tablesMap[floorId] = singleFloorTablesList
-
-                    val combinedMasterList = tablesMap.values.flatten()
-                    Log.i(TAG, "📦 [REPO] Pushing updated flattened master list size: ${combinedMasterList.size} items to UI.")
-                    trySend(ResourceUiState.Success(combinedMasterList))
+                    // Only emit once ALL expected floor listeners have reported their initial state
+                    if (initialLoadedFloors.containsAll(expectedFloorIds)) {
+                        val combinedMasterList = tablesMap.values.flatten()
+                        Log.i(TAG, "📦 [REPO] Pushing complete combined master list size: ${combinedMasterList.size} items to UI.")
+                        trySend(ResourceUiState.Success(combinedMasterList))
+                    }
                 }
 
                 activeListeners.add(tableListener)

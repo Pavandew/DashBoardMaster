@@ -16,8 +16,8 @@ class TableCardsAdapter(
     private val onTableClick: (TableCardData) -> Unit
 ) : ListAdapter<TableCardData, TableCardsAdapter.TableCardViewHolder>(TableDiffCallback()) {
 
-    fun updateList(newList: List<TableCardData>) {
-        submitList(newList)
+    fun updateList(newList: List<TableCardData>, commitCallback: Runnable? = null) {
+        submitList(newList, commitCallback)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TableCardViewHolder {

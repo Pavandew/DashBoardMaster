@@ -118,6 +118,10 @@ class WaiterTablesFragment : Fragment() {
         floorAdapter = FloorChipsAdapter { selectedChip ->
             Log.d(TAG, "📱 WaiterTablesFragment Floor chip clicked: Title = '${selectedChip.name}', ID = '${selectedChip.id}'")
             viewModel.setFloorFilter(selectedChip.id)
+            binding.rvTableCards.post {
+                binding.rvTableCards.scrollToPosition(0)
+                binding.appBarLayout.setExpanded(true, true)
+            }
         }
         binding.rvFloorChips.adapter = floorAdapter
     }
@@ -141,7 +145,12 @@ class WaiterTablesFragment : Fragment() {
                                 binding.pbLoading.visibility = View.GONE
                                 binding.rvTableCards.visibility = View.VISIBLE
 
-                                tableAdapter.updateList(resource.data)
+                                tableAdapter.updateList(resource.data) {
+                                    binding.rvTableCards.post {
+                                        binding.rvTableCards.scrollToPosition(0)
+                                        binding.appBarLayout.setExpanded(true, false)
+                                    }
+                                }
                                 currentSearchList.clear()
                                 currentSearchList.addAll(resource.data)
                                 
