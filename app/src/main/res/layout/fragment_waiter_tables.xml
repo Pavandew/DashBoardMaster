@@ -6,6 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
     tools:context=".staff_dash.waiter_screens.table.views.WaiterTablesFragment">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -13,6 +15,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/white"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         app:elevation="0dp">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
@@ -64,7 +68,9 @@
         android:layout_height="match_parent"
         android:paddingHorizontal="10dp"
         android:clipToPadding="false"
-        android:nestedScrollingEnabled="true" app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+        android:descendantFocusability="blocksDescendants"
+        android:nestedScrollingEnabled="true"
+        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
         app:spanCount="3"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:listitem="@layout/item_table_card" />

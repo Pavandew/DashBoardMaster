@@ -36,111 +36,163 @@ class ActiveOrdersRepository {
             return@callbackFlow
         }
 
-        val ordersQuery = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
+        var activeOrdersMap = mapOf<String, Pair<ActiveOrderCardData, Long>>()
+        var completedOrdersMap = mapOf<String, Pair<ActiveOrderCardData, Long>>()
 
-        val listener = ordersQuery.addSnapshotListener { snapshots, exception ->
+        fun emitCombinedList() {
+            CoroutineScope(Dispatchers.IO).launch {
+                val mergedMap = mutableMapOf<String, Pair<ActiveOrderCardData, Long>>()
+                // Active orders first
+                mergedMap.putAll(activeOrdersMap)
+                // Completed / Paid orders merged in
+                completedOrdersMap.forEach { (id, pair) ->
+                    if (!mergedMap.containsKey(id) || mergedMap[id]?.first?.status != ActiveOrderStatus.PAID) {
+                        mergedMap[id] = pair
+                    }
+                }
+
+                val sortedList = mergedMap.values.sortedByDescending { it.second }.map { it.first }
+                Log.i(TAG, "📦 [REPO] Emitting Success with ${sortedList.size} combined active + paid order cards.")
+                trySend(ResourceUiState.Success(sortedList))
+            }
+        }
+
+        // 1. Listen to active_orders subcollections across table locations
+        val ordersQuery = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
+        val activeListener = ordersQuery.addSnapshotListener { snapshots, exception ->
             if (exception != null) {
                 Log.e(TAG, "📦 [REPO] Snapshot listener error: ${exception.message}", exception)
                 trySend(ResourceUiState.Error("Error fetching active orders: ${exception.message}"))
                 return@addSnapshotListener
             }
 
-            val totalDocs = snapshots?.documents?.size ?: 0
-            Log.i(TAG, "📦 [REPO] Snapshot event received. Total active_orders documents found in Firestore: $totalDocs")
+            val docs = snapshots?.documents ?: emptyList()
+            val tempMap = mutableMapOf<String, Pair<ActiveOrderCardData, Long>>()
 
-            if (totalDocs == 0) {
-                trySend(ResourceUiState.Success(emptyList<ActiveOrderCardData>()))
+            docs.forEach { document ->
+                val docPath = document.reference.path
+                if (!docPath.contains("${AppConstants.COLLECTION_RESTAURANTS}/$managerId")) {
+                    return@forEach
+                }
+
+                val orderModel = try {
+                    document.toObject(OrderDataModel::class.java)
+                } catch (e: Exception) {
+                    Log.e(TAG, "📦 [REPO] Crash converting doc ${document.id} to OrderDataModel", e)
+                    null
+                }
+
+                if (orderModel != null) {
+                    val customDocOrderId = document.getString(AppConstants.FIELD_ORDER_ID)
+                    val finalOrderId = when {
+                        !customDocOrderId.isNullOrBlank() -> customDocOrderId
+                        !orderModel.orderId.isNullOrBlank() -> orderModel.orderId
+                        else -> document.id
+                    }
+
+                    var resolvedTableName = document.getString(AppConstants.FIELD_TABLE_NAME) ?: orderModel.tableName
+                    if (resolvedTableName.isBlank() || resolvedTableName == "N/A") {
+                        resolvedTableName = "Table"
+                    }
+
+                    val totalItemCount = if (orderModel.items.isNotEmpty()) {
+                        orderModel.items.sumOf { it.quantity }
+                    } else {
+                        0
+                    }
+
+                    val formattedTime = TimeUtils.getRelativeTime(orderModel.timestamp)
+
+                    val statusStr = document.getString(AppConstants.FIELD_ORDER_STATUS) ?: orderModel.orderStatus
+                    val status = when (statusStr.uppercase()) {
+                        AppConstants.STATUS_PENDING -> ActiveOrderStatus.PENDING
+                        AppConstants.STATUS_PREPARING -> ActiveOrderStatus.PREPARING
+                        AppConstants.STATUS_READY -> ActiveOrderStatus.READY
+                        AppConstants.STATUS_SERVED -> ActiveOrderStatus.SERVED
+                        AppConstants.STATUS_BILLING -> ActiveOrderStatus.BILLING
+                        AppConstants.STATUS_PAID, AppConstants.STATUS_COMPLETED -> ActiveOrderStatus.PAID
+                        else -> ActiveOrderStatus.PENDING
+                    }
+
+                    val cardData = ActiveOrderCardData(
+                        orderId = finalOrderId,
+                        tableName = resolvedTableName,
+                        totalItems = totalItemCount,
+                        orderTime = formattedTime,
+                        status = status
+                    )
+
+                    tempMap[finalOrderId] = cardData to orderModel.timestamp.seconds
+                }
+            }
+
+            activeOrdersMap = tempMap
+            emitCombinedList()
+        }
+
+        // 2. Listen to completed_orders collection for settled / paid orders
+        val completedQuery = RestaurantPathHelper.getOutletDocRef(managerId)
+            .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
+            .orderBy(AppConstants.FIELD_TIMESTAMP, com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .limit(50)
+
+        val completedListener = completedQuery.addSnapshotListener { snapshots, exception ->
+            if (exception != null) {
+                Log.e(TAG, "📦 [REPO] Completed orders listener error: ${exception.message}", exception)
                 return@addSnapshotListener
             }
 
-            CoroutineScope(Dispatchers.IO).launch {
-                val activeOrderList = mutableListOf<Pair<ActiveOrderCardData, Long>>()
+            val docs = snapshots?.documents ?: emptyList()
+            val tempMap = mutableMapOf<String, Pair<ActiveOrderCardData, Long>>()
 
-                snapshots?.documents?.forEachIndexed { index, document ->
-                    val docPath = document.reference.path
-                    if (!docPath.contains("${AppConstants.COLLECTION_RESTAURANTS}/$managerId")) {
-                        return@forEachIndexed
-                    }
-
-                    val orderModel = try {
-                        document.toObject(OrderDataModel::class.java)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "📦 [REPO] Crash converting doc ${document.id} to OrderDataModel", e)
-                        null
-                    }
-
-                    if (orderModel != null) {
-                        // 1. RESOLVE DISPLAY ORDER ID
-                        val customDocOrderId = document.getString(AppConstants.FIELD_ORDER_ID)
-                        val finalOrderId = when {
-                            !customDocOrderId.isNullOrBlank() -> customDocOrderId
-                            !orderModel.orderId.isNullOrBlank() -> orderModel.orderId
-                            else -> document.id
-                        }
-
-                        // 2. RESOLVE TABLE NAME
-                        var resolvedTableName = document.getString(AppConstants.FIELD_TABLE_NAME) ?: orderModel.tableName
-
-                        if (resolvedTableName.isBlank() || resolvedTableName == "N/A") {
-                            val parentTableRef = document.reference.parent.parent
-                            if (parentTableRef != null) {
-                                try {
-                                    val parentSnapshot = parentTableRef.get().await()
-                                    resolvedTableName = parentSnapshot.getString(AppConstants.FIELD_TABLE_NAME) ?: "Table"
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "📦 [REPO] Failed to fetch parent table document", e)
-                                    resolvedTableName = "Table"
-                                }
-                            } else {
-                                resolvedTableName = "Table"
-                            }
-                        }
-
-                        // 3. COMPUTE TOTAL ITEM COUNT
-                        val totalItemCount = if (orderModel.items.isNotEmpty()) {
-                            orderModel.items.sumOf { it.quantity }
-                        } else {
-                            0
-                        }
-
-                        // 4. FORMAT TIMESTAMP (Using shared TimeUtils)
-                        val formattedTime = TimeUtils.getRelativeTime(orderModel.timestamp)
-
-                        // 5. MAP STATUS
-                        val statusStr = document.getString(AppConstants.FIELD_ORDER_STATUS) ?: orderModel.orderStatus
-                        val status = when (statusStr.uppercase()) {
-                            AppConstants.STATUS_PENDING -> ActiveOrderStatus.PENDING
-                            AppConstants.STATUS_PREPARING -> ActiveOrderStatus.PREPARING
-                            AppConstants.STATUS_READY -> ActiveOrderStatus.READY
-                            AppConstants.STATUS_SERVED -> ActiveOrderStatus.SERVED
-                            AppConstants.STATUS_BILLING -> ActiveOrderStatus.BILLING
-                            AppConstants.STATUS_PAID -> ActiveOrderStatus.PAID
-                            else -> ActiveOrderStatus.PENDING
-                        }
-
-                        val cardData = ActiveOrderCardData(
-                            orderId = finalOrderId,
-                            tableName = resolvedTableName,
-                            totalItems = totalItemCount,
-                            orderTime = formattedTime,
-                            status = status
-                        )
-
-                        activeOrderList.add(cardData to orderModel.timestamp.seconds)
-                    }
+            docs.forEach { document ->
+                val orderModel = try {
+                    document.toObject(OrderDataModel::class.java)
+                } catch (e: Exception) {
+                    null
                 }
 
-                // Sort by timestamp descending (Recent on top)
-                val sortedList = activeOrderList.sortedByDescending { it.second }.map { it.first }
+                if (orderModel != null) {
+                    val customDocOrderId = document.getString(AppConstants.FIELD_ORDER_ID)
+                    val finalOrderId = when {
+                        !customDocOrderId.isNullOrBlank() -> customDocOrderId
+                        !orderModel.orderId.isNullOrBlank() -> orderModel.orderId
+                        else -> document.id
+                    }
 
-                Log.i(TAG, "📦 [REPO] Emitting Success with ${sortedList.size} processed active order cards (Sorted).")
-                trySend(ResourceUiState.Success(sortedList))
+                    var resolvedTableName = document.getString(AppConstants.FIELD_TABLE_NAME) ?: orderModel.tableName
+                    if (resolvedTableName.isBlank() || resolvedTableName == "N/A") {
+                        resolvedTableName = "Table"
+                    }
+
+                    val totalItemCount = if (orderModel.items.isNotEmpty()) {
+                        orderModel.items.sumOf { it.quantity }
+                    } else {
+                        0
+                    }
+
+                    val formattedTime = TimeUtils.getRelativeTime(orderModel.timestamp)
+
+                    val cardData = ActiveOrderCardData(
+                        orderId = finalOrderId,
+                        tableName = resolvedTableName,
+                        totalItems = totalItemCount,
+                        orderTime = formattedTime,
+                        status = ActiveOrderStatus.PAID
+                    )
+
+                    tempMap[finalOrderId] = cardData to orderModel.timestamp.seconds
+                }
             }
+
+            completedOrdersMap = tempMap
+            emitCombinedList()
         }
 
         awaitClose {
-            Log.d(TAG, "📦 [REPO] Active orders snapshot listener removed.")
-            listener.remove()
+            Log.d(TAG, "📦 [REPO] Removing active and completed orders snapshot listeners.")
+            activeListener.remove()
+            completedListener.remove()
         }
     }.flowOn(Dispatchers.IO)
 

@@ -74,11 +74,13 @@ class CashierBillingViewModel(
             val status = order.orderStatus.uppercase()
             val type = order.orderType.uppercase()
 
-            if (type == "TAKE_AWAY" || type == "DELIVERY") {
+            if (status == "REJECTED" || status == "CANCELLED") {
+                false
+            } else if (type == "TAKE_AWAY" || type == "DELIVERY") {
                 status != "COMPLETED"
             } else {
-                // Show SERVED (eating/done) and BILLING (ready to pay)
-                status == "SERVED" || status == "BILLING" || status == "PAID" || status == "COMPLETED"
+                // Include all active table orders and paid/completed bills
+                true
             }
         }
 
@@ -88,10 +90,12 @@ class CashierBillingViewModel(
             val s = it.orderStatus.uppercase()
             val t = it.orderType.uppercase()
             if (t == "TAKE_AWAY" || t == "DELIVERY") s != "PAID" && s != "COMPLETED"
-            else s == "SERVED" || s == "BILLING"
+            else s != "PAID" && s != "COMPLETED"
         }
         val countTakeAway = relevantOrders.count { 
-            (it.orderType == "TAKE_AWAY" || it.orderType == "DELIVERY") && it.orderStatus.uppercase() == "PAID"
+            val t = it.orderType.uppercase()
+            val s = it.orderStatus.uppercase()
+            (t == "TAKE_AWAY" || t == "DELIVERY") && (s == "PAID" || s == "READY")
         }
         val countPaid = relevantOrders.count { 
             it.orderStatus.uppercase() == "PAID" || it.orderStatus.uppercase() == "COMPLETED"
@@ -110,10 +114,15 @@ class CashierBillingViewModel(
             filtered = when (currentFilter) {
                 "Pending Bill" -> filtered.filter { 
                     val s = it.orderStatus.uppercase()
-                    if (it.orderType == "TAKE_AWAY" || it.orderType == "DELIVERY") s != "PAID" && s != "COMPLETED"
-                    else s == "SERVED" || s == "BILLING"
+                    val t = it.orderType.uppercase()
+                    if (t == "TAKE_AWAY" || t == "DELIVERY") s != "PAID" && s != "COMPLETED"
+                    else s != "PAID" && s != "COMPLETED"
                 }
-                "Take Away" -> filtered.filter { it.orderStatus.uppercase() == "PAID" && (it.orderType == "TAKE_AWAY" || it.orderType == "DELIVERY") }
+                "Take Away" -> filtered.filter { 
+                    val t = it.orderType.uppercase()
+                    val s = it.orderStatus.uppercase()
+                    (s == "PAID" || s == "READY") && (t == "TAKE_AWAY" || t == "DELIVERY") 
+                }
                 "Paid Bills" -> filtered.filter { it.orderStatus.uppercase() == "PAID" || it.orderStatus.uppercase() == "COMPLETED" }
                 else -> filtered
             }
