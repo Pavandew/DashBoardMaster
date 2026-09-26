@@ -32,7 +32,11 @@ class ReportsRepository {
      * Streams completed orders in real-time for the specified time filter.
      * Returns zero values if no completed orders exist.
      */
-    fun getReportSummaryStream(managerId: String, filter: TimeFilter): Flow<ReportSummaryModel> = callbackFlow {
+    fun getReportSummaryStream(
+        managerId: String,
+        filter: TimeFilter,
+        customDateStr: String? = null
+    ): Flow<ReportSummaryModel> = callbackFlow {
         if (managerId.isEmpty()) {
             Log.w(TAG, "getReportSummaryStream: managerId is empty. Emitting 0 summary.")
             trySend(ReportSummaryModel())
@@ -40,125 +44,116 @@ class ReportsRepository {
             return@callbackFlow
         }
 
-        Log.i(TAG, "Starting real-time listener for managerId: $managerId, filter: $filter")
+        Log.i(TAG, "Starting database-filtered listener for managerId: $managerId, filter: $filter, customDate: $customDateStr")
 
-        val registration = RestaurantPathHelper.getOutletDocRef(managerId)
+        val sdfDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val sdfMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault())
+        val now = Date()
+        val todayStr = sdfDate.format(now)
+        val currentMonthStr = sdfMonth.format(now)
+
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.DAY_OF_YEAR, -7)
+        val sevenDaysAgoTimestamp = com.google.firebase.Timestamp(cal.time)
+
+        val completedCollectionRef = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
-            .addSnapshotListener { snapshots, error ->
-                if (error != null) {
-                    Log.e(TAG, "Firestore Snapshot Error in completed_orders listener", error)
-                    trySend(ReportSummaryModel())
-                    return@addSnapshotListener
-                }
 
-                if (snapshots == null || snapshots.isEmpty) {
-                    Log.d(TAG, "No completed_orders found in Firestore for manager $managerId. Emitting 0 summary.")
-                    trySend(ReportSummaryModel())
-                    return@addSnapshotListener
-                }
-
-                Log.d(TAG, "Firestore Snapshot Received: ${snapshots.size()} total completed order documents found in collection.")
-
-                var totalRevenue = 0.0
-                var totalOrders = 0
-                var totalDiscounts = 0.0
-                var cashAmount = 0.0
-                var upiAmount = 0.0
-                var cardAmount = 0.0
-                var dineInSales = 0.0
-                var dineInOrders = 0
-                var takeawaySales = 0.0
-                var takeawayOrders = 0
-                var grossSubtotal = 0.0
-                var totalGst = 0.0
-
-                val sdfDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val sdfMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault())
-
-                val now = Date()
-                val todayStr = sdfDate.format(now)
-                val currentMonthStr = sdfMonth.format(now)
-
-                val cal = Calendar.getInstance()
-                cal.add(Calendar.DAY_OF_YEAR, -7)
-                val sevenDaysAgo = cal.time
-
-                for (doc in snapshots.documents) {
-                    val billingDate = doc.getString(AppConstants.FIELD_BILLING_DATE) ?: ""
-                    val billingMonth = doc.getString(AppConstants.FIELD_BILLING_MONTH) ?: ""
-                    val timestamp = doc.getTimestamp(AppConstants.FIELD_PAID_AT)?.toDate()
-                        ?: doc.getTimestamp(AppConstants.FIELD_TIMESTAMP)?.toDate()
-
-                    val docDate = when {
-                        billingDate.isNotEmpty() -> billingDate
-                        timestamp != null -> sdfDate.format(timestamp)
-                        else -> ""
-                    }
-
-                    val docMonth = when {
-                        billingMonth.isNotEmpty() -> billingMonth
-                        timestamp != null -> sdfMonth.format(timestamp)
-                        else -> ""
-                    }
-
-                    val matchesFilter = when (filter) {
-                        TimeFilter.TODAY -> docDate == todayStr
-                        TimeFilter.MONTH -> docMonth == currentMonthStr
-                        TimeFilter.WEEK -> timestamp != null && timestamp.after(sevenDaysAgo)
-                    }
-
-                    if (!matchesFilter) continue
-
-                    totalOrders++
-                    val grandTotal = doc.getDouble(AppConstants.FIELD_GRAND_TOTAL) ?: 0.0
-                    val subtotal = doc.getDouble(AppConstants.FIELD_SUBTOTAL) ?: 0.0
-                    val gst = doc.getDouble(AppConstants.FIELD_GST) ?: 0.0
-                    val discount = doc.getDouble(AppConstants.FIELD_DISCOUNT_AMOUNT) ?: 0.0
-                    val payMethod = doc.getString(AppConstants.FIELD_PAYMENT_METHOD)?.uppercase() ?: "CASH"
-                    val orderType = doc.getString(AppConstants.FIELD_ORDER_TYPE) ?: "Dine-In"
-
-                    totalRevenue += grandTotal
-                    grossSubtotal += subtotal
-                    totalGst += gst
-                    totalDiscounts += discount
-
-                    when {
-                        payMethod.contains("CASH") -> cashAmount += grandTotal
-                        payMethod.contains("UPI") || payMethod.contains("ONLINE") || payMethod.contains("QR") -> upiAmount += grandTotal
-                        payMethod.contains("CARD") -> cardAmount += grandTotal
-                        else -> cashAmount += grandTotal
-                    }
-
-                    if (orderType.contains("Takeaway", ignoreCase = true) || orderType.contains("Parcel", ignoreCase = true)) {
-                        takeawaySales += grandTotal
-                        takeawayOrders++
-                    } else {
-                        dineInSales += grandTotal
-                        dineInOrders++
-                    }
-                }
-
-                val avgOrderVal = if (totalOrders > 0) totalRevenue / totalOrders else 0.0
-
-                val summary = ReportSummaryModel(
-                    totalRevenue = totalRevenue,
-                    totalOrders = totalOrders,
-                    avgOrderValue = avgOrderVal,
-                    totalDiscounts = totalDiscounts,
-                    cashAmount = cashAmount,
-                    upiAmount = upiAmount,
-                    cardAmount = cardAmount,
-                    dineInSales = dineInSales,
-                    dineInOrders = dineInOrders,
-                    takeawaySales = takeawaySales,
-                    takeawayOrders = takeawayOrders,
-                    grossSubtotal = grossSubtotal,
-                    totalGst = totalGst
-                )
-
-                Log.i(TAG, "Report Data Aggregated for filter $filter: Revenue=₹$totalRevenue, Orders=$totalOrders, Cash=₹$cashAmount, UPI=₹$upiAmount, Card=₹$cardAmount")
-                trySend(summary)
+        val baseQuery: com.google.firebase.firestore.Query = when {
+            !customDateStr.isNullOrEmpty() -> {
+                completedCollectionRef.whereEqualTo(AppConstants.FIELD_BILLING_DATE, customDateStr)
             }
+            filter == TimeFilter.TODAY -> {
+                completedCollectionRef.whereEqualTo(AppConstants.FIELD_BILLING_DATE, todayStr)
+            }
+            filter == TimeFilter.MONTH -> {
+                completedCollectionRef.whereEqualTo(AppConstants.FIELD_BILLING_MONTH, currentMonthStr)
+            }
+            filter == TimeFilter.WEEK -> {
+                completedCollectionRef.whereGreaterThanOrEqualTo(AppConstants.FIELD_TIMESTAMP, sevenDaysAgoTimestamp)
+            }
+            else -> {
+                completedCollectionRef.whereEqualTo(AppConstants.FIELD_BILLING_DATE, todayStr)
+            }
+        }
+
+        val registration = baseQuery.addSnapshotListener { snapshots, error ->
+            if (error != null) {
+                Log.e(TAG, "Firestore Snapshot Error in completed_orders listener", error)
+                trySend(ReportSummaryModel())
+                return@addSnapshotListener
+            }
+
+            if (snapshots == null || snapshots.isEmpty) {
+                Log.d(TAG, "No completed_orders found for filter $filter / customDate $customDateStr.")
+                trySend(ReportSummaryModel())
+                return@addSnapshotListener
+            }
+
+            var totalRevenue = 0.0
+            var totalOrders = 0
+            var totalDiscounts = 0.0
+            var cashAmount = 0.0
+            var upiAmount = 0.0
+            var cardAmount = 0.0
+            var dineInSales = 0.0
+            var dineInOrders = 0
+            var takeawaySales = 0.0
+            var takeawayOrders = 0
+            var grossSubtotal = 0.0
+            var totalGst = 0.0
+
+            for (doc in snapshots.documents) {
+                totalOrders++
+                val grandTotal = doc.getDouble(AppConstants.FIELD_GRAND_TOTAL) ?: 0.0
+                val subtotal = doc.getDouble(AppConstants.FIELD_SUBTOTAL) ?: 0.0
+                val gst = doc.getDouble(AppConstants.FIELD_GST) ?: 0.0
+                val discount = doc.getDouble(AppConstants.FIELD_DISCOUNT_AMOUNT) ?: 0.0
+                val payMethod = doc.getString(AppConstants.FIELD_PAYMENT_METHOD)?.uppercase() ?: "CASH"
+                val orderType = doc.getString(AppConstants.FIELD_ORDER_TYPE) ?: "Dine-In"
+
+                totalRevenue += grandTotal
+                grossSubtotal += subtotal
+                totalGst += gst
+                totalDiscounts += discount
+
+                when {
+                    payMethod.contains("CASH") -> cashAmount += grandTotal
+                    payMethod.contains("UPI") || payMethod.contains("ONLINE") || payMethod.contains("QR") -> upiAmount += grandTotal
+                    payMethod.contains("CARD") -> cardAmount += grandTotal
+                    else -> cashAmount += grandTotal
+                }
+
+                if (orderType.contains("Takeaway", ignoreCase = true) || orderType.contains("Parcel", ignoreCase = true)) {
+                    takeawaySales += grandTotal
+                    takeawayOrders++
+                } else {
+                    dineInSales += grandTotal
+                    dineInOrders++
+                }
+            }
+
+            val avgOrderVal = if (totalOrders > 0) totalRevenue / totalOrders else 0.0
+
+            val summary = ReportSummaryModel(
+                totalRevenue = totalRevenue,
+                totalOrders = totalOrders,
+                avgOrderValue = avgOrderVal,
+                totalDiscounts = totalDiscounts,
+                cashAmount = cashAmount,
+                upiAmount = upiAmount,
+                cardAmount = cardAmount,
+                dineInSales = dineInSales,
+                dineInOrders = dineInOrders,
+                takeawaySales = takeawaySales,
+                takeawayOrders = takeawayOrders,
+                grossSubtotal = grossSubtotal,
+                totalGst = totalGst
+            )
+
+            Log.i(TAG, "Report Data Aggregated for filter $filter: Revenue=₹$totalRevenue, Orders=$totalOrders, Cash=₹$cashAmount, UPI=₹$upiAmount, Card=₹$cardAmount")
+            trySend(summary)
+        }
 
         awaitClose { 
             Log.d(TAG, "Closing real-time listener for managerId: $managerId")
@@ -176,8 +171,12 @@ class ReportsRepository {
             return@callbackFlow
         }
 
+        val sdfDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val todayStr = sdfDate.format(Date())
+
         val registration = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
+            .whereEqualTo(AppConstants.FIELD_BILLING_DATE, todayStr)
             .addSnapshotListener { snapshots, error ->
                 if (error != null || snapshots == null || snapshots.isEmpty) {
                     trySend(ShiftSales())

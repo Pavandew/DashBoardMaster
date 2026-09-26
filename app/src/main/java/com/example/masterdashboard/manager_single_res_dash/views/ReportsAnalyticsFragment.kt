@@ -21,6 +21,7 @@ import com.example.masterdashboard.manager_single_res_dash.models.ReportKpiModel
 import com.example.masterdashboard.manager_single_res_dash.settings.repo.ReportsRepository
 import com.example.masterdashboard.manager_single_res_dash.utils.DateFilterBottomSheet
 import com.example.masterdashboard.manager_single_res_dash.settings.viewModel.ReportsViewModel
+import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
@@ -97,11 +98,12 @@ class ReportsAnalyticsFragment : Fragment() {
                 val managerId = sessionManager.getUid()
 
                 if (isCustom) {
-                    showDatePicker { selectedDate ->
-                        Log.i(TAG, "Custom Date Selected: $selectedDate")
+                    showDatePicker { selectedDateDisplay, rawIsoDate ->
+                        Log.i(TAG, "Custom Date Selected: $selectedDateDisplay ($rawIsoDate)")
                         activeTimeFilter = ReportsRepository.TimeFilter.TODAY
-                        updateFilterButtonLabels(activeTimeFilter, "Custom Date: $selectedDate")
-                        viewModel.loadReportData(managerId, ReportsRepository.TimeFilter.TODAY)
+                        binding.tvActiveDateFilter.text = "Custom Date"
+                        binding.tvActiveDateRange.text = "Showing report for: Custom Date ($selectedDateDisplay)"
+                        viewModel.loadReportData(managerId, ReportsRepository.TimeFilter.TODAY, rawIsoDate)
                     }
                 } else {
                     activeTimeFilter = selectedFilter
@@ -139,75 +141,88 @@ class ReportsAnalyticsFragment : Fragment() {
     private fun observeReportData() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.reportState.collect { summary ->
-                    Log.d(TAG, "UI Update: Displaying report metrics - Total Revenue: ₹${summary.totalRevenue}, Total Orders: ${summary.totalOrders}")
+                viewModel.reportState.collect { state ->
+                    when (state) {
+                        is ResourceUiState.Loading -> {
+                            Log.d(TAG, "UI Update: Loading report data...")
+                        }
+                        is ResourceUiState.Success -> {
+                            val summary = state.data
+                            Log.d(TAG, "UI Update: Displaying report metrics - Total Revenue: ₹${summary.totalRevenue}, Total Orders: ${summary.totalOrders}")
 
-                    // 1. Update KPI RecyclerView items
-                    val revenueSubtitle = if (summary.totalOrders > 0) "↑ Active period sales" else "No sales recorded"
-                    val orderSubtitle = if (summary.totalOrders > 0) "↑ Completed orders" else "No orders completed"
+                            // 1. Update KPI RecyclerView items
+                            val revenueSubtitle = if (summary.totalOrders > 0) "↑ Active period sales" else "No sales recorded"
+                            val orderSubtitle = if (summary.totalOrders > 0) "↑ Completed orders" else "No orders completed"
 
-                    val kpiList = listOf(
-                        ReportKpiModel(
-                            title = "Total Collection",
-                            value = formatCurrency(summary.totalRevenue),
-                            subtitle = revenueSubtitle,
-                            iconRes = R.drawable.ic_sales_report_24dp,
-                            iconTintRes = R.color.green_growth
-                        ),
-                        ReportKpiModel(
-                            title = "Orders Completed",
-                            value = "${summary.totalOrders} Orders",
-                            subtitle = orderSubtitle,
-                            iconRes = R.drawable.ic_history_24dp,
-                            iconTintRes = R.color.accent_blue
-                        ),
-                        ReportKpiModel(
-                            title = "Avg Order Value",
-                            value = formatCurrency(summary.avgOrderValue),
-                            subtitle = "Per transaction",
-                            iconRes = R.drawable.ic_payments_24dp,
-                            iconTintRes = R.color.accent_purple
-                        ),
-                        ReportKpiModel(
-                            title = "Total Discounts",
-                            value = formatCurrency(summary.totalDiscounts),
-                            subtitle = "Applied on bills",
-                            iconRes = R.drawable.ic_discount_24dp,
-                            iconTintRes = R.color.accent_orange
-                        )
-                    )
-                    kpiAdapter.updateKpis(kpiList)
+                            val kpiList = listOf(
+                                ReportKpiModel(
+                                    title = "Total Collection",
+                                    value = formatCurrency(summary.totalRevenue),
+                                    subtitle = revenueSubtitle,
+                                    iconRes = R.drawable.ic_sales_report_24dp,
+                                    iconTintRes = R.color.green_growth
+                                ),
+                                ReportKpiModel(
+                                    title = "Orders Completed",
+                                    value = "${summary.totalOrders} Orders",
+                                    subtitle = orderSubtitle,
+                                    iconRes = R.drawable.ic_history_24dp,
+                                    iconTintRes = R.color.accent_blue
+                                ),
+                                ReportKpiModel(
+                                    title = "Avg Order Value",
+                                    value = formatCurrency(summary.avgOrderValue),
+                                    subtitle = "Per transaction",
+                                    iconRes = R.drawable.ic_payments_24dp,
+                                    iconTintRes = R.color.accent_purple
+                                ),
+                                ReportKpiModel(
+                                    title = "Total Discounts",
+                                    value = formatCurrency(summary.totalDiscounts),
+                                    subtitle = "Applied on bills",
+                                    iconRes = R.drawable.ic_discount_24dp,
+                                    iconTintRes = R.color.accent_orange
+                                )
+                            )
+                            kpiAdapter.updateKpis(kpiList)
 
-                    // 2. Update Payment Breakdown sub-layout
-                    val paymentCard = binding.cardPaymentBreakdown
-                    val hasRevenue = summary.totalRevenue > 0
-                    val cashPct = if (hasRevenue) ((summary.cashAmount / summary.totalRevenue) * 100).toInt() else 0
-                    val upiPct = if (hasRevenue) ((summary.upiAmount / summary.totalRevenue) * 100).toInt() else 0
-                    val cardPct = if (hasRevenue) ((summary.cardAmount / summary.totalRevenue) * 100).toInt() else 0
+                            // 2. Update Payment Breakdown sub-layout
+                            val paymentCard = binding.cardPaymentBreakdown
+                            val hasRevenue = summary.totalRevenue > 0
+                            val cashPct = if (hasRevenue) ((summary.cashAmount / summary.totalRevenue) * 100).toInt() else 0
+                            val upiPct = if (hasRevenue) ((summary.upiAmount / summary.totalRevenue) * 100).toInt() else 0
+                            val cardPct = if (hasRevenue) ((summary.cardAmount / summary.totalRevenue) * 100).toInt() else 0
 
-                    paymentCard.tvCashAmount.text = "${formatCurrency(summary.cashAmount)} ($cashPct%)"
-                    paymentCard.pbCashPercentage.progress = cashPct
+                            paymentCard.tvCashAmount.text = "${formatCurrency(summary.cashAmount)} ($cashPct%)"
+                            paymentCard.pbCashPercentage.progress = cashPct
 
-                    paymentCard.tvUpiAmount.text = "${formatCurrency(summary.upiAmount)} ($upiPct%)"
-                    paymentCard.pbUpiPercentage.progress = upiPct
+                            paymentCard.tvUpiAmount.text = "${formatCurrency(summary.upiAmount)} ($upiPct%)"
+                            paymentCard.pbUpiPercentage.progress = upiPct
 
-                    paymentCard.tvCardAmount.text = "${formatCurrency(summary.cardAmount)} ($cardPct%)"
-                    paymentCard.pbCardPercentage.progress = cardPct
+                            paymentCard.tvCardAmount.text = "${formatCurrency(summary.cardAmount)} ($cardPct%)"
+                            paymentCard.pbCardPercentage.progress = cardPct
 
-                    // 3. Update Order Channels sub-layout
-                    val channelsCard = binding.cardOrderChannels
-                    channelsCard.tvDineInSales.text = formatCurrency(summary.dineInSales)
-                    channelsCard.tvDineInOrders.text = "${summary.dineInOrders} Orders"
+                            // 3. Update Order Channels sub-layout
+                            val channelsCard = binding.cardOrderChannels
+                            channelsCard.tvDineInSales.text = formatCurrency(summary.dineInSales)
+                            channelsCard.tvDineInOrders.text = "${summary.dineInOrders} Orders"
 
-                    channelsCard.tvTakeawaySales.text = formatCurrency(summary.takeawaySales)
-                    channelsCard.tvTakeawayOrders.text = "${summary.takeawayOrders} Orders"
+                            channelsCard.tvTakeawaySales.text = formatCurrency(summary.takeawaySales)
+                            channelsCard.tvTakeawayOrders.text = "${summary.takeawayOrders} Orders"
 
-                    // 4. Update Tax & Summary sub-layout
-                    val taxCard = binding.cardTaxSummary
-                    taxCard.tvGrossSubtotal.text = formatCurrency(summary.grossSubtotal)
-                    taxCard.tvTotalGst.text = formatCurrency(summary.totalGst)
-                    taxCard.tvTotalDiscountSummary.text = "- ${formatCurrency(summary.totalDiscounts)}"
-                    taxCard.tvNetCollection.text = formatCurrency(summary.totalRevenue)
+                            // 4. Update Tax & Summary sub-layout
+                            val taxCard = binding.cardTaxSummary
+                            taxCard.tvGrossSubtotal.text = formatCurrency(summary.grossSubtotal)
+                            taxCard.tvTotalGst.text = formatCurrency(summary.totalGst)
+                            taxCard.tvTotalDiscountSummary.text = "- ${formatCurrency(summary.totalDiscounts)}"
+                            taxCard.tvNetCollection.text = formatCurrency(summary.totalRevenue)
+                        }
+                        is ResourceUiState.Error -> {
+                            Log.e(TAG, "UI Update: Error loading reports: ${state.message}")
+                            Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                        }
+                        else -> {}
+                    }
                 }
             }
         }
@@ -227,7 +242,7 @@ class ReportsAnalyticsFragment : Fragment() {
         }
     }
 
-    private fun showDatePicker(onDateSelected: (String) -> Unit) {
+    private fun showDatePicker(onDateSelected: (displayDate: String, rawIsoDate: String) -> Unit) {
         Log.d(TAG, "Opening DatePickerDialog")
         val calendar = Calendar.getInstance()
         val datePicker = DatePickerDialog(
@@ -235,8 +250,9 @@ class ReportsAnalyticsFragment : Fragment() {
             { _, year, month, dayOfMonth ->
                 val selectedCal = Calendar.getInstance()
                 selectedCal.set(year, month, dayOfMonth)
-                val sdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-                onDateSelected(sdf.format(selectedCal.time))
+                val displaySdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                val isoSdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                onDateSelected(displaySdf.format(selectedCal.time), isoSdf.format(selectedCal.time))
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
