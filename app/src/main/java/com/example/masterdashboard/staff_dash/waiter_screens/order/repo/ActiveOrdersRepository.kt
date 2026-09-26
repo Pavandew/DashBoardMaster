@@ -8,6 +8,7 @@ import com.example.masterdashboard.staff_dash.waiter_screens.table.models.OrderD
 import com.example.masterdashboard.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.example.masterdashboard.staff_dash.utils.TimeUtils
 import com.example.masterdashboard.utils.RestaurantPathHelper
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -130,9 +131,14 @@ class ActiveOrdersRepository {
             emitCombinedList()
         }
 
-        // 2. Listen to completed_orders collection for settled / paid orders
+        // 2. Listen to completed_orders collection for recent settled / paid orders (last 24 hours)
+        val twentyFourHoursAgo = Timestamp(
+            java.util.Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000L)
+        )
+
         val completedQuery = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
+            .whereGreaterThanOrEqualTo(AppConstants.FIELD_TIMESTAMP, twentyFourHoursAgo)
             .orderBy(AppConstants.FIELD_TIMESTAMP, com.google.firebase.firestore.Query.Direction.DESCENDING)
             .limit(50)
 

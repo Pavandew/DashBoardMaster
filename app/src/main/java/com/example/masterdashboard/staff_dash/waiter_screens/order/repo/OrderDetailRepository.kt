@@ -35,6 +35,7 @@ class OrderDetailRepository {
 
         try {
             val querySnapshot = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
                 .get()
                 .await()
 
@@ -193,6 +194,7 @@ class OrderDetailRepository {
             if (!snapshot.exists()) {
                 Log.w(TAG, "📦 [REPO] Doc not found at primary path '${orderRef.path}'. Searching collectionGroup...")
                 val querySnap = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                    .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
                     .get()
                     .await()
 
@@ -272,6 +274,7 @@ class OrderDetailRepository {
 
             if (!snapshot.exists()) {
                 val querySnap = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                    .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
                     .get()
                     .await()
 
