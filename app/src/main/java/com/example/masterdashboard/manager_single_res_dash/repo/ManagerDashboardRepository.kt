@@ -59,15 +59,20 @@ class ManagerDashboardRepository {
     }
 
     /**
-     * Fetches the restaurant name for the given owner UID/restaurant ID.
+     * Fetches restaurant name and logo URL for the given owner UID/restaurant ID.
+     * Returns Pair(Name, LogoUrl)
      */
-    suspend fun getRestaurantName(ownerUid: String): String? {
+    suspend fun getRestaurantDetails(ownerUid: String): Pair<String?, String?> {
         return try {
             val doc = RestaurantPathHelper.getRestaurantDocRef(ownerUid).get().await()
-            doc.getString(AppConstants.FIELD_RESTAURANT_NAME)
+            val name = doc.getString(AppConstants.FIELD_RESTAURANT_NAME)
+            val logo = doc.getString("restaurantLogoUri")
+                ?: doc.getString("restaurantLogoUrl")
+                ?: (doc.get("billingPrinterSettings") as? Map<*, *>)?.get("restaurantLogoUri") as? String
+            name to logo
         } catch (e: Exception) {
-            Log.e("ManagerRepo", "Error fetching restaurant name for $ownerUid", e)
-            null
+            Log.e("ManagerRepo", "Error fetching restaurant details for $ownerUid", e)
+            null to null
         }
     }
 }

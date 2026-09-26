@@ -120,7 +120,8 @@ class ActiveOrdersRepository {
                         tableName = resolvedTableName,
                         totalItems = totalItemCount,
                         orderTime = formattedTime,
-                        status = status
+                        status = status,
+                        docPath = document.reference.path
                     )
 
                     tempMap[finalOrderId] = cardData to orderModel.timestamp.seconds
@@ -184,7 +185,8 @@ class ActiveOrdersRepository {
                         tableName = resolvedTableName,
                         totalItems = totalItemCount,
                         orderTime = formattedTime,
-                        status = ActiveOrderStatus.PAID
+                        status = ActiveOrderStatus.PAID,
+                        docPath = document.reference.path
                     )
 
                     tempMap[finalOrderId] = cardData to orderModel.timestamp.seconds

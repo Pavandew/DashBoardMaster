@@ -8,7 +8,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.masterdashboard"
+        applicationId = "com.restroone.app"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

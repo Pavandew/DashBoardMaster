@@ -5,6 +5,9 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.masterdashboard.subscription.models.BillingCycle
+import com.example.masterdashboard.subscription.models.PaymentGateway
+import com.example.masterdashboard.subscription.models.PaymentResultPayload
+import com.example.masterdashboard.subscription.models.PaymentState
 import com.example.masterdashboard.subscription.models.SubscriptionPlan
 import com.example.masterdashboard.subscription.models.SubscriptionStatus
 import com.example.masterdashboard.subscription.models.UserSubscriptionInfo
@@ -25,6 +28,9 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
 
     private val _uiState = MutableStateFlow<SubscriptionUiState>(SubscriptionUiState.Loading)
     val uiState: StateFlow<SubscriptionUiState> = _uiState.asStateFlow()
+
+    private val _paymentState = MutableStateFlow<PaymentState>(PaymentState.Idle)
+    val paymentState: StateFlow<PaymentState> = _paymentState.asStateFlow()
 
     init {
         Log.d(TAG, "ViewModel initialized. Emitting instant local plan state...")
@@ -101,5 +107,74 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
                 selectedBillingCycle = plan.billingCycle
             )
         }
+    }
+
+    fun initiatePayment(gateway: PaymentGateway) {
+        val currentState = _uiState.value
+        if (currentState !is SubscriptionUiState.Success) {
+            Log.w(TAG, "initiatePayment: Cannot initiate payment, UI state is not Success")
+            return
+        }
+
+        val plan = currentState.selectedPlan ?: currentState.plans.firstOrNull()
+        if (plan == null) {
+            Log.e(TAG, "initiatePayment: No plan selected")
+            _paymentState.value = PaymentState.Error("Please select a valid subscription plan")
+            return
+        }
+
+        viewModelScope.launch {
+            _paymentState.value = PaymentState.InitiatingOrder
+            try {
+                val orderDetails = repository.createPaymentOrder(plan, gateway)
+                Log.i(TAG, "initiatePayment: Created order '${orderDetails.orderId}' for Gateway ${gateway.name}")
+                _paymentState.value = PaymentState.AwaitingSdk(orderDetails)
+            } catch (e: Exception) {
+                Log.e(TAG, "initiatePayment: Failed to create order", e)
+                _paymentState.value = PaymentState.Error(e.message ?: "Failed to initiate payment order")
+            }
+        }
+    }
+
+    fun processPaymentResult(payload: PaymentResultPayload) {
+        val currentState = _uiState.value
+        if (currentState !is SubscriptionUiState.Success) {
+            Log.w(TAG, "processPaymentResult: Cannot process payment, UI state is not Success")
+            return
+        }
+
+        val plan = currentState.selectedPlan ?: currentState.plans.firstOrNull()
+        if (plan == null) {
+            Log.e(TAG, "processPaymentResult: No plan selected")
+            _paymentState.value = PaymentState.Error("Invalid plan selected for verification")
+            return
+        }
+
+        viewModelScope.launch {
+            _paymentState.value = PaymentState.VerifyingPayment
+            try {
+                Log.i(TAG, "processPaymentResult: Verifying payment '${payload.paymentId}' via Gateway ${payload.gateway.name}...")
+                val success = repository.verifyAndActivateSubscription(plan, payload)
+                if (success) {
+                    Log.i(TAG, "processPaymentResult: Payment verified and subscription activated successfully!")
+                    _paymentState.value = PaymentState.Success(
+                        message = "🎉 🎉 Congratulations! Your ${plan.title} is now active!",
+                        subscriptionId = payload.paymentId
+                    )
+                    loadSubscriptionData() // Refresh status from Firestore
+                } else {
+                    Log.e(TAG, "processPaymentResult: Failed to activate subscription in Firestore")
+                    _paymentState.value = PaymentState.Error("Payment was successful but activation failed. Please contact support.")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "processPaymentResult: Exception during payment verification", e)
+                _paymentState.value = PaymentState.Error(e.message ?: "Error verifying payment")
+            }
+        }
+    }
+
+    fun resetPaymentState() {
+        Log.d(TAG, "resetPaymentState: Resetting payment state to Idle")
+        _paymentState.value = PaymentState.Idle
     }
 }

@@ -41,6 +41,9 @@ class ManagerDashboardViewModel(
     private val _restaurantName = MutableStateFlow("")
     val restaurantName: StateFlow<String> = _restaurantName.asStateFlow()
 
+    private val _restaurantLogoUrl = MutableStateFlow("")
+    val restaurantLogoUrl: StateFlow<String> = _restaurantLogoUrl.asStateFlow()
+
     // Persistent UI state for Quick Actions expansion
     private val _isQuickActionsExpanded = MutableStateFlow(false)
     val isQuickActionsExpanded: StateFlow<Boolean> = _isQuickActionsExpanded.asStateFlow()
@@ -156,23 +159,32 @@ class ManagerDashboardViewModel(
     }
 
     /**
-     * Loads the restaurant name, prioritizing local cache in SessionManager.
+     * Loads the restaurant name and logo URL, prioritizing local cache in SessionManager.
      */
     fun loadRestaurantDetails(ownerUid: String, sessionManager: SessionManager) {
         val cachedName = sessionManager.getRestaurantName()
+        val cachedLogo = sessionManager.getRestaurantLogoUrl()
+
         if (cachedName.isNotEmpty()) {
-            Log.d(TAG, "Cache Hit: Using restaurant name from SessionManager: $cachedName")
             _restaurantName.value = cachedName
-            return
+        }
+        if (cachedLogo.isNotEmpty()) {
+            _restaurantLogoUrl.value = cachedLogo
         }
 
         if (ownerUid.isEmpty()) return
 
         viewModelScope.launch {
-            Log.d(TAG, "Cache Miss: Fetching restaurant name from Firestore for UID: $ownerUid")
-            val fetchedName = repository.getRestaurantName(ownerUid) ?: "My Restaurant"
-            sessionManager.saveRestaurantName(fetchedName)
-            _restaurantName.value = fetchedName
+            Log.d(TAG, "Fetching restaurant details from Firestore for UID: $ownerUid")
+            val (fetchedName, fetchedLogo) = repository.getRestaurantDetails(ownerUid)
+            if (!fetchedName.isNullOrEmpty()) {
+                sessionManager.saveRestaurantName(fetchedName)
+                _restaurantName.value = fetchedName
+            }
+            if (!fetchedLogo.isNullOrEmpty()) {
+                sessionManager.saveRestaurantLogoUrl(fetchedLogo)
+                _restaurantLogoUrl.value = fetchedLogo
+            }
         }
     }
 

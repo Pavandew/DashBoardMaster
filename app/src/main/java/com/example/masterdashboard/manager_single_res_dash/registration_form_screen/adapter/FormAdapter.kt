@@ -1,6 +1,7 @@
 package com.example.masterdashboard.manager_single_res_dash.registration_form_screen.adapter
 
 import android.app.DatePickerDialog
+import android.net.Uri
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
@@ -8,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.masterdashboard.R
 import com.example.masterdashboard.databinding.*
 import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.model.FormItem
 import com.google.android.material.textfield.TextInputLayout
@@ -243,11 +245,16 @@ class FormAdapter(
                 onInputChanged(item.key, "PICK_IMAGE")
             }
             
-            if (item.imageUri != null) {
+            if (!item.imageUri.isNullOrEmpty()) {
                 binding.viewPlaceholderIcon.visibility = View.GONE
+                try {
+                    binding.ivLogoPreview.setImageURI(Uri.parse(item.imageUri))
+                } catch (e: Exception) {
+                    binding.ivLogoPreview.setImageResource(R.drawable.app_logo)
+                }
             } else {
                 binding.viewPlaceholderIcon.visibility = View.VISIBLE
-                binding.ivLogoPreview.setImageResource(com.example.masterdashboard.R.drawable.ic_launcher_background)
+                binding.ivLogoPreview.setImageResource(R.drawable.app_logo)
             }
         }
     }

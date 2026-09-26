@@ -128,10 +128,29 @@ class SessionManager(context: Context) {
         return name
     }
 
+    fun saveRestaurantLogoUrl(logoUrl: String) {
+        Log.d(TAG, "saveRestaurantLogoUrl: $logoUrl")
+        prefs.edit { putString("restaurantLogoUrl", logoUrl) }
+    }
+
+    fun getRestaurantLogoUrl(): String {
+        val url = prefs.getString("restaurantLogoUrl", "") ?: ""
+        if (url.isNotEmpty()) return url
+
+        val cachedDetails = getCachedRestaurantDetails()
+        return cachedDetails?.restaurantLogoUri ?: cachedDetails?.billingPrinterSettings?.restaurantLogoUri ?: ""
+    }
+
     fun saveRestaurantDetails(data: RegistrationDataModel) {
         val json = Gson().toJson(data)
         Log.d(TAG, "saveRestaurantDetails: Restaurant data cached")
-        prefs.edit { putString(AppConstants.KEY_RESTAURANT_DETAILS, json) }
+        val logo = data.restaurantLogoUri ?: data.billingPrinterSettings.restaurantLogoUri ?: ""
+        prefs.edit {
+            putString(AppConstants.KEY_RESTAURANT_DETAILS, json)
+            if (logo.isNotEmpty()) {
+                putString("restaurantLogoUrl", logo)
+            }
+        }
     }
 
     fun getCachedRestaurantDetails(): RegistrationDataModel? {

@@ -23,6 +23,7 @@ import com.example.masterdashboard.manager_single_res_dash.viewModel.ManagerDash
 import com.example.masterdashboard.manager_single_res_dash.views.StaffManagementFragment
 import com.example.masterdashboard.manager_single_res_dash.views.TableManagementFragment
 import com.example.masterdashboard.manager_single_res_dash.views.CustomerManagementFragment
+import coil.load
 import com.example.masterdashboard.staff_dash.billing_screens.views.CashierBillingFragment
 import com.example.masterdashboard.staff_dash.billing_screens.views.CashierOrderFragment
 import com.example.masterdashboard.staff_dash.kitchen_screens.views.KitchenOrderFragment
@@ -154,6 +155,22 @@ class ManagerDashboardFragment : Fragment() {
                             Log.d("ManagerDashboard", "UI Update: Restaurant name updated: $name")
                             binding.masterDashHeader.txtRestaurantName.text = "$name ▾"
                             navigationHelper.updateDrawerHeader(name)
+                        }
+                    }
+                }
+
+                // Observe Restaurant Logo URL
+                launch {
+                    viewModel.restaurantLogoUrl.collect { logoUrl ->
+                        if (!logoUrl.isNullOrEmpty()) {
+                            Log.d("ManagerDashboard", "UI Update: Loading logo into header profile: $logoUrl")
+                            binding.masterDashHeader.imgProfile.load(logoUrl) {
+                                crossfade(true)
+                                placeholder(R.drawable.person)
+                                error(R.drawable.person)
+                            }
+                        } else {
+                            binding.masterDashHeader.imgProfile.setImageResource(R.drawable.person)
                         }
                     }
                 }

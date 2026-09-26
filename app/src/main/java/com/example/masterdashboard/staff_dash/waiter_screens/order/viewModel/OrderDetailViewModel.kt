@@ -41,6 +41,7 @@ class OrderDetailViewModel(
     fun loadOrderSpecifications(
         managerId: String,
         orderId: String,
+        docPath: String = "",
         preloadedTableName: String,
         preloadedStatus: String,
         preloadedTime: String
@@ -62,7 +63,7 @@ class OrderDetailViewModel(
             )
         }
 
-        repository.fetchDetailedTicket(managerId, orderId, preloadedTableName).onEach { resource ->
+        repository.fetchDetailedTicket(managerId, orderId, docPath, preloadedTableName).onEach { resource ->
             when (resource) {
                 is ResourceUiState.Loading -> {
                     Log.d(TAG, "🏗️ [VIEWMODEL] Loading order details...")

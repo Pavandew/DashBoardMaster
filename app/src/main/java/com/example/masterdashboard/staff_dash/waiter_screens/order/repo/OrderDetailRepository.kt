@@ -28,35 +28,52 @@ class OrderDetailRepository {
     fun fetchDetailedTicket(
         managerId: String,
         orderId: String,
+        docPath: String = "",
         fallbackTableName: String
     ): Flow<ResourceUiState<OrderDetailExpansionUiState>> = flow {
-        Log.d(TAG, "📦 [REPO] fetchDetailedTicket() started for Manager: $managerId, OrderId: $orderId")
+        Log.d(TAG, "📦 [REPO] fetchDetailedTicket() started for Manager: $managerId, OrderId: $orderId, DocPath: '$docPath'")
         emit(ResourceUiState.Loading)
 
         try {
-            val querySnapshot = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
-                .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
-                .get()
-                .await()
+            var document: com.google.firebase.firestore.DocumentSnapshot? = null
 
-            Log.d(TAG, "📦 [REPO] Query completed. Total documents checked across collectionGroup: ${querySnapshot.size()}")
-
-            var document = querySnapshot.documents.firstOrNull { doc ->
-                (doc.id == orderId || doc.getString(AppConstants.FIELD_ORDER_ID) == orderId) &&
-                        doc.reference.path.contains("${AppConstants.COLLECTION_RESTAURANTS}/$managerId")
+            // 1. Direct document lookup using exact path (0ms, 0 index needed!)
+            if (docPath.isNotEmpty()) {
+                val directRef = firestore.document(docPath)
+                val directSnap = directRef.get().await()
+                if (directSnap.exists()) {
+                    Log.i(TAG, "📦 [REPO] Direct path lookup successful: $docPath")
+                    document = directSnap
+                }
             }
 
-            // Fallback: If not found in active_orders (e.g. order was paid/settled), check completed_orders collection
+            // 2. Direct lookup in completed_orders
             if (document == null || !document.exists()) {
-                Log.d(TAG, "📦 [REPO] Order '$orderId' not found in active_orders. Checking completed_orders...")
                 val completedRef = RestaurantPathHelper.getOutletDocRef(managerId)
                     .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
                     .document(orderId)
-
                 val completedSnap = completedRef.get().await()
                 if (completedSnap.exists()) {
-                    Log.i(TAG, "📦 [REPO] Target order found in completed_orders at path: ${completedSnap.reference.path}")
+                    Log.i(TAG, "📦 [REPO] Direct completed_orders lookup successful for orderId: $orderId")
                     document = completedSnap
+                }
+            }
+
+            // 3. Fallback collectionGroup check
+            if (document == null || !document.exists()) {
+                Log.d(TAG, "📦 [REPO] Falling back to collectionGroup query for order '$orderId'...")
+                try {
+                    val querySnapshot = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                        .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
+                        .get()
+                        .await()
+
+                    document = querySnapshot.documents.firstOrNull { doc ->
+                        (doc.id == orderId || doc.getString(AppConstants.FIELD_ORDER_ID) == orderId) &&
+                                doc.reference.path.contains("${AppConstants.COLLECTION_RESTAURANTS}/$managerId")
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "📦 [REPO] collectionGroup fallback query skipped or failed: ${e.message}")
                 }
             }
 

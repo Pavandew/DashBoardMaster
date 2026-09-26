@@ -17,6 +17,7 @@ import com.example.masterdashboard.manager_single_res_dash.registration_form_scr
 import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.uiState.RegistrationUiState
 import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.viewModel.RegistrationDataViewModel
 import com.example.masterdashboard.manager_single_res_dash.registration_form_screen.viewModel.Step4ViewModel
+import com.example.masterdashboard.utils.DocumentUploadManager
 import com.example.masterdashboard.utils.SessionManager
 import kotlinx.coroutines.launch
 
@@ -30,6 +31,10 @@ class FormStep4Fragment : Fragment() {
 
     private var formAdapter: FormAdapter? = null
     private lateinit var sessionManager: SessionManager
+
+    private val documentUploadManager by lazy {
+        DocumentUploadManager(this)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -110,14 +115,35 @@ class FormStep4Fragment : Fragment() {
         val data = dataViewModel.registrationData
         when (key) {
             "logo" -> {
-                data.restaurantLogoUri = "logo_uploaded"
-                Toast.makeText(requireContext(), "Logo Upload Simulated", Toast.LENGTH_SHORT).show()
-                stepViewModel.initFields(data)
+                Log.d("FormStep4Fragment", "Logo upload button clicked. Launching DocumentUploadManager...")
+                documentUploadManager.selectDocument { uri ->
+                    Log.i("FormStep4Fragment", "Logo image selected: $uri")
+                    data.restaurantLogoUri = uri.toString()
+                    data.billingPrinterSettings.restaurantLogoUri = uri.toString()
+                    stepViewModel.initFields(data)
+                    Toast.makeText(requireContext(), "Logo attached successfully!", Toast.LENGTH_SHORT).show()
+                }
             }
-            "show_logo" -> data.showLogoOnReceipts = value as Boolean
-            "seating" -> data.seatingCapacity = value as String
-            "open_days" -> data.openDays = value as String
-            "timezone" -> data.timezone = value as String
+            "show_logo" -> {
+                val isChecked = value as Boolean
+                data.showLogoOnReceipts = isChecked
+                data.billingPrinterSettings.showLogoOnReceipts = isChecked
+            }
+            "seating" -> {
+                val seating = value as String
+                data.seatingCapacity = seating
+                data.restaurantProfile.seatingCapacity = seating
+            }
+            "open_days" -> {
+                val openDays = value as String
+                data.openDays = openDays
+                data.restaurantProfile.openDays = openDays
+            }
+            "timezone" -> {
+                val timezone = value as String
+                data.timezone = timezone
+                data.restaurantProfile.timezone = timezone
+            }
         }
     }
 

@@ -25,12 +25,14 @@ import com.example.masterdashboard.subscription.views.SubscriptionPlansFragment
 import com.example.masterdashboard.utils.LogoutManager
 import com.example.masterdashboard.utils.NavigationUtils
 import com.example.masterdashboard.utils.SessionManager
+import coil.load
 import kotlinx.coroutines.launch
 
 class DrawerNavigationHelper(private val fragment: Fragment) {
 
     companion object {
         private const val TAG = "DrawerNavigationHelper"
+
     }
 
     private val context: Context
@@ -175,6 +177,20 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
         val nameTv = navigationView.findViewById<TextView>(R.id.drawerProfileName)
         val roleTv = navigationView.findViewById<TextView>(R.id.drawerProfileRole)
         val trialBadgeTv = navigationView.findViewById<TextView>(R.id.tvDrawerTrialBadge)
+
+        val profileImg = navigationView.findViewById<com.google.android.material.imageview.ShapeableImageView>(R.id.drawerProfileImage)
+            ?: navigationView.findViewById<android.widget.ImageView>(R.id.imgProfile)
+
+        val logoUrl = sessionManager.getRestaurantLogoUrl()
+        if (!logoUrl.isNullOrEmpty() && profileImg != null) {
+            profileImg.load(logoUrl) {
+                crossfade(true)
+                placeholder(R.drawable.person)
+                error(R.drawable.person)
+            }
+        } else {
+            profileImg?.setImageResource(R.drawable.person)
+        }
 
         nameTv?.text = state.userName
 

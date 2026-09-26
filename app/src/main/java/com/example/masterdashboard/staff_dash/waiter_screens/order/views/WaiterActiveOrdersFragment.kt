@@ -102,11 +102,12 @@ class WaiterActiveOrdersFragment : Fragment() {
         }
 
         ordersAdapter = ActiveOrdersAdapter { clickedOrder ->
-            Log.d(TAG, "Order clicked: ID='${clickedOrder.orderId}', Table='${clickedOrder.tableName}', Status='${clickedOrder.status.name}', Time='${clickedOrder.orderTime}'")
+            Log.d(TAG, "Order clicked: ID='${clickedOrder.orderId}', Table='${clickedOrder.tableName}', Status='${clickedOrder.status.name}', Time='${clickedOrder.orderTime}', DocPath='${clickedOrder.docPath}'")
 
             val expansionFragment = OrderDetailExpansionFragment().apply {
                 arguments = Bundle().apply {
                     putString("orderId", clickedOrder.orderId)
+                    putString("docPath", clickedOrder.docPath)
                     putString("tableName", clickedOrder.tableName)
                     putString("orderStatus", clickedOrder.status.name)
                     putString("orderTime", clickedOrder.orderTime)

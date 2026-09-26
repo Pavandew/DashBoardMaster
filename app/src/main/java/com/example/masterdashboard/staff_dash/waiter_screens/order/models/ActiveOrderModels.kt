@@ -10,7 +10,8 @@ data class ActiveOrderCardData(
     val tableName: String = "",
     val totalItems: Int = 0,
     val orderTime: String = "",
-    val status: ActiveOrderStatus = ActiveOrderStatus.PREPARING
+    val status: ActiveOrderStatus = ActiveOrderStatus.PREPARING,
+    val docPath: String = ""
 )
 
 // Data representation for your reusable top filter chips
@@ -19,6 +20,7 @@ data class OrderStatusFilterData(
     val name: String, // e.g., "All (5)", "Preparing (3)"
     val statusType: ActiveOrderStatus?, // null represents the "All" category filter
     val isSelected: Boolean = false
+
 )
 
 // Main screen UI wrapper keeping stream handling clean and safe

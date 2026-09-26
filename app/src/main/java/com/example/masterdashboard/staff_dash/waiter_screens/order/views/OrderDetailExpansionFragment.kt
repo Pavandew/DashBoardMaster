@@ -63,21 +63,23 @@ class OrderDetailExpansionFragment : Fragment() {
 
         // Unpack arguments passed from previous list fragment
         currentOrderId = arguments?.getString("orderId") ?: "N/A"
+        val currentDocPath = arguments?.getString("docPath") ?: ""
         passedTableName = arguments?.getString("tableName") ?: ""
         passedStatusStr = arguments?.getString("orderStatus") ?: "PREPARING"
         passedOrderTime = arguments?.getString("orderTime") ?: ""
 
-        Log.d(TAG, "📱 [FRAGMENT] Received Arguments -> OrderId: '$currentOrderId', Table: '$passedTableName', Status: '$passedStatusStr', Time: '$passedOrderTime'")
+        Log.d(TAG, "📱 [FRAGMENT] Received Arguments -> OrderId: '$currentOrderId', DocPath: '$currentDocPath', Table: '$passedTableName', Status: '$passedStatusStr', Time: '$passedOrderTime'")
 
         setupToolbar()
         setupRowRecyclerView()
         observeSpecState()
 
         // Fetch detailed items payload from Firestore
-        Log.d(TAG, "📱 [FRAGMENT] Triggering loadOrderSpecifications for Manager: $managerId, Order: $currentOrderId")
+        Log.d(TAG, "📱 [FRAGMENT] Triggering loadOrderSpecifications for Manager: $managerId, Order: $currentOrderId, DocPath: '$currentDocPath'")
         viewModel.loadOrderSpecifications(
             managerId = managerId,
             orderId = currentOrderId,
+            docPath = currentDocPath,
             preloadedTableName = passedTableName,
             preloadedStatus = passedStatusStr,
             preloadedTime = passedOrderTime

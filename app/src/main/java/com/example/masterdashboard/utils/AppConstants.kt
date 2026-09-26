@@ -1,6 +1,11 @@
 package com.example.masterdashboard.utils
 
 object AppConstants {
+    // Payment Credentials (Test / Sandbox)
+    const val RAZORPAY_TEST_KEY_ID = "rzp_test_MasterDashboardKey"
+    const val PHONEPE_TEST_VPA = "pgtestpayuat@ybl"
+    const val PHONEPE_TEST_MERCHANT_ID = "PGTESTPAYUAT"
+
     // Portal Types
     const val PORTAL_MULTI_RESTAURANT = "multi_restaurant"
     const val PORTAL_RESTAURANT = "restaurant_portal"
@@ -149,7 +154,7 @@ object AppConstants {
     const val ORDER_TYPE_DELIVERY = "DELIVERY"
 
     // Preferences Keys
-    const val PREF_NAME = "master_dashboard_prefs"
+    const val PREF_NAME = "restroone_prefs"
     const val KEY_SELECTED_PORTAL = "selected_portal"
     const val KEY_UID = "uid"
     const val KEY_ROLE = "role"

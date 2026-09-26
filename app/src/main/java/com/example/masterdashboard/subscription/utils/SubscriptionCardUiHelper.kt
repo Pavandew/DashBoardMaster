@@ -156,8 +156,8 @@ class SubscriptionCardUiHelper(private val context: Context) {
             binding.tvBadgeYearly.setBackgroundResource(R.drawable.bg_status_active)
         } else {
             binding.tvBadgeYearly.text = context.getString(R.string.sub_badge_save_16)
-            binding.tvBadgeYearly.setTextColor(colorPurplePrimary)
-            binding.tvBadgeYearly.setBackgroundResource(R.drawable.bg_role_badge)
+            binding.tvBadgeYearly.setTextColor(colorWhite)
+            binding.tvBadgeYearly.setBackgroundResource(R.drawable.bg_subscription_badge_discount)
         }
 
         if (userSub.status == SubscriptionStatus.ACTIVE_MONTHLY) {

@@ -18,13 +18,22 @@ import com.example.masterdashboard.databinding.FragmentSubscriptionPlansBinding
 import com.example.masterdashboard.manager_single_res_dash.ManagerHomeActivity
 import com.example.masterdashboard.subscription.adapter.SubscriptionFeatureAdapter
 import com.example.masterdashboard.subscription.models.BillingCycle
+import com.example.masterdashboard.subscription.models.PaymentGateway
+import com.example.masterdashboard.subscription.models.PaymentOrderDetails
+import com.example.masterdashboard.subscription.models.PaymentResultPayload
+import com.example.masterdashboard.subscription.models.PaymentState
+import com.example.masterdashboard.subscription.models.SubscriptionPlan
 import com.example.masterdashboard.subscription.models.SubscriptionStatus
+import com.example.masterdashboard.subscription.payment.PaymentGatewayListener
+import com.example.masterdashboard.subscription.payment.PhonePePaymentHandler
+import com.example.masterdashboard.subscription.payment.RazorpayPaymentHandler
 import com.example.masterdashboard.subscription.uistate.SubscriptionUiState
 import com.example.masterdashboard.subscription.utils.SubscriptionCardUiHelper
 import com.example.masterdashboard.subscription.viewModel.SubscriptionViewModel
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
-class SubscriptionPlansFragment : Fragment() {
+class SubscriptionPlansFragment : Fragment(), PaymentGatewayListener {
 
     companion object {
         private const val TAG = "SubscriptionPlansFragment"
@@ -39,6 +48,10 @@ class SubscriptionPlansFragment : Fragment() {
         SubscriptionCardUiHelper(requireContext())
     }
 
+    private var razorpayHandler: RazorpayPaymentHandler? = null
+    private var phonePeHandler: PhonePePaymentHandler? = null
+    private var activeOrderDetails: PaymentOrderDetails? = null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -51,7 +64,10 @@ class SubscriptionPlansFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.i(TAG, "onViewCreated: Initializing subscription UI views & listeners")
+        Log.i(TAG, "onViewCreated: Initializing subscription UI views & payment handlers")
+
+        razorpayHandler = RazorpayPaymentHandler(requireActivity(), this)
+        phonePeHandler = PhonePePaymentHandler(requireActivity(), this)
 
         setupToolbar()
         setupStrikethroughPrice()
@@ -113,13 +129,6 @@ class SubscriptionPlansFragment : Fragment() {
             if (state is SubscriptionUiState.Success) {
                 val selectedPlan = state.selectedPlan
                 val selectedCycle = state.selectedBillingCycle
-                val userStatus = state.userSubscription.status
-                val daysLeft = state.userSubscription.trialDaysRemaining
-
-                Log.i(
-                    TAG,
-                    "ACTION CLICKED -> SelectedCycle=$selectedCycle, PlanID='${selectedPlan?.id}', Title='${selectedPlan?.title}', Price='${selectedPlan?.priceText}', UserStatus=$userStatus, TrialDaysLeft=$daysLeft"
-                )
 
                 if (selectedCycle == BillingCycle.TRIAL) {
                     Toast.makeText(
@@ -132,65 +141,137 @@ class SubscriptionPlansFragment : Fragment() {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                     }
                     startActivity(intent)
-                } else {
-                    val price = selectedPlan?.priceText ?: "₹2,999"
-                    val planName = selectedPlan?.title ?: "Yearly Owner Pass"
-
-                    Toast.makeText(
-                        requireContext(),
-                        "🎉 Selected $planName ($price). Payment gateway integration ready!",
-                        Toast.LENGTH_LONG
-                    ).show()
+                } else if (selectedPlan != null) {
+                    showPaymentGatewayPicker(selectedPlan)
                 }
-            } else {
-                Log.w(TAG, "Subscribe clicked but UI state is not Success: $state")
             }
         }
+    }
+
+    private fun showPaymentGatewayPicker(plan: SubscriptionPlan) {
+        val pickerSheet = PaymentGatewayPickerBottomSheet.newInstance(plan) { gateway ->
+            Log.i(TAG, "User selected Gateway: ${gateway.name} for Plan: '${plan.title}' (${plan.priceText})")
+            viewModel.initiatePayment(gateway)
+        }
+        pickerSheet.show(childFragmentManager, PaymentGatewayPickerBottomSheet.TAG)
     }
 
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    Log.d(TAG, "observeViewModel: Received UI State -> ${state::class.java.simpleName}")
-                    when (state) {
-                        is SubscriptionUiState.Loading -> {
-                            Log.d(TAG, "Subscription UI State: Loading")
-                            binding.progressBar.visibility = View.VISIBLE
+                launch {
+                    viewModel.uiState.collect { state ->
+                        when (state) {
+                            is SubscriptionUiState.Loading -> binding.progressBar.visibility = View.VISIBLE
+                            is SubscriptionUiState.Success -> {
+                                binding.progressBar.visibility = View.GONE
+                                renderSubscriptionSuccess(state)
+                            }
+                            is SubscriptionUiState.Error -> {
+                                binding.progressBar.visibility = View.GONE
+                                Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+                            }
                         }
-                        is SubscriptionUiState.Success -> {
-                            Log.i(
-                                TAG,
-                                "Subscription UI State: Success -> UserStatus=${state.userSubscription.status}, SelectedCycle=${state.selectedBillingCycle}, SelectedPlan='${state.selectedPlan?.title}'"
-                            )
-                            binding.progressBar.visibility = View.GONE
-                            renderSubscriptionSuccess(state)
-                        }
-                        is SubscriptionUiState.Error -> {
-                            Log.e(TAG, "Subscription UI State: Error -> ${state.message}")
-                            binding.progressBar.visibility = View.GONE
-                            Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
-                        }
+                    }
+                }
+
+                launch {
+                    viewModel.paymentState.collect { paymentState ->
+                        handlePaymentState(paymentState)
                     }
                 }
             }
         }
     }
 
+    private fun handlePaymentState(state: PaymentState) {
+        Log.d(TAG, "handlePaymentState: ${state::class.java.simpleName}")
+        when (state) {
+            is PaymentState.Idle -> binding.progressBar.visibility = View.GONE
+            is PaymentState.InitiatingOrder -> {
+                binding.progressBar.visibility = View.VISIBLE
+                Toast.makeText(requireContext(), "Creating payment order...", Toast.LENGTH_SHORT).show()
+            }
+            is PaymentState.AwaitingSdk -> {
+                binding.progressBar.visibility = View.GONE
+                activeOrderDetails = state.orderDetails
+                launchPaymentSdk(state.orderDetails)
+            }
+            is PaymentState.VerifyingPayment -> {
+                binding.progressBar.visibility = View.VISIBLE
+                Toast.makeText(requireContext(), "Verifying payment & activating subscription...", Toast.LENGTH_SHORT).show()
+            }
+            is PaymentState.Success -> {
+                binding.progressBar.visibility = View.GONE
+                showSuccessDialog(state.message)
+                viewModel.resetPaymentState()
+            }
+            is PaymentState.Error -> {
+                binding.progressBar.visibility = View.GONE
+                Toast.makeText(requireContext(), "Payment Error: ${state.errorMessage}", Toast.LENGTH_LONG).show()
+                viewModel.resetPaymentState()
+            }
+        }
+    }
+
+    private fun launchPaymentSdk(orderDetails: PaymentOrderDetails) {
+        when (orderDetails.gateway) {
+            PaymentGateway.RAZORPAY -> {
+                Log.i(TAG, "launchPaymentSdk: Launching Razorpay SDK...")
+                razorpayHandler?.startPayment(orderDetails)
+            }
+            PaymentGateway.PHONEPE -> {
+                Log.i(TAG, "launchPaymentSdk: Launching PhonePe SDK...")
+                phonePeHandler?.startPayment(orderDetails)
+            }
+        }
+    }
+
+    override fun onPaymentSuccess(payload: PaymentResultPayload) {
+        Log.i(TAG, "onPaymentSuccess: Payment ID = '${payload.paymentId}' via ${payload.gateway.name}")
+        viewModel.processPaymentResult(payload)
+    }
+
+    override fun onPaymentFailure(gateway: PaymentGateway, code: Int, description: String?) {
+        Log.e(TAG, "onPaymentFailure: Gateway=${gateway.name}, Code=$code, Desc=$description")
+        Toast.makeText(requireContext(), "Payment failed or cancelled: $description", Toast.LENGTH_LONG).show()
+        viewModel.resetPaymentState()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        activeOrderDetails?.let { details ->
+            if (details.gateway == PaymentGateway.PHONEPE) {
+                phonePeHandler?.handleActivityResult(requestCode, resultCode, data, details)
+            }
+        }
+    }
+
+    private fun showSuccessDialog(message: String) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("🎉 Subscription Active!")
+            .setMessage(message)
+            .setPositiveButton("Open Dashboard") { _, _ ->
+                val intent = Intent(requireContext(), ManagerHomeActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                }
+                startActivity(intent)
+            }
+            .setCancelable(false)
+            .show()
+    }
+
     private fun renderSubscriptionSuccess(state: SubscriptionUiState.Success) {
         val userSub = state.userSubscription
 
-        // 1. Delegate Status Header rendering to UI Helper
         cardUiHelper.renderStatusHeader(binding, userSub)
 
-        // 2. Render Features list
         val features = state.plans.firstOrNull()?.features ?: emptyList()
         binding.rvFeatures.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = SubscriptionFeatureAdapter(features)
         }
 
-        // 3. Delegate Card Selections and Action Button Text to UI Helper
         cardUiHelper.updatePlanCardSelection(
             binding = binding,
             selectedCycle = state.selectedBillingCycle,
