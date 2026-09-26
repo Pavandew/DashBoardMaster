@@ -1,6 +1,5 @@
 package com.example.masterdashboard.staff_dash.billing_screens.repo
 
-
 import android.util.Log
 import com.example.masterdashboard.utils.AppConstants
 import com.example.masterdashboard.staff_dash.billing_screens.model.CashierBillingOrderModel
@@ -50,8 +49,9 @@ class CashierBillingRepository(
 
         val targetPrefix = "restaurants/$managerId/"
 
-        // 1. Listen to active_orders across table subcollections
+        // 1. Listen to active_orders across table subcollections for this manager
         val activeRegistration = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
+            .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
             .orderBy(AppConstants.FIELD_TIMESTAMP, Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -71,9 +71,14 @@ class CashierBillingRepository(
                 }
             }
 
-        // 2. Listen to completed_orders collection for this manager
-        val completedRegistration = com.example.masterdashboard.utils.RestaurantPathHelper.getOutletDocRef(managerId)
+        // 2. Listen to completed_orders collection for this manager (last 24 hours)
+        val twentyFourHoursAgo = Timestamp(
+            java.util.Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000L)
+        )
+
+        val completedRegistration = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
+            .whereGreaterThanOrEqualTo(AppConstants.FIELD_TIMESTAMP, twentyFourHoursAgo)
             .orderBy(AppConstants.FIELD_TIMESTAMP, Query.Direction.DESCENDING)
             .limit(50)
             .addSnapshotListener { snapshot, error ->

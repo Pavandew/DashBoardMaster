@@ -133,7 +133,9 @@ class CashierBillingViewModel(
         filtered = filtered.sortedWith(compareByDescending<CashierBillingOrderModel> { it.orderStatus.uppercase() == "BILLING" }.thenByDescending { it.timestamp })
 
         if (currentSearchQuery.isNotEmpty()) {
-            filtered = filtered.filter { it.tableName.contains(currentSearchQuery, true) || it.orderId.contains(currentSearchQuery, true) }
+            filtered = filtered.filter { it.tableName.contains(
+
+                currentSearchQuery, true) || it.orderId.contains(currentSearchQuery, true) }
         }
 
         // Send Success state immediately so chips show up even with 0 orders
