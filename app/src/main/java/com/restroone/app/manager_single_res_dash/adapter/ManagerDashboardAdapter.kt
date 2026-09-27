@@ -1,0 +1,354 @@
+package com.restroone.app.manager_single_res_dash.adapter
+
+import android.content.res.ColorStateList
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.core.graphics.toColorInt
+import androidx.recyclerview.widget.RecyclerView
+import com.restroone.app.R
+import com.restroone.app.databinding.ItemDahsCardTrendBinding
+import com.restroone.app.databinding.ItemDashQuickActionsBinding
+import com.restroone.app.databinding.ItemDashboardOverviewBinding
+import com.restroone.app.databinding.ItemDashboardSummaryBinding
+import com.restroone.app.databinding.ItemTopSellingCardsBinding
+import com.restroone.app.manager_single_res_dash.models.DashboardSummary
+import com.restroone.app.manager_single_res_dash.models.ShiftSales
+import com.restroone.app.manager_single_res_dash.models.TopSellingFoodItem
+import com.restroone.app.manager_single_res_dash.models.StatMetric
+import com.restroone.app.manager_single_res_dash.models.QuickActionModel
+import com.google.android.material.card.MaterialCardView
+
+class ManagerDashboardAdapter (
+    private var metricsList: List<StatMetric>,
+    private var summaryData: DashboardSummary,
+    private var topSellingItems: List<TopSellingFoodItem>,
+    private var isQuickActionsExpanded: Boolean = false,
+    private var trendData: ShiftSales = ShiftSales(),
+    private val onQuickActionClicked: (actionType: QuickActionType) -> Unit,
+    private val onToggleQuickActions: () -> Unit = {},
+    private val onSummaryClicked: (status: String) -> Unit = {}
+): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+    fun updateData(
+        newMetrics: List<StatMetric>,
+        newSummary: DashboardSummary,
+        newTopSelling: List<TopSellingFoodItem>,
+        isExpanded: Boolean,
+        newTrend: ShiftSales = this.trendData
+    ) {
+        this.metricsList = newMetrics
+        this.summaryData = newSummary
+        this.topSellingItems = newTopSelling
+        this.isQuickActionsExpanded = isExpanded
+        this.trendData = newTrend
+        notifyDataSetChanged()
+    }
+
+    // Enum representing your distinct quick action options cleanly
+    enum class QuickActionType {
+        WAITER_TABLES, WAITER_ORDERS, KITCHEN_ORDERS, KITCHEN_PREP, BILLING_MAIN, BILLING_ORDERS,
+        ADD_STAFF, MENU, FLOOR_TABLE, REPORTS, CUSTOMERS
+    }
+
+    companion object {
+        private const val TYPE_OVERVIEW = 0
+        private const val TYPE_SUMMARY = 1
+        private const val TYPE_QUICK_ACTIONS = 2
+        private const val TYPE_TREND = 3
+        private const val TYPE_TOP_SELLING = 4
+
+        private const val SECTIONS_COUNT = 5
+    }
+
+    override fun getItemCount(): Int = SECTIONS_COUNT
+
+    override fun getItemViewType(position: Int): Int {
+        return when(position) {
+            0 -> TYPE_OVERVIEW
+            1 -> TYPE_SUMMARY
+            2 -> TYPE_QUICK_ACTIONS
+            3 -> TYPE_TREND
+            else -> TYPE_TOP_SELLING
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return when (viewType) {
+            TYPE_OVERVIEW -> OverviewViewHolder(ItemDashboardOverviewBinding.inflate(inflater, parent, false))
+            TYPE_SUMMARY -> SummaryViewHolder(ItemDashboardSummaryBinding.inflate(inflater, parent, false))
+            TYPE_QUICK_ACTIONS -> QuickActionsViewHolder(ItemDashQuickActionsBinding.inflate(inflater, parent, false))
+            TYPE_TREND -> TrendViewHolder(ItemDahsCardTrendBinding.inflate(inflater, parent, false))
+            else -> TopSellingViewHolder(ItemTopSellingCardsBinding.inflate(inflater, parent, false))
+        }
+    }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (holder) {
+            is OverviewViewHolder -> holder.bind(metricsList)
+            is SummaryViewHolder -> holder.bind(summaryData, onSummaryClicked)
+            is QuickActionsViewHolder -> holder.bind(isQuickActionsExpanded, onToggleQuickActions, onQuickActionClicked)
+            is TrendViewHolder -> holder.bind(trendData)
+            is TopSellingViewHolder -> holder.bind(topSellingItems)
+        }
+    }
+
+    // VIEW HOLDERS IMPLEMENTATION
+
+    class OverviewViewHolder(val binding: ItemDashboardOverviewBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(metrics: List<StatMetric>) {
+            val rootGrid = binding.gridOverviewContainer
+
+            val colors = listOf(
+                Pair("#1D2D4B", "#121826"), // Blue
+                Pair("#44321A", "#1C1917"), // Orange
+                Pair("#461F33", "#1A1420"), // Pink
+                Pair("#2B204D", "#151426")  // Purple
+            )
+
+            for (i in 0 until minOf(metrics.size, rootGrid.childCount)) {
+                val cardView = rootGrid.getChildAt(i) as? MaterialCardView ?: continue
+
+                val title = cardView.findViewById<TextView>(R.id.lblStatTitle)
+                val value = cardView.findViewById<TextView>(R.id.lblStatValue)
+                val trend = cardView.findViewById<TextView>(R.id.lblStatTrend)
+                val icon = cardView.findViewById<ImageView>(R.id.lblImageIcon)
+
+                title.text = metrics[i].title
+                value.text = metrics[i].value
+                trend.text = metrics[i].trend
+
+                val colorScheme = colors[i % colors.size]
+                cardView.strokeColor = colorScheme.first.toColorInt()
+                cardView.setCardBackgroundColor(colorScheme.second.toColorInt())
+
+                val context = cardView.context
+                trend.setTextColor(
+                    if (metrics[i].isPositiveTrend) context.getColor(R.color.green_growth)
+                    else context.getColor(R.color.red_alert)
+                )
+
+                val tintColor = when(i % colors.size) {
+                    0 -> context.getColor(R.color.accent_blue)
+                    1 -> context.getColor(R.color.accent_orange)
+                    2 -> context.getColor(R.color.accent_pink)
+                    else -> context.getColor(R.color.accent_purple)
+                }
+                icon.setColorFilter(tintColor)
+            }
+        }
+    }
+
+    class SummaryViewHolder(val binding: ItemDashboardSummaryBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(summary: DashboardSummary, onSummaryClicked: (String) -> Unit) {
+            val context = binding.root.context
+            
+            binding.summaryNew.apply {
+                txtSummaryLabel.text = context.getString(R.string.summary_new)
+                txtSummaryCount.text = summary.newCount
+                imgSummaryIcon.setImageResource(R.drawable.ic_person_24dp)
+                imgSummaryIcon.imageTintList = ColorStateList.valueOf(context.getColor(R.color.accent_blue))
+                root.setOnClickListener { onSummaryClicked("NEW") }
+            }
+            binding.summaryKitchen.apply {
+                txtSummaryLabel.text = context.getString(R.string.summary_kitchen)
+                txtSummaryCount.text = summary.kitchenCount
+                imgSummaryIcon.setImageResource(R.drawable.ic_chef_24dp)
+                imgSummaryIcon.imageTintList = ColorStateList.valueOf(context.getColor(R.color.accent_purple))
+                root.setOnClickListener { onSummaryClicked("KITCHEN") }
+            }
+            binding.summaryReady.apply {
+                txtSummaryLabel.text = context.getString(R.string.summary_ready)
+                txtSummaryCount.text = summary.readyCount
+                imgSummaryIcon.setImageResource(R.drawable.ic_person_24dp)
+                imgSummaryIcon.imageTintList = ColorStateList.valueOf(context.getColor(R.color.green_growth))
+                root.setOnClickListener { onSummaryClicked("READY") }
+            }
+            binding.summaryServed.apply {
+                txtSummaryLabel.text = context.getString(R.string.summary_served)
+                txtSummaryCount.text = summary.servedCount
+                imgSummaryIcon.setImageResource(R.drawable.ic_waiter_24dp)
+                imgSummaryIcon.imageTintList = ColorStateList.valueOf(context.getColor(R.color.accent_blue))
+                root.setOnClickListener { onSummaryClicked("SERVED") }
+            }
+            binding.summaryCancelled.apply {
+                txtSummaryLabel.text = context.getString(R.string.summary_cancelled)
+                txtSummaryCount.text = summary.cancelledCount
+                imgSummaryIcon.setImageResource(R.drawable.ic_person_24dp)
+                imgSummaryIcon.imageTintList = ColorStateList.valueOf(context.getColor(R.color.red_alert))
+                summaryDivider.visibility = View.GONE
+                root.setOnClickListener { onSummaryClicked("CANCELLED") }
+            }
+        }
+    }
+
+    class QuickActionsViewHolder(val binding: ItemDashQuickActionsBinding) : RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(
+            isExpanded: Boolean,
+            onToggle: () -> Unit,
+            onItemAction: (QuickActionType) -> Unit
+        ) {
+            val context = binding.root.context
+
+            val allActions = listOf(
+                // Line 1: Primary Business Operations (Most needed)
+                QuickActionModel(
+                    QuickActionType.BILLING_MAIN,
+                    "Settlement Center",
+                    R.drawable.biling,
+                    context.getColor(R.color.accent_blue),
+                    "#1D2D4B".toColorInt(),
+                    "#121826".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.BILLING_ORDERS,
+                    "Quick Bill Counter",
+                    R.drawable.ic_dashboard_24dp,
+                    context.getColor(R.color.accent_blue),
+                    "#1D2D4B".toColorInt(),
+                    "#121826".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.REPORTS,
+                    "Reports & Analytics",
+                    R.drawable.ic_sales_report_24dp,
+                    context.getColor(R.color.accent_blue),
+                    "#1D2D4B".toColorInt(),
+                    "#121826".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.CUSTOMERS,
+                    "Customer Insights",
+                    R.drawable.ic_person_24dp,
+                    context.getColor(R.color.accent_blue),
+                    "#1D2D4B".toColorInt(),
+                    "#121826".toColorInt()
+                ),
+
+                // Line 2: Management & Configuration
+                QuickActionModel(
+                    QuickActionType.ADD_STAFF,
+                    "Staff Management",
+                    R.drawable.ic_staffs_24dp,
+                    context.getColor(R.color.accent_purple),
+                    "#2B204D".toColorInt(),
+                    "#151426".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.MENU,
+                    "Menu Management",
+                    R.drawable.ic_menu_24dp,
+                    context.getColor(R.color.accent_orange),
+                    "#44321A".toColorInt(),
+                    "#1C1917".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.FLOOR_TABLE,
+                    "Table Management",
+                    R.drawable.ic_table_24dp,
+                    context.getColor(R.color.green_growth),
+                    "#173B2C".toColorInt(),
+                    "#111818".toColorInt()
+                ),
+
+                // Line 3: Operational Overviews (Less needed for Manager)
+                QuickActionModel(
+                    QuickActionType.KITCHEN_ORDERS,
+                    "Live Order Station",
+                    R.drawable.ic_chef_24dp,
+                    context.getColor(R.color.accent_purple),
+                    "#2B204D".toColorInt(),
+                    "#151426".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.KITCHEN_PREP,
+                    "Cooking Workstation",
+                    R.drawable.ic_chef_24dp,
+                    context.getColor(R.color.accent_purple),
+                    "#2B204D".toColorInt(),
+                    "#151426".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.WAITER_ORDERS,
+                    "Track Active Orders",
+                    R.drawable.ic_waiter_24dp,
+                    context.getColor(R.color.accent_pink),
+                    "#461F33".toColorInt(),
+                    "#1A1420".toColorInt()
+                ),
+                QuickActionModel(
+                    QuickActionType.WAITER_TABLES,
+                    "Manage Floor Tables",
+                    R.drawable.waiter,
+                    context.getColor(R.color.accent_pink),
+                    "#461F33".toColorInt(),
+                    "#1A1420".toColorInt()
+                )
+            )
+
+            // Update Toggle Button Text
+            binding.btnViewAllActions.text = if (isExpanded) {
+                context.getString(R.string.show_less_action)
+            } else {
+                context.getString(R.string.view_all_action)
+            }
+
+            // Update List
+            val displayedActions = if (isExpanded) allActions else allActions.take(3)
+            binding.rvQuickActions.adapter = QuickActionAdapter(displayedActions, onItemAction)
+
+            // Handle Toggle Click
+            binding.btnViewAllActions.setOnClickListener {
+                onToggle()
+            }
+        }
+    }
+
+    class TrendViewHolder(val binding: ItemDahsCardTrendBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(trend: ShiftSales) {
+            binding.tvPeakHourTag.text = trend.peakShiftName
+
+            val maxSales = maxOf(trend.morningSales, trend.lunchSales, trend.eveningSales, trend.dinnerSales)
+            val maxBase = if (maxSales > 0) maxSales else 1.0
+
+            binding.tvMorningSales.text = "₹ ${trend.morningSales.toInt()} (${trend.morningOrders} orders)"
+            binding.pbMorning.progress = ((trend.morningSales / maxBase) * 100).toInt()
+
+            binding.tvLunchSales.text = "₹ ${trend.lunchSales.toInt()} (${trend.lunchOrders} orders)"
+            binding.pbLunch.progress = ((trend.lunchSales / maxBase) * 100).toInt()
+
+            binding.tvEveningSales.text = "₹ ${trend.eveningSales.toInt()} (${trend.eveningOrders} orders)"
+            binding.pbEvening.progress = ((trend.eveningSales / maxBase) * 100).toInt()
+
+            binding.tvDinnerSales.text = "₹ ${trend.dinnerSales.toInt()} (${trend.dinnerOrders} orders)"
+            binding.pbDinner.progress = ((trend.dinnerSales / maxBase) * 100).toInt()
+        }
+    }
+
+    class TopSellingViewHolder(val binding: ItemTopSellingCardsBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(items: List<TopSellingFoodItem>) {
+            val itemViews = listOf(
+                binding.topSellingCard1,
+                binding.topSellingCard2,
+                binding.topSellingCard3
+            )
+
+            for (i in itemViews.indices) {
+                if (i < items.size) {
+                    val item = items[i]
+                    itemViews[i].root.visibility = View.VISIBLE
+                    itemViews[i].txtFoodName.text = item.name
+                    itemViews[i].txtOrderCount.text = itemViews[i].root.context.getString(R.string.order_count_format, item.orderCount)
+                    itemViews[i].txtFoodPrice.text = item.totalPriceText
+                    itemViews[i].imgFoodItem.setImageResource(item.imageResId)
+                } else {
+                    itemViews[i].root.visibility = View.GONE
+                }
+            }
+        }
+    }
+}

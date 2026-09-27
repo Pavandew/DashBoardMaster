@@ -1,0 +1,8 @@
+package com.restroone.app.manager_single_res_dash.uistate
+
+sealed interface FirebaseUiState {
+    object Idle : FirebaseUiState
+    object Loading : FirebaseUiState
+    object Success : FirebaseUiState
+    data class Error(val message: String) : FirebaseUiState
+}

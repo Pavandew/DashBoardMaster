@@ -1,0 +1,257 @@
+package com.restroone.app.staff_dash.waiter_screens.order.views
+
+import android.os.Bundle
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.restroone.app.R
+import com.restroone.app.databinding.FragmentOrderDetailsExpansionBinding
+import com.restroone.app.utils.NavigationUtils
+import com.restroone.app.utils.SessionManager
+import com.restroone.app.staff_dash.waiter_screens.WaiterHomeActivity
+import com.restroone.app.staff_dash.waiter_screens.order.adapter.OrderDetailRowAdapter
+import com.restroone.app.staff_dash.utils.StatusUIUtils
+import com.restroone.app.staff_dash.waiter_screens.order.models.ActiveOrderStatus
+import com.restroone.app.staff_dash.waiter_screens.order.repo.OrderDetailRepository
+import com.restroone.app.staff_dash.waiter_screens.order.viewModel.OrderDetailViewModel
+import com.restroone.app.staff_dash.waiter_screens.table.views.WaiterOrderTakingFragment
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+class OrderDetailExpansionFragment : Fragment() {
+
+    companion object {
+        private const val TAG = "Order_Detail_Debug"
+    }
+
+    private var _binding: FragmentOrderDetailsExpansionBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModel: OrderDetailViewModel by viewModels {
+        OrderDetailViewModel.OrderDetailViewModelFactory(OrderDetailRepository())
+    }
+
+    private lateinit var rowAdapter: OrderDetailRowAdapter
+
+    private var currentOrderId: String = ""
+    private var passedTableName: String = ""
+    private var passedStatusStr: String = ""
+    private var passedOrderTime: String = ""
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentOrderDetailsExpansionBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        Log.i(TAG, "📱 [FRAGMENT] OrderDetailExpansionFragment Opened")
+
+        val sessionManager = SessionManager(requireContext())
+        val managerId = sessionManager.getUid() ?: ""
+
+        // Unpack arguments passed from previous list fragment
+        currentOrderId = arguments?.getString("orderId") ?: "N/A"
+        val currentDocPath = arguments?.getString("docPath") ?: ""
+        passedTableName = arguments?.getString("tableName") ?: ""
+        passedStatusStr = arguments?.getString("orderStatus") ?: "PREPARING"
+        passedOrderTime = arguments?.getString("orderTime") ?: ""
+
+        Log.d(TAG, "📱 [FRAGMENT] Received Arguments -> OrderId: '$currentOrderId', DocPath: '$currentDocPath', Table: '$passedTableName', Status: '$passedStatusStr', Time: '$passedOrderTime'")
+
+        setupToolbar()
+        setupRowRecyclerView()
+        observeSpecState()
+
+        // Fetch detailed items payload from Firestore
+        Log.d(TAG, "📱 [FRAGMENT] Triggering loadOrderSpecifications for Manager: $managerId, Order: $currentOrderId, DocPath: '$currentDocPath'")
+        viewModel.loadOrderSpecifications(
+            managerId = managerId,
+            orderId = currentOrderId,
+            docPath = currentDocPath,
+            preloadedTableName = passedTableName,
+            preloadedStatus = passedStatusStr,
+            preloadedTime = passedOrderTime
+        )
+    }
+
+    override fun onStart() {
+        super.onStart()
+        (activity as? WaiterHomeActivity)?.hideBottomNavigation()
+    }
+
+    private fun setupToolbar() {
+        val toolbar = binding.orderDetailToolbar
+        toolbar.tvToolbarTitle.text = getString(R.string.order_details)
+        toolbar.llSubtitleContainer.visibility = View.GONE
+        toolbar.toolbarImgNotification.visibility = View.GONE
+        toolbar.toolbarImgMenu.setOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
+    }
+
+    private fun setupRowRecyclerView() {
+        rowAdapter = OrderDetailRowAdapter()
+        binding.rvExpandedOrderItems.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = rowAdapter
+        }
+    }
+
+    private fun observeSpecState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+
+
+
+                    if (state.isLoading && state.items.isEmpty()) {
+                        Log.d(TAG, "📱 [FRAGMENT] UI State -> Loading items...")
+                        binding.pbOrderDetailLoading.visibility = View.VISIBLE
+                        binding.nsvContentContainer.visibility = View.INVISIBLE
+                        binding.layoutActionButtons.visibility = View.INVISIBLE
+                    } else {
+                        Log.i(TAG, "📱 [FRAGMENT] UI State -> Rendered! Displaying ${state.items.size} dish items for Table '${state.tableName}'")
+
+                        binding.pbOrderDetailLoading.visibility = View.GONE
+                        binding.nsvContentContainer.visibility = View.VISIBLE
+                        binding.layoutActionButtons.visibility = View.VISIBLE
+
+                        binding.tvExpandedTableId.text = state.tableName
+                        binding.tvExpandedOrderId.text = state.orderId
+                        binding.tvExpandedTimestamp.text = state.timeStamp
+
+                        // Status Tag Configuration - Using centralized utility
+                        StatusUIUtils.applyStatusUI(requireContext(), binding.tvExpandedStatusTag, state.status)
+
+                        // Update adapter with current order status to ensure items reflect served/ready states
+                        rowAdapter.updateOrderStatus(state.status)
+
+                        // Bottom Actions Logic
+                        when (state.status) {
+                            ActiveOrderStatus.PENDING, ActiveOrderStatus.PREPARING -> {
+                                binding.btnMarkAsServed.visibility = View.GONE
+                                binding.btnAddMoreItems.visibility = View.VISIBLE
+                                binding.btnGenerateBill.visibility = View.GONE
+                            }
+                            ActiveOrderStatus.READY -> {
+                                binding.btnMarkAsServed.visibility = View.VISIBLE
+                                binding.btnAddMoreItems.visibility = View.VISIBLE
+                                binding.btnGenerateBill.visibility = View.GONE
+                            }
+                            ActiveOrderStatus.SERVED -> {
+                                binding.btnMarkAsServed.visibility = View.GONE
+                                binding.btnAddMoreItems.visibility = View.VISIBLE
+                                binding.btnGenerateBill.visibility = View.VISIBLE
+                            }
+                            ActiveOrderStatus.BILLING -> {
+                                binding.btnMarkAsServed.visibility = View.GONE
+                                binding.btnAddMoreItems.visibility = View.VISIBLE
+                                binding.btnGenerateBill.visibility = View.GONE
+                            }
+                            else -> {
+                                binding.btnMarkAsServed.visibility = View.GONE
+                                binding.btnAddMoreItems.visibility = View.GONE
+                                binding.btnGenerateBill.visibility = View.GONE
+                            }
+                        }
+
+                        // Submit items list to adapter
+                        rowAdapter.submitList(state.items)
+
+                        // Financial totals
+                        binding.tvExpandedSubtotal.text = "${getString(R.string.currency_symbol)} ${state.subtotal}"
+                        binding.tvExpandedGst.text = "${getString(R.string.currency_symbol)} ${String.format("%.2f", state.gstAmount)}"
+                        binding.tvExpandedGrandTotal.text = "${getString(R.string.currency_symbol)} ${String.format("%.2f", state.grandTotal)}"
+
+                        // Mark as Served Action
+                        binding.btnMarkAsServed.setOnClickListener {
+                            val managerId = SessionManager(requireContext()).getUid() ?: ""
+                            
+                            // 1. Button feedback state: Change text and disable to acknowledge tap
+                            binding.btnMarkAsServed.isEnabled = false
+                            binding.btnMarkAsServed.text = getString(R.string.marking_as_served)
+                            viewLifecycleOwner.lifecycleScope.launch {
+                                delay(350) // Smooth micro-delay for clear visual acknowledgment
+                                viewModel.finalizeOrderAsServed(
+                                    managerId = managerId,
+                                    floorId = state.floorId,
+                                    tableId = state.tableId,
+                                    orderDocId = state.documentId
+                                ) {
+                                    binding.btnMarkAsServed.isEnabled = true
+                                    binding.btnMarkAsServed.text = getString(R.string.mark_as_served)
+                                    Toast.makeText(context, "Order marked as Served!", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+
+                        // Add More Items Action
+                        binding.btnAddMoreItems.setOnClickListener {
+                            Log.d(TAG, "📱 [FRAGMENT] 'Add Items' clicked. Navigating to WaiterOrderTakingFragment for Table: ${state.tableName}")
+                            
+                            val bundle = Bundle().apply {
+                                putString("tableId", state.tableId)
+                                putString("tableName", state.tableName)
+                                putString("floorId", state.floorId)
+                                putString("status", "OCCUPIED")
+                                putString("existingOrderDocId", state.documentId)
+                                putString("existingOrderId", state.orderId)
+                            }
+
+                            val orderTakingFragment = WaiterOrderTakingFragment().apply {
+                                arguments = bundle
+                            }
+
+                            val containerId = NavigationUtils.getHostContainerId(activity)
+                            if (containerId != 0) {
+                                parentFragmentManager.beginTransaction()
+                                    .replace(containerId, orderTakingFragment)
+                                    .addToBackStack(null)
+                                    .commit()
+                            }
+                        }
+
+                        // Generate Bill Action
+                        binding.btnGenerateBill.setOnClickListener {
+                            val managerId = SessionManager(requireContext()).getUid() ?: ""
+                            Log.d(TAG, "📱 [FRAGMENT] 'Generate Bill' clicked for DocId: '${state.documentId}'")
+
+                            viewModel.finalizeOrderAsBilling(
+                                managerId = managerId,
+                                floorId = state.floorId,
+                                tableId = state.tableId,
+                                orderDocId = state.documentId
+                            ) {
+                                Toast.makeText(context, "Order sent to Billing!", Toast.LENGTH_SHORT).show()
+                                parentFragmentManager.popBackStack()
+                            }
+                        }
+                    }
+
+                    state.errorMessage?.let { error ->
+                        Log.e(TAG, "📱 [FRAGMENT] Error displayed to user: $error")
+                        binding.pbOrderDetailLoading.visibility = View.GONE
+                        Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+}

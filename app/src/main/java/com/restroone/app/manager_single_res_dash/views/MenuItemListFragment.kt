@@ -1,0 +1,245 @@
+package com.restroone.app.manager_single_res_dash.views
+
+import android.os.Bundle
+import android.util.Log
+import androidx.fragment.app.Fragment
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Toast
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.restroone.app.R
+import com.restroone.app.databinding.FragmentMenuItemListBinding
+import com.restroone.app.manager_single_res_dash.adapter.FoodItemListAdapter
+import com.restroone.app.manager_single_res_dash.models.MenuFoodItemsData
+import com.restroone.app.manager_single_res_dash.uistate.MenuItemUiState
+import com.restroone.app.manager_single_res_dash.viewModel.MenuItemViewModel
+import com.restroone.app.utils.AppConstants
+import com.restroone.app.utils.MenuDialogHelper
+import com.restroone.app.utils.SessionManager
+import kotlinx.coroutines.launch
+
+class MenuItemListFragment : Fragment() {
+    companion object {
+        private const val TAG = "FoodItemListFragment"
+    }
+
+    private var _binding: FragmentMenuItemListBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModel: MenuItemViewModel by viewModels()
+    private lateinit var foodItemListAdapter: FoodItemListAdapter
+    private val sessionManager by lazy { SessionManager(requireContext()) }
+    private val userRole by lazy { sessionManager.getRole() }
+
+    private var categoryId: String = ""
+    private var categoryName: String = ""
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        arguments?.let {
+            categoryId = it.getString("CATEGORY_ID", "")
+            categoryName = it.getString("CATEGORY_NAME", "Items")
+        }
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentMenuItemListBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        Log.i(TAG, "Navigation: MenuItemListFragment Opened")
+        Log.i(TAG, "Navigation: Entered MenuItemListFragment for Category: $categoryName (ID: $categoryId)")
+
+        setupToolbar()
+        setupRecyclerView()
+        setupRoleBasedAccess()
+        setupOnClickActions()
+
+        val ownerUid = sessionManager.getUid()
+        if (ownerUid.isNotEmpty() && categoryId.isNotEmpty()) {
+            Log.d(TAG, "Streaming food subcollection path elements inside: $categoryName")
+            viewModel.observeFoodItems(ownerUid, categoryId)
+        } else {
+            Log.e(TAG, "Session configuration failure. Missing parameters context keys tokens.")
+        }
+
+        observeFoodItemsStream()
+    }
+
+    private fun setupToolbar() {
+        val toolbar = binding.foodItemsToolbar
+        val context = requireContext()
+        val whiteColor = ContextCompat.getColor(context, android.R.color.white)
+
+        toolbar.customToolbar.setBackgroundColor(ContextCompat.getColor(context, R.color.bg_main))
+
+        // FIXED: Displaying the dynamic category name ("Pizza") instead of static global header text
+        toolbar.tvToolbarTitle.text = categoryName
+        toolbar.tvToolbarTitle.setTextColor(whiteColor)
+
+        toolbar.toolbarImgMenu.setColorFilter(whiteColor)
+        toolbar.llSubtitleContainer.visibility = View.GONE
+        toolbar.toolbarImgNotification.visibility = View.GONE
+        toolbar.toolbarImgMenu.setOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
+    }
+
+    private fun setupRecyclerView() {
+        foodItemListAdapter = FoodItemListAdapter(
+            onItemClick = { selectedFoodItem ->
+                Log.d(TAG, "Selected food item: ${selectedFoodItem.itemName} -> ID: ${selectedFoodItem.id}")
+                val hasMenuPermission = sessionManager.hasPermission("menu_access")
+                val canManageMenu = (userRole != AppConstants.ROLE_STAFF) || hasMenuPermission
+
+                if (!canManageMenu) {
+                    return@FoodItemListAdapter
+                }
+                
+                // Navigate to Edit mode
+                val editMenuItemFragment = AddMenuItemFragment().apply {
+                    arguments = Bundle().apply {
+                        putString("CATEGORY_ID", categoryId)
+                        putString("CATEGORY_NAME", categoryName)
+                        putSerializable("EDIT_ITEM", selectedFoodItem)
+                    }
+                }
+
+                val containerId = (view?.parent as? View)?.id ?: R.id.manager_fragmentContainer
+                parentFragmentManager.beginTransaction()
+                    .replace(containerId, editMenuItemFragment)
+                    .addToBackStack(null)
+                    .commit()
+            },
+            onItemLongClick = { targetFoodItem ->
+                val hasMenuPermission = sessionManager.hasPermission("menu_access")
+                if (userRole != AppConstants.ROLE_STAFF || hasMenuPermission) {
+                    showDeleteConfirmationPopup(targetFoodItem)
+                } else {
+                    Log.w(TAG, "Action Denied: Staff roles are unauthorized to delete menu items.")
+                }
+            }
+        )
+
+        binding.rvFoodItems.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = foodItemListAdapter
+            setHasFixedSize(true)
+        }
+    }
+
+    private fun setupRoleBasedAccess() {
+        val hasMenuPermission = sessionManager.hasPermission("menu_access")
+        val canManageMenu = (userRole != AppConstants.ROLE_STAFF) || hasMenuPermission
+
+        if (!canManageMenu) {
+            Log.i(TAG, "Staff member without menu permission detected. Hiding add item button.")
+            binding.btnAddNewItem.visibility = View.GONE
+        } else {
+            binding.btnAddNewItem.visibility = View.VISIBLE
+        }
+    }
+
+    private fun setupOnClickActions() {
+        binding.btnAddNewItem.setOnClickListener {
+            Log.d(TAG, "🔘 '+ Add New Item' button clicked. Forwarding keys to AddMenuItemFragment")
+
+            val addMenuItemFragment = AddMenuItemFragment().apply {
+                arguments = Bundle().apply {
+                    putString("CATEGORY_ID", categoryId)
+                    putString("CATEGORY_NAME", categoryName)
+                }
+            }
+
+            Log.i(TAG, "Navigation: Transitioning to AddMenuItemFragment for Category: $categoryName")
+
+            val containerId = (view?.parent as? View)?.id ?: R.id.manager_fragmentContainer
+            parentFragmentManager.beginTransaction()
+                .replace(containerId, addMenuItemFragment)
+                .addToBackStack(null)
+                .commit()
+        }
+    }
+
+    private fun observeFoodItemsStream() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.foodItemsState.collect { state ->
+                    when (state) {
+                        is MenuItemUiState.Loading -> {
+                            binding.progressBar.visibility = View.VISIBLE
+                            binding.rvFoodItems.visibility = View.GONE
+                            binding.tvEmptyState.visibility = View.GONE
+                        }
+                        is MenuItemUiState.Success -> {
+                            binding.progressBar.visibility = View.GONE
+                            binding.rvFoodItems.visibility = View.VISIBLE
+                            binding.tvEmptyState.visibility = View.GONE
+                            Log.i(TAG, "Success: Received updates. Population list count: ${state.foodList.size}")
+                            foodItemListAdapter.submitList(state.foodList)
+                        }
+                        is MenuItemUiState.Empty -> {
+                            binding.progressBar.visibility = View.GONE
+                            binding.rvFoodItems.visibility = View.GONE
+                            binding.tvEmptyState.visibility = View.VISIBLE
+                            Log.w(TAG, "Returned empty structural subcollection models array data blocks sets.")
+                            foodItemListAdapter.submitList(emptyList())
+                        }
+                        is MenuItemUiState.Error -> {
+                            binding.progressBar.visibility = View.GONE
+                            binding.tvEmptyState.visibility = View.GONE
+                            Log.e(TAG, " Failed parsing stream pipeline values context profiles: ${state.message}")
+                            Toast.makeText(requireContext(), "Error linking menu items matching database references: ${state.message}", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun showDeleteConfirmationPopup(item: MenuFoodItemsData) {
+        val ownerUid = sessionManager.getUid()
+
+        // Clean & Reusable Utility Call!
+        MenuDialogHelper.showDeleteConfirmation(
+            context = requireContext(),
+            title = "Delete Menu Item?",
+            message = "Are you sure you want to permanently remove \"${item.itemName}\" from the menu? This action cannot be undone.",
+            onConfirm = {
+                if (ownerUid.isNotEmpty() && categoryId.isNotEmpty()) {
+                    // OPTIMISTIC UI FIX: Create a temporary list excluding the deleted item
+                    val currentList = foodItemListAdapter.currentList.toMutableList()
+                    val indexToRemove = currentList.indexOfFirst { it.id == item.id }
+
+                    if (indexToRemove != -1) {
+                        currentList.removeAt(indexToRemove)
+                        Log.d(TAG, "Optimistic UI: Instantly sliding '${item.itemName}' out of active view memory layout.")
+                        // Submit the reduced list immediately so it vanishes from the UI instantly
+                        foodItemListAdapter.submitList(currentList)
+                    }
+
+                    // Execute the explicit Firebase cloud transaction task
+                    viewModel.deleteMenuFoodItem(ownerUid, categoryId, item.id, item.itemName)
+                    Toast.makeText(requireContext(), "${item.itemName} removed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+}
+

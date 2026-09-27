@@ -1,0 +1,143 @@
+package com.restroone.app.login.viewmodel
+
+import android.util.Log
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.restroone.app.login.repo.StaffLoginRepository
+import com.restroone.app.login.uistate.StaffLoginUiState
+import com.restroone.app.manager_single_res_dash.models.StaffDataModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+class StaffLoginViewModel(
+    private val repository: StaffLoginRepository = StaffLoginRepository()
+) : ViewModel(){
+
+    companion object {
+        private const val TAG = "StaffLoginViewModel"
+    }
+
+    private val _loginState = MutableStateFlow<StaffLoginUiState>(StaffLoginUiState.Idle)
+    val loginState: StateFlow<StaffLoginUiState> = _loginState.asStateFlow()
+
+    fun processStaffLogin(staffId: String, passwordStr: String) {
+
+        // FIXED: Only trim whitespace spacing. Do NOT force uppercase mapping here.
+        // This preserves the exact casing typed by the user to achieve a true literal match.
+        val cleanId = staffId.trim()
+        val cleanPass = passwordStr.trim()
+
+        // 1. Core Syntax Input Validations
+        if (cleanId.isEmpty()) {
+            _loginState.value = StaffLoginUiState.ValidationError("Enter Staff ID")
+            return
+        }
+        if (cleanPass.isEmpty()) {
+            _loginState.value = StaffLoginUiState.ValidationError("Enter Password")
+            return
+        }
+
+        _loginState.value = StaffLoginUiState.Loading
+        Log.d(TAG, "ViewModel: Forwarding strict literal search request matching ID: '$cleanId' downstream to Repository layer")
+
+        // 2. Fire Async coroutine Repository lookup Core sequence
+        viewModelScope.launch {
+            repository.findStaffProfileById(cleanId).fold(
+                onSuccess = { (staffProfile, ownerUid) ->
+
+                    // Account Status Verification checks
+                    if (staffProfile.status.equals("Suspended", ignoreCase = true)) {
+                        Log.w(TAG, "Access Denied: Account profile structure $cleanId is currently suspended.")
+                        _loginState.value = StaffLoginUiState.AuthError("Access Denied: This staff account is suspended.")
+                        return@launch
+                    }
+
+                    // Plain text structural verification checks matching custom password matrix
+                    if(staffProfile.password == cleanPass) {
+                        Log.i(TAG, "Success: Credentials match verification confirmed for user ${staffProfile.staffName}")
+
+                        // Pass required Configuration routing tokens back to UI listener scopes
+                        _loginState.value = StaffLoginUiState.Success(
+                            staffName = staffProfile.staffName,
+                            restaurantOwnerUid = ownerUid, // Linked root workspace parameters mapping keys (Owner UID)
+                            staffDocId = staffProfile.id, // Database Auto-ID for this staff member
+                            staffId = staffProfile.staffId, // Alphanumeric Custom ID (e.g. PAVAN9730)
+                            role = staffProfile.role,      // Pass the exact role field string ("Waiter", "Kitchen", "Billing") here
+                            mobile = staffProfile.mobile,
+                            permissions = staffProfile.permissions
+                        )
+                    } else {
+                        Log.w(TAG, "Failure: Mismatched password entries submitted against key code ID: $cleanId")
+                        _loginState.value = StaffLoginUiState.AuthError("Invalid Password PIN. Please try again.")
+                    }
+                },
+                onFailure = { exception ->
+                    Log.e(TAG, "Database Sync Failure during account verification pipelines initialization", exception)
+                    _loginState.value = StaffLoginUiState.AuthError(exception.message ?: "Invalid Staff ID or Profile mismatch.")
+                }
+            )
+        }
+    }
+
+    fun resetStateToIdle() {
+        _loginState.value = StaffLoginUiState.Idle
+    }
+
+    fun findStaffProfileForReset(staffId: String) {
+        val cleanId = staffId.trim()
+        if (cleanId.isEmpty()) {
+            _loginState.value = StaffLoginUiState.ValidationError("Enter Staff ID")
+            return
+        }
+
+        _loginState.value = StaffLoginUiState.Loading
+        viewModelScope.launch {
+            repository.findStaffProfileById(cleanId).fold(
+                onSuccess = { (staffProfile, ownerUid) ->
+                    handleProfileFound(staffProfile, ownerUid)
+                },
+                onFailure = {
+                    _loginState.value = StaffLoginUiState.AuthError("Staff ID not found.")
+                }
+            )
+        }
+    }
+
+    fun findStaffByPhoneForReset(phone: String) {
+        val cleanPhone = phone.trim()
+        if (cleanPhone.isEmpty()) {
+            _loginState.value = StaffLoginUiState.ValidationError("Enter Mobile Number")
+            return
+        }
+
+        _loginState.value = StaffLoginUiState.Loading
+        viewModelScope.launch {
+            repository.findStaffProfileByPhone(cleanPhone).fold(
+                onSuccess = { (staffProfile, ownerUid) ->
+                    handleProfileFound(staffProfile, ownerUid)
+                },
+                onFailure = {
+                    _loginState.value = StaffLoginUiState.AuthError("Mobile number not registered.")
+                }
+            )
+        }
+    }
+
+    private fun handleProfileFound(staffProfile: StaffDataModel, ownerUid: String) {
+        if (staffProfile.mobile.isEmpty()) {
+            _loginState.value = StaffLoginUiState.AuthError("No mobile number linked to this account.")
+        } else {
+            _loginState.value = StaffLoginUiState.Success(
+                staffName = staffProfile.staffName,
+                restaurantOwnerUid = ownerUid,
+                staffDocId = staffProfile.id,
+                staffId = staffProfile.staffId,
+                role = staffProfile.role,
+                mobile = staffProfile.mobile,
+                permissions = staffProfile.permissions
+            )
+        }
+    }
+}

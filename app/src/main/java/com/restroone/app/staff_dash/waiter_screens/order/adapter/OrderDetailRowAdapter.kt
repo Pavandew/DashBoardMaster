@@ -1,0 +1,115 @@
+package com.restroone.app.staff_dash.waiter_screens.order.adapter
+
+import android.graphics.Paint
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
+import com.restroone.app.R
+import com.restroone.app.databinding.ItemOrderDetailRowBinding
+import com.restroone.app.staff_dash.utils.StatusUIUtils
+import com.restroone.app.staff_dash.waiter_screens.order.models.ActiveOrderStatus
+import com.restroone.app.staff_dash.waiter_screens.order.models.OrderExpandedItemData
+
+class OrderDetailRowAdapter : ListAdapter<OrderExpandedItemData, OrderDetailRowAdapter.RowViewHolder>(RowDiffCallback()) {
+
+    private var currentOrderStatus: ActiveOrderStatus = ActiveOrderStatus.PENDING
+
+    fun updateOrderStatus(status: ActiveOrderStatus) {
+        this.currentOrderStatus = status
+        notifyDataSetChanged()
+    }
+
+    // View Holder class holding item bindings securely in memory
+    inner class RowViewHolder(val binding: ItemOrderDetailRowBinding) : RecyclerView.ViewHolder(binding.root)
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RowViewHolder {
+        val binding = ItemOrderDetailRowBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
+        return RowViewHolder(binding)
+    }
+
+    override fun onBindViewHolder(holder: RowViewHolder, position: Int) {
+        val item = getItem(position)
+        val binding = holder.binding
+        val context = binding.root.context
+
+        // Bind raw document structural values to text layout targets smoothly
+        val displayName = when {
+            item.variantName.isEmpty() -> item.name
+            item.name.contains("(${item.variantName})", ignoreCase = true) || item.name.contains(item.variantName, ignoreCase = true) -> item.name
+            else -> "${item.name} (${item.variantName})"
+        }
+        binding.tvExpandedItemName.text = displayName
+        binding.tvExpandedItemQtyPrice.text = "${item.quantity} x ₹${item.unitPrice}"
+        binding.tvExpandedItemRowTotal.text = "₹${item.totalPrice}"
+
+        // Handle Strike-thru for rejected items
+        if (item.status.equals("REJECTED", true)) {
+            binding.tvExpandedItemName.paintFlags = binding.tvExpandedItemName.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+            binding.tvExpandedItemName.setTextColor(ContextCompat.getColor(context, R.color.red_alert))
+        } else {
+            binding.tvExpandedItemName.paintFlags = binding.tvExpandedItemName.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+            binding.tvExpandedItemName.setTextColor(ContextCompat.getColor(context, R.color.table_id_text))
+        }
+
+        // Apply Item Status UI using centralized utility
+        val isNewAddition = item.quantity > item.orderedQuantity
+        val delta = maxOf(0, item.quantity - item.orderedQuantity)
+        
+        // If the whole order is SERVED and there are no new additions, override item status display
+        val effectiveStatus = if (currentOrderStatus == ActiveOrderStatus.SERVED && !isNewAddition) "SERVED" else item.status
+
+        // Visual distinction for the waiter:
+        when {
+            isNewAddition || delta > 0 -> {
+                // Newly added items pending in kitchen
+                binding.cardItemRoot.setCardBackgroundColor(ContextCompat.getColor(context, R.color.white))
+                binding.viewStatusStrip.setBackgroundColor(ContextCompat.getColor(context, R.color.status_occupied))
+                binding.cardItemRoot.alpha = 1.0f
+            }
+            effectiveStatus.equals("SERVED", true) -> {
+                // Already delivered to table - Show in Light Purple/Grey
+                binding.cardItemRoot.setCardBackgroundColor(ContextCompat.getColor(context, R.color.bg_light_purple))
+                binding.viewStatusStrip.setBackgroundColor(ContextCompat.getColor(context, R.color.accent_purple))
+                binding.cardItemRoot.alpha = 0.8f
+            }
+            effectiveStatus.equals("READY", true) || (item.readyQuantity >= item.quantity && item.quantity > 0) -> {
+                // Kitchen finished it - Highlight in Green for the waiter to pick up
+                binding.cardItemRoot.setCardBackgroundColor(ContextCompat.getColor(context, R.color.status_free_bg))
+                binding.viewStatusStrip.setBackgroundColor(ContextCompat.getColor(context, R.color.status_free))
+                binding.cardItemRoot.alpha = 1.0f
+            }
+            else -> {
+                // Still in kitchen (Preparing/Pending)
+                binding.cardItemRoot.setCardBackgroundColor(ContextCompat.getColor(context, R.color.white))
+                binding.viewStatusStrip.setBackgroundColor(ContextCompat.getColor(context, R.color.search_bar_hint))
+                binding.cardItemRoot.alpha = 1.0f
+            }
+        }
+
+        StatusUIUtils.applyItemStatusUI(
+            context = context,
+            textView = binding.tvItemStatusLabel,
+            status = effectiveStatus,
+            isNewAddition = isNewAddition,
+            delta = delta
+        )
+    }
+
+    // High-performance DiffUtil callback to optimize layout element item changes dynamically
+    class RowDiffCallback : DiffUtil.ItemCallback<OrderExpandedItemData>() {
+        override fun areItemsTheSame(oldItem: OrderExpandedItemData, newItem: OrderExpandedItemData): Boolean {
+            return oldItem.id == newItem.id
+        }
+
+        override fun areContentsTheSame(oldItem: OrderExpandedItemData, newItem: OrderExpandedItemData): Boolean {
+            return oldItem == newItem
+        }
+    }
+}

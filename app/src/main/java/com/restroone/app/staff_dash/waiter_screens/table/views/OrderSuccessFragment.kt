@@ -1,0 +1,166 @@
+package com.restroone.app.staff_dash.waiter_screens.table.views
+
+import android.os.Bundle
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.activityViewModels
+import com.restroone.app.R
+import com.restroone.app.databinding.FragmentOrderSuccesBinding
+import com.restroone.app.staff_dash.billing_screens.CashierHomeActivity
+import com.restroone.app.staff_dash.waiter_screens.WaiterHomeActivity
+import com.restroone.app.staff_dash.waiter_screens.order.views.OrderDetailExpansionFragment
+import com.restroone.app.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
+import com.restroone.app.utils.NavigationUtils
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+class OrderSuccessFragment : Fragment() {
+
+    companion object {
+        private const val TAG = "OrderSuccessFragment"
+    }
+
+    private var _binding: FragmentOrderSuccesBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModel: OrderTakingViewModel by activityViewModels()
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentOrderSuccesBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        Log.i(TAG, "Navigation: OrderSuccessFragment Opened")
+        Log.d(TAG, "onViewCreated: Displaying success screen.")
+
+        (activity as? WaiterHomeActivity)?.hideBottomNavigation()
+        (activity as? CashierHomeActivity)?.hideBottomNavigation()
+
+        val isCashier = arguments?.getBoolean("isCashier") ?: false
+        if (isCashier) {
+            binding.btnViewActiveOrders.text = getString(R.string.view_all_bills)
+            binding.btnBackToTables.text = getString(R.string.new_order)
+        }
+
+        // NEW: Clear the cart and reset the upload status now that we are safely on the success screen.
+        // This prevents the cart's "auto-pop" logic or "Sending..." states from interfering with navigation.
+        viewModel.clearCart()
+        viewModel.resetUploadStatus()
+
+        setupSystemBackPress() // FIXED: Added custom hardware back press interceptor
+        populateReceiptForm()
+        setupNavigationActions()
+    }
+
+    // FIXED: Intercepts the phone's physical back button or gesture swipe
+    private fun setupSystemBackPress() {
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    Log.d(TAG, "Back pressed: Navigating back to Tables screen.")
+                    navigateToTablesScreenCleanly()
+                }
+            }
+        )
+    }
+
+    private fun populateReceiptForm() {
+        val rawTableName = arguments?.getString("tableName") ?: "N/A"
+        val orderId = arguments?.getString("orderId") ?: "#ORD-0000"
+        val totalItems = arguments?.getInt("totalItems") ?: 0
+        val totalPrice = arguments?.getDouble("totalPrice") ?: 0.0
+
+        val currentTimestamp = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date())
+
+        binding.tvSuccessTableId.text = formatTableName(rawTableName)
+        binding.tvSuccessOrderId.text = orderId
+        binding.tvSuccessTotalItems.text = totalItems.toString()
+        val currency = getString(R.string.currency_symbol)
+        binding.tvSuccessTotalAmount.text = String.format(Locale.US, "%s %.2f", currency, totalPrice)
+        binding.tvSuccessTimestamp.text = currentTimestamp
+    }
+
+    private fun formatTableName(rawName: String): String {
+        val trimmed = rawName.trim()
+        if (trimmed.isEmpty() || trimmed.equals("N/A", ignoreCase = true)) return "Table N/A"
+
+        var s = trimmed
+        if (s.startsWith("Table", ignoreCase = true)) {
+            s = s.substring(5).trim()
+        }
+
+        val stripped = s.replace("^([tT][-\\s]?)+".toRegex(), "").trim()
+
+        return if (stripped.isNotEmpty()) {
+            if (stripped.all { it.isDigit() }) {
+                "Table T$stripped"
+            } else {
+                "Table $stripped"
+            }
+        } else {
+            if (s.isNotEmpty()) "Table $s" else "Table $trimmed"
+        }
+    }
+
+    private fun setupNavigationActions() {
+        binding.btnViewActiveOrders.setOnClickListener {
+            val orderId = arguments?.getString("orderId") ?: viewModel.lastOrderId ?: ""
+            val rawTableName = arguments?.getString("tableName") ?: ""
+            Log.d(TAG, "Navigating to Order Details Fragment for Order: $orderId, Table: $rawTableName")
+
+            viewModel.clearCart()
+
+            val detailFragment = OrderDetailExpansionFragment().apply {
+                arguments = Bundle().apply {
+                    putString("orderId", orderId)
+                    putString("tableName", rawTableName)
+                    putString("orderStatus", "PENDING")
+                    putString("orderTime", "Just Now")
+                }
+            }
+
+            val containerId = NavigationUtils.getHostContainerId(activity)
+            if (containerId != 0) {
+                parentFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                parentFragmentManager.beginTransaction()
+                    .replace(containerId, detailFragment)
+                    .addToBackStack(null)
+                    .commit()
+            } else {
+                (activity as? WaiterHomeActivity)?.openOrders()
+                (activity as? CashierHomeActivity)?.openBills()
+            }
+        }
+
+        binding.btnBackToTables.setOnClickListener {
+            Log.d(TAG, "Back to Tables clicked.")
+            navigateToTablesScreenCleanly()
+        }
+    }
+
+    // FIXED: Centralized clean navigation utility function
+    private fun navigateToTablesScreenCleanly() {
+        // 1. Clear out the shared cart counter state arrays
+        viewModel.clearCart()
+
+        // 2. Clear out the entire ordering fragment session history
+        parentFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+}
