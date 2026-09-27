@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.masterdashboard"
+    namespace = "com.restroone.app"
     compileSdk = 35
 
     defaultConfig {

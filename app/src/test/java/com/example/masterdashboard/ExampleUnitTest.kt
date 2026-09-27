@@ -1,4 +1,4 @@
-package com.example.masterdashboard
+package com.restroone.app
 
 import org.junit.Test
 
