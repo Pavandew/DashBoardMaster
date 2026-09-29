@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/login_background"
+    android:background="@drawable/app_background"
     android:id="@+id/login_screen"
     tools:context=".login.views.LoginActivity">
 
@@ -25,29 +25,9 @@
             android:gravity="center">
 
             <ImageView
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:src="@drawable/app_logo"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="MASTER"
-                android:textSize="24sp"
-                android:textAllCaps="true"
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                android:layout_marginTop="10dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Dashboard"
-                android:textAllCaps="true"
-                android:layout_marginTop="3dp"
-                android:textSize="19sp"
-                android:textStyle="bold"
-                android:textColor="@color/brown"/>
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:src="@drawable/app_logo_with_name"/>
 
             <include
                 android:id="@+id/login_item"
