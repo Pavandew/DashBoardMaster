@@ -60,13 +60,13 @@ class LoginActivity : AppCompatActivity() {
                 View.GONE
             binding.loginItem.loginBtn.backgroundTintList =
                 getColorStateList(R.color.orange_gradient_start)
-            binding.root.setBackgroundResource(R.drawable.app_background_orange)
+            binding.root.setBackgroundResource(R.drawable.app_background)
         }
         // Hide Create Account for staff
         if(selectedPortal == AppConstants.PORTAL_MULTI_RESTAURANT) {
             binding.loginItem.loginBtn.backgroundTintList =
                 getColorStateList(R.color.blue_gradient_start)
-            binding.root.setBackgroundResource(R.drawable.app_backround_blue)
+            binding.root.setBackgroundResource(R.drawable.app_background)
         }
 
         binding.loginItem.loginPhoneEt.doOnTextChanged { _, _, _, _ ->

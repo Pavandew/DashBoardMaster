@@ -43,74 +43,73 @@ class ActivityVisitorPortal : AppCompatActivity() {
 
     private fun setupAllPortals() {
 
-        // 1. Multi Restaurant Portal
+        // 1. Multi Restaurant Portal (Slate Blue Theme)
         val master = PortalItem(
             "Multi Restaurant",
-            subTitle = "Manage Multiple",
+            subTitle = "Multi Restaurant Owner Login",
             description = "Manage all restaurants and system settings",
             R.drawable.shield,
-            R.color.primary_blue,
+            R.color.portal_multi_primary,
+            R.color.portal_multi_bg_light,
             listOf(
-                PortalFeature(R.drawable.ic_restaurant_24dp, "Manage", R.color.primary_blue),
-                PortalFeature(R.drawable.ic_analytics_24dp, "Reports", R.color.primary_blue),
-                PortalFeature(R.drawable.ic_settings_24dp, "Settings", R.color.primary_blue)
+                PortalFeature(R.drawable.ic_restaurant_24dp, "Manage", R.color.portal_multi_primary),
+                PortalFeature(R.drawable.ic_analytics_24dp, "Reports", R.color.portal_multi_primary),
+                PortalFeature(R.drawable.ic_settings_24dp, "Settings", R.color.portal_multi_primary)
             )
         ) {
             sessionManager.setSelectedPortal(AppConstants.PORTAL_MULTI_RESTAURANT)
-
             startActivity(Intent(this, LoginActivity::class.java))
-//            Toast.makeText(this, "Master Portal - Coming Soon!", Toast.LENGTH_SHORT).show()
         }
 
-        // 2. Restaurant Portal
+        // 2. Restaurant Portal (Muted Purple Theme)
         val manager = PortalItem(
-            "Restaurant Portal",
-            subTitle = "Owner/Manager",
+            "Single Restaurant ",
+            subTitle = "Owner/Manager Login",
             description = "Manage restaurant and staff",
             R.drawable.manager,
-            R.color.primary_purple,
+            R.color.portal_restaurant_primary,
+            R.color.portal_restaurant_bg_light,
             listOf(
                 PortalFeature(
                     R.drawable.ic_staffs_24dp,
                     "Staff Management",
-                    R.color.primary_purple
+                    R.color.portal_restaurant_primary
                 ),
                 PortalFeature(
                     R.drawable.ic_sales_report_24dp,
                     "Sales & Report",
-                    R.color.primary_purple
+                    R.color.portal_restaurant_primary
                 ),
                 PortalFeature(
                     R.drawable.ic_visibility_24dp,
                     "Inventory Overview",
-                    R.color.primary_purple
+                    R.color.portal_restaurant_primary
                 )
             )
         ) {
-            // No activity currently
             sessionManager.setSelectedPortal(AppConstants.PORTAL_RESTAURANT)
             startActivity(Intent(this, LoginActivity::class.java))
         }
 
-        // 3. Staff Portal
+        // 3. Staff Portal (Warm Terracotta/Peach Theme)
         val staff = PortalItem(
-            "Staff Dashboard",
-            subTitle = "Working Staffs",
-            "Take orders manage tables and Kitchens",
+            "Staff Portal",
+            subTitle = "Working Staffs Login",
+            "Take orders, manage tables and kitchens",
             R.drawable.waiter,
-            R.color.primary_orange,
+            R.color.portal_staff_primary,
+            R.color.portal_staff_bg_light,
             listOf(
-                PortalFeature(R.drawable.ic_table_24dp, "Floor & Tables", R.color.primary_orange),
+                PortalFeature(R.drawable.ic_table_24dp, "View Tables", R.color.portal_staff_primary),
                 PortalFeature(
                     R.drawable.ic_order_approve_24dp,
                     "Take Order",
-                    R.color.primary_orange
+                    R.color.portal_staff_primary
                 ),
-                PortalFeature(R.drawable.ic_send_24dp, "Send KOT", R.color.primary_orange)
+                PortalFeature(R.drawable.ic_send_24dp, "Send KOT", R.color.portal_staff_primary)
             )
         ) {
             sessionManager.setSelectedPortal(AppConstants.PORTAL_STAFF)
-
             startActivity(Intent(this, StaffLoginActivity::class.java))
         }
 

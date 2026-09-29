@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
-    android:background="@drawable/login_background"
+    android:background="@drawable/app_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".login.views.StaffLoginActivity">
@@ -28,22 +28,14 @@
                 android:id="@+id/staff_login_img"
                 android:layout_width="120dp"
                 android:layout_height="120dp"
-                android:src="@drawable/person" />
-
-            <TextView
-                android:id="@+id/tvLabel1"
-                style="@style/TextAppearance.MyApp.Title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Foodies" />
+                android:src="@drawable/app_logo_without_bg" />
 
             <TextView
                 android:id="@+id/tvLabel2"
                 style="@style/TextAppearance.MyApp.ToolbarTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Staff Panel"
+                android:text="Staff Login"
                 android:textColor="#262626" />
 
             <com.google.android.material.card.MaterialCardView
