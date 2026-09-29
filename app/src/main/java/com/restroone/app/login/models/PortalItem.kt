@@ -15,6 +15,7 @@ data class PortalItem(
     val description: String,
     @DrawableRes val mainIcon: Int,
     @ColorRes val themeColor: Int,
+    @ColorRes val bgLightColor: Int,
     val features: List<PortalFeature>,
     val onClick: () -> Unit
 )

@@ -37,22 +37,30 @@ class PortalManager(private val context: Context) {
      * Binds data to an included portal card layout
      */
     fun bindCard(binding: ItemPortalCardBinding, item: PortalItem) {
-        val color = ContextCompat.getColor(context, item.themeColor)
-        val colorState = ColorStateList.valueOf(color)
+        val themeColorVal = ContextCompat.getColor(context, item.themeColor)
+        val bgLightColorVal = ContextCompat.getColor(context, item.bgLightColor)
+        val themeColorState = ColorStateList.valueOf(themeColorVal)
 
         binding.apply {
+            // Main card background is always pure white
+            portalCardMain.setCardBackgroundColor(ContextCompat.getColor(context, R.color.white))
+
+            // Title and Descriptions
             portalTvTitleFirst.text = item.title
-            portalTvTitleFirst.setTextColor(color)
+            portalTvTitleFirst.setTextColor(themeColorVal)
             portalTvSubTitle.text = item.subTitle
             portalTvDescription.text = item.description
+
+            // Main Icon container (soft pastel background, icon tinted with primary theme color)
+            portalCardIconBg.setCardBackgroundColor(bgLightColorVal)
             portalIvMainIcon.setImageResource(item.mainIcon)
+            portalIvMainIcon.imageTintList = themeColorState
 
-            // Apply the theme color to card elements
-            portalCardMain.setCardBackgroundColor(color)
-            portalCardIconBg.setCardBackgroundColor(color)
-            portalIvArrow.backgroundTintList = colorState
+            // Arrow button (circle background filled with primary theme color, white arrow)
+            portalIvArrow.backgroundTintList = themeColorState
+            portalIvArrow.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.white))
 
-            // Bind features dynamically
+            // Bind bottom features dynamically
             setupFeature(ivFeature1Icon, tvFeature1Text, item.features.getOrNull(0))
             setupFeature(ivFeature2Icon, tvFeature2Text, item.features.getOrNull(1))
             setupFeature(ivFeature3Icon, tvFeature3Text, item.features.getOrNull(2))
@@ -63,9 +71,12 @@ class PortalManager(private val context: Context) {
 
     private fun setupFeature(icon: ImageView, text: TextView, feature: PortalFeature?) {
         if (feature != null) {
+            val featureColor = ContextCompat.getColor(context, feature.color)
+            val featureColorState = ColorStateList.valueOf(featureColor)
             icon.setImageResource(feature.icon)
-            icon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(context, feature.color))
+            icon.imageTintList = featureColorState
             text.text = feature.text
+            text.setTextColor(featureColor)
         }
     }
 }
