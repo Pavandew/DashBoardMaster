@@ -76,11 +76,25 @@ class WaiterTablesFragment : Fragment() {
         setupToolbar()
         setUpRecyclerView()
         setupSearchEngine()
+        setupSwipeRefreshAndRetry(managerId)
         observeViewModelData()
         setupFloorChips()
 
-        // FIX: Instead of manual fetch triggers, set the managerId state flow to fire both real-time streams
+        // Load data on startup
         viewModel.loadDashboardData(managerId)
+    }
+
+    private fun setupSwipeRefreshAndRetry(managerId: String) {
+        binding.swipeRefresh.setOnRefreshListener {
+            Log.d(TAG, "📱 WaiterTablesFragment Swipe-to-refresh triggered.")
+            viewModel.forceRefresh(managerId)
+        }
+
+        binding.includeErrorState.btnErrorRetry.setOnClickListener {
+            Log.d(TAG, "📱 WaiterTablesFragment Retry button clicked.")
+            binding.includeErrorState.layoutErrorContainer.visibility = View.GONE
+            viewModel.forceRefresh(managerId)
+        }
     }
 
     override fun onStart() {
@@ -127,68 +141,52 @@ class WaiterTablesFragment : Fragment() {
     }
 
     private fun observeViewModelData() {
-        Log.d(TAG, "📱 WaiterTablesFragment Hooking up UI flows to coroutine repeatOnLifecycle collectors...")
+        Log.d(TAG, "📱 WaiterTablesFragment Observing Unified UiState flow...")
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                var lastAutoScrolledFloorId: String? = null
 
-                // Collect Reactive Filtered Tables
-                launch {
-                    viewModel.tableState.collect { resource ->
-                        when (resource) {
-                            is ResourceUiState.Loading -> {
-                                Log.d(TAG, "📱 WaiterTablesFragment UI Collector received: [ResourceUiState.Loading] ➔ Displaying ProgressIndicator.")
-                                binding.pbLoading.visibility = View.VISIBLE
-                                binding.rvTableCards.visibility = View.GONE
-                            }
-                            is ResourceUiState.Success -> {
-                                Log.i(TAG, "📱 WaiterTablesFragment UI Collector received: [ResourceUiState.Success] ➔ Populating ${resource.data.size} cards to Adapter.")
-                                binding.pbLoading.visibility = View.GONE
-                                binding.rvTableCards.visibility = View.VISIBLE
+                viewModel.uiState.collect { state ->
+                    // 1. Loading & Swipe Refresh indicators
+                    binding.pbLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+                    binding.swipeRefresh.isRefreshing = state.isRefreshing
 
-                                tableAdapter.updateList(resource.data) {
-                                    binding.rvTableCards.post {
-                                        binding.rvTableCards.scrollToPosition(0)
-                                        binding.appBarLayout.setExpanded(true, false)
-                                    }
-                                }
-                                currentSearchList.clear()
-                                currentSearchList.addAll(resource.data)
-                                
-                                // Reset search if needed
-                                if (binding.searchBar.etSearchOrder.text.isNotEmpty()) {
-                                    searchManager?.refreshSearch()
-                                }
+                    // 2. Error vs Content visibility
+                    if (state.errorMessage != null) {
+                        binding.rvTableCards.visibility = View.GONE
+                        binding.includeErrorState.layoutErrorContainer.visibility = View.VISIBLE
+                        binding.includeErrorState.tvErrorStateMessage.text = state.errorMessage
+                    } else {
+                        binding.includeErrorState.layoutErrorContainer.visibility = View.GONE
+                        binding.rvTableCards.visibility = View.VISIBLE
+
+                        tableAdapter.updateList(state.tables) {
+                            binding.rvTableCards.post {
+                                binding.rvTableCards.scrollToPosition(0)
+                                binding.appBarLayout.setExpanded(true, false)
                             }
-                            is ResourceUiState.Error -> {
-                                Log.e(TAG, "📱 WaiterTablesFragment UI Collector received: [ResourceUiState.Error] ➔ Reason: ${resource.message}")
-                                binding.pbLoading.visibility = View.GONE
-                                binding.rvTableCards.visibility = View.VISIBLE
-                                Toast.makeText(context, resource.message, Toast.LENGTH_LONG).show()
-                            }
-                            else -> {}
+                        }
+                        currentSearchList.clear()
+                        currentSearchList.addAll(state.tables)
+
+                        if (binding.searchBar.etSearchOrder.text.isNotEmpty()) {
+                            searchManager?.refreshSearch()
                         }
                     }
-                }
 
-                // Collect Reactive Floors (with selection state)
-                launch {
-                    var lastAutoScrolledFloorId: String? = null
-                    viewModel.floorState.collectLatest { dynamicFloors ->
-                        Log.i(TAG, "📱 WaiterTablesFragment UI Collector received floor list change event. Submitting ${dynamicFloors.size} elements to Chip Layout.")
-                        if (dynamicFloors.isNotEmpty()) {
-                            floorAdapter.submitList(dynamicFloors)
-                            
-                            // AUTO-SCROLL: Only scroll to the selected chip if it's different from the last scrolled one
-                            val currentSelectedId = dynamicFloors.find { it.isSelected }?.id
-                            if (currentSelectedId != null && currentSelectedId != lastAutoScrolledFloorId) {
-                                val selectedPos = dynamicFloors.indexOfFirst { it.id == currentSelectedId }
-                                if (selectedPos != -1) {
-                                    binding.rvFloorChips.post {
-                                        binding.rvFloorChips.smoothScrollToPosition(selectedPos)
-                                    }
+                    // 3. Floors Chip List & Auto-Scroll
+                    if (state.floors.isNotEmpty()) {
+                        floorAdapter.submitList(state.floors)
+
+                        val currentSelectedId = state.floors.find { it.isSelected }?.id
+                        if (currentSelectedId != null && currentSelectedId != lastAutoScrolledFloorId) {
+                            val selectedPos = state.floors.indexOfFirst { it.id == currentSelectedId }
+                            if (selectedPos != -1) {
+                                binding.rvFloorChips.post {
+                                    binding.rvFloorChips.smoothScrollToPosition(selectedPos)
                                 }
-                                lastAutoScrolledFloorId = currentSelectedId
                             }
+                            lastAutoScrolledFloorId = currentSelectedId
                         }
                     }
                 }

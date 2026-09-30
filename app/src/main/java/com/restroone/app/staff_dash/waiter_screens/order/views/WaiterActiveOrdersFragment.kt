@@ -53,13 +53,28 @@ class WaiterActiveOrdersFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Log.i(TAG, "Navigation: WaiterActiveOrdersFragment Opened")
 
+        val managerId = sessionManager.getUid()
+
         setupToolbar()
         setUpRecyclerViews()
+        setupSwipeRefreshAndRetry(managerId)
         observeActiveOrderState()
 
-        val managerId = sessionManager.getUid()
         Log.d(TAG, "onViewCreated: Triggering streamActiveOrders for Manager ID: $managerId")
         viewModel.streamActiveOrders(managerId)
+    }
+
+    private fun setupSwipeRefreshAndRetry(managerId: String) {
+        binding.swipeRefresh.setOnRefreshListener {
+            Log.d(TAG, "Swipe-to-refresh triggered on Active Orders")
+            viewModel.forceRefresh(managerId)
+        }
+
+        binding.includeErrorState.btnErrorRetry.setOnClickListener {
+            Log.d(TAG, "Retry button clicked on Active Orders")
+            binding.includeErrorState.layoutErrorContainer.visibility = View.GONE
+            viewModel.forceRefresh(managerId)
+        }
     }
 
     override fun onResume() {
@@ -134,7 +149,27 @@ class WaiterActiveOrdersFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    binding.pbLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+                    binding.pbLoading.visibility = if (state.isLoading && !state.isRefreshing) View.VISIBLE else View.GONE
+                    binding.swipeRefresh.isRefreshing = state.isRefreshing
+
+                    if (state.errorMessage != null) {
+                        binding.rvActiveOrders.visibility = View.GONE
+                        binding.includeEmptyState.layoutEmptyContainer.visibility = View.GONE
+                        binding.includeErrorState.layoutErrorContainer.visibility = View.VISIBLE
+                        binding.includeErrorState.tvErrorStateMessage.text = state.errorMessage
+                    } else {
+                        binding.includeErrorState.layoutErrorContainer.visibility = View.GONE
+
+                        if (state.visibleOrders.isEmpty()) {
+                            binding.rvActiveOrders.visibility = View.GONE
+                            binding.includeEmptyState.layoutEmptyContainer.visibility = View.VISIBLE
+                            binding.includeEmptyState.tvEmptyStateTitle.text = "No Active Orders"
+                            binding.includeEmptyState.tvEmptyStateMessage.text = "There are no active orders in this section currently."
+                        } else {
+                            binding.includeEmptyState.layoutEmptyContainer.visibility = View.GONE
+                            binding.rvActiveOrders.visibility = View.VISIBLE
+                        }
+                    }
 
                     val processFilterChips = state.filters.map { model ->
                         TableFilterData(
@@ -145,11 +180,6 @@ class WaiterActiveOrdersFragment : Fragment() {
                     }
                     filterAdapter.submitList(processFilterChips)
                     ordersAdapter.submitList(state.visibleOrders)
-
-                    state.errorMessage?.let { error ->
-                        Log.e(TAG, "Error loading orders: $error")
-                        Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                    }
                 }
             }
         }
