@@ -48,6 +48,14 @@ class ActiveOrdersViewModel(
         updateUiStateFiltersAndOrders()
     }
 
+    fun forceRefresh(managerId: String?) {
+        Log.d(TAG, "🏗️ [VIEWMODEL] forceRefresh() triggered manually for Manager ID: $managerId")
+        streamJob?.cancel()
+        streamJob = null
+        _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
+        streamActiveOrders(managerId)
+    }
+
     fun streamActiveOrders(managerId: String?) {
         // ALWAYS reset selection to "All" (ID "1") whenever navigating into this screen
         currentlySelectedFilterId = "1"
@@ -173,6 +181,7 @@ class ActiveOrdersViewModel(
         _uiState.update {
             it.copy(
                 isLoading = false,
+                isRefreshing = false,
                 filters = computedFilters,
                 visibleOrders = filteredOrdersList,
                 errorMessage = null

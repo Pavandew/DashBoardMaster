@@ -79,9 +79,10 @@ abstract class BaseOrderTakingFragment : Fragment() {
         setupRecyclerLayouts()
         setupSearchEngine()
         setupCustomizationOverlay()
-        observeViewStates()
-
+        
         val managerId = sessionManager.getUid()
+        setupSwipeRefreshAndRetry(managerId)
+        observeViewStates()
         
         // 1. Initialize session meta-data in the Activity-scoped ViewModel
         val tableId = arguments?.getString("tableId") ?: ""
@@ -235,6 +236,33 @@ abstract class BaseOrderTakingFragment : Fragment() {
     private var lastAutoScrolledCatId: String? = null
     private var lastAutoScrolledDietId: String? = null
 
+    private fun setupSwipeRefreshAndRetry(managerId: String) {
+        binding.swipeRefresh.setOnRefreshListener {
+            Log.d(TAG, "Swipe-to-refresh triggered on Menu Taking")
+            reloadMenu(managerId)
+        }
+
+        binding.includeErrorState.btnErrorRetry.setOnClickListener {
+            Log.d(TAG, "Retry button clicked on Menu Taking")
+            binding.includeErrorState.layoutErrorContainer.visibility = View.GONE
+            reloadMenu(managerId)
+        }
+    }
+
+    private fun reloadMenu(managerId: String) {
+        if (managerId.isNotEmpty()) {
+            sessionViewModel.loadCatalog(managerId)
+            menuViewModel.loadMenuData(
+                managerId = managerId,
+                currentCart = sessionViewModel.originalFoodList.value,
+                initialCategories = sessionViewModel.categories.value
+            ) { fullCatalog ->
+                sessionViewModel.syncMenuCatalog(fullCatalog)
+                searchManager?.updateDataList(fullCatalog)
+            }
+        }
+    }
+
     private fun observeViewStates() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -242,7 +270,21 @@ abstract class BaseOrderTakingFragment : Fragment() {
                 // Observe Menu UI Logic (List rendering and Filtering)
                 launch {
                     menuViewModel.uiState.collect { state ->
-                        binding.pbLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+                        if (!binding.swipeRefresh.isRefreshing) {
+                            binding.pbLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+                        }
+
+                        if (state.errorMessage != null) {
+                            binding.pbLoading.visibility = View.GONE
+                            binding.swipeRefresh.isRefreshing = false
+                            binding.rvMenuItems.visibility = View.GONE
+                            binding.includeErrorState.layoutErrorContainer.visibility = View.VISIBLE
+                            binding.includeErrorState.tvErrorStateMessage.text = state.errorMessage
+                        } else {
+                            binding.swipeRefresh.isRefreshing = false
+                            binding.includeErrorState.layoutErrorContainer.visibility = View.GONE
+                            binding.rvMenuItems.visibility = View.VISIBLE
+                        }
                         
                         // Submit latest categories and diet filters to their respective chip adapters
                         val catList = state.categories.map { TableFilterData(it.id, it.name, it.isSelected) }
