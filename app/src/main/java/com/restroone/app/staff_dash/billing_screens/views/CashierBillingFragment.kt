@@ -54,14 +54,29 @@ class CashierBillingFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Log.i(TAG, "onViewCreated: Initializing Billing dashboard")
 
+        val managerId = sessionManager.getUid()
+
         setupToolbar()
         setupAdapters()
         setupSearch()
+        setupSwipeRefreshAndRetry(managerId)
         observeViewModel()
 
-        val managerId = sessionManager.getUid()
         Log.d(TAG, "Fetching billing orders for Manager ID: $managerId")
         viewModel.startListeningOrders(managerId)
+    }
+
+    private fun setupSwipeRefreshAndRetry(managerId: String) {
+        binding.swipeRefresh.setOnRefreshListener {
+            Log.d(TAG, "Swipe-to-refresh triggered on Cashier Settlement Center")
+            viewModel.forceRefresh(managerId)
+        }
+
+        binding.includeErrorState.btnErrorRetry.setOnClickListener {
+            Log.d(TAG, "Retry button clicked on Cashier Settlement Center")
+            binding.includeErrorState.layoutErrorContainer.visibility = View.GONE
+            viewModel.forceRefresh(managerId)
+        }
     }
 
     private fun setupToolbar() {
@@ -125,28 +140,35 @@ class CashierBillingFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    when (state) {
-                        is CashierBillingUiState.Loading -> {
-                            Log.d(TAG, "UI State -> Loading")
-                            binding.pbBillingLoading.visibility = View.VISIBLE
+                    binding.pbBillingLoading.visibility = if (state.isLoading && !state.isRefreshing) View.VISIBLE else View.GONE
+                    binding.swipeRefresh.isRefreshing = state.isRefreshing
+
+                    if (state.errorMessage != null) {
+                        binding.rvCashierBillingList.visibility = View.GONE
+                        binding.includeEmptyState.layoutEmptyContainer.visibility = View.GONE
+                        binding.includeErrorState.layoutErrorContainer.visibility = View.VISIBLE
+                        binding.includeErrorState.tvErrorStateMessage.text = state.errorMessage
+                    } else {
+                        binding.includeErrorState.layoutErrorContainer.visibility = View.GONE
+
+                        if (state.orders.isEmpty()) {
+                            binding.rvCashierBillingList.visibility = View.GONE
+                            binding.includeEmptyState.layoutEmptyContainer.visibility = View.VISIBLE
+                            binding.includeEmptyState.tvEmptyStateTitle.text = "No Bills to Settle"
+                            binding.includeEmptyState.tvEmptyStateMessage.text = "There are no pending or active bills in Settlement Center currently."
+                        } else {
+                            binding.includeEmptyState.layoutEmptyContainer.visibility = View.GONE
+                            binding.rvCashierBillingList.visibility = View.VISIBLE
                         }
-                        is CashierBillingUiState.Success -> {
-                            Log.d(TAG, "UI State -> Success: Received ${state.orders.size} orders")
-                            binding.pbBillingLoading.visibility = View.GONE
-                            ordersAdapter.submitList(state.orders) {
-                                if (state.orders.isNotEmpty()) {
-                                    binding.rvCashierBillingList.post {
-                                        binding.rvCashierBillingList.scrollToPosition(0)
-                                    }
+
+                        ordersAdapter.submitList(state.orders) {
+                            if (state.orders.isNotEmpty()) {
+                                binding.rvCashierBillingList.post {
+                                    binding.rvCashierBillingList.scrollToPosition(0)
                                 }
                             }
-                            filterAdapter.submitList(state.filters)
                         }
-                        is CashierBillingUiState.Error -> {
-                            Log.e(TAG, "UI State -> Error: ${state.message}")
-                            binding.pbBillingLoading.visibility = View.GONE
-                            Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
-                        }
+                        filterAdapter.submitList(state.filters)
                     }
                 }
             }

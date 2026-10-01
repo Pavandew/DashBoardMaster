@@ -23,7 +23,7 @@ class CashierBillingViewModel(
         private const val TAG = "CashierBillingVM"
     }
 
-    private val _uiState = MutableStateFlow<CashierBillingUiState>(CashierBillingUiState.Loading)
+    private val _uiState = MutableStateFlow(CashierBillingUiState(isLoading = true))
     val uiState: StateFlow<CashierBillingUiState> = _uiState.asStateFlow()
 
     private var rawOrdersList: List<CashierBillingOrderModel> = emptyList()
@@ -32,16 +32,30 @@ class CashierBillingViewModel(
     private var isListening = false
 
     init {
-        applyFilters() // Emit initial state with zero counts
+        applyFilters()
+    }
+
+    /**
+     * Force re-triggers the real-time billing orders stream (e.g. for SwipeRefresh & Retry)
+     */
+    fun forceRefresh(managerId: String) {
+        if (managerId.isEmpty()) return
+        Log.d(TAG, "forceRefresh: Re-triggering billing stream for manager: $managerId")
+        isListening = false
+        _uiState.value = CashierBillingUiState(isRefreshing = true)
+        startListeningOrders(managerId)
     }
 
     fun startListeningOrders(managerId: String) {
         if (managerId.isEmpty()) return
         
-        // Prevent restart if already listening
         if (isListening) {
             Log.d(TAG, "Already listening to billing stream. Skipping restart.")
             return
+        }
+
+        if (rawOrdersList.isEmpty()) {
+            _uiState.value = CashierBillingUiState(isLoading = true)
         }
 
         viewModelScope.launch {
@@ -49,7 +63,7 @@ class CashierBillingViewModel(
             repository.streamBillingOrders(managerId)
                 .catch { e ->
                     Log.e(TAG, "Error in orders flow stream", e)
-                    _uiState.value = CashierBillingUiState.Error(e.message ?: "Failed to load orders")
+                    _uiState.value = CashierBillingUiState(isLoading = false, isRefreshing = false, errorMessage = e.message ?: "Failed to load orders")
                 }
                 .collect { orders ->
                     rawOrdersList = orders
@@ -138,8 +152,15 @@ class CashierBillingViewModel(
                 currentSearchQuery, true) || it.orderId.contains(currentSearchQuery, true) }
         }
 
-        // Send Success state immediately so chips show up even with 0 orders
-        _uiState.value = CashierBillingUiState.Success(orders = filtered, selectedFilter = currentFilter, filters = computedFilters)
+        // Send state immediately so chips show up even with 0 orders
+        _uiState.value = CashierBillingUiState(
+            isLoading = false,
+            isRefreshing = false,
+            orders = filtered,
+            selectedFilter = currentFilter,
+            filters = computedFilters,
+            errorMessage = null
+        )
     }
 
     /**
