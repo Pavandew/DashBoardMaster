@@ -48,11 +48,11 @@ class KitchenOrderViewModel(private val repository: KitchenOrderRepository = Kit
         val (isWorkstation, loading, error) = triple
 
         if (error != null) {
-            return@combine KitchenOrderUiState.Error(error)
+            return@combine KitchenOrderUiState(isLoading = false, isRefreshing = false, errorMessage = error.message ?: "Unknown error")
         }
 
         if (loading && rawList.isEmpty() && !isListening) {
-            return@combine KitchenOrderUiState.Loading
+            return@combine KitchenOrderUiState(isLoading = true, isRefreshing = false)
         }
 
         // 1. Pre-filter rejected or cancelled orders
@@ -137,9 +137,27 @@ class KitchenOrderViewModel(private val repository: KitchenOrderRepository = Kit
             }
         }
 
-        KitchenOrderUiState.Success(baseOrders, computedFilters)
+        KitchenOrderUiState(
+            isLoading = false,
+            isRefreshing = false,
+            orders = baseOrders,
+            filters = computedFilters,
+            errorMessage = null
+        )
     }.flowOn(Dispatchers.Default)
-     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), KitchenOrderUiState.Loading)
+     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), KitchenOrderUiState(isLoading = true))
+
+    /**
+     * Re-triggers the real-time Firestore stream (e.g. for SwipeRefresh / Retry button)
+     */
+    fun forceRefresh(managerId: String) {
+        if (managerId.isEmpty()) return
+        Log.d(TAG, "forceRefresh: Re-triggering real-time stream for manager: $managerId")
+        isListening = false
+        _isLoading.value = true
+        _error.value = null
+        startListeningOrders(managerId)
+    }
 
     /**
      * Initializes the real-time Firestore stream for the restaurant.

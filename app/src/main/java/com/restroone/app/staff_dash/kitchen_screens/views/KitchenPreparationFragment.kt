@@ -44,11 +44,26 @@ class KitchenPreparationFragment : Fragment(R.layout.fragment_kitchen_preparatio
         setupChipsRecyclerView()
         setupOrdersRecyclerView()
         setupSearch()
+        
+        val managerId = sessionManager.getUid()
+        setupSwipeRefreshAndRetry(managerId)
         observeUiState()
 
-        val managerId = sessionManager.getUid()
         viewModel.startListeningOrders(managerId)
         viewModel.setWorkstationContext(true)
+    }
+
+    private fun setupSwipeRefreshAndRetry(managerId: String) {
+        binding.swipeRefresh.setOnRefreshListener {
+            Log.d(TAG, "Swipe-to-refresh triggered on Kitchen Workstation")
+            viewModel.forceRefresh(managerId)
+        }
+
+        binding.includeErrorState.btnErrorRetry.setOnClickListener {
+            Log.d(TAG, "Retry button clicked on Kitchen Workstation")
+            binding.includeErrorState.layoutErrorContainer.visibility = View.GONE
+            viewModel.forceRefresh(managerId)
+        }
     }
 
     private fun setupToolbar() {
@@ -56,15 +71,15 @@ class KitchenPreparationFragment : Fragment(R.layout.fragment_kitchen_preparatio
             tvToolbarTitle.text = getString(R.string.title_cooking_workstation)
             toolbarImgNotification.visibility = View.VISIBLE
             toolbarImgNotification.setBackgroundResource(R.drawable.ic_history_24dp)
-            toolbarImgNotification.setOnClickListener {
-                val containerId = NavigationUtils.getHostContainerId(activity)
-                if (containerId != 0) {
-                    parentFragmentManager.beginTransaction()
-                        .replace(containerId, KitchenHistoryFragment())
-                        .addToBackStack(null)
-                        .commit()
-                }
-            }
+//            toolbarImgNotification.setOnClickListener {
+//                val containerId = NavigationUtils.getHostContainerId(activity)
+//                if (containerId != 0) {
+//                    parentFragmentManager.beginTransaction()
+//                        .replace(containerId, KitchenHistoryFragment())
+//                        .addToBackStack(null)
+//                        .commit()
+//                }
+//            }
 
             if (parentFragmentManager.backStackEntryCount > 0) {
                 toolbarImgMenu.visibility = View.VISIBLE
@@ -118,39 +133,41 @@ class KitchenPreparationFragment : Fragment(R.layout.fragment_kitchen_preparatio
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.uiState.collectLatest { state ->
-                when (state) {
-                    is KitchenOrderUiState.Loading -> {
-                        binding.pbKitchenLoading.visibility = View.VISIBLE
-                    }
-                    is KitchenOrderUiState.Success -> {
-                        binding.pbKitchenLoading.visibility = View.GONE
-                        workstationAdapter.submitList(state.orders)
-                        filterAdapter.submitList(state.filters)
+                binding.pbKitchenLoading.visibility = if (state.isLoading && !state.isRefreshing) View.VISIBLE else View.GONE
+                binding.swipeRefresh.isRefreshing = state.isRefreshing
 
-                        // AUTO-SCROLL: Only scroll to the selected chip if it's different from the last scrolled one
-                        val currentSelectedId = state.filters.find { it.isSelected }?.id
-                        if (currentSelectedId != null && currentSelectedId != lastAutoScrolledStatusId) {
-                            val selectedPos = state.filters.indexOfFirst { it.id == currentSelectedId }
-                            if (selectedPos != -1) {
-                                binding.rvOrderFilterChips.post {
-                                    binding.rvOrderFilterChips.smoothScrollToPosition(selectedPos)
-                                }
+                if (state.errorMessage != null) {
+                    binding.rvInprogressOrders.visibility = View.GONE
+                    binding.includeEmptyState.layoutEmptyContainer.visibility = View.GONE
+                    binding.includeErrorState.layoutErrorContainer.visibility = View.VISIBLE
+                    binding.includeErrorState.tvErrorStateMessage.text = state.errorMessage
+                } else {
+                    binding.includeErrorState.layoutErrorContainer.visibility = View.GONE
+
+                    workstationAdapter.submitList(state.orders)
+                    filterAdapter.submitList(state.filters)
+
+                    // AUTO-SCROLL: Only scroll to the selected chip if it's different from the last scrolled one
+                    val currentSelectedId = state.filters.find { it.isSelected }?.id
+                    if (currentSelectedId != null && currentSelectedId != lastAutoScrolledStatusId) {
+                        val selectedPos = state.filters.indexOfFirst { it.id == currentSelectedId }
+                        if (selectedPos != -1) {
+                            binding.rvOrderFilterChips.post {
+                                binding.rvOrderFilterChips.smoothScrollToPosition(selectedPos)
                             }
-                            lastAutoScrolledStatusId = currentSelectedId
                         }
-
-                        // Show or hide empty state based on list size
-                        if (state.orders.isEmpty()) {
-                            binding.rvInprogressOrders.visibility = View.GONE
-                            binding.layoutEmptyState.visibility = View.VISIBLE
-                        } else {
-                            binding.rvInprogressOrders.visibility = View.VISIBLE
-                            binding.layoutEmptyState.visibility = View.GONE
-                        }
+                        lastAutoScrolledStatusId = currentSelectedId
                     }
-                    is KitchenOrderUiState.Error -> {
-                        binding.pbKitchenLoading.visibility = View.GONE
-                        Toast.makeText(context, "Error: ${state.exception.message}", Toast.LENGTH_LONG).show()
+
+                    // Show or hide empty state based on list size
+                    if (state.orders.isEmpty()) {
+                        binding.rvInprogressOrders.visibility = View.GONE
+                        binding.includeEmptyState.layoutEmptyContainer.visibility = View.VISIBLE
+                        binding.includeEmptyState.tvEmptyStateTitle.text = "Workstation Clear"
+                        binding.includeEmptyState.tvEmptyStateMessage.text = "There are no orders currently being prepared in the kitchen."
+                    } else {
+                        binding.includeEmptyState.layoutEmptyContainer.visibility = View.GONE
+                        binding.rvInprogressOrders.visibility = View.VISIBLE
                     }
                 }
             }

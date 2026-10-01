@@ -119,49 +119,42 @@ class KitchenOrderFragment : Fragment(R.layout.fragment_kitchen_order) {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collectLatest { state ->
-                    when (state) {
-                        is KitchenOrderUiState.Loading -> {
-                            binding.pbKitchenLoading.visibility = View.VISIBLE
-                            binding.toolbarKitchen.subtitle = "Updating tickets..."
-                        }
-                        is KitchenOrderUiState.Success -> {
-                            binding.pbKitchenLoading.visibility = View.GONE
-                            orderAdapter.submitList(state.orders)
-                            filterAdapter.submitList(state.filters)
-                            
-                            // AUTO-SCROLL: Only scroll to the selected chip if it's different from the last scrolled one
-                            val currentSelectedId = state.filters.find { it.isSelected }?.id
-                            if (currentSelectedId != null && currentSelectedId != lastAutoScrolledFilterId) {
-                                val selectedPos = state.filters.indexOfFirst { it.id == currentSelectedId }
-                                if (selectedPos != -1) {
-                                    binding.rvOrderFilterChips.post {
-                                        binding.rvOrderFilterChips.smoothScrollToPosition(selectedPos)
-                                    }
+                    binding.pbKitchenLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+
+                    if (state.errorMessage != null) {
+                        binding.toolbarKitchen.subtitle = "Error loading orders"
+                        Toast.makeText(context, "Error: ${state.errorMessage}", Toast.LENGTH_LONG).show()
+                    } else {
+                        orderAdapter.submitList(state.orders)
+                        filterAdapter.submitList(state.filters)
+
+                        // AUTO-SCROLL: Only scroll to the selected chip if it's different from the last scrolled one
+                        val currentSelectedId = state.filters.find { it.isSelected }?.id
+                        if (currentSelectedId != null && currentSelectedId != lastAutoScrolledFilterId) {
+                            val selectedPos = state.filters.indexOfFirst { it.id == currentSelectedId }
+                            if (selectedPos != -1) {
+                                binding.rvOrderFilterChips.post {
+                                    binding.rvOrderFilterChips.smoothScrollToPosition(selectedPos)
                                 }
-                                lastAutoScrolledFilterId = currentSelectedId
                             }
-
-                            // Show or hide empty state based on list size
-                            if (state.orders.isEmpty()) {
-                                binding.rvKitchenOrdersStream.visibility = View.GONE
-                                binding.layoutEmptyState.visibility = View.VISIBLE
-                            } else {
-                                binding.rvKitchenOrdersStream.visibility = View.VISIBLE
-                                binding.layoutEmptyState.visibility = View.GONE
-                            }
-
-                            // Dynamic update of subtitle with live order count
-                            val count = state.orders.size
-                            binding.toolbarKitchen.subtitle = if (count == 0) {
-                                "No active tickets"
-                            } else {
-                                "$count active tickets to prepare"
-                            }
+                            lastAutoScrolledFilterId = currentSelectedId
                         }
-                        is KitchenOrderUiState.Error -> {
-                            binding.pbKitchenLoading.visibility = View.GONE
-                            binding.toolbarKitchen.subtitle = "Error loading orders"
-                            Toast.makeText(context, "Error: ${state.exception.message}", Toast.LENGTH_LONG).show()
+
+                        // Show or hide empty state based on list size
+                        if (state.orders.isEmpty()) {
+                            binding.rvKitchenOrdersStream.visibility = View.GONE
+                            binding.layoutEmptyState.visibility = View.VISIBLE
+                        } else {
+                            binding.rvKitchenOrdersStream.visibility = View.VISIBLE
+                            binding.layoutEmptyState.visibility = View.GONE
+                        }
+
+                        // Dynamic update of subtitle with live order count
+                        val count = state.orders.size
+                        binding.toolbarKitchen.subtitle = if (count == 0) {
+                            "No active tickets"
+                        } else {
+                            "$count active tickets to prepare"
                         }
                     }
                 }
