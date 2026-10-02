@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 
 import com.restroone.app.manager_single_res_dash.registration_form_screen.repository.RegistrationRepository
 import com.restroone.app.subscription.views.SubscriptionPlansFragment
+import com.restroone.app.utils.NetworkUtils
 
 class FormStep5Fragment : Fragment() {
 
@@ -82,6 +83,10 @@ class FormStep5Fragment : Fragment() {
         }
 
         binding.btnContinue.setOnClickListener {
+            if (!NetworkUtils.isNetworkAvailable(requireContext())) {
+                Toast.makeText(requireContext(), "No internet connection. Please check your network and try again.", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
             val isEdit = dataViewModel.isEditMode
             Log.i("FormStep5Fragment", "Action: Submit button clicked (isEditMode: $isEdit)")
             val finalData = dataViewModel.registrationData
