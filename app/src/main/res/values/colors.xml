@@ -71,9 +71,11 @@
     <color name="orange_gradient_start">#FF8C42</color>
     <color name="orange_gradient_end">#FF6B1A</color>
 
-    <!-- Portal Title Gradient -->
-    <color name="portal_title_start">#4facfe</color>
-    <color name="portal_title_end">#00f2fe</color>
+    <!-- Portal Title Golden Gradient -->
+    <color name="portal_title_start">#C48B5E</color>
+    <color name="portal_title_end">#816B30</color>
+    <color name="golden_icon_tint">#ED9E54</color>
+    <color name="golden_icon_bg">#FAF0E6</color>
     <!-- Status Colors -->
     <color name="status_free">#178038</color>
     <color name="status_paid">#065921</color>
