@@ -80,13 +80,10 @@ class AddTableFragment : Fragment() {
     }
 
     private fun setupDropdownMenus() {
-        // Floor Selection Dropdown setup [cite: 325]
-        val floorNames = listOf(preSelectedFloorName)
-        val floorAdapter = ArrayAdapter(requireContext(), R.layout.item_dropdown_menu_popup, floorNames)
-        binding.actvFloorDropdown.setAdapter(floorAdapter)
-        binding.actvFloorDropdown.setText(preSelectedFloorName, false)
+        // Floor Display is pre-selected and read-only since user navigated here from that specific floor
+        binding.etFloorDisplay.setText(preSelectedFloorName)
 
-        // Status Selection Dropdown setup matching your screenshot validation constraints [cite: 325]
+        // Status Selection Dropdown setup matching validation constraints
         val statuses = listOf("Available", "Occupied", "Reserved", "Dirty")
         val statusAdapter = ArrayAdapter(requireContext(), R.layout.item_dropdown_menu_popup, statuses)
         binding.actvStatusDropdown.setAdapter(statusAdapter)

@@ -131,7 +131,9 @@ class ActiveOrdersRepository {
                         totalItems = totalItemCount,
                         orderTime = formattedTime,
                         status = status,
-                        docPath = document.reference.path
+                        docPath = document.reference.path,
+                        orderSource = document.getString("orderSource") ?: orderModel.orderSource,
+                        orderedBy = document.getString("orderedBy") ?: orderModel.orderedBy
                     )
 
                     tempMap[finalOrderId] = cardData to orderModel.timestamp.seconds

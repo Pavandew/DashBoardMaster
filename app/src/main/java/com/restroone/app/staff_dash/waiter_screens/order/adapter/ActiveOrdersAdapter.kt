@@ -39,6 +39,16 @@ class ActiveOrdersAdapter(
         binding.tvOrderTotalItems.text = "${order.totalItems} Items"
         binding.tvOrderTimestamp.text = order.orderTime
 
+        if (order.orderSource.equals("CUSTOMER_QR", ignoreCase = true)) {
+            binding.tvOrderSourceBadge.visibility = android.view.View.VISIBLE
+            binding.tvOrderSourceBadge.text = "📱 Customer QR"
+            binding.tvOrderSourceBadge.setTextColor(android.graphics.Color.parseColor("#7E22CE"))
+        } else {
+            binding.tvOrderSourceBadge.visibility = android.view.View.VISIBLE
+            binding.tvOrderSourceBadge.text = if (order.orderedBy.isNotBlank()) "👤 ${order.orderedBy}" else "👤 Staff"
+            binding.tvOrderSourceBadge.setTextColor(android.graphics.Color.parseColor("#047857"))
+        }
+
         // Use centralized utility for status UI
         StatusUIUtils.applyStatusUI(context, binding.tvOrderStatusTag, order.status)
 

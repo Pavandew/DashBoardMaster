@@ -11,7 +11,9 @@ data class ActiveOrderCardData(
     val totalItems: Int = 0,
     val orderTime: String = "",
     val status: ActiveOrderStatus = ActiveOrderStatus.PREPARING,
-    val docPath: String = ""
+    val docPath: String = "",
+    val orderSource: String = "WAITER",
+    val orderedBy: String = ""
 )
 
 // Data representation for your reusable top filter chips
