@@ -13,6 +13,7 @@ import com.restroone.app.databinding.ActivitySignUpBinding
 import com.restroone.app.login.uistate.SignUpUiState
 import com.restroone.app.login.viewmodel.SignUpViewModel
 import com.restroone.app.utils.AppConstants
+import com.restroone.app.utils.NetworkUtils
 import com.restroone.app.utils.SessionManager
 import kotlinx.coroutines.launch
 
@@ -55,8 +56,12 @@ class SignUpActivity : AppCompatActivity() {
             Log.d(TAG, "Create Account button clicked")
             clearErrors()
 
+            if (!NetworkUtils.isNetworkAvailable(this)) {
+                Toast.makeText(this, "No internet connection. Please check your network and try again.", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
             if (!binding.loginItem.signupCb.isChecked) {
-                Log.d(TAG, "Terms and conditions not checked")
                 Toast.makeText(
                     this,
                     "Accept terms and conditions",
@@ -66,6 +71,8 @@ class SignUpActivity : AppCompatActivity() {
             }
 
             // selectedPortal
+
+
             val selectedPortal =
                 sessionManager.getSelectedPortal()
             Log.d(TAG, "Selected portal from session: $selectedPortal")

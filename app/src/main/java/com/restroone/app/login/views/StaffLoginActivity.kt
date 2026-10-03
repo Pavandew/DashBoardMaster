@@ -22,6 +22,7 @@ import com.restroone.app.utils.AppConstants
 import com.restroone.app.utils.SessionManager
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
+import com.restroone.app.utils.NetworkUtils
 import kotlinx.coroutines.launch
 
 class StaffLoginActivity : AppCompatActivity() {
@@ -48,6 +49,10 @@ class StaffLoginActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         binding.staffLoginBtn.setOnClickListener {
+            if (!NetworkUtils.isNetworkAvailable(this)) {
+                Toast.makeText(this, "No internet connection. Please check your network and try again.", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
             val enteredId = binding.staffEtInput.text.toString().trim()
             val enteredPass = binding.staffPasswordEt.text.toString().trim()
 
@@ -180,16 +185,20 @@ class StaffLoginActivity : AppCompatActivity() {
     }
 
     private fun saveFcmToken(ownerUid: String, staffDocId: String) {
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (!task.isSuccessful) return@addOnCompleteListener
+        try {
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (!task.isSuccessful) return@addOnCompleteListener
 
-            val token = task.result ?: return@addOnCompleteListener
-            val db = FirebaseFirestore.getInstance()
-            db.collection(AppConstants.COLLECTION_USERS)
-                .document(ownerUid)
-                .collection(AppConstants.COLLECTION_STAFF)
-                .document(staffDocId)
-                .update(AppConstants.FIELD_FCM_TOKEN, token)
+                val token = task.result ?: return@addOnCompleteListener
+                val db = FirebaseFirestore.getInstance()
+                db.collection(AppConstants.COLLECTION_USERS)
+                    .document(ownerUid)
+                    .collection(AppConstants.COLLECTION_STAFF)
+                    .document(staffDocId)
+                    .update(AppConstants.FIELD_FCM_TOKEN, token)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Safe staff FCM token handling exception", e)
         }
     }
 }

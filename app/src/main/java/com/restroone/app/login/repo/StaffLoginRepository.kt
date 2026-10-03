@@ -5,6 +5,7 @@ import com.restroone.app.utils.AppConstants
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import android.util.Log
+import com.restroone.app.utils.NetworkUtils
 
 class StaffLoginRepository {
 
@@ -80,7 +81,8 @@ class StaffLoginRepository {
 
         } catch (e: Exception) {
             Log.e("StaffLoginRepo", "Critical connection error", e)
-            Result.failure(e)
+            val formattedMsg = NetworkUtils.formatErrorMessage(e)
+            Result.failure(Exception(formattedMsg))
         }
     }
 }
