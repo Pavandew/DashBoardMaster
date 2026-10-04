@@ -132,6 +132,13 @@ class OrderDetailExpansionFragment : Fragment() {
                         binding.tvExpandedOrderId.text = state.orderId
                         binding.tvExpandedTimestamp.text = state.timeStamp
 
+                        if (state.customerName.isNotBlank() && !state.customerName.equals("N/A", true)) {
+                            binding.layoutCustomerRow.visibility = View.VISIBLE
+                            binding.tvExpandedCustomerName.text = state.customerName
+                        } else {
+                            binding.layoutCustomerRow.visibility = View.GONE
+                        }
+
                         // Status Tag Configuration - Using centralized utility
                         StatusUIUtils.applyStatusUI(requireContext(), binding.tvExpandedStatusTag, state.status)
 

@@ -96,7 +96,40 @@ class MenuManagementRepository {
             }
 
             if (snapshots != null) {
-                val items = snapshots.toObjects(MenuFoodItemsData::class.java)
+                val items = snapshots.documents.map { doc ->
+                    val rawPrice = doc.get("price")
+                    val priceStr = when (rawPrice) {
+                        is Number -> rawPrice.toString()
+                        is String -> rawPrice
+                        else -> rawPrice?.toString() ?: ""
+                    }
+
+                    val rawVeg = doc.getBoolean("isVeg") ?: true
+                    val hasVariants = doc.getBoolean("hasVariants") ?: false
+
+                    @Suppress("UNCHECKED_CAST")
+                    val rawVariants = doc.get("variants") as? List<Map<String, Any>>
+                    val variantsList = rawVariants?.map { v ->
+                        com.restroone.app.manager_single_res_dash.models.ItemVariant(
+                            variantName = v["variantName"] as? String ?: "",
+                            price = (v["price"] as? Number)?.toDouble() ?: 0.0,
+                            isSelected = v["isSelected"] as? Boolean ?: false
+                        )
+                    } ?: emptyList()
+
+                    MenuFoodItemsData(
+                        id = doc.id,
+                        itemName = doc.getString("itemName") ?: "",
+                        categoryName = doc.getString("categoryName") ?: "",
+                        price = priceStr,
+                        description = doc.getString("description") ?: "",
+                        status = doc.getString("status") ?: "Active",
+                        imageUrl = doc.getString("imageUrl") ?: "",
+                        isVeg = rawVeg,
+                        hasVariants = hasVariants,
+                        variants = variantsList
+                    )
+                }
                 trySend(items)
             }
         }

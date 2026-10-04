@@ -81,6 +81,7 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
     var existingOrderId: String? = null
     var isViewingCart: Boolean = false
     var lastOrderId: String? = null
+    var lastOrderDocPath: String? = null
     var customerName: String = ""
     var customerMobile: String = ""
     var orderType: String = "DINE_IN"
@@ -444,7 +445,9 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
             orderStatus = targetOrderStatus, 
             paymentMethod = selectedPaymentMethod, 
             restaurantId = managerId ?: "", 
-            waiterId = waiterId
+            waiterId = waiterId,
+            orderSource = "WAITER",
+            orderedBy = sessionManager?.getUserName() ?: "Staff"
         )
 
         viewModelScope.launch {
@@ -466,6 +469,7 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
                     
                     if (status is ResourceUiState.Success && managerId != null) {
                         Log.i(TAG, "Submission: Successful. Saved at: ${status.data}")
+                        lastOrderDocPath = status.data
                         // Mark currently sent quantities as "previous" to avoid re-notifying chef for same count
                         _originalFoodList.value = _originalFoodList.value.map { it.copy(previousQuantity = it.currentQuantity) }
                         notifyChef(managerId, currentTableName, finalOrderId, waiterId, status.data)

@@ -1,105 +1,140 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://tools.android.com/tools"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="@dimen/margin_medium"
-    android:layout_marginEnd="@dimen/margin_medium"
+    android:layout_marginHorizontal="10dp"
+    android:layout_marginVertical="6dp"
     app:cardBackgroundColor="@color/white"
-    app:cardCornerRadius="@dimen/corner_radius_medium"
-    app:cardElevation="0dp">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:strokeColor="#E5E7EB"
+    app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/clOrderCardContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="@dimen/padding_medium"
-        android:clickable="true"
-        android:focusable="true"
-        android:foreground="?attr/selectableItemBackground">
+        android:background="?attr/selectableItemBackground"
+        android:padding="16dp">
 
+        <!-- Table Name & Golden Customer QR Badge -->
         <TextView
             android:id="@+id/tvOrderTableName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="T-02"
-            android:textColor="@color/order_table_text"
-            android:textSize="@dimen/text_size_large"
+            android:textColor="#111827"
+            android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Table 04" />
 
         <TextView
-            android:id="@+id/tvOrderTicketId"
+            android:id="@+id/tvOrderSourceBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/margin_tiny"
-            android:text="#ORD-1256"
-            android:textColor="@color/order_ticket_text"
-            android:textSize="@dimen/text_size_caption"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvOrderTableName" />
+            android:layout_marginStart="10dp"
+            android:background="@drawable/bg_status_amber"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="3dp"
+            android:textColor="#B45309"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            tools:text="📱 Customer QR"
+            app:layout_constraintBottom_toBottomOf="@id/tvOrderTableName"
+            app:layout_constraintStart_toEndOf="@id/tvOrderTableName"
+            app:layout_constraintTop_toTopOf="@id/tvOrderTableName" />
 
+        <!-- Status Tag (Top Right) -->
         <TextView
             android:id="@+id/tvOrderStatusTag"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_status_occupied"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
-            android:text="Preparing"
-            android:textColor="@color/order_status_preparing"
-            android:textSize="@dimen/text_size_medium"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="5dp"
+            android:textColor="#D97706"
+            android:textSize="12sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/ivChevronArrow"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Preparing" />
+
+        <!-- Divider Line -->
+        <View
+            android:id="@+id/vDivider"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="12dp"
+            android:background="#E6E6E7"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/tvOrderTableName" />
+
+        <!-- Larger, Bold Order Ticket ID, Item Count & Timestamp (Bottom Row) -->
+        <TextView
+            android:id="@+id/tvOrderTicketId"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textColor="#1F2937"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/vDivider"
+            tools:text="#ORD-1256" />
 
         <TextView
             android:id="@+id/tvOrderTotalItems"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="2 Items"
-            android:textColor="@color/order_items_text"
-            android:textSize="@dimen/text_size_body"
+            android:layout_marginStart="10dp"
+            android:textColor="#4B5563"
+            android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="@id/tvOrderTicketId"
-            app:layout_constraintEnd_toStartOf="@id/tvOrderTimestamp"
             app:layout_constraintStart_toEndOf="@id/tvOrderTicketId"
-            app:layout_constraintTop_toTopOf="@id/tvOrderTicketId" />
+            app:layout_constraintTop_toTopOf="@id/tvOrderTicketId"
+            tools:text="• 3 Items" />
+
+        <ImageView
+            android:id="@+id/ivClockIcon"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginStart="16dp"
+            android:src="@drawable/ic_nest_clock_24dp"
+            app:layout_constraintBottom_toBottomOf="@id/tvOrderTicketId"
+            app:layout_constraintStart_toEndOf="@id/tvOrderTotalItems"
+            app:layout_constraintTop_toTopOf="@id/tvOrderTicketId"
+            app:tint="#9CA3AF"
+            tools:ignore="ContentDescription" />
 
         <TextView
             android:id="@+id/tvOrderTimestamp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="11:30 AM"
-            android:layout_marginEnd="10dp"
-            android:textColor="@color/order_items_text"
-            android:textSize="@dimen/text_size_body"
-            app:layout_constraintBottom_toBottomOf="@id/tvOrderTotalItems"
-            app:layout_constraintEnd_toStartOf="@id/ivChevronArrow"
-            app:layout_constraintTop_toTopOf="@id/tvOrderTotalItems" />
+            android:layout_marginStart="4dp"
+            android:textColor="#6B7280"
+            android:textSize="13sp"
+            app:layout_constraintBottom_toBottomOf="@id/tvOrderTicketId"
+            app:layout_constraintStart_toEndOf="@id/ivClockIcon"
+            app:layout_constraintTop_toTopOf="@id/tvOrderTicketId"
+            tools:text="11:30 AM" />
 
+        <!-- Chevron Arrow Indicator -->
         <ImageView
             android:id="@+id/ivChevronArrow"
-            android:layout_width="27dp"
-            android:layout_height="27dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:src="@drawable/ic_arrow_forward_24dp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/tvOrderTicketId"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/order_chevron_tint" />
-
-        <View
-            android:id="@+id/vDivider"
-            android:layout_width="0dp"
-            android:layout_height="0.8dp"
-            android:layout_marginTop="@dimen/padding_medium"
-            android:background="@drawable/shape_divider_gradient"
-            android:visibility="visible"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvOrderTotalItems" />
+            app:layout_constraintTop_toTopOf="@id/tvOrderTimestamp"
+            app:tint="#9CA3AF"
+            tools:ignore="ContentDescription" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

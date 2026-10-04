@@ -46,8 +46,13 @@ class KitchenOrderRepository(private val firestore: FirebaseFirestore = Firebase
                     !isCompletedOrServed || isWithin24Hours
                 }
                 .distinctBy { if (it.orderId.isNotEmpty() && it.orderId != "N/A") it.orderId else it.docPath }
-                .sortedByDescending { it.timestamp?.seconds ?: 0L }
-            Log.d(TAG, "📦 [REPO] Emitting ${combined.size} combined active + completed kitchen order tickets.")
+                .sortedWith(compareBy<KitchenOrderDetailData> { order ->
+                    val status = order.status.uppercase()
+                    if (status == "COMPLETED" || status == "SERVED" || status == "PAID") 1 else 0
+                }.thenByDescending { 
+                    it.timestamp?.seconds ?: (System.currentTimeMillis() / 1000L) 
+                })
+            Log.d(TAG, "📦 [REPO] Emitting ${combined.size} sorted kitchen order tickets (active first, newest first).")
             trySend(combined)
         }
 

@@ -29,11 +29,12 @@ class CashierBillingViewModel(
     private var rawOrdersList: List<CashierBillingOrderModel> = emptyList()
     private var currentFilter: String = "All"
     private var currentSearchQuery: String = ""
-    private var isListening = false
 
     init {
         applyFilters()
     }
+
+    private var collectionJob: kotlinx.coroutines.Job? = null
 
     /**
      * Force re-triggers the real-time billing orders stream (e.g. for SwipeRefresh & Retry)
@@ -41,7 +42,7 @@ class CashierBillingViewModel(
     fun forceRefresh(managerId: String) {
         if (managerId.isEmpty()) return
         Log.d(TAG, "forceRefresh: Re-triggering billing stream for manager: $managerId")
-        isListening = false
+        collectionJob?.cancel()
         _uiState.value = CashierBillingUiState(isRefreshing = true)
         startListeningOrders(managerId)
     }
@@ -49,8 +50,8 @@ class CashierBillingViewModel(
     fun startListeningOrders(managerId: String) {
         if (managerId.isEmpty()) return
         
-        if (isListening) {
-            Log.d(TAG, "Already listening to billing stream. Skipping restart.")
+        if (collectionJob?.isActive == true) {
+            Log.d(TAG, "Billing stream already active. Skipping restart.")
             return
         }
 
@@ -58,8 +59,7 @@ class CashierBillingViewModel(
             _uiState.value = CashierBillingUiState(isLoading = true)
         }
 
-        viewModelScope.launch {
-            isListening = true
+        collectionJob = viewModelScope.launch {
             repository.streamBillingOrders(managerId)
                 .catch { e ->
                     Log.e(TAG, "Error in orders flow stream", e)

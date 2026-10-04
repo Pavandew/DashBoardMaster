@@ -20,6 +20,7 @@ data class OrderDetailExpansionUiState(
     val floorId: String = "",
     val tableId: String = "",
     val tableName: String = "",
+    val customerName: String = "",
     val status: ActiveOrderStatus = ActiveOrderStatus.PREPARING,
     val timeStamp: String = "",
     val items: List<OrderExpandedItemData> = emptyList(),

@@ -28,7 +28,7 @@ class KitchenOrderViewModel(private val repository: KitchenOrderRepository = Kit
     private val _isWorkstationContext = MutableStateFlow(false)
     private val _error = MutableStateFlow<Throwable?>(null)
     private val _isLoading = MutableStateFlow(false)
-    private var isListening = false
+    private var collectionJob: kotlinx.coroutines.Job? = null
 
     val selectedStatusFilter: StateFlow<String> = _selectedStatusFilter.asStateFlow()
     val selectedTypeFilter: StateFlow<String> = _selectedTypeFilter.asStateFlow()
@@ -51,7 +51,7 @@ class KitchenOrderViewModel(private val repository: KitchenOrderRepository = Kit
             return@combine KitchenOrderUiState(isLoading = false, isRefreshing = false, errorMessage = error.message ?: "Unknown error")
         }
 
-        if (loading && rawList.isEmpty() && !isListening) {
+        if (loading && rawList.isEmpty() && collectionJob?.isActive != true) {
             return@combine KitchenOrderUiState(isLoading = true, isRefreshing = false)
         }
 
@@ -153,7 +153,7 @@ class KitchenOrderViewModel(private val repository: KitchenOrderRepository = Kit
     fun forceRefresh(managerId: String) {
         if (managerId.isEmpty()) return
         Log.d(TAG, "forceRefresh: Re-triggering real-time stream for manager: $managerId")
-        isListening = false
+        collectionJob?.cancel()
         _isLoading.value = true
         _error.value = null
         startListeningOrders(managerId)
@@ -167,17 +167,16 @@ class KitchenOrderViewModel(private val repository: KitchenOrderRepository = Kit
             Log.e(TAG, "startListeningOrders: Manager ID is empty. Stream cannot be started.")
             return
         }
-        
-        // Prevent multiple simultaneous listeners or unnecessary restarts
-        if (isListening) {
-            Log.d(TAG, "startListeningOrders: Already listening. Skipping flow restart.")
+
+        if (collectionJob?.isActive == true) {
+            Log.d(TAG, "Kitchen stream already active. Skipping restart.")
             return
         }
 
         Log.i(TAG, "startListeningOrders: Opening real-time stream for manager: $managerId")
         _isLoading.value = true
-        viewModelScope.launch {
-            isListening = true
+        _error.value = null
+        collectionJob = viewModelScope.launch {
             repository.getRealtimeKitchenOrderDetailDatas(managerId)
                 .catch { exception ->
                     Log.e(TAG, "Firestore Stream: Error encountered", exception)

@@ -102,11 +102,37 @@ class StaffProfileFragment : Fragment() {
         binding.apply {
             tvProfileName.text = profile.staffName.ifEmpty { "N/A" }
             tvRoleBadge.text = profile.role.ifEmpty { "WAITER" }.uppercase()
-            tvShiftValue.text = profile.shift.ifEmpty { "Not Assigned" }
-            tvPhoneValue.text = profile.mobile.ifEmpty { "N/A" }
-            tvEmailValue.text = profile.email.ifEmpty { "N/A" }
-            tvGenderValue.text = profile.gender.ifEmpty { "N/A" }
-            tvDateJoinedValue.text = profile.joiningDate.ifEmpty { "N/A" }
+
+            // Bind Employee ID row
+            rowEmployeeId.iconRow.setImageResource(R.drawable.ic_badge_24dp)
+            rowEmployeeId.tvRowTitle.text = "Employee ID"
+            rowEmployeeId.tvRowValue.text = profile.staffId.ifEmpty { "N/A" }
+
+            // Bind Shift row
+            rowShift.iconRow.setImageResource(R.drawable.ic_nest_clock_24dp)
+            rowShift.tvRowTitle.text = "Assigned Shift"
+            rowShift.tvRowValue.text = profile.shift.ifEmpty { "Not Assigned" }
+
+            // Bind Phone row
+            rowPhone.iconRow.setImageResource(R.drawable.ic_call_24dp)
+            rowPhone.tvRowTitle.text = "Phone Number"
+            rowPhone.tvRowValue.text = profile.mobile.ifEmpty { "N/A" }
+
+            // Bind Email row
+            rowEmail.iconRow.setImageResource(R.drawable.ic_mail_24dp)
+            rowEmail.tvRowTitle.text = "Email Address"
+            rowEmail.tvRowValue.text = profile.email.ifEmpty { "N/A" }
+
+            // Bind Gender row
+            rowGender.iconRow.setImageResource(R.drawable.ic_badge_24dp)
+            rowGender.tvRowTitle.text = "Gender"
+            rowGender.tvRowValue.text = profile.gender.ifEmpty { "N/A" }
+
+            // Bind Date Joined row
+            rowDateJoined.iconRow.setImageResource(R.drawable.ic_calendar_24dp)
+            rowDateJoined.tvRowTitle.text = "Date of Joining"
+            rowDateJoined.tvRowValue.text = profile.joiningDate.ifEmpty { "N/A" }
+            rowDateJoined.rowDivider.visibility = View.GONE
 
             // Restrict Menu Management in Profile ONLY to Master Chef / Head Chef / Manager
             val cleanRole = profile.role.lowercase().trim()
@@ -131,10 +157,7 @@ class StaffProfileFragment : Fragment() {
             } else {
                 cardMenuManagement.visibility = View.GONE
             }
-            tvPhoneValue.text = profile.mobile.ifEmpty { "N/A" }
-            tvEmailValue.text = profile.email.ifEmpty { "N/A" }
-            tvGenderValue.text = profile.gender.ifEmpty { "N/A" }
-            tvDateJoinedValue.text = profile.joiningDate.ifEmpty { "N/A" }
+
 
             if (profile.profileImageUrl.isNotEmpty()) {
                 Glide.with(requireContext())

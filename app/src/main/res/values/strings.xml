@@ -257,4 +257,57 @@
     <string name="sub_monthly_owner_pass_current">Monthly Owner Pass (Current Plan)</string>
     <string name="sub_monthly_owner_pass">Monthly Owner Pass</string>
     <string name="sub_yearly_owner_pass">Yearly Owner Pass</string>
+
+    <!-- Help, Support & Legal Strings -->
+    <string name="help_terms_title">Help &amp; Terms</string>
+    <string name="app_title_pos">RestroOne POS</string>
+    <string name="system_status_active">🟢 All Cloud Systems Operational</string>
+    <string name="btn_call_helpline">Call Helpline</string>
+    <string name="btn_email_support">Email Support</string>
+    <string name="tab_terms">T&amp;C</string>
+    <string name="tab_support">Support</string>
+    <string name="tab_privacy">Privacy</string>
+    <string name="terms_use_title">Terms &amp; Conditions of Use</string>
+    <string name="terms_last_updated">Last updated: October 2026</string>
+
+    <string name="support_technical_title">Customer Support &amp; Technical Help</string>
+    <string name="support_dedicated_sub">Dedicated support for restaurant operations</string>
+    <string name="support_email_label">Official Support Email</string>
+    <string name="support_email_val">support@masterdashboard.com</string>
+    <string name="support_phone_label">Hotline / Priority Phone</string>
+    <string name="support_phone_val">+91 98765 43210</string>
+    <string name="support_hours_label">Operation Hours</string>
+    <string name="support_hours_val">24/7 Technical Priority Support for Live POS</string>
+
+    <string name="privacy_title">Privacy Policy &amp; Security</string>
+    <string name="privacy_sub">How we handle your data responsibly</string>
+    <string name="privacy_encryption_title">Data Encryption in Transit &amp; at Rest</string>
+    <string name="privacy_encryption_desc">All sensitive communication between the RestroOne app and Firebase Cloud servers is encrypted using industry-standard TLS protocols.</string>
+    <string name="privacy_no_share_title">Zero Third-Party Data Sharing</string>
+    <string name="privacy_no_share_desc">We never trade, sell, or disclose your customer details, staff records, or sales earnings to external advertisers.</string>
+
+    <string name="err_dialer">Unable to open phone dialer</string>
+    <string name="err_email_client">Unable to open email client</string>
+
+    <!-- Terms Clause Strings -->
+    <string name="terms_clause_1_title">1. Acceptance of Terms</string>
+    <string name="terms_clause_1_desc">By registering, logging in, or using RestroOne POS services, restaurant owners, managers, and authorized staff members agree to be bound by these Terms and Conditions. If you do not agree to these terms, please refrain from using the software.</string>
+
+    <string name="terms_clause_2_title">2. User Account &amp; Staff Security</string>
+    <string name="terms_clause_2_desc">Restaurant owners and managers are responsible for maintaining the confidentiality of login credentials, manager security PINs, and staff passkeys. The account owner is fully liable for all transactions, order modifications, and inventory updates performed under their account.</string>
+
+    <string name="terms_clause_3_title">3. Subscriptions &amp; Payments</string>
+    <string name="terms_clause_3_desc">Access to RestroOne POS features is provided under subscription plans or active trial periods. Subscription fees are billed periodically. Failure to renew an active plan may limit system access to read-only mode until subscription renewal.</string>
+
+    <string name="terms_clause_4_title">4. Data Ownership &amp; Merchant Rights</string>
+    <string name="terms_clause_4_desc">The restaurant retains 100% ownership of its business data, including food menu items, order logs, sales reports, and customer contact records. RestroOne POS will not sell or distribute merchant operational data to third parties.</string>
+
+    <string name="terms_clause_5_title">5. Service Availability &amp; Cloud Limitations</string>
+    <string name="terms_clause_5_desc">While RestroOne POS maintains cloud infrastructure for maximum uptime, we are not liable for temporary service interruptions caused by local internet outages, hardware thermal printer disconnects, or third-party payment gateway downtime.</string>
+
+    <string name="terms_clause_6_title">6. Acceptable Use Policy</string>
+    <string name="terms_clause_6_desc">Users agree not to attempt unauthorized access, reverse-engineer the application, or use the system for fraudulent transaction logging or unauthorized financial tampering.</string>
+
+    <string name="terms_clause_7_title">7. Account Termination &amp; Amendments</string>
+    <string name="terms_clause_7_desc">RestroOne POS reserves the right to suspend or terminate accounts engaging in fraudulent activity, software tampering, or severe breach of these terms. Terms may be updated periodically.</string>
 </resources>

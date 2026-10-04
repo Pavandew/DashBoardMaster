@@ -146,4 +146,5 @@
     <color name="sub_dark_text">#1F2937</color>
     <color name="sub_muted_text">#9CA3AF</color>
     <color name="sub_red_expired">#D32F2F</color>
+    <color name="progress_golden">#ED9E54</color>
 </resources>

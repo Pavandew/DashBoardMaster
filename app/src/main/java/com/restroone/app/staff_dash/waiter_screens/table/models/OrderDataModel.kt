@@ -22,6 +22,8 @@ data class OrderDataModel(
     val paymentMethod: String = "",
     val restaurantId: String = "", // Added for precise cross-collection filtering
     val waiterId: String = "", // Added to identify which waiter to notify
+    val orderSource: String = "WAITER", // "WAITER" or "CUSTOMER_QR"
+    val orderedBy: String = "", // Waiter name or Customer name
     val timestamp: Timestamp = Timestamp.now(),
     val orderDocPath: String = "" // Added to resolve CustomClassMapper warning
 ) : Serializable

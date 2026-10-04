@@ -153,6 +153,7 @@ class OrderDetailRepository {
                         floorId = extractedFloorId,
                         tableId = extractedTableId,
                         tableName = tableName,
+                        customerName = orderModel.customerName,
                         status = status,
                         timeStamp = formattedTime,
                         items = mappedItems,

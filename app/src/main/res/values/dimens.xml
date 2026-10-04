@@ -7,7 +7,7 @@
     <dimen name="login_sub_title_17dp">17dp</dimen>
 
     <dimen name="signup_et_height_40dp">40dp</dimen>
-    <dimen name="tv_title_25dp">25dp</dimen>
+    <dimen name="tv_title_16dp">16dp</dimen>
 
     <dimen name="padding_20dp">20dp</dimen>
     <dimen name="dash_card_height_160dp">140dp</dimen>
@@ -22,7 +22,7 @@
 
     <!-- Padding and Margins -->
     <dimen name="padding_small">8dp</dimen>
-    <dimen name="padding_medium">16dp</dimen>
+    <dimen name="padding_medium">12dp</dimen>
     <dimen name="padding_large">20dp</dimen>
 
     <!-- Border Radius -->

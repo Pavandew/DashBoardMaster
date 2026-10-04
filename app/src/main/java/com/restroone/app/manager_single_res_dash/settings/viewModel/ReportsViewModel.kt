@@ -32,15 +32,16 @@ class ReportsViewModel : ViewModel() {
     fun loadReportData(
         managerId: String,
         filter: ReportsRepository.TimeFilter = _selectedFilter.value,
-        customDateStr: String? = null
+        startDateStr: String? = null,
+        endDateStr: String? = null
     ) {
-        Log.i(TAG, "loadReportData called: managerId='$managerId', filter=$filter, customDate='$customDateStr'")
+        Log.i(TAG, "loadReportData called: managerId='$managerId', filter=$filter, startDate='$startDateStr', endDate='$endDateStr'")
         _selectedFilter.value = filter
         _reportState.value = ResourceUiState.Loading
 
         reportJob?.cancel()
         reportJob = viewModelScope.launch {
-            repository.getReportSummaryStream(managerId, filter, customDateStr)
+            repository.getReportSummaryStream(managerId, filter, startDateStr, endDateStr)
                 .catch { exception ->
                     Log.e(TAG, "Error collecting report summary stream", exception)
                     _reportState.value = ResourceUiState.Error(exception.message ?: "Failed to load report")

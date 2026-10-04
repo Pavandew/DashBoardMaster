@@ -22,6 +22,7 @@ import com.restroone.app.manager_single_res_dash.table_management.adapter.AddTab
 import com.restroone.app.utils.AppConstants
 import com.restroone.app.utils.MenuDialogHelper
 import com.restroone.app.utils.SessionManager
+import com.restroone.app.qrcode.TableQrDialogHelper
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -97,6 +98,14 @@ class TableItemListFragment : Fragment() {
         tableAdapter = AddTableListAdapter(
             onTableClick = { selectedTable ->
                 Log.d(TAG, "Table Row Clicked: ${selectedTable.tableName} Status: ${selectedTable.status}")
+                val ownerUid = sessionManager.getUid()
+                TableQrDialogHelper.showTableQrDialog(
+                    context = requireContext(),
+                    restaurantId = ownerUid,
+                    floorName = floorName,
+                    tableId = selectedTable.tableId,
+                    tableName = selectedTable.tableName
+                )
             },
             onTableLongClick = { targetTableItem ->
                 // RBAC SECURITY GATE: Blocks staff profile definitions from executing deletions [cite: 658]

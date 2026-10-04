@@ -35,7 +35,8 @@ class ReportsRepository {
     fun getReportSummaryStream(
         managerId: String,
         filter: TimeFilter,
-        customDateStr: String? = null
+        startDateStr: String? = null,
+        endDateStr: String? = null
     ): Flow<ReportSummaryModel> = callbackFlow {
         if (managerId.isEmpty()) {
             Log.w(TAG, "getReportSummaryStream: managerId is empty. Emitting 0 summary.")
@@ -44,7 +45,7 @@ class ReportsRepository {
             return@callbackFlow
         }
 
-        Log.i(TAG, "Starting database-filtered listener for managerId: $managerId, filter: $filter, customDate: $customDateStr")
+        Log.i(TAG, "Starting database-filtered listener for managerId: $managerId, filter: $filter, startDate: $startDateStr, endDate: $endDateStr")
 
         val sdfDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val sdfMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault())
@@ -60,8 +61,13 @@ class ReportsRepository {
             .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
 
         val baseQuery: com.google.firebase.firestore.Query = when {
-            !customDateStr.isNullOrEmpty() -> {
-                completedCollectionRef.whereEqualTo(AppConstants.FIELD_BILLING_DATE, customDateStr)
+            !startDateStr.isNullOrEmpty() && !endDateStr.isNullOrEmpty() -> {
+                completedCollectionRef
+                    .whereGreaterThanOrEqualTo(AppConstants.FIELD_BILLING_DATE, startDateStr)
+                    .whereLessThanOrEqualTo(AppConstants.FIELD_BILLING_DATE, endDateStr)
+            }
+            !startDateStr.isNullOrEmpty() -> {
+                completedCollectionRef.whereEqualTo(AppConstants.FIELD_BILLING_DATE, startDateStr)
             }
             filter == TimeFilter.TODAY -> {
                 completedCollectionRef.whereEqualTo(AppConstants.FIELD_BILLING_DATE, todayStr)
@@ -85,7 +91,7 @@ class ReportsRepository {
             }
 
             if (snapshots == null || snapshots.isEmpty) {
-                Log.d(TAG, "No completed_orders found for filter $filter / customDate $customDateStr.")
+                Log.d(TAG, "No completed_orders found for filter $filter / range $startDateStr to $endDateStr.")
                 trySend(ReportSummaryModel())
                 return@addSnapshotListener
             }

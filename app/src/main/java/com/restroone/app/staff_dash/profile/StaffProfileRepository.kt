@@ -60,10 +60,16 @@ class StaffProfileRepository(
                         fieldStaffId.equals(customStaffId, ignoreCase = true) ||
                         fieldEmpId.equals(customStaffId, ignoreCase = true)
                     ) {
-                        matchedProfile = doc.toObject(StaffProfileModel::class.java)?.copy(
-                            staffId = doc.id
+                        val resolvedStaffId = fieldStaffId?.takeIf { it.isNotEmpty() }
+                            ?: fieldId?.takeIf { it.isNotEmpty() }
+                            ?: fieldEmpId?.takeIf { it.isNotEmpty() }
+                            ?: doc.id
+
+                        val parsedModel = doc.toObject(StaffProfileModel::class.java) ?: StaffProfileModel()
+                        matchedProfile = parsedModel.copy(
+                            staffId = resolvedStaffId
                         )
-                        Log.i(TAG, "✅ [MATCH FOUND] Doc ID='${doc.id}', Name='${matchedProfile?.staffName}'")
+                        Log.i(TAG, "✅ [MATCH FOUND] Doc ID='${doc.id}', EmpID='$resolvedStaffId', Name='${matchedProfile.staffName}'")
                         break
                     }
                 }

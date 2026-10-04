@@ -25,6 +25,7 @@ import com.restroone.app.utils.AppConstants
 import com.restroone.app.utils.SessionManager
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
+import com.restroone.app.utils.NetworkUtils
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
@@ -87,6 +88,11 @@ class LoginActivity : AppCompatActivity() {
             binding.loginItem.loginPhoneLayout.error = null
             binding.loginItem.loginPasswordLayout.error = null
 
+            if (!NetworkUtils.isNetworkAvailable(this)) {
+                Toast.makeText(this, "No internet connection. Please check your network and try again.", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
             val phone =
                 binding.loginItem.loginPhoneEt.text.toString().trim()
 
@@ -98,6 +104,10 @@ class LoginActivity : AppCompatActivity() {
         }
 
         binding.loginItem.loginTvForgotPassword.setOnClickListener {
+            if (!NetworkUtils.isNetworkAvailable(this)) {
+                Toast.makeText(this, "No internet connection. Please check your network and try again.", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
             val phone = binding.loginItem.loginPhoneEt.text.toString().trim()
             if (phone.isNotEmpty()) {
                 viewModel.findUserByPhoneForReset(phone)
@@ -333,25 +343,29 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun saveFcmToken(uid: String) {
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (!task.isSuccessful) {
-                Log.w(TAG, "Fetching FCM registration token failed", task.exception)
-                return@addOnCompleteListener
+        try {
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    Log.w(TAG, "Fetching FCM registration token failed", task.exception)
+                    return@addOnCompleteListener
+                }
+
+                val token = task.result ?: return@addOnCompleteListener
+                Log.d(TAG, "FCM Token: $token")
+
+                // Update token in Firestore
+                val db = FirebaseFirestore.getInstance()
+                db.collection(AppConstants.COLLECTION_USERS).document(uid)
+                    .update(AppConstants.FIELD_FCM_TOKEN, token)
+                    .addOnSuccessListener {
+                        Log.d(TAG, "FCM token saved successfully for user: $uid")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Error saving FCM token", e)
+                    }
             }
-
-            val token = task.result
-            Log.d(TAG, "FCM Token: $token")
-
-            // Update token in Firestore
-            val db = FirebaseFirestore.getInstance()
-            db.collection(AppConstants.COLLECTION_USERS).document(uid)
-                .update(AppConstants.FIELD_FCM_TOKEN, token)
-                .addOnSuccessListener {
-                    Log.d(TAG, "FCM token saved successfully for user: $uid")
-                }
-                .addOnFailureListener { e ->
-                    Log.e(TAG, "Error saving FCM token", e)
-                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Safe FCM token handling encountered exception", e)
         }
     }
 

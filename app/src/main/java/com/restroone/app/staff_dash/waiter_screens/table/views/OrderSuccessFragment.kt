@@ -118,7 +118,8 @@ class OrderSuccessFragment : Fragment() {
         binding.btnViewActiveOrders.setOnClickListener {
             val orderId = arguments?.getString("orderId") ?: viewModel.lastOrderId ?: ""
             val rawTableName = arguments?.getString("tableName") ?: ""
-            Log.d(TAG, "Navigating to Order Details Fragment for Order: $orderId, Table: $rawTableName")
+            val docPath = arguments?.getString("docPath") ?: viewModel.lastOrderDocPath ?: ""
+            Log.d(TAG, "Navigating to Order Details Fragment for Order: $orderId, Table: $rawTableName, DocPath: $docPath")
 
             viewModel.clearCart()
 
@@ -126,6 +127,7 @@ class OrderSuccessFragment : Fragment() {
                 arguments = Bundle().apply {
                     putString("orderId", orderId)
                     putString("tableName", rawTableName)
+                    putString("docPath", docPath)
                     putString("orderStatus", "PENDING")
                     putString("orderTime", "Just Now")
                 }

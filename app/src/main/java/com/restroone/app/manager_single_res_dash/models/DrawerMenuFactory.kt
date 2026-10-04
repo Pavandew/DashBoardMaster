@@ -139,7 +139,17 @@ object DrawerMenuFactory {
                 )
             ),
 
-            // 6. Account & Settings (Parent Header)
+            // 6. Notifications (Single top-level item)
+            DrawerMenuItem(
+                id = 14,
+                title = "Notifications",
+                iconRes = R.drawable.ic_notifications_24dp,
+                badgeCount = unreadCount,
+                fragmentClass = NotificationFragment::class.java,
+                isHeader = false
+            ),
+
+            // 7. Account & Settings (Parent Header)
             DrawerMenuItem(
                 id = 500,
                 title = "Account & Settings",
@@ -154,14 +164,6 @@ object DrawerMenuFactory {
                         parentHeaderId = 500
                     ),
                     DrawerMenuItem(
-                        id = 14,
-                        title = "Notifications",
-                        iconRes = R.drawable.ic_notifications_24dp,
-                        badgeCount = unreadCount,
-                        fragmentClass = NotificationFragment::class.java,
-                        parentHeaderId = 500
-                    ),
-                    DrawerMenuItem(
                         id = 15,
                         title = "Settings",
                         iconRes = R.drawable.ic_settings_24dp,
@@ -171,7 +173,7 @@ object DrawerMenuFactory {
                 )
             ),
 
-            // 7. Logout (Single item)
+            // 8. Logout (Single item)
             DrawerMenuItem(
                 id = 16,
                 title = "Logout",

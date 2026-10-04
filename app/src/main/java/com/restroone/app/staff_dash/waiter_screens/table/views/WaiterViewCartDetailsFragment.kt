@@ -79,6 +79,7 @@ class WaiterViewCartDetailsFragment : BaseViewCartFragment() {
             putString("tableId", arguments?.getString("tableId"))
             putString("tableName", arguments?.getString("tableName"))
             putString("orderId", viewModel.lastOrderId)
+            putString("docPath", viewModel.lastOrderDocPath)
             putInt("totalItems", viewModel.cartSummary.value.totalItems)
             putDouble("totalPrice", taxInfo.grandTotal)
             putBoolean("isCashier", false)

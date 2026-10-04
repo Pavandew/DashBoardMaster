@@ -120,9 +120,13 @@ class ManagerSettingsFragment : Fragment() {
                 val profileSheet = ProfileInfoSettingsBottomSheet()
                 profileSheet.show(childFragmentManager, ProfileInfoSettingsBottomSheet.TAG)
             }
-            "app_version" -> {
-                val helpSheet = HelpSupportSettingsBottomSheet()
-                helpSheet.show(childFragmentManager, HelpSupportSettingsBottomSheet.TAG)
+            "app_version", "help_support" -> {
+                val containerId = com.restroone.app.utils.NavigationUtils.getHostContainerId(activity)
+                val targetContainer = if (containerId != 0) containerId else R.id.manager_fragmentContainer
+                parentFragmentManager.beginTransaction()
+                    .replace(targetContainer, HelpSupportFragment())
+                    .addToBackStack(null)
+                    .commit()
             }
             "manager_pin" -> {
                 val pinSheet = ManagerPinSettingsBottomSheet()

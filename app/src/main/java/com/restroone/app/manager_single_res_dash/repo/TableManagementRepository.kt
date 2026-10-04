@@ -38,7 +38,10 @@ class TableManagementRepository {
             }
 
             if (snapshots != null) {
-                val floors = snapshots.toObjects(FloorDataModel::class.java)
+                val floors = snapshots.documents.map { doc ->
+                    val floor = doc.toObject(FloorDataModel::class.java) ?: FloorDataModel()
+                    floor.copy(floorId = doc.id)
+                }
                 Log.i(TAG, "getFloors loaded ${floors.size} entries for $ownerUid")
                 trySend(floors)
             }
@@ -118,7 +121,10 @@ class TableManagementRepository {
             }
 
             if (snapshots != null) {
-                val tables = snapshots.toObjects(TableData::class.java)
+                val tables = snapshots.documents.map { doc ->
+                    val table = doc.toObject(TableData::class.java) ?: TableData()
+                    table.copy(tableId = doc.id)
+                }
                 Log.i(TAG, "getLiveTables loaded ${tables.size} entries.")
                 trySend(tables)
             }

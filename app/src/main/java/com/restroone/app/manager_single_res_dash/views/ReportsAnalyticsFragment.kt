@@ -98,12 +98,11 @@ class ReportsAnalyticsFragment : Fragment() {
                 val managerId = sessionManager.getUid()
 
                 if (isCustom) {
-                    showDatePicker { selectedDateDisplay, rawIsoDate ->
-                        Log.i(TAG, "Custom Date Selected: $selectedDateDisplay ($rawIsoDate)")
-                        activeTimeFilter = ReportsRepository.TimeFilter.TODAY
-                        binding.tvActiveDateFilter.text = "Custom Date"
-                        binding.tvActiveDateRange.text = "Showing report for: Custom Date ($selectedDateDisplay)"
-                        viewModel.loadReportData(managerId, ReportsRepository.TimeFilter.TODAY, rawIsoDate)
+                    showDateRangePicker { startDisplay, endDisplay, startIso, endIso ->
+                        Log.i(TAG, "Custom Date Range Selected: $startDisplay to $endDisplay ($startIso to $endIso)")
+                        binding.tvActiveDateFilter.text = "Custom Range"
+                        binding.tvActiveDateRange.text = "Showing report for: $startDisplay - $endDisplay"
+                        viewModel.loadReportData(managerId, activeTimeFilter, startIso, endIso)
                     }
                 } else {
                     activeTimeFilter = selectedFilter
@@ -242,23 +241,58 @@ class ReportsAnalyticsFragment : Fragment() {
         }
     }
 
-    private fun showDatePicker(onDateSelected: (displayDate: String, rawIsoDate: String) -> Unit) {
-        Log.d(TAG, "Opening DatePickerDialog")
+    private fun showDateRangePicker(onRangeSelected: (startDisplay: String, endDisplay: String, startIso: String, endIso: String) -> Unit) {
+        Log.d(TAG, "Opening Start DatePickerDialog")
         val calendar = Calendar.getInstance()
-        val datePicker = DatePickerDialog(
+        DatePickerDialog(
             requireContext(),
-            { _, year, month, dayOfMonth ->
-                val selectedCal = Calendar.getInstance()
-                selectedCal.set(year, month, dayOfMonth)
-                val displaySdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-                val isoSdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                onDateSelected(displaySdf.format(selectedCal.time), isoSdf.format(selectedCal.time))
+            { _, startYear, startMonth, startDay ->
+                val startCal = Calendar.getInstance().apply { set(startYear, startMonth, startDay) }
+
+                Log.d(TAG, "Opening End DatePickerDialog")
+                DatePickerDialog(
+                    requireContext(),
+                    { _, endYear, endMonth, endDay ->
+                        val endCal = Calendar.getInstance().apply { set(endYear, endMonth, endDay) }
+
+                        if (endCal.before(startCal)) {
+                            Toast.makeText(context, "End date cannot be before start date.", Toast.LENGTH_SHORT).show()
+                            return@DatePickerDialog
+                        }
+
+                        val diffMillis = endCal.timeInMillis - startCal.timeInMillis
+                        val diffDays = diffMillis / (1000 * 60 * 60 * 24)
+
+                        if (diffDays > 90) {
+                            Toast.makeText(context, "Maximum custom date range allowed is 3 months (90 days).", Toast.LENGTH_LONG).show()
+                            return@DatePickerDialog
+                        }
+
+                        val displaySdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                        val isoSdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
+                        onRangeSelected(
+                            displaySdf.format(startCal.time),
+                            displaySdf.format(endCal.time),
+                            isoSdf.format(startCal.time),
+                            isoSdf.format(endCal.time)
+                        )
+                    },
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+                ).apply {
+                    setTitle("Select End Date")
+                    show()
+                }
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
             calendar.get(Calendar.DAY_OF_MONTH)
-        )
-        datePicker.show()
+        ).apply {
+            setTitle("Select Start Date")
+            show()
+        }
     }
 
     private fun formatCurrency(amount: Double): String {

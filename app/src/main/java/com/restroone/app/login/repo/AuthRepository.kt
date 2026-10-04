@@ -9,6 +9,7 @@ import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import com.restroone.app.utils.NetworkUtils
 import kotlinx.coroutines.tasks.await
 import java.util.concurrent.TimeUnit
 
@@ -47,7 +48,8 @@ class AuthRepository {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error finding user by phone", e)
-            Result.failure(e)
+            val formattedMsg = NetworkUtils.formatErrorMessage(e)
+            Result.failure(Exception(formattedMsg))
         }
     }
 

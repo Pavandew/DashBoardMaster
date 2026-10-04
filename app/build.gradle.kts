@@ -59,6 +59,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.razorpay:checkout:1.6.38")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation("com.google.zxing:core:3.5.3")
     annotationProcessor(libs.glide.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
