@@ -26,13 +26,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="@dimen/tv_title_25dp">
+            android:paddingBottom="16dp">
 
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="@dimen/margin_large"
-                android:layout_marginTop="@dimen/margin_large"
+                android:layout_marginHorizontal="10dp"
+                android:layout_marginTop="10dp"
                 app:cardBackgroundColor="#F6F3F3"
                 app:cardCornerRadius="@dimen/alert_card_radius"
                 app:cardElevation="2dp">
@@ -40,7 +40,7 @@
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="@dimen/padding_medium">
+                    android:padding="16dp">
 
                     <TextView
                         android:id="@+id/tvLabelTable"
@@ -48,7 +48,8 @@
                         android:layout_height="wrap_content"
                         android:text="@string/table_number"
                         android:textColor="@color/search_bar_hint"
-                        android:textSize="@dimen/text_size_caption"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
@@ -56,9 +57,9 @@
                         android:id="@+id/tvExpandedTableId"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/margin_tiny"
+                        android:layout_marginTop="2dp"
                         android:textColor="@color/table_id_text"
-                        android:textSize="@dimen/text_size_20sp"
+                        android:textSize="18sp"
                         android:textStyle="bold"
                         tools:text="T-05"
                         app:layout_constraintStart_toStartOf="parent"
@@ -70,7 +71,8 @@
                         android:layout_height="wrap_content"
                         android:text="@string/order_id_label"
                         android:textColor="@color/search_bar_hint"
-                        android:textSize="@dimen/text_size_caption"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
@@ -78,9 +80,9 @@
                         android:id="@+id/tvExpandedOrderId"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/margin_tiny"
+                        android:layout_marginTop="2dp"
                         android:textColor="@color/table_id_text"
-                        android:textSize="@dimen/text_size_20sp"
+                        android:textSize="18sp"
                         android:textStyle="bold"
                         tools:text="#ORD-1258"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -90,36 +92,67 @@
                         android:id="@+id/tvExpandedStatusTag"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/margin_large"
                         android:background="@drawable/bg_status_preparing"
-                        android:paddingHorizontal="@dimen/margin_medium"
-                        android:paddingVertical="@dimen/order_card_margin_vertical"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="3dp"
                         android:textColor="@color/order_status_preparing"
-                        android:textSize="@dimen/text_size_caption"
+                        android:textSize="11sp"
                         android:textStyle="bold"
-                        tools:text="• Preparing"
+                        app:layout_constraintEnd_toStartOf="@+id/tvLabelOrderId"
+                        app:layout_constraintStart_toEndOf="@+id/tvLabelTable"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:text="• Preparing" />
+
+                    <View
+                        android:id="@+id/vHeaderDivider"
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="12dp"
+                        android:background="#E5E7EB"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/tvExpandedTableId" />
 
-                    <TextView
-                        android:id="@+id/tvLabelTime"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:id="@+id/layoutCustomerRow"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/time_label"
-                        android:textColor="@color/search_bar_hint"
-                        android:textSize="@dimen/text_size_medium"
-                        app:layout_constraintBottom_toTopOf="@id/tvExpandedTimestamp"
-                        app:layout_constraintEnd_toEndOf="parent" />
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/tvExpandedTimestamp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/vHeaderDivider">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Customer: "
+                            android:textColor="@color/search_bar_hint"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tvExpandedCustomerName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/table_id_text"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            tools:text="Rahul Sharma" />
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvExpandedTimestamp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
                         android:textColor="@color/chip_unselected_text"
-                        android:textSize="@dimen/text_size_caption"
-                        app:layout_constraintBottom_toBottomOf="@id/tvExpandedStatusTag"
+                        android:textSize="12sp"
+                        tools:text="11 May 2026, 11:30 AM"
+                        app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
-                        tools:text="11 May 2026, 11:30 AM" />
+                        app:layout_constraintTop_toBottomOf="@id/vHeaderDivider" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </androidx.cardview.widget.CardView>
@@ -128,7 +161,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="@dimen/margin_large"
-                android:layout_marginTop="@dimen/tv_title_25dp"
+                android:layout_marginTop="@dimen/tv_title_16dp"
                 android:layout_marginBottom="@dimen/margin_small"
                 android:text="@string/items"
                 android:textColor="@color/order_table_text"
@@ -241,7 +274,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        android:indeterminateTint="@color/chip_selected"
+        android:indeterminateDrawable="@drawable/progress_golden_gradient"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
