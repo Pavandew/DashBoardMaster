@@ -157,8 +157,6 @@ class SignUpActivity : AppCompatActivity() {
                                 OTPVerificationActivity::class.java
                             )
 
-                            Log.d(TAG, "Navigating to OTPVerificationActivity with data: phone=${state.phone}, role=${state.role}, portalType=${state.portalType}")
-
                             intent.putExtra(AppConstants.KEY_MOBILE, state.phone)
                             intent.putExtra(
                                 "fullName",

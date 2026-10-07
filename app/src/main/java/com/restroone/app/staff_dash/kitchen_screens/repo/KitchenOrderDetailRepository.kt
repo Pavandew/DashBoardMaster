@@ -5,6 +5,7 @@ import com.restroone.app.utils.AppConstants
 import com.restroone.app.staff_dash.kitchen_screens.model.KitchenOrderDetailData
 import com.restroone.app.staff_dash.kitchen_screens.model.OrderDetailItem
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.tasks.await
 class KitchenOrderDetailsRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
+    private val functions = FirebaseFunctions.getInstance()
 
     companion object {
         private const val TAG = "KitchenDetailsRepo"
@@ -108,9 +110,17 @@ class KitchenOrderDetailsRepository(
         if (docPath.isEmpty()) return
         try {
             val firestoreStatus = if (newStatus.equals("New", ignoreCase = true)) AppConstants.STATUS_PENDING else newStatus
-            val updates = mutableMapOf<String, Any>(AppConstants.FIELD_ORDER_STATUS to firestoreStatus)
-            if (reason.isNotEmpty()) updates[AppConstants.FIELD_REJECTION_REASON] = reason
-            firestore.document(docPath).update(updates).await()
+            val restaurantId = docPath.split("/").getOrNull(1)
+                ?: throw IllegalArgumentException("Invalid order path")
+            functions.getHttpsCallable("updateKitchenOrder").call(
+                mapOf(
+                    "restaurantId" to restaurantId,
+                    "docPath" to docPath,
+                    "action" to "status",
+                    "orderStatus" to firestoreStatus,
+                    "rejectionReason" to reason
+                )
+            ).await()
         } catch (e: Exception) {
             Log.e(TAG, "updateOrderStatus failure", e)
             throw e
@@ -122,38 +132,22 @@ class KitchenOrderDetailsRepository(
      */
     suspend fun updateOrderItemsAndStatus(
         docPath: String,
-        updatedItems: List<OrderDetailItem>,
         newStatus: String,
         reason: String = ""
     ) {
         if (docPath.isEmpty()) return
-        try {
-            val firestoreStatus = if (newStatus.equals("New", ignoreCase = true)) AppConstants.STATUS_PENDING else newStatus
-            val itemsMap = updatedItems.map { item ->
-                mapOf(
-                    AppConstants.FIELD_ITEM_ID to item.itemId,
-                    AppConstants.FIELD_ITEM_NAME to item.itemName,
-                    AppConstants.FIELD_VARIANT_NAME to item.variantName,
-                    AppConstants.FIELD_ITEM_PRICE to item.price,
-                    AppConstants.FIELD_QUANTITY to item.quantity,
-                    AppConstants.FIELD_ORDERED_QTY to item.quantity,
-                    AppConstants.FIELD_READY_QTY to item.readyQuantity,
-                    AppConstants.FIELD_ROW_TOTAL to item.rowTotal,
-                    AppConstants.FIELD_CATEGORY to item.category,
-                    AppConstants.FIELD_ITEM_NOTE to item.itemNote,
-                    "itemStatus" to item.itemStatus
-                )
-            }
-            val updates = mutableMapOf<String, Any>(
-                AppConstants.FIELD_ORDER_STATUS to firestoreStatus,
-                AppConstants.FIELD_ORDER_ITEMS to itemsMap
+        val restaurantId = docPath.split("/").getOrNull(1)
+            ?: throw IllegalArgumentException("Invalid order path")
+        val firestoreStatus = if (newStatus.equals("New", ignoreCase = true)) AppConstants.STATUS_PENDING else newStatus
+        functions.getHttpsCallable("updateKitchenOrder").call(
+            mapOf(
+                "restaurantId" to restaurantId,
+                "docPath" to docPath,
+                "action" to "status",
+                "orderStatus" to firestoreStatus,
+                "rejectionReason" to reason
             )
-            if (reason.isNotEmpty()) updates[AppConstants.FIELD_REJECTION_REASON] = reason
-            firestore.document(docPath).update(updates).await()
-        } catch (e: Exception) {
-            Log.e(TAG, "updateOrderItemsAndStatus failure", e)
-            throw e
-        }
+        ).await()
     }
 
     /**
@@ -161,22 +155,22 @@ class KitchenOrderDetailsRepository(
      */
     suspend fun updateOrderWithRejectedItems(
         docPath: String,
-        updatedItems: List<Map<String, Any>>,
-        newSubtotal: Double,
-        newGst: Double,
-        newGrandTotal: Double,
+        remainingItemIds: List<String>,
         rejectionReason: String
     ) {
         if (docPath.isEmpty()) return
         try {
-            val updates = mapOf(
-                AppConstants.FIELD_ORDER_ITEMS to updatedItems,
-                AppConstants.FIELD_SUBTOTAL to newSubtotal,
-                AppConstants.FIELD_GST to newGst,
-                AppConstants.FIELD_GRAND_TOTAL to newGrandTotal,
-                AppConstants.FIELD_REJECTION_REASON to rejectionReason
-            )
-            firestore.document(docPath).update(updates).await()
+            val restaurantId = docPath.split("/").getOrNull(1)
+                ?: throw IllegalArgumentException("Invalid order path")
+            functions.getHttpsCallable("updateKitchenOrder").call(
+                mapOf(
+                    "restaurantId" to restaurantId,
+                    "docPath" to docPath,
+                    "action" to "reject",
+                    "remainingItemIds" to remainingItemIds,
+                    "rejectionReason" to rejectionReason
+                )
+            ).await()
         } catch (e: Exception) {
             Log.e(TAG, "updateOrderWithRejectedItems failure", e)
             throw e

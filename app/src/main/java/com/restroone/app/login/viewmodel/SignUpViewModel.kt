@@ -33,8 +33,6 @@ class SignUpViewModel : ViewModel() {
         role: String,
         portalType: String
     ) {
-        Log.i(TAG, "signUpUser: Attempting to sign up user with phone: $phone")
-
         // validation
         val result = SignUpValidator.validate(
             fullName,
@@ -56,10 +54,10 @@ class SignUpViewModel : ViewModel() {
                 viewModelScope.launch {
                     _signUpState.value = SignUpUiState.Loading
 
-                    repository.findUserByPhone(phone).fold(
-                        onSuccess = { user ->
-                            if (user != null) {
-                                Log.w(TAG, "signUpUser: Phone $phone is already registered")
+                    repository.isPhoneRegistered(phone).fold(
+                        onSuccess = { registered ->
+                            if (registered) {
+                                Log.w(TAG, "signUpUser: Mobile is already registered")
                                 _signUpState.value = SignUpUiState.Error(
                                     AppConstants.FIELD_MOBILE,
                                     "Mobile already registered"
@@ -68,7 +66,7 @@ class SignUpViewModel : ViewModel() {
                             }
 
                             // Success -> Trigger OTP screen flow
-                            Log.i(TAG, "signUpUser: User not found, proceeding to OTP for $phone")
+                            Log.i(TAG, "signUpUser: Proceeding to OTP verification")
                             _signUpState.value = SignUpUiState.Success(
                                 message = "Ready to send OTP",
                                 phone = phone,

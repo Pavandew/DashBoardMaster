@@ -93,19 +93,12 @@ class KitchenInventoryViewModel(
 
     fun addItem(restaurantId: String, item: InventoryItem, staffName: String) {
         viewModelScope.launch {
-            repository.addInventoryItem(restaurantId, item)
+            val inventoryId = repository.addInventoryItem(restaurantId, item)
             
             // Notify Manager/Owner about the new item added
-            val status = item.getStockStatus()
-            val notifyType = if (status == "In Stock") "Added" else status
-
             AppNotificationHelper.notifyInventoryUpdate(
                 managerId = restaurantId,
-                staffName = staffName,
-                itemName = item.itemName,
-                quantity = item.itemQuantity,
-                unit = item.itemUnit,
-                type = notifyType
+                inventoryId = inventoryId
             )
         }
     }
@@ -115,16 +108,9 @@ class KitchenInventoryViewModel(
             repository.updateInventoryItem(restaurantId, item)
             
             // Notify Manager/Owner about the update
-            val status = item.getStockStatus()
-            val notifyType = if (status == "In Stock") "Updated" else status
-
             AppNotificationHelper.notifyInventoryUpdate(
                 managerId = restaurantId,
-                staffName = staffName,
-                itemName = item.itemName,
-                quantity = item.itemQuantity,
-                unit = item.itemUnit,
-                type = notifyType
+                inventoryId = item.inventoryId
             )
         }
     }

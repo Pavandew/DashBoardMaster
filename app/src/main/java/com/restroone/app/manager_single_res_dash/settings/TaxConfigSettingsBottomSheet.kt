@@ -50,7 +50,7 @@ class TaxConfigSettingsBottomSheet : BottomSheetDialogFragment() {
         setupUI()
         observeViewModel()
 
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
         if (ownerUid.isNotEmpty()) {
             viewModel.loadTaxSettings(ownerUid, sessionManager)
         } else {
@@ -193,7 +193,7 @@ class TaxConfigSettingsBottomSheet : BottomSheetDialogFragment() {
             return
         }
 
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
         val newSettings = TaxSettings(
             chargeTaxOnBills = isTaxEnabled,
             defaultTaxRate = rate,

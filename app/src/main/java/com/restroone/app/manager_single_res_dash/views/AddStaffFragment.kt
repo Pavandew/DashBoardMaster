@@ -87,7 +87,7 @@ class AddStaffFragment : Fragment() {
             }
 
             // 2. Cross-verify mobile data array sets to ensure entries do not already exist
-            val ownerUid = sessionManager.getUid()
+            val ownerUid = sessionManager.getRestaurantId()
             sharedViewModel.verifyMobileAndProceed(ownerUid, mobile) {
 
                 // 3. Save personal fields back to model cache flow states

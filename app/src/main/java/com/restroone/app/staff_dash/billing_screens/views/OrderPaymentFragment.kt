@@ -299,7 +299,7 @@ class OrderPaymentFragment : Fragment() {
      * Triggers the actual Firestore write via the ViewModel.
      */
     private fun proceedWithOrderFinalization() {
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         val waiterId = sessionManager.getStaffDocId() // Stores current staff ID
         val tableId = arguments?.getString("tableId") ?: "N/A"
         val floorId = arguments?.getString("floorId") ?: "N/A"

@@ -47,7 +47,7 @@ class KitchenOrderFragment : Fragment(R.layout.fragment_kitchen_order) {
         setupSearch()
         observeUiState()
 
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         viewModel.startListeningOrders(managerId)
         viewModel.setWorkstationContext(false)
     }
@@ -68,7 +68,7 @@ class KitchenOrderFragment : Fragment(R.layout.fragment_kitchen_order) {
         binding.toolbarKitchen.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.action_refresh -> {
-                    val managerId = sessionManager.getUid()
+                    val managerId = sessionManager.getRestaurantId()
                     viewModel.startListeningOrders(managerId)
                     true
                 }

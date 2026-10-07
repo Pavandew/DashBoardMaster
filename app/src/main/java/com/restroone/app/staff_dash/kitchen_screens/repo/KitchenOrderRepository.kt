@@ -3,6 +3,7 @@ package com.restroone.app.staff_dash.kitchen_screens.repo
 import android.util.Log
 import com.restroone.app.utils.AppConstants
 import com.restroone.app.utils.RestaurantPathHelper
+import com.restroone.app.utils.RestaurantActiveOrders
 import com.restroone.app.staff_dash.kitchen_screens.model.KitchenOrderDetailData
 import com.restroone.app.staff_dash.kitchen_screens.model.OrderDetailItem
 import com.google.firebase.Timestamp
@@ -57,17 +58,8 @@ class KitchenOrderRepository(private val firestore: FirebaseFirestore = Firebase
         }
 
         // 1. Listens to active_orders across table subcollections for this manager
-        val activeRegistration = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
-            .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
-            .orderBy(AppConstants.FIELD_TIMESTAMP, Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    Log.e(TAG, "📦 [REPO] Active orders snapshot error: ${error.message}")
-                    return@addSnapshotListener
-                }
-
-                val documents = snapshot?.documents ?: emptyList()
-
+        val activeJob = launch {
+            RestaurantActiveOrders.observe(firestore, managerId).collect { documents ->
                 launch(Dispatchers.Default) {
                     activeOrdersList = documents.map { doc ->
                         async { parseKitchenOrderDoc(doc, managerId) }
@@ -76,6 +68,7 @@ class KitchenOrderRepository(private val firestore: FirebaseFirestore = Firebase
                     emitCombinedList()
                 }
             }
+        }
 
         // 2. Listens to completed_orders collection for this manager (last 24 hours)
         val twentyFourHoursAgo = Timestamp(
@@ -106,7 +99,7 @@ class KitchenOrderRepository(private val firestore: FirebaseFirestore = Firebase
 
         awaitClose {
             Log.d(TAG, "📦 [REPO] Dismantling kitchen orders snapshot listeners.")
-            activeRegistration.remove()
+            activeJob.cancel()
             completedRegistration.remove()
         }
     }

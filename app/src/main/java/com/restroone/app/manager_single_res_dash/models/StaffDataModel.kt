@@ -8,7 +8,7 @@ import java.io.Serializable
 data class StaffDataModel(
     val id: String = "",
     val staffId: String = "",       // ✅ Added Custom ID Created by System Form
-    val password: String = "",      // ✅ Added Password for Manager view & Staff Login
+    val password: String = "",
     val staffName: String = "",
     val mobile: String = "",
     val phone: String = "",         // ✅ Added for backward compatibility with old data
@@ -35,7 +35,6 @@ data class StaffDataModel(
         return mapOf(
             "id" to id,
             AppConstants.FIELD_STAFF_ID to staffId,         // ✅ Synced to database payload
-            AppConstants.FIELD_PASSWORD to password,       // ✅ Synced to database payload
             AppConstants.FIELD_STAFF_NAME to staffName,
             AppConstants.FIELD_MOBILE to getUnifiedMobile(), // ✅ Always save as 'mobile' but include 'phone' value if that's all we have
             AppConstants.FIELD_EMAIL to email,

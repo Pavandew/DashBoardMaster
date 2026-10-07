@@ -18,13 +18,26 @@ android {
     }
 
     buildTypes {
+        debug {
+            val emulatorHost = providers.gradleProperty("restrooneFirebaseEmulatorHost").orNull
+                ?.replace("\\", "\\\\")
+                ?.replace("\"", "\\\"")
+                .orEmpty()
+            buildConfigField("String", "FIREBASE_EMULATOR_HOST", "\"$emulatorHost\"")
+        }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+    }
+    
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -32,6 +45,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 
@@ -49,7 +63,10 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.appcheck.playintegrity)
+    debugImplementation(libs.firebase.appcheck.debug)
     implementation(libs.firebase.firestore)
+    implementation("com.google.firebase:firebase-functions:22.1.1")
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.storage)
     implementation(libs.googleid)

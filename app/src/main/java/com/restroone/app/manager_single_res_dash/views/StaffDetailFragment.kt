@@ -54,7 +54,7 @@ class StaffDetailFragment : Fragment() {
         observeDetailUiPipeline()
 
         val staffDocId = arguments?.getString("STAFF_DOCUMENT_ID") ?: ""
-        val ownerUid = SessionManager(requireContext()).getUid()
+        val ownerUid = SessionManager(requireContext()).getRestaurantId()
 
         Log.d(TAG, "Requesting details matching Staff ID: '$staffDocId' under Owner: '$ownerUid'")
         viewModel.loadStaffProfile(ownerUid, staffDocId)
@@ -141,4 +141,3 @@ class StaffDetailFragment : Fragment() {
         _binding = null
     }
 }
-

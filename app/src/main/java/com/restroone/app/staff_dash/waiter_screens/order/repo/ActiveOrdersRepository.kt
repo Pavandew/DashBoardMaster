@@ -8,8 +8,9 @@ import com.restroone.app.staff_dash.waiter_screens.table.models.OrderDataModel
 import com.restroone.app.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.restroone.app.staff_dash.utils.TimeUtils
 import com.restroone.app.utils.RestaurantPathHelper
-import com.google.firebase.Timestamp
+import com.restroone.app.utils.RestaurantActiveOrders
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -39,35 +40,20 @@ class ActiveOrdersRepository {
 
         var activeOrdersMap = mapOf<String, Pair<ActiveOrderCardData, Long>>()
         var completedOrdersMap = mapOf<String, Pair<ActiveOrderCardData, Long>>()
-
         fun emitCombinedList() {
             CoroutineScope(Dispatchers.IO).launch {
-                val mergedMap = mutableMapOf<String, Pair<ActiveOrderCardData, Long>>()
-                // Active orders first
-                mergedMap.putAll(activeOrdersMap)
-                // Completed / Paid orders merged in
-                completedOrdersMap.forEach { (id, pair) ->
-                    if (!mergedMap.containsKey(id) || mergedMap[id]?.first?.status != ActiveOrderStatus.PAID) {
-                        mergedMap[id] = pair
-                    }
-                }
-
-                val sortedList = mergedMap.values.sortedByDescending { it.second }.map { it.first }
-                Log.i(TAG, "📦 [REPO] Emitting Success with ${sortedList.size} combined active + paid order cards.")
+                val combined = activeOrdersMap + completedOrdersMap
+                val sortedList = combined.values
+                    .sortedByDescending { it.second }
+                    .map { it.first }
+                Log.i(TAG, "📦 [REPO] Emitting Success with ${sortedList.size} active order cards.")
                 trySend(ResourceUiState.Success(sortedList))
             }
         }
 
         // 1. Listen to active_orders subcollections across table locations
-        val ordersQuery = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
-        val activeListener = ordersQuery.addSnapshotListener { snapshots, exception ->
-            if (exception != null) {
-                Log.e(TAG, "📦 [REPO] Snapshot listener error: ${exception.message}", exception)
-                trySend(ResourceUiState.Error("Error fetching active orders: ${exception.message}"))
-                return@addSnapshotListener
-            }
-
-            val docs = snapshots?.documents ?: emptyList()
+        val activeJob = launch {
+            RestaurantActiveOrders.observe(firestore, managerId).collect { docs ->
             val tempMap = mutableMapOf<String, Pair<ActiveOrderCardData, Long>>()
 
             docs.forEach { document ->
@@ -142,6 +128,7 @@ class ActiveOrdersRepository {
 
             activeOrdersMap = tempMap
             emitCombinedList()
+            }
         }
 
         // 2. Listen to completed_orders collection for recent settled / paid orders (last 24 hours)
@@ -217,7 +204,7 @@ class ActiveOrdersRepository {
 
         awaitClose {
             Log.d(TAG, "📦 [REPO] Removing active and completed orders snapshot listeners.")
-            activeListener.remove()
+            activeJob.cancel()
             completedListener.remove()
         }
     }.flowOn(Dispatchers.IO)

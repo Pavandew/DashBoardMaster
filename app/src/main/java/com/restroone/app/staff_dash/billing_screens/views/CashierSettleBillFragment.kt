@@ -190,7 +190,7 @@ class CashierSettleBillFragment : Fragment() {
             amount = currentOrder.grandTotal,
             paymentMethod = method,
             onConfirm = {
-                val managerId = sessionManager.getUid()
+                val managerId = sessionManager.getRestaurantId()
                 viewModel.settleAndCompleteOrder(managerId)
                 
                 // Auto-trigger print after settlement

@@ -57,7 +57,7 @@ class CashierViewCartDetailsFragment : BaseViewCartFragment() {
      * Sends the order to the kitchen without immediate payment.
      */
     private fun executePayLater() {
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         val waiterId = sessionManager.getStaffDocId()
         val tableId = arguments?.getString("tableId") ?: "COUNTER_ORDER"
         val floorId = arguments?.getString("floorId") ?: "N/A"

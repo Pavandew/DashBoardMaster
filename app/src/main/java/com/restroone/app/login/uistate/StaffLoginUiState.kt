@@ -6,6 +6,7 @@ sealed interface StaffLoginUiState {
     data class Success(
         val staffName: String,
         val restaurantOwnerUid: String,
+        val restaurantId: String,
         val staffDocId: String,
         val staffId: String,
         val role: String,

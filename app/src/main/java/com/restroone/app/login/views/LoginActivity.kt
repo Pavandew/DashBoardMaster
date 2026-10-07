@@ -99,7 +99,6 @@ class LoginActivity : AppCompatActivity() {
             val password =
                 binding.loginItem.loginPasswordEt.text.toString().trim()
 
-            Log.i(TAG, "Attempting login for phone: $phone")
             viewModel.loginUser(phone, password)
         }
 
@@ -196,18 +195,13 @@ class LoginActivity : AppCompatActivity() {
                             navigateToDashboard(state.role, state.isRestaurantSetup)
                         }
 
-                        is LoginUiState.ResetUserFound -> {
-                            Log.i(TAG, "ResetUserFound: user found for phone ${state.phone}")
+                        is LoginUiState.ResetRequested -> {
                             binding.loginItem.loginBtn.isEnabled = true
                             binding.loginItem.loginBtn.text = "Login"
 
                             viewModel.reset()
 
-                            openResetPasswordFragment(
-                                phone = state.phone,
-                                ownerUid = state.uid,
-                                role = state.role
-                            )
+                            openResetPasswordFragment(phone = state.phone)
                         }
 
                         is LoginUiState.Error -> {
@@ -272,12 +266,12 @@ class LoginActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun openResetPasswordFragment(phone: String, ownerUid: String, role: String) {
+    private fun openResetPasswordFragment(phone: String) {
         val fragment = ChangePasswordFragment.newInstance(
             phone = phone,
-            ownerUid = ownerUid,
+            ownerUid = "",
             staffDocId = "",
-            role = role,
+            role = "",
             isForgotPassword = true
         )
 

@@ -80,7 +80,7 @@ abstract class BaseOrderTakingFragment : Fragment() {
         setupSearchEngine()
         setupCustomizationOverlay()
         
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         setupSwipeRefreshAndRetry(managerId)
         observeViewStates()
         
@@ -190,7 +190,7 @@ abstract class BaseOrderTakingFragment : Fragment() {
     }
 
     private fun showCustomizationOverlay(item: FoodItemData) {
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         if (managerId.isNotEmpty() && item.categoryId.isNotEmpty()) {
             customizationViewModel.loadAddons(managerId, item.categoryId, item.id)
         }

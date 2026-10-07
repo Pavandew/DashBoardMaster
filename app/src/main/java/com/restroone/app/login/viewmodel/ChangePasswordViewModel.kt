@@ -47,7 +47,6 @@ class ChangePasswordViewModel(private val repository: ChangePasswordRepository) 
             return
         }
 
-        Log.i(TAG, "verifyCurrentPassword: Verifying password. Role: $role, UID: $uid")
         _uiState.value = ChangePasswordState.Loading
 
         viewModelScope.launch {
@@ -81,7 +80,6 @@ class ChangePasswordViewModel(private val repository: ChangePasswordRepository) 
 
     fun sendOtp(phone: String, activity: Activity) {
         val formattedPhone = if (phone.startsWith("+91")) phone else "+91$phone"
-        Log.i(TAG, "sendOtp: Requesting OTP for $formattedPhone")
         _uiState.value = ChangePasswordState.Loading
 
         val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
@@ -143,18 +141,18 @@ class ChangePasswordViewModel(private val repository: ChangePasswordRepository) 
         newPassword: String,
         role: String,
         uid: String,
-        staffDocId: String? = null
+        staffDocId: String? = null,
+        isForgotPassword: Boolean = false
     ) {
-        Log.i(TAG, "updatePassword: Initiating password update. Role: $role, UID: $uid")
         _uiState.value = ChangePasswordState.Loading
         viewModelScope.launch {
-            val result = if (role == AppConstants.ROLE_MANAGER || 
-                role == AppConstants.ROLE_OWNER_SINGLE || 
+            val result = if (isForgotPassword) {
+                repository.resetPassword(newPassword)
+            } else if (role == AppConstants.ROLE_MANAGER ||
+                role == AppConstants.ROLE_OWNER_SINGLE ||
                 role == AppConstants.ROLE_OWNER_MULTI) {
-                Log.d(TAG, "updatePassword: Treating as Owner/Manager update")
                 repository.updateOwnerPassword(uid, newPassword)
             } else {
-                Log.d(TAG, "updatePassword: Treating as Staff update. StaffDocId: $staffDocId")
                 if (staffDocId.isNullOrEmpty()) {
                     Log.e(TAG, "updatePassword: staffDocId is missing for non-owner role")
                     _uiState.value = ChangePasswordState.Error("Staff account error: Document ID missing")

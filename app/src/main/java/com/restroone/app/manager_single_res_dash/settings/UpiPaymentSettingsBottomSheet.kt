@@ -92,7 +92,7 @@ class UpiPaymentSettingsBottomSheet : BottomSheetDialogFragment() {
 
     private fun saveUpiSettings() {
         val upiId = binding.etUpiId.text?.toString()?.trim() ?: ""
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
 
         if (ownerUid.isEmpty()) {
             Toast.makeText(requireContext(), "User session not found", Toast.LENGTH_SHORT).show()

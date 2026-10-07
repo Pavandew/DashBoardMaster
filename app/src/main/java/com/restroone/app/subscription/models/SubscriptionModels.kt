@@ -98,7 +98,8 @@ data class PaymentOrderDetails(
     val currency: String = "INR",
     val gateway: PaymentGateway,
     val ownerUid: String,
-    val restaurantId: String
+    val restaurantId: String,
+    val gatewayKeyId: String = ""
 )
 
 /**

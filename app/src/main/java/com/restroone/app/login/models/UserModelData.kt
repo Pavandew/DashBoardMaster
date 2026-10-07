@@ -19,9 +19,6 @@ data class UserModelData(
     @get:PropertyName("phone")
     val phone: String = "",
 
-    @get:PropertyName("passwordHash")
-    val passwordHash: String = "",
-
     @get:PropertyName("role")
     val role: String = "",
 

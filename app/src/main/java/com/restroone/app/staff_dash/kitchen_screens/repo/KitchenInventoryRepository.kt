@@ -43,19 +43,19 @@ class KitchenInventoryRepository(private val firestore: FirebaseFirestore = Fire
         }
     }
 
-    suspend fun addInventoryItem(restaurantId: String, item: InventoryItem) {
+    suspend fun addInventoryItem(restaurantId: String, item: InventoryItem): String {
         if (restaurantId.isEmpty()) {
-            Log.e(TAG, "addInventoryItem: Cannot add item, restaurantId is empty")
-            return
+            throw IllegalArgumentException("Restaurant ID is required to add inventory.")
         }
         
         try {
             Log.d(TAG, "addInventoryItem: Adding ${item.itemName} to $restaurantId")
-            RestaurantPathHelper.getOutletDocRef(restaurantId)
+            val itemRef = RestaurantPathHelper.getOutletDocRef(restaurantId)
                 .collection(AppConstants.COLLECTION_INVENTORY)
-                .add(item)
-                .await()
+                .document()
+            itemRef.set(item.copy(inventoryId = itemRef.id)).await()
             Log.d(TAG, "addInventoryItem: Successfully added ${item.itemName}")
+            return itemRef.id
         } catch (e: Exception) {
             Log.e(TAG, "addInventoryItem: Error adding item", e)
             throw e

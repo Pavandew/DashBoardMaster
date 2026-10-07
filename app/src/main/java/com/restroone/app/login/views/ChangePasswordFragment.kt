@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import com.restroone.app.R
 import com.restroone.app.databinding.FragmentChangePasswordBinding
 import com.restroone.app.master_dash.MasterHomeActivity
+import com.google.firebase.auth.FirebaseAuth
 import com.restroone.app.login.repo.ChangePasswordRepository
 import com.restroone.app.login.viewmodel.ChangePasswordState
 import com.restroone.app.login.viewmodel.ChangePasswordViewModel
@@ -125,7 +126,6 @@ class ChangePasswordFragment : Fragment() {
             val staffDocId = arguments?.getString(AppConstants.KEY_STAFF_DOC_ID) ?: sessionManager.getStaffDocId()
             val role = arguments?.getString(AppConstants.FIELD_ROLE) ?: sessionManager.getRole()
 
-            Log.i(TAG, "btnVerifyCurrentPassword clicked. Verifying current password for role: $role, UID: $uid")
             viewModel.verifyCurrentPassword(
                 currentPassword = currentPass,
                 role = role,
@@ -153,7 +153,6 @@ class ChangePasswordFragment : Fragment() {
             val argPhone = arguments?.getString(AppConstants.KEY_MOBILE)
             val phone = argPhone ?: sessionManager.getPhone()
 
-            Log.i(TAG, "btnSendOtp clicked. Fetching phone: $phone")
             if (!phone.isNullOrEmpty()) {
                 viewModel.sendOtp(phone, requireActivity())
             } else {
@@ -194,16 +193,31 @@ class ChangePasswordFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            val uid = arguments?.getString(AppConstants.FIELD_UID) ?: sessionManager.getUid()
+            val isForgotPassword = arguments?.getBoolean("is_forgot_password", false) == true
+            val uid = if (isForgotPassword) {
+                FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+            } else {
+                arguments?.getString(AppConstants.FIELD_UID) ?: sessionManager.getUid()
+            }
             val staffDocId = arguments?.getString(AppConstants.KEY_STAFF_DOC_ID) ?: sessionManager.getStaffDocId()
-            val role = arguments?.getString(AppConstants.FIELD_ROLE) ?: sessionManager.getRole()
+            val role = if (isForgotPassword) {
+                AppConstants.ROLE_OWNER_SINGLE
+            } else {
+                arguments?.getString(AppConstants.FIELD_ROLE) ?: sessionManager.getRole()
+            }
+
+            if (uid.isBlank()) {
+                Toast.makeText(requireContext(), "Verify the phone number before updating the password.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
             Log.d(TAG, "Validation Success: Calling ViewModel updatePassword")
             viewModel.updatePassword(
                 newPassword = newPass,
                 role = role,
                 uid = uid,
-                staffDocId = staffDocId
+                staffDocId = staffDocId,
+                isForgotPassword = isForgotPassword
             )
         }
     }

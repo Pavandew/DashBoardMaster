@@ -50,7 +50,7 @@ class KitchenNotificationService : Service() {
             return START_NOT_STICKY
         }
 
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         Log.i(TAG, "onStartCommand: Service triggered for Manager: $managerId")
         
         // 1. Show Foreground Notification (Required for Android 8+)

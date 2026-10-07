@@ -175,7 +175,7 @@ class AddTableFragment : Fragment() {
         binding.btnSaveTableAction.setOnClickListener {
             val rawInput = binding.etTableNameField.text?.toString()?.trim() ?: ""
             val selectedStatusInput = binding.actvStatusDropdown.text.toString().trim()
-            val ownerUid = sessionManager.getUid()
+            val ownerUid = sessionManager.getRestaurantId()
 
             if (rawInput.isEmpty()) {
                 Toast.makeText(requireContext(), "Please enter a table name.", Toast.LENGTH_SHORT).show()

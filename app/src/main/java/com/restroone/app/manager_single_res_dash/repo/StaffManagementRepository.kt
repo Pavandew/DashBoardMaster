@@ -4,7 +4,7 @@ import android.util.Log
 import com.restroone.app.manager_single_res_dash.models.StaffDataModel
 import com.restroone.app.utils.AppConstants
 import com.restroone.app.utils.RestaurantPathHelper
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
 
 class StaffManagementRepository {
@@ -12,6 +12,10 @@ class StaffManagementRepository {
     suspend fun getStaffList(ownerUid: String) : Result<List<StaffDataModel>> =
         runCatching {
             Log.d("StaffManagementRepo", "Fetching staff roster for Outlet: $ownerUid")
+
+            FirebaseFunctions.getInstance().getHttpsCallable("migrateStaffCredentials")
+                .call(mapOf("restaurantId" to ownerUid))
+                .await()
 
             val snapshot = RestaurantPathHelper.getOutletDocRef(ownerUid)
                 .collection(AppConstants.COLLECTION_STAFF)
@@ -45,7 +49,6 @@ class StaffManagementRepository {
             StaffDataModel(
                 id = documentSnapshot.id,
                 staffId = documentSnapshot.getString(AppConstants.FIELD_STAFF_ID) ?: documentSnapshot.getString("staffid") ?: "",
-                password = documentSnapshot.getString(AppConstants.FIELD_PASSWORD) ?: "",
                 staffName = documentSnapshot.getString(AppConstants.FIELD_STAFF_NAME) ?: "",
                 mobile = documentSnapshot.getString(AppConstants.FIELD_MOBILE) ?: "",
                 email = documentSnapshot.getString(AppConstants.FIELD_EMAIL) ?: "",
@@ -68,16 +71,9 @@ class StaffManagementRepository {
     suspend fun deleteStaffMember(ownerUid: String, staffId: String): Result<Unit> = runCatching {
         Log.i("StaffManagementRepo", "Deleting staff member '$staffId' for Outlet: $ownerUid")
 
-        val staffDocRef = RestaurantPathHelper.getOutletDocRef(ownerUid)
-            .collection(AppConstants.COLLECTION_STAFF)
-            .document(staffId)
-
-        val userStaffRef = FirebaseFirestore.getInstance()
-            .collection(AppConstants.COLLECTION_USERS)
-            .document(staffId)
-
-        staffDocRef.delete().await()
-        userStaffRef.delete().await()
+        FirebaseFunctions.getInstance().getHttpsCallable("deleteStaff")
+            .call(mapOf("restaurantId" to ownerUid, "staffDocId" to staffId))
+            .await()
         Log.i("StaffManagementRepo", "Successfully deleted staff '$staffId' from outlet roster and users collection.")
     }
 }

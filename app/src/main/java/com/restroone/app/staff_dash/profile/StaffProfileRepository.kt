@@ -19,70 +19,39 @@ class StaffProfileRepository(
     }
 
     fun getStaffProfileStream(): Flow<Result<StaffProfileModel>> = callbackFlow {
-        val managerId = sessionManager.getUid().trim()
+        val managerId = sessionManager.getRestaurantId().trim()
         val customStaffId = sessionManager.getStaffId().trim()
+        val staffDocId = sessionManager.getStaffDocId().trim()
 
-        Log.d(TAG, "📦 [REPO] Querying staff profile for ManagerUID/RestaurantID='$managerId', StaffID='$customStaffId'")
+        Log.d(TAG, "📦 [REPO] Querying staff profile for RestaurantID='$managerId', StaffDocID='$staffDocId'")
 
-        if (managerId.isEmpty() || customStaffId.isEmpty()) {
+        if (managerId.isEmpty() || customStaffId.isEmpty() || staffDocId.isEmpty()) {
             Log.e(TAG, "📦 [REPO] Error: UID or StaffID is empty in SessionManager.")
             trySend(Result.failure(Exception("Session expired or invalid credentials.")))
             close()
             return@callbackFlow
         }
 
-        // Reference to outlet staff subcollection: restaurants/{restaurantId}/staff
-        val collectionRef = RestaurantPathHelper.getOutletDocRef(managerId)
+        val documentRef = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_STAFF)
+            .document(staffDocId)
 
-        val listenerRegistration = collectionRef.addSnapshotListener { querySnapshot, error ->
+        val listenerRegistration = documentRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 Log.e(TAG, "📦 [REPO] Listener Error: ${error.message}", error)
                 trySend(Result.failure(error))
                 return@addSnapshotListener
             }
 
-            if (querySnapshot != null && !querySnapshot.isEmpty) {
-                Log.d(TAG, "📦 [REPO] Found ${querySnapshot.size()} total staff documents under restaurant.")
-
-                var matchedProfile: StaffProfileModel? = null
-
-                for (doc in querySnapshot.documents) {
-                    val dataMap = doc.data
-                    Log.d(TAG, "📄 [DOC] ID='${doc.id}' -> Fields=$dataMap")
-
-                    val fieldId = dataMap?.get("id")?.toString()?.trim()
-                    val fieldStaffId = dataMap?.get("staffId")?.toString()?.trim()
-                    val fieldEmpId = dataMap?.get("empId")?.toString()?.trim()
-
-                    if (doc.id.equals(customStaffId, ignoreCase = true) ||
-                        fieldId.equals(customStaffId, ignoreCase = true) ||
-                        fieldStaffId.equals(customStaffId, ignoreCase = true) ||
-                        fieldEmpId.equals(customStaffId, ignoreCase = true)
-                    ) {
-                        val resolvedStaffId = fieldStaffId?.takeIf { it.isNotEmpty() }
-                            ?: fieldId?.takeIf { it.isNotEmpty() }
-                            ?: fieldEmpId?.takeIf { it.isNotEmpty() }
-                            ?: doc.id
-
-                        val parsedModel = doc.toObject(StaffProfileModel::class.java) ?: StaffProfileModel()
-                        matchedProfile = parsedModel.copy(
-                            staffId = resolvedStaffId
-                        )
-                        Log.i(TAG, "✅ [MATCH FOUND] Doc ID='${doc.id}', EmpID='$resolvedStaffId', Name='${matchedProfile.staffName}'")
-                        break
-                    }
-                }
-
-                if (matchedProfile != null) {
-                    trySend(Result.success(matchedProfile))
+            if (snapshot != null && snapshot.exists()) {
+                val profile = snapshot.toObject(StaffProfileModel::class.java)
+                if (profile != null) {
+                    trySend(Result.success(profile.copy(staffId = customStaffId)))
                 } else {
-                    Log.w(TAG, "⚠️ [REPO] No document matched StaffID '$customStaffId' across document IDs or fields.")
-                    trySend(Result.failure(Exception("Staff member '$customStaffId' not found.")))
+                    trySend(Result.failure(Exception("Staff profile could not be parsed.")))
                 }
             } else {
-                Log.w(TAG, "📦 [REPO] Subcollection 'staff' under restaurant '$managerId' is completely empty.")
-                trySend(Result.failure(Exception("No staff records exist under restaurant outlet.")))
+                trySend(Result.failure(Exception("Staff profile does not exist.")))
             }
         }
 

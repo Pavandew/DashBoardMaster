@@ -96,22 +96,10 @@ class KitchenPreparationDetailViewModel(
             return
         }
 
-        // Fetch token for PUSH
-        val token = repository.getWaiterToken(data.restaurantId, data.waiterId)
-        
-        // ALWAYS call dispatcher. It will save the record to history even if token is null.
         AppNotificationHelper.notifyWaiterOrderReady(
-            waiterToken = token,
-            tableName = data.tableName,
-            orderId = data.orderId,
             managerId = data.restaurantId,
-            waiterId = data.waiterId,
             orderDocPath = data.docPath
         )
-        
-        if (token == null) {
-            Log.d(TAG, "notifyWaiter: No FCM token found for waiter ${data.waiterId}. Record saved to history only.")
-        }
     }
 
     /**

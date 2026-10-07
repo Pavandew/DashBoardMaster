@@ -20,6 +20,7 @@ data class FoodItemData(
     val name: String,
     val price: Int,
     val imageUrl: String,
+    val catalogItemId: String = id,
     val categoryId: String = "",   // FIX: Added to support seamless sub-collection item filtering
     val categoryName: String = "", // Added to display category name in tag
     val isVeg: Boolean = true,     // Added to support Diet Filtering (Veg/Non-Veg)

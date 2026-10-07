@@ -70,7 +70,7 @@ class TableItemListFragment : Fragment() {
         setupRoleBasedAccess()
         setupPermissionAndActions()
 
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
         if (ownerUid.isNotEmpty() && floorId.isNotEmpty()) {
             viewModel.observeTables(ownerUid, floorId) // Invoking separate observer block [cite: 594]
         }
@@ -98,7 +98,7 @@ class TableItemListFragment : Fragment() {
         tableAdapter = AddTableListAdapter(
             onTableClick = { selectedTable ->
                 Log.d(TAG, "Table Row Clicked: ${selectedTable.tableName} Status: ${selectedTable.status}")
-                val ownerUid = sessionManager.getUid()
+                val ownerUid = sessionManager.getRestaurantId()
                 TableQrDialogHelper.showTableQrDialog(
                     context = requireContext(),
                     restaurantId = ownerUid,
@@ -222,7 +222,7 @@ class TableItemListFragment : Fragment() {
      * Triggers your WaiterTableViewModel single table document deletion function.
      */
     private fun showTableDeletePopup(table: TableData) {
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
 
         MenuDialogHelper.showDeleteConfirmation(
             context = requireContext(),
@@ -262,4 +262,3 @@ class TableItemListFragment : Fragment() {
         _binding = null
     }
 }
-

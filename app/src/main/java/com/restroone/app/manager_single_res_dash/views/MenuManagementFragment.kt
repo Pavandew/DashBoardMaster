@@ -58,7 +58,7 @@ private val userRole by lazy{ sessionManager.getRole() }
         setupPermissionAndAction()
 
         // fetch values via active session manager key token
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
         if (ownerUid.isNotEmpty()) {
             viewModel.observeCategories(ownerUid)
         }
@@ -136,7 +136,7 @@ private val userRole by lazy{ sessionManager.getRole() }
     private fun setupPermissionAndAction() {
         binding.btnAddCategory.setOnClickListener {
             Log.d(TAG, "🔘 '+ Add Category' button clicked.")
-            val ownerUid = sessionManager.getUid()
+            val ownerUid = sessionManager.getRestaurantId()
 
             if (ownerUid.isEmpty()) {
                 Log.e(TAG, "Access Denied: Session Manager returned an empty owner UID token string.")
@@ -199,7 +199,7 @@ private val userRole by lazy{ sessionManager.getRole() }
 
     // Example look at how you will drop it inside your Category screen layout:
     private fun showCategoryDeletePopup(category: MenuCategory) {
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
 
         MenuDialogHelper.showDeleteConfirmation(
             context = requireContext(),
@@ -230,4 +230,3 @@ private val userRole by lazy{ sessionManager.getRole() }
         _binding = null
     }
 }
-

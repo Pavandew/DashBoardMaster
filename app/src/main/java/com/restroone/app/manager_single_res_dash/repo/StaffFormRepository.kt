@@ -3,12 +3,11 @@ package com.restroone.app.manager_single_res_dash.repo
 import com.restroone.app.manager_single_res_dash.models.StaffDataModel
 import com.restroone.app.utils.AppConstants
 import com.restroone.app.utils.RestaurantPathHelper
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
 
 class StaffFormRepository {
-    private val firestore = FirebaseFirestore.getInstance()
+    private val functions = FirebaseFunctions.getInstance()
 
     suspend fun saveStaffToFirestore(staff: StaffDataModel, ownerUid: String) : Result<Unit> {
         return try {
@@ -16,31 +15,15 @@ class StaffFormRepository {
                 return Result.failure(Exception("Owner UID is missing"))
             }
 
-            // Reference to outlet staff roster: restaurants -> restaurantId -> staff
-            val staffCollection = RestaurantPathHelper.getOutletDocRef(ownerUid)
-                .collection(AppConstants.COLLECTION_STAFF)
-
-            val newDocRef = staffCollection.document()
-            val finalStaffData = staff.copy(id = newDocRef.id)
-
-            // 1. Save in restaurant outlet staff roster
-            newDocRef.set(finalStaffData.toMap()).await()
-
-            // 2. Also save/link staff user account in users/{staffDocId} for login
-            val userStaffRef = firestore.collection(AppConstants.COLLECTION_USERS).document(newDocRef.id)
-            val staffAccountData = mapOf(
-                AppConstants.FIELD_UID to newDocRef.id,
-                AppConstants.FIELD_STAFF_ID to finalStaffData.staffId,
-                AppConstants.FIELD_FULL_NAME to finalStaffData.staffName,
-                AppConstants.FIELD_MOBILE to finalStaffData.mobile,
-                AppConstants.FIELD_EMAIL to finalStaffData.email,
-                AppConstants.FIELD_PASSWORD to finalStaffData.password,
-                AppConstants.FIELD_ROLE to finalStaffData.role.ifEmpty { AppConstants.ROLE_STAFF },
-                AppConstants.FIELD_RESTAURANT_ID to ownerUid,
-                "ownerUid" to ownerUid,
-                AppConstants.FIELD_STATUS to finalStaffData.status
-            )
-            userStaffRef.set(staffAccountData, SetOptions.merge()).await()
+            functions.getHttpsCallable("createStaff")
+                .call(
+                    mapOf(
+                        "restaurantId" to ownerUid,
+                        "staff" to staff.toMap(),
+                        "password" to staff.password
+                    )
+                )
+                .await()
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -64,10 +47,14 @@ class StaffFormRepository {
                 return Result.failure(Exception("Required IDs are missing"))
             }
 
-            RestaurantPathHelper.getOutletDocRef(ownerUid)
-                .collection(AppConstants.COLLECTION_STAFF)
-                .document(staff.id)
-                .set(staff.toMap())
+            functions.getHttpsCallable("updateStaff")
+                .call(
+                    mapOf(
+                        "restaurantId" to ownerUid,
+                        "staffDocId" to staff.id,
+                        "staff" to staff.toMap()
+                    )
+                )
                 .await()
 
             Result.success(Unit)

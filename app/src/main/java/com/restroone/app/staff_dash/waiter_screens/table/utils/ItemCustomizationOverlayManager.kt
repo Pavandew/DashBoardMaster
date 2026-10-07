@@ -47,7 +47,7 @@ class ItemCustomizationOverlayManager(
         binding.btnAddToOrder.setOnClickListener {
             val item = currentItem ?: return@setOnClickListener
             val selectedVariant = customizationList.find { it.isVariant && it.isSelected }
-            val selectedAddons = customizationList.filter { !it.isVariant && it.isSelected }.map { it.name }
+            val selectedAddons = customizationList.filter { !it.isVariant && it.isSelected }.map { it.id }
             
             onConfirm(
                 item.id,
@@ -115,7 +115,7 @@ class ItemCustomizationOverlayManager(
                 id = addon.id,
                 name = addon.name,
                 price = addon.price,
-                isSelected = item.selectedAddons.contains(addon.name),
+                isSelected = item.selectedAddons.contains(addon.id),
                 isVariant = false
             ))
         }

@@ -73,7 +73,7 @@ class StaffManagementFragment : Fragment() {
         setupOnClick()
 
         // Fetch values via clean decoupled runtime context
-        val ownerUid = SessionManager(requireContext()).getUid()
+        val ownerUid = SessionManager(requireContext()).getRestaurantId()
         if (ownerUid.isNotEmpty()) {
             viewModel.loadStaffMembers(ownerUid)
         }
@@ -188,7 +188,7 @@ class StaffManagementFragment : Fragment() {
     }
 
     private fun showDeleteConfirmationPopup(staff: StaffDataModel) {
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
 
         // Clean & Reusable Utility Call!
         MenuDialogHelper.showDeleteConfirmation(
@@ -237,4 +237,3 @@ class StaffManagementFragment : Fragment() {
         _binding = null
     }
 }
-

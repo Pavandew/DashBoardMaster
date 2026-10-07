@@ -64,7 +64,7 @@ class ReportsAnalyticsFragment : Fragment() {
         setupActionButtons()
         observeReportData()
 
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         Log.d(TAG, "Initializing report screen for managerId: '$managerId'")
         viewModel.loadReportData(managerId, ReportsRepository.TimeFilter.TODAY)
     }
@@ -95,7 +95,7 @@ class ReportsAnalyticsFragment : Fragment() {
         binding.btnDateFilterPicker.setOnClickListener {
             Log.d(TAG, "Opening DateFilterBottomSheet")
             val filterBottomSheet = DateFilterBottomSheet(activeTimeFilter) { selectedFilter, isCustom ->
-                val managerId = sessionManager.getUid()
+                val managerId = sessionManager.getRestaurantId()
 
                 if (isCustom) {
                     showDateRangePicker { startDisplay, endDisplay, startIso, endIso ->

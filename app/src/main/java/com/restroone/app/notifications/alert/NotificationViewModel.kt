@@ -32,7 +32,7 @@ class NotificationViewModel(
      * Starts the real-time observation of filtered notifications.
      */
     fun observeNotificationStream() {
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         val userRole = sessionManager.getRole()
         val staffId = sessionManager.getStaffDocId()
 
@@ -91,7 +91,7 @@ class NotificationViewModel(
         Log.d(TAG, "Notification clicked: id=${notification.id} type=${notification.type} isRead=${notification.isRead}")
 
         // 1. Mark as read in backend
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         if (managerId.isNotEmpty() && !notification.isRead) {
             viewModelScope.launch {
                 try {
@@ -123,7 +123,7 @@ class NotificationViewModel(
      * Updates the status of an actionable request (e.g., Accepting a Bill Request).
      */
     fun updateRequestStatus(notificationId: String, nextStatus: RequestStatus) {
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         if (managerId.isEmpty()) {
             Log.w(TAG, "Cannot update request status because managerId is empty: notificationId=$notificationId nextStatus=$nextStatus")
             return

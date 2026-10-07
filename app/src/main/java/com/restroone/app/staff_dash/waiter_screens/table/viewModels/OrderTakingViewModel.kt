@@ -218,7 +218,10 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
                     readyQuantity = existing.readyQuantity,
                     itemStatus = existing.itemStatus, 
                     variantName = existing.variantName,
-                    price = existing.price
+                    price = existing.price,
+                    selectedAddons = existing.addonIds,
+                    catalogItemId = existing.catalogItemId.ifEmpty { item.catalogItemId },
+                    categoryId = existing.categoryId.ifEmpty { item.categoryId }
                 )
             } else {
                 if (item.currentQuantity > 0) {
@@ -409,6 +412,9 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
             val effectiveStatus = if (isNewAddition) AppConstants.STATUS_PENDING else item.itemStatus
             OrderItemModel(
                 itemId = item.id, 
+                catalogItemId = item.catalogItemId,
+                categoryId = item.categoryId,
+                addonIds = item.selectedAddons,
                 itemName = item.name, 
                 variantName = item.variantName, 
                 price = item.price, 
@@ -472,7 +478,7 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
                         lastOrderDocPath = status.data
                         // Mark currently sent quantities as "previous" to avoid re-notifying chef for same count
                         _originalFoodList.value = _originalFoodList.value.map { it.copy(previousQuantity = it.currentQuantity) }
-                        notifyChef(managerId, currentTableName, finalOrderId, waiterId, status.data)
+                        notifyChef(managerId, status.data)
                     }
                 }
         }
@@ -481,10 +487,8 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
     /**
      * Triggers notifications and logs history for the kitchen staff.
      */
-    private suspend fun notifyChef(managerId: String, tableName: String, orderId: String, waiterId: String, docPath: String) {
-        Log.d(TAG, "Notification: Fetching chef tokens for restaurant: $managerId")
-        val tokens = repository.getChefTokens(managerId)
-        AppNotificationHelper.notifyKitchenOfNewOrder(tokens, tableName, orderId, managerId, waiterId, docPath)
+    private suspend fun notifyChef(managerId: String, docPath: String) {
+        AppNotificationHelper.notifyKitchenOfNewOrder(managerId, docPath)
     }
 
     // --- Helper Utilities ---

@@ -53,7 +53,7 @@ class WaiterActiveOrdersFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Log.i(TAG, "Navigation: WaiterActiveOrdersFragment Opened")
 
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
 
         setupToolbar()
         setUpRecyclerViews()

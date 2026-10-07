@@ -81,13 +81,7 @@ class SplashActivity : AppCompatActivity() {
             val role = sessionManager.getRole()
 
             if (isLoggedIn) {
-                val userName = sessionManager.getUserName() ?: "Unknown Name"
-                val userPhone = sessionManager.getPhone() ?: "Unknown Number"
-                // NEW: Read the persistently preserved alphanumeric Staff ID from preferences cache
-                val staffId = sessionManager.getStaffId() ?: "No Stored ID"
-
-                // UPDATED LOG: Includes [StaffID: $staffId] directly in the trace matrix output
-                Log.d(TAG, "SESSION ACTIVE: User Logged In! [Name: $userName | StaffID: $staffId | Phone: $userPhone | Role: $role]")
+                Log.d(TAG, "SESSION ACTIVE: User logged in")
                 navigateToDashboard(role)
             } else {
                 Log.w(TAG, "NO SESSION: No user logged in. Redirecting to Visitor Portal.")

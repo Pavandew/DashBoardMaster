@@ -8,7 +8,9 @@ import com.restroone.app.staff_dash.waiter_screens.order.models.OrderExpandedIte
 import com.restroone.app.staff_dash.waiter_screens.table.models.OrderDataModel
 import com.restroone.app.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.restroone.app.utils.RestaurantPathHelper
+import com.restroone.app.utils.RestaurantActiveOrders
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -24,6 +26,7 @@ class OrderDetailRepository {
     }
 
     private val firestore = FirebaseFirestore.getInstance()
+    private val functions = FirebaseFunctions.getInstance()
 
     fun fetchDetailedTicket(
         managerId: String,
@@ -61,19 +64,15 @@ class OrderDetailRepository {
 
             // 3. Fallback collectionGroup check
             if (document == null || !document.exists()) {
-                Log.d(TAG, "📦 [REPO] Falling back to collectionGroup query for order '$orderId'...")
+                Log.d(TAG, "📦 [REPO] Falling back to restaurant-scoped order lookup for '$orderId'...")
                 try {
-                    val querySnapshot = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
-                        .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
-                        .get()
-                        .await()
-
-                    document = querySnapshot.documents.firstOrNull { doc ->
+                    val orders = RestaurantActiveOrders.getAll(firestore, managerId)
+                    document = orders.firstOrNull { doc ->
                         (doc.id == orderId || doc.getString(AppConstants.FIELD_ORDER_ID) == orderId) &&
-                                doc.reference.path.contains("${AppConstants.COLLECTION_RESTAURANTS}/$managerId")
+                                doc.reference.path.startsWith("${AppConstants.COLLECTION_RESTAURANTS}/$managerId/")
                     }
                 } catch (e: Exception) {
-                    Log.w(TAG, "📦 [REPO] collectionGroup fallback query skipped or failed: ${e.message}")
+                    Log.w(TAG, "📦 [REPO] Scoped fallback lookup failed: ${e.message}")
                 }
             }
 
@@ -208,17 +207,12 @@ class OrderDetailRepository {
 
             var snapshot = orderRef.get().await()
 
-            // Robust Fallback: If not found at primary path, query collectionGroup across restaurants collection
+            // Search only collections beneath this restaurant when a legacy path is missing.
             if (!snapshot.exists()) {
-                Log.w(TAG, "📦 [REPO] Doc not found at primary path '${orderRef.path}'. Searching collectionGroup...")
-                val querySnap = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
-                    .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
-                    .get()
-                    .await()
-
-                val foundDoc = querySnap.documents.firstOrNull { doc ->
+                Log.w(TAG, "📦 [REPO] Doc not found at primary path '${orderRef.path}'. Searching restaurant-scoped collections...")
+                val foundDoc = RestaurantActiveOrders.getAll(firestore, managerId).firstOrNull { doc ->
                     (doc.id == orderDocId || doc.getString(AppConstants.FIELD_ORDER_ID) == orderDocId) &&
-                            doc.reference.path.contains("${AppConstants.COLLECTION_RESTAURANTS}/$managerId")
+                            doc.reference.path.startsWith("${AppConstants.COLLECTION_RESTAURANTS}/$managerId/")
                 }
 
                 if (foundDoc != null) {
@@ -227,26 +221,14 @@ class OrderDetailRepository {
                 }
             }
 
-            val orderModel = snapshot.toObject(OrderDataModel::class.java)
-
-            if (orderModel != null) {
-                // Mark all items that are not REJECTED as SERVED
-                val updatedItems = orderModel.items.map { item ->
-                    if (!item.itemStatus.equals(AppConstants.STATUS_REJECTED, ignoreCase = true)) {
-                        item.copy(
-                            orderedQuantity = item.quantity,
-                            readyQuantity = item.quantity,
-                            itemStatus = AppConstants.STATUS_SERVED
-                        )
-                    } else item
-                }
-
-                val updates = mapOf(
-                    AppConstants.FIELD_ORDER_STATUS to AppConstants.STATUS_SERVED,
-                    AppConstants.FIELD_ORDER_ITEMS to updatedItems
-                )
-
-                orderRef.update(updates).await()
+            if (snapshot.exists()) {
+                functions.getHttpsCallable("updateWaiterOrder").call(
+                    mapOf(
+                        "restaurantId" to managerId,
+                        "docPath" to orderRef.path,
+                        "action" to "served"
+                    )
+                ).await()
                 Log.i(TAG, "📦 [REPO] Successfully updated order and items to SERVED in Firestore.")
                 emit(ResourceUiState.Success(true))
             } else {
@@ -291,14 +273,9 @@ class OrderDetailRepository {
             val snapshot = orderRef.get().await()
 
             if (!snapshot.exists()) {
-                val querySnap = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
-                    .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
-                    .get()
-                    .await()
-
-                val foundDoc = querySnap.documents.firstOrNull { doc ->
+                val foundDoc = RestaurantActiveOrders.getAll(firestore, managerId).firstOrNull { doc ->
                     (doc.id == orderDocId || doc.getString(AppConstants.FIELD_ORDER_ID) == orderDocId) &&
-                            doc.reference.path.contains("${AppConstants.COLLECTION_RESTAURANTS}/$managerId")
+                            doc.reference.path.startsWith("${AppConstants.COLLECTION_RESTAURANTS}/$managerId/")
                 }
 
                 if (foundDoc != null) {
@@ -365,6 +342,7 @@ class OrderDetailRepository {
             val snapshot = firestore.collection(AppConstants.COLLECTION_USERS)
                 .document(managerId)
                 .collection(AppConstants.COLLECTION_STAFF)
+                .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
                 .whereIn(AppConstants.FIELD_ROLE, listOf("billing", "cashier", "Billing", "Cashier"))
                 .get()
                 .await()
