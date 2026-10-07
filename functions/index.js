@@ -257,20 +257,24 @@ async function clearRateLimit(identifier) {
  * Obtains UID strictly from Firebase Phone-OTP session context (request.auth.uid).
  */
 exports.registerUser = onAppCheckCall(async (request) => {
+    console.log("📝 [Register] Request received for UID:", request.auth?.uid);
     if (!request.auth || !request.auth.uid) {
+        console.error("❌ [Register] Unauthenticated call to registerUser.");
         throw new HttpsError("unauthenticated", "Phone OTP authentication required before registration.");
     }
 
     const uid = request.auth.uid; // STRICTLY from authenticated session
-    const { mobile, password } = request.data;
+    const { mobile, password } = request.data || {};
 
     if (!mobile || !password) {
+        console.error("❌ [Register] Missing mobile or password.");
         throw new HttpsError("invalid-argument", "Mobile and password are required.");
     }
 
     const cleanMobile = normalizeMobile(mobile);
     const verifiedMobile = normalizeMobile(request.auth.token.phone_number);
     if (!verifiedMobile || verifiedMobile !== cleanMobile) {
+        console.error("❌ [Register] Mobile mismatch | Verified:", verifiedMobile, "| Requested:", cleanMobile);
         throw new HttpsError(
             "permission-denied",
             "The requested mobile number does not match the verified phone."
@@ -281,6 +285,7 @@ exports.registerUser = onAppCheckCall(async (request) => {
     const mappingRef = db.collection("mobileMappings").doc(cleanMobile);
     const mappingDoc = await mappingRef.get();
     if (mappingDoc.exists) {
+        console.warn("⚠️ [Register] Mobile number already registered:", cleanMobile);
         throw new HttpsError("already-exists", "This mobile number is already registered.");
     }
 
@@ -302,6 +307,7 @@ exports.registerUser = onAppCheckCall(async (request) => {
         createdAt: Date.now()
     });
 
+    console.log("🟢 [Register] Account successfully registered and mapped for UID:", uid);
     return { success: true, uid: uid };
 });
 
@@ -830,8 +836,11 @@ exports.updateStaffFcmToken = onAppCheckCall(async (request) => {
  */
 exports.authenticateUser = onAppCheckCall(async (request) => {
     const { mobile, password } = request.data || {};
+    console.log("🔐 [Auth] Request received for mobile:", mobile);
+
     if (typeof mobile !== "string" || !mobile.trim()
         || typeof password !== "string" || !password) {
+        console.error("❌ [Auth] Invalid argument structure submitted.");
         throw new HttpsError("invalid-argument", "Invalid mobile number or password.");
     }
 
@@ -844,6 +853,7 @@ exports.authenticateUser = onAppCheckCall(async (request) => {
         await checkRateLimit(cleanMobile);
     } catch (error) {
         if (error instanceof HttpsError && error.code === "resource-exhausted") {
+            console.error("⚠️ [Auth] Rate limit exceeded for mobile:", cleanMobile);
             throw genericError();
         }
         throw error;
@@ -872,12 +882,14 @@ exports.authenticateUser = onAppCheckCall(async (request) => {
 
     if (!mappedUid || !mappingDoc.exists || !credentialSnapshot.exists || !storedHash
         || !passwordMatches || !activeUser) {
+        console.warn("❌ [Auth] Authentication failed for mobile:", cleanMobile, "| MappedExists:", mappingDoc.exists, "| CredExists:", credentialSnapshot?.exists, "| PasswordMatches:", passwordMatches, "| ActiveUser:", activeUser);
         await recordFailedAttempt(cleanMobile);
         throw genericError();
     }
 
     await clearRateLimit(cleanMobile);
     const customToken = await admin.auth().createCustomToken(uid);
+    console.log("🟢 [Auth] Authentication successful! Custom token generated for UID:", uid);
     return { token: customToken, uid };
 });
 
