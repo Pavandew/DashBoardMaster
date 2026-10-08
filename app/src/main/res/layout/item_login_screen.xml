@@ -6,15 +6,30 @@
     android:layout_margin="10dp"
     android:layout_gravity="center_horizontal"
     android:backgroundTint="@android:color/white"
-    app:cardCornerRadius="24dp"
-    app:cardElevation="6dp"
+    app:cardCornerRadius="28dp"
+    app:cardElevation="8dp"
     app:strokeWidth="0dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="24dp">
+
+        <!-- Portal Badge -->
+        <TextView
+            android:id="@+id/tv_portal_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Single Restaurant Portal"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="4dp"
+            android:background="@drawable/bg_portal_badge"
+            android:layout_marginBottom="12dp"
+            android:visibility="gone" />
 
         <!-- Title -->
         <TextView
@@ -45,15 +60,15 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             app:boxBackgroundMode="outline"
-            app:boxCornerRadiusTopStart="10dp"
-            app:boxCornerRadiusTopEnd="10dp"
-            app:boxCornerRadiusBottomStart="10dp"
-            app:boxCornerRadiusBottomEnd="10dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
             app:boxStrokeWidth="1dp"
-            app:boxStrokeWidthFocused="1dp"
+            app:boxStrokeWidthFocused="2dp"
             app:boxStrokeColor="#E3E5EF"
             app:errorEnabled="true"
-            app:startIconDrawable="@drawable/ic_person_24dp"
+            app:startIconDrawable="@drawable/ic_call_24dp"
             app:startIconTint="@color/black"
             app:hintTextColor="#8A8FA8">
 
@@ -70,11 +85,12 @@
                 android:inputType="phone" />
 
         </com.google.android.material.textfield.TextInputLayout>
+
         <!-- Password Label -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="6dp"
             android:text="Password"
             style="@style/TextAppearance.MyApp.TitleSmall" />
 
@@ -84,12 +100,14 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
+            android:layout_marginTop="4dp"
             app:boxBackgroundMode="outline"
-            app:boxCornerRadiusTopStart="8dp"
-            app:boxCornerRadiusTopEnd="8dp"
-            app:boxCornerRadiusBottomStart="8dp"
-            app:boxCornerRadiusBottomEnd="8dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxStrokeWidth="1dp"
+            app:boxStrokeWidthFocused="2dp"
             app:boxStrokeColor="#E3E5EF"
             app:endIconMode="password_toggle"
             app:errorEnabled="true"
@@ -126,7 +144,7 @@
                 android:paddingTop="4dp"
                 android:paddingBottom="4dp"
                 android:text="Forgot Password?"
-                android:textColor="#4B35FF"
+                android:textColor="#5B67FF"
                 style="@style/TextAppearance.MyApp.CaptionSmall" />
         </LinearLayout>
 
@@ -137,6 +155,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Login"
+            app:cornerRadius="14dp"
             app:iconGravity="textStart"
             app:backgroundTint="@color/purple_gradient_end"
             app:iconPadding="10dp"
@@ -147,7 +166,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="13dp"
+            android:layout_marginTop="16dp"
             android:orientation="horizontal">
 
             <TextView
@@ -162,7 +181,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Create Account"
-                android:textColor="#4B35FF"
+                android:textColor="#5B67FF"
                 style="@style/TextAppearance.MyApp.CaptionSmall" />
         </LinearLayout>
 

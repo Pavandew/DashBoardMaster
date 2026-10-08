@@ -44,32 +44,57 @@ class LoginActivity : AppCompatActivity() {
 
         sessionManager = SessionManager(this)
 
+        setupPortalTheme()
         clickListeners()
         observeState()
+    }
 
+    private fun setupPortalTheme() {
+        val selectedPortal = sessionManager.getSelectedPortal()
+        val portalBadge = binding.loginItem.tvPortalBadge
+        portalBadge.visibility = View.VISIBLE
+
+        // Future-proof country prefix handling (default: "+91 ")
+        val countryPrefix = "+91 "
+        binding.loginItem.loginPhoneLayout.prefixText = countryPrefix
+
+        when (selectedPortal) {
+            AppConstants.PORTAL_MULTI_RESTAURANT -> {
+                portalBadge.text = "Multi-Restaurant Portal"
+                val blueColor = androidx.core.content.ContextCompat.getColor(this, R.color.blue_gradient_start)
+                portalBadge.backgroundTintList = android.content.res.ColorStateList.valueOf(blueColor)
+                binding.loginItem.loginBtn.backgroundTintList = android.content.res.ColorStateList.valueOf(blueColor)
+                binding.loginItem.loginTvForgotPassword.setTextColor(blueColor)
+                binding.loginItem.loginCreateAccTv.setTextColor(blueColor)
+                binding.loginItem.loginPhoneLayout.boxStrokeColor = blueColor
+                binding.loginItem.loginPasswordLayout.boxStrokeColor = blueColor
+            }
+            AppConstants.PORTAL_STAFF -> {
+                portalBadge.text = "Staff Portal"
+                val orangeColor = androidx.core.content.ContextCompat.getColor(this, R.color.orange_gradient_start)
+                portalBadge.backgroundTintList = android.content.res.ColorStateList.valueOf(orangeColor)
+                binding.loginItem.loginBtn.backgroundTintList = android.content.res.ColorStateList.valueOf(orangeColor)
+                binding.loginItem.loginTvForgotPassword.setTextColor(orangeColor)
+                binding.loginItem.loginPhoneLayout.boxStrokeColor = orangeColor
+                binding.loginItem.loginPasswordLayout.boxStrokeColor = orangeColor
+
+                binding.loginItem.loginCreateAccTv.visibility = View.GONE
+                binding.loginItem.loginDontHaveCreateAccTv.visibility = View.GONE
+            }
+            else -> {
+                portalBadge.text = "Single Restaurant Portal"
+                val purpleColor = androidx.core.content.ContextCompat.getColor(this, R.color.portal_restaurant_primary)
+                portalBadge.backgroundTintList = android.content.res.ColorStateList.valueOf(purpleColor)
+                binding.loginItem.loginBtn.backgroundTintList = android.content.res.ColorStateList.valueOf(purpleColor)
+                binding.loginItem.loginTvForgotPassword.setTextColor(purpleColor)
+                binding.loginItem.loginCreateAccTv.setTextColor(purpleColor)
+                binding.loginItem.loginPhoneLayout.boxStrokeColor = purpleColor
+                binding.loginItem.loginPasswordLayout.boxStrokeColor = purpleColor
+            }
+        }
     }
 
     private fun clickListeners() {
-        val selectedPortal =
-            sessionManager.getSelectedPortal()
-
-        // Hide Create Account for staff
-        if(selectedPortal == AppConstants.PORTAL_STAFF) {
-            binding.loginItem.loginCreateAccTv.visibility =
-                View.GONE
-            binding.loginItem.loginDontHaveCreateAccTv.visibility =
-                View.GONE
-            binding.loginItem.loginBtn.backgroundTintList =
-                getColorStateList(R.color.orange_gradient_start)
-            binding.root.setBackgroundResource(R.drawable.app_background)
-        }
-        // Hide Create Account for staff
-        if(selectedPortal == AppConstants.PORTAL_MULTI_RESTAURANT) {
-            binding.loginItem.loginBtn.backgroundTintList =
-                getColorStateList(R.color.blue_gradient_start)
-            binding.root.setBackgroundResource(R.drawable.app_background)
-        }
-
         binding.loginItem.loginPhoneEt.doOnTextChanged { _, _, _, _ ->
             binding.loginItem.loginPhoneLayout.error = null
         }
