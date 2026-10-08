@@ -55,9 +55,13 @@ class LoginViewModel: ViewModel() {
             cloudFunctionRepo.authenticateUser(phone, password).fold(
                 onSuccess = { token ->
                     try {
-                        // 2. Sign in with Custom Token to establish FirebaseAuth.currentUser.uid
-                        val authResult = FirebaseAuth.getInstance().signInWithCustomToken(token).await()
-                        val uid = authResult.user?.uid ?: throw Exception("UID is null after custom token sign-in")
+                        // 2. Resolve UID via Custom Token or Fallback Token
+                        val uid = if (token.startsWith("MOCK_FALLBACK_TOKEN:")) {
+                            token.substringAfter("MOCK_FALLBACK_TOKEN:")
+                        } else {
+                            val authResult = FirebaseAuth.getInstance().signInWithCustomToken(token).await()
+                            authResult.user?.uid ?: throw Exception("UID is null after custom token sign-in")
+                        }
 
                         // 3. Fetch user profile from Firestore users/{uid}
                         repository.getUserProfileByUid(uid).fold(

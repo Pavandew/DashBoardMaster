@@ -21,7 +21,41 @@ class AuthRepository {
     private val TAG = "AuthRepository"
 
     /**
-     * Finds a user by their phone number, checking both 'mobile' and 'phone' fields.
+     * Finds a user by their phone number, checking both 'mobile' and 'phone' fields in Firestore.
+     */
+    suspend fun findUserByPhone(phone: String): Result<UserModelData?> {
+        return try {
+            val formattedPhone = if (phone.startsWith("+91")) phone else "+91$phone"
+            
+            // Try querying by 'mobile' first
+            var snapshot = db.collection(AppConstants.COLLECTION_USERS)
+                .whereEqualTo(AppConstants.FIELD_MOBILE, formattedPhone)
+                .get()
+                .await()
+
+            // Fallback: Try querying by 'phone'
+            if (snapshot.isEmpty) {
+                snapshot = db.collection(AppConstants.COLLECTION_USERS)
+                    .whereEqualTo("phone", formattedPhone)
+                    .get()
+                    .await()
+            }
+
+            if (snapshot.isEmpty) {
+                Result.success(null)
+            } else {
+                val user = snapshot.documents[0].toObject(UserModelData::class.java)
+                Result.success(user)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error finding user by phone", e)
+            val formattedMsg = NetworkUtils.formatErrorMessage(e)
+            Result.failure(Exception(formattedMsg))
+        }
+    }
+
+    /**
+     * Checks if a phone number is registered. Falls back seamlessly if Cloud Functions are not deployed.
      */
     suspend fun isPhoneRegistered(phone: String): Result<Boolean> {
         return try {
@@ -34,9 +68,14 @@ class AuthRepository {
                 ?: throw IllegalStateException("Invalid mobile registration response")
             Result.success(response["registered"] == true)
         } catch (e: Exception) {
-            Log.e(TAG, "Error checking phone registration", e)
-            val formattedMsg = NetworkUtils.formatErrorMessage(e)
-            Result.failure(Exception(formattedMsg))
+            Log.w(TAG, "Cloud Function isMobileRegistered exception. Attempting local Firestore fallback: ${e.message}")
+            val userResult = findUserByPhone(phone)
+            if (userResult.isSuccess) {
+                Result.success(userResult.getOrNull() != null)
+            } else {
+                val formattedMsg = NetworkUtils.formatErrorMessage(e)
+                Result.failure(Exception(formattedMsg))
+            }
         }
     }
 
