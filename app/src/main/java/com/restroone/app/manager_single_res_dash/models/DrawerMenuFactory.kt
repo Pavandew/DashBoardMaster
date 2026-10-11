@@ -12,6 +12,8 @@ import com.restroone.app.notifications.alert.NotificationFragment
 import com.restroone.app.staff_dash.billing_screens.views.CashierBillingFragment
 import com.restroone.app.staff_dash.kitchen_screens.views.KitchenInventoryFragment
 import com.restroone.app.staff_dash.kitchen_screens.views.KitchenOrderFragment
+import com.restroone.app.staff_dash.kitchen_screens.views.KitchenPreparationFragment
+import com.restroone.app.staff_dash.waiter_screens.order.views.WaiterActiveOrdersFragment
 import com.restroone.app.staff_dash.waiter_screens.table.views.WaiterTablesFragment
 import com.restroone.app.subscription.views.SubscriptionPlansFragment
 
@@ -34,7 +36,6 @@ object DrawerMenuFactory {
                 title = "Floor & Orders",
                 iconRes = R.drawable.ic_table_24dp,
                 isHeader = true,
-                isExpanded = true,
                 children = listOf(
                     DrawerMenuItem(
                         id = 1,
@@ -44,10 +45,10 @@ object DrawerMenuFactory {
                         parentHeaderId = 100
                     ),
                     DrawerMenuItem(
-                        id = 3,
-                        title = "Table Management",
-                        iconRes = R.drawable.ic_table_24dp,
-                        fragmentClass = TableManagementFragment::class.java,
+                        id = 1,
+                        title = "Track Active Orders",
+                        iconRes = R.drawable.waiter,
+                        fragmentClass = WaiterActiveOrdersFragment::class.java,
                         parentHeaderId = 100
                     )
                 )
@@ -66,6 +67,13 @@ object DrawerMenuFactory {
                         iconRes = R.drawable.ic_chef_24dp,
                         fragmentClass = KitchenOrderFragment::class.java,
                         parentHeaderId = 200
+                    ),
+                    DrawerMenuItem(
+                        id = 1,
+                        title = "Live Order Station",
+                        iconRes = R.drawable.waiter,
+                        fragmentClass = KitchenPreparationFragment::class.java,
+                        parentHeaderId = 100
                     ),
                     DrawerMenuItem(
                         id = 6,
@@ -90,14 +98,21 @@ object DrawerMenuFactory {
                         iconRes = R.drawable.biling,
                         fragmentClass = CashierBillingFragment::class.java,
                         parentHeaderId = 300
+                    ),
+                    DrawerMenuItem(
+                        id = 1,
+                        title = "Quick Bill Counter",
+                        iconRes = R.drawable.waiter,
+                        fragmentClass = WaiterTablesFragment::class.java,
+                        parentHeaderId = 100
                     )
                 )
             ),
 
-            // 5. Management & Reports (Parent Header)
+            // 5. Management (Parent Header)
             DrawerMenuItem(
                 id = 400,
-                title = "Management & Reports",
+                title = "Management",
                 iconRes = R.drawable.ic_settings_24dp,
                 isHeader = true,
                 children = listOf(
@@ -109,6 +124,13 @@ object DrawerMenuFactory {
                         parentHeaderId = 400
                     ),
                     DrawerMenuItem(
+                        id = 3,
+                        title = "Table Management",
+                        iconRes = R.drawable.ic_table_24dp,
+                        fragmentClass = TableManagementFragment::class.java,
+                        parentHeaderId = 100
+                    ),
+                    DrawerMenuItem(
                         id = 10,
                         title = "Staff Management",
                         iconRes = R.drawable.ic_staffs_24dp,
@@ -116,15 +138,8 @@ object DrawerMenuFactory {
                         parentHeaderId = 400
                     ),
                     DrawerMenuItem(
-                        id = 11,
-                        title = "Reports & Analytics",
-                        iconRes = R.drawable.ic_sales_report_24dp,
-                        fragmentClass = ReportsAnalyticsFragment::class.java,
-                        parentHeaderId = 400
-                    ),
-                    DrawerMenuItem(
                         id = 12,
-                        title = "Customers",
+                        title = "Customer Management",
                         iconRes = R.drawable.ic_person_24dp,
                         fragmentClass = CustomerManagementFragment::class.java,
                         parentHeaderId = 400
@@ -135,6 +150,30 @@ object DrawerMenuFactory {
                         iconRes = R.drawable.ic_discount_24dp,
                         fragmentClass = null,
                         parentHeaderId = 400
+                    )
+                )
+            ),
+
+            // 6. Report & History (Parent Header)
+            DrawerMenuItem(
+                id = 600,
+                title = "Report & History",
+                iconRes = R.drawable.ic_sales_report_24dp,
+                isHeader = true,
+                children = listOf(
+                    DrawerMenuItem(
+                        id = 11,
+                        title = "Reports & Analytics",
+                        iconRes = R.drawable.ic_sales_report_24dp,
+                        fragmentClass = ReportsAnalyticsFragment::class.java,
+                        parentHeaderId = 600
+                    ),
+                    DrawerMenuItem(
+                        id = 18,
+                        title = "Paid Order History",
+                        iconRes = R.drawable.ic_history_24dp,
+                        fragmentClass = com.restroone.app.manager_single_res_dash.views.PaidOrderHistoryFragment::class.java,
+                        parentHeaderId = 600
                     )
                 )
             ),

@@ -66,6 +66,8 @@ object AppConstants {
     const val FIELD_DOCUMENT_TYPE = "documentType"
     const val FIELD_DOCUMENT_NUMBER = "documentNumber"
     const val FIELD_WAITER_ID = "waiterId"
+    const val FIELD_WAITER_NAME = "waiterName"
+    const val FIELD_CASHIER_NAME = "cashierName"
 
     // Firestore Fields - Menu & Category
     const val FIELD_CATEGORY_NAME = "menuCategoryName"

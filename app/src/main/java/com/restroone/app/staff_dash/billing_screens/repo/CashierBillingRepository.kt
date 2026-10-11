@@ -146,6 +146,8 @@ class CashierBillingRepository(
             val paidAt = doc.getTimestamp(AppConstants.FIELD_PAID_AT)
             val paymentMethod = doc.getString(AppConstants.FIELD_PAYMENT_METHOD) ?: ""
             val waiterId = doc.getString(AppConstants.FIELD_WAITER_ID) ?: ""
+            val waiterName = doc.getString("orderedBy") ?: doc.getString(AppConstants.FIELD_WAITER_NAME) ?: doc.getString("waiterName") ?: ""
+            val cashierName = doc.getString(AppConstants.FIELD_CASHIER_NAME) ?: doc.getString("cashierName") ?: ""
             val customerName = doc.getString(AppConstants.FIELD_CUSTOMER_NAME) ?: ""
             val customerPhone = doc.getString(AppConstants.FIELD_CUSTOMER_MOBILE) ?: ""
 
@@ -190,6 +192,8 @@ class CashierBillingRepository(
                 customerName = customerName,
                 customerPhone = customerPhone,
                 waiterId = waiterId,
+                waiterName = waiterName,
+                cashierName = cashierName,
                 docPath = doc.reference.path
             )
         } catch (e: Exception) {
@@ -246,7 +250,8 @@ class CashierBillingRepository(
     fun settleOrder(
         order: CashierBillingOrderModel,
         paymentMode: String,
-        discount: Double
+        discount: Double,
+        cashierName: String = ""
     ): Flow<ResourceUiState<String>> = callbackFlow {
         trySend(ResourceUiState.Loading)
 
@@ -268,6 +273,9 @@ class CashierBillingRepository(
         val exactDate = sdfDate.format(currentTime.toDate())
 
         val finalGrandTotal = (order.subtotal + order.serviceChargeAmount + order.taxAmount - discount)
+
+        val resolvedWaiterName = if (order.waiterName.isNotEmpty()) order.waiterName else "Staff"
+        val resolvedCashierName = if (cashierName.isNotEmpty()) cashierName else if (order.cashierName.isNotEmpty()) order.cashierName else "Cashier"
 
         val fullCompletedOrderData = mapOf(
             AppConstants.FIELD_ORDER_ID to order.orderId,
@@ -297,6 +305,8 @@ class CashierBillingRepository(
             AppConstants.FIELD_PAID_AT to currentTime,
             AppConstants.FIELD_PAYMENT_METHOD to paymentMode,
             AppConstants.FIELD_WAITER_ID to order.waiterId,
+            AppConstants.FIELD_WAITER_NAME to resolvedWaiterName,
+            AppConstants.FIELD_CASHIER_NAME to resolvedCashierName,
             AppConstants.FIELD_BILLING_MONTH to monthYear,
             AppConstants.FIELD_BILLING_DATE to exactDate
         )

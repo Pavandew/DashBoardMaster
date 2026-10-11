@@ -60,6 +60,7 @@ class ActiveOrdersRepository {
 
         // 1. Listen to active_orders subcollections across table locations
         val ordersQuery = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
+            .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
         val activeListener = ordersQuery.addSnapshotListener { snapshots, exception ->
             if (exception != null) {
                 Log.e(TAG, "📦 [REPO] Snapshot listener error: ${exception.message}", exception)

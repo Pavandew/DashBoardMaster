@@ -23,5 +23,7 @@ data class CashierBillingOrderModel(
     val paidAt: Timestamp? = null,
     val paymentMethod: String = "",
     val waiterId: String = "", // Added to identify waiter for notifications
+    val waiterName: String = "",
+    val cashierName: String = "",
     val docPath: String = "" // Added to facilitate updates
 ) : Serializable
