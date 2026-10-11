@@ -28,7 +28,7 @@
                 android:id="@+id/staff_login_img"
                 android:layout_width="140dp"
                 android:layout_height="140dp"
-                android:src="@drawable/app_logo_without_bg" />
+                android:src="@drawable/app_logo_with_name" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/staff_login_card"
@@ -83,7 +83,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="20dp"
-                        android:text="Staff ID or Mobile Number" />
+                        android:text="Staff ID" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputLayout"
