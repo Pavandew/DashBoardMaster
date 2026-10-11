@@ -13,5 +13,6 @@ data class ReportSummaryModel(
     val takeawaySales: Double = 0.0,
     val takeawayOrders: Int = 0,
     val grossSubtotal: Double = 0.0,
-    val totalGst: Double = 0.0
+    val totalGst: Double = 0.0,
+    val completedOrders: List<CompletedOrderHistoryModel> = emptyList()
 )

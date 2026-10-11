@@ -3,6 +3,7 @@ package com.restroone.app.manager_single_res_dash.settings.viewModel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.restroone.app.manager_single_res_dash.models.CompletedOrderHistoryModel
 import com.restroone.app.manager_single_res_dash.models.ReportSummaryModel
 import com.restroone.app.manager_single_res_dash.settings.repo.ReportsRepository
 import com.restroone.app.staff_dash.waiter_screens.table.uistate.ResourceUiState
@@ -27,7 +28,31 @@ class ReportsViewModel : ViewModel() {
     private val _selectedFilter = MutableStateFlow(ReportsRepository.TimeFilter.TODAY)
     val selectedFilter: StateFlow<ReportsRepository.TimeFilter> = _selectedFilter.asStateFlow()
 
+    private var masterCompletedOrders: List<CompletedOrderHistoryModel> = emptyList()
+
+    private val _filteredOrders = MutableStateFlow<List<CompletedOrderHistoryModel>>(emptyList())
+    val filteredOrders: StateFlow<List<CompletedOrderHistoryModel>> = _filteredOrders.asStateFlow()
+
+    private var currentQuery: String = ""
+
     private var reportJob: Job? = null
+
+    fun filterOrders(query: String) {
+        currentQuery = query.trim().lowercase()
+        if (currentQuery.isEmpty()) {
+            _filteredOrders.value = masterCompletedOrders
+        } else {
+            _filteredOrders.value = masterCompletedOrders.filter { order ->
+                order.orderId.lowercase().contains(currentQuery) ||
+                order.tableName.lowercase().contains(currentQuery) ||
+                order.customerPhone.contains(currentQuery) ||
+                order.customerName.lowercase().contains(currentQuery) ||
+                order.waiterName.lowercase().contains(currentQuery) ||
+                order.cashierName.lowercase().contains(currentQuery) ||
+                order.paymentMethod.lowercase().contains(currentQuery)
+            }
+        }
+    }
 
     fun loadReportData(
         managerId: String,
@@ -48,6 +73,8 @@ class ReportsViewModel : ViewModel() {
                 }
                 .collect { summary ->
                     Log.d(TAG, "New Report Summary received: Revenue=₹${summary.totalRevenue}, Orders=${summary.totalOrders}")
+                    masterCompletedOrders = summary.completedOrders
+                    filterOrders(currentQuery)
                     _reportState.value = ResourceUiState.Success(summary)
                 }
         }

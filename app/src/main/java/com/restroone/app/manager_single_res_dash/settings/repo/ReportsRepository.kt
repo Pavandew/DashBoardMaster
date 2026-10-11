@@ -8,6 +8,7 @@ import com.restroone.app.manager_single_res_dash.models.TopSellingFoodItem
 import com.restroone.app.utils.AppConstants
 import com.restroone.app.utils.RestaurantPathHelper
 import com.google.firebase.firestore.FirebaseFirestore
+import com.restroone.app.manager_single_res_dash.models.CompletedOrderHistoryModel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -109,6 +110,8 @@ class ReportsRepository {
             var grossSubtotal = 0.0
             var totalGst = 0.0
 
+            val completedOrdersList = mutableListOf<CompletedOrderHistoryModel>()
+
             for (doc in snapshots.documents) {
                 totalOrders++
                 val grandTotal = doc.getDouble(AppConstants.FIELD_GRAND_TOTAL) ?: 0.0
@@ -137,6 +140,43 @@ class ReportsRepository {
                     dineInSales += grandTotal
                     dineInOrders++
                 }
+
+                val orderId = doc.getString(AppConstants.FIELD_ORDER_ID) ?: doc.id
+                val tableName = doc.getString(AppConstants.FIELD_TABLE_NAME) ?: "Table"
+                val customerName = doc.getString(AppConstants.FIELD_CUSTOMER_NAME) ?: ""
+                val customerPhone = doc.getString(AppConstants.FIELD_CUSTOMER_MOBILE) ?: ""
+                val waiterName = doc.getString(AppConstants.FIELD_WAITER_NAME) ?: doc.getString("orderedBy") ?: "Staff"
+                val cashierName = doc.getString(AppConstants.FIELD_CASHIER_NAME) ?: "Cashier"
+                val timestamp = doc.getTimestamp(AppConstants.FIELD_TIMESTAMP)
+                val docPath = doc.reference.path
+
+                val rawItems = doc.get(AppConstants.FIELD_ORDER_ITEMS) as? List<Map<String, Any>>
+                val totalItems = rawItems?.sumOf { ((it[AppConstants.FIELD_QUANTITY] as? Number)?.toInt() ?: 1) } ?: 0
+                val summaryStr = rawItems?.joinToString(", ") { item ->
+                    val name = item[AppConstants.FIELD_ITEM_NAME] as? String ?: "Item"
+                    val qty = (item[AppConstants.FIELD_QUANTITY] as? Number)?.toInt() ?: 1
+                    "${qty}x $name"
+                } ?: ""
+
+                completedOrdersList.add(
+                    CompletedOrderHistoryModel(
+                        orderId = orderId,
+                        tableName = tableName,
+                        orderType = orderType,
+                        grandTotal = grandTotal,
+                        paymentMethod = payMethod,
+                        customerName = customerName,
+                        customerPhone = customerPhone,
+                        waiterName = waiterName,
+                        cashierName = cashierName,
+                        timestamp = timestamp,
+                        docPath = docPath,
+                        itemsSummary = summaryStr,
+                        discount = discount,
+                        subtotal = subtotal,
+                        totalItems = totalItems
+                    )
+                )
             }
 
             val avgOrderVal = if (totalOrders > 0) totalRevenue / totalOrders else 0.0
@@ -154,7 +194,8 @@ class ReportsRepository {
                 takeawaySales = takeawaySales,
                 takeawayOrders = takeawayOrders,
                 grossSubtotal = grossSubtotal,
-                totalGst = totalGst
+                totalGst = totalGst,
+                completedOrders = completedOrdersList
             )
 
             Log.i(TAG, "Report Data Aggregated for filter $filter: Revenue=₹$totalRevenue, Orders=$totalOrders, Cash=₹$cashAmount, UPI=₹$upiAmount, Card=₹$cardAmount")
