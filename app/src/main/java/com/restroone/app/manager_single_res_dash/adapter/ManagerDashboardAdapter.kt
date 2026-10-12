@@ -214,7 +214,7 @@ class ManagerDashboardAdapter (
                 ),
                 QuickActionModel(
                     QuickActionType.REPORTS,
-                    "Reports & Analytics",
+                    "Report & History",
                     R.drawable.ic_sales_report_24dp,
                     context.getColor(R.color.accent_blue),
                     "#1D2D4B".toColorInt(),

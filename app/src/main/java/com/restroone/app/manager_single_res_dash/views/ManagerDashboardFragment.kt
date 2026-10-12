@@ -245,7 +245,7 @@ class ManagerDashboardFragment : Fragment() {
                     ManagerDashboardAdapter.QuickActionType.FLOOR_TABLE ->
                         DrawerMenuItem(3, "Table Management", 0, fragmentClass = TableManagementFragment::class.java)
                     ManagerDashboardAdapter.QuickActionType.REPORTS -> 
-                        DrawerMenuItem(11, "Reports & Analytics", 0, fragmentClass = ReportsAnalyticsFragment::class.java)
+                        DrawerMenuItem(11, "Report & History", 0, fragmentClass = ReportsAnalyticsFragment::class.java)
                     ManagerDashboardAdapter.QuickActionType.CUSTOMERS -> 
                         DrawerMenuItem(12, "Customer Insights", 0, fragmentClass = CustomerManagementFragment::class.java)
                 }

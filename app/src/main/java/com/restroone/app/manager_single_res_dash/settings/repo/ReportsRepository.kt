@@ -179,6 +179,8 @@ class ReportsRepository {
                 )
             }
 
+            completedOrdersList.sortByDescending { it.timestamp?.seconds ?: 0L }
+
             val avgOrderVal = if (totalOrders > 0) totalRevenue / totalOrders else 0.0
 
             val summary = ReportSummaryModel(
