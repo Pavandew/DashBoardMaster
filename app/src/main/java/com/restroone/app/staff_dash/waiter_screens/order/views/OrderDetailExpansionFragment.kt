@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -23,6 +24,7 @@ import com.restroone.app.staff_dash.waiter_screens.order.models.ActiveOrderStatu
 import com.restroone.app.staff_dash.waiter_screens.order.repo.OrderDetailRepository
 import com.restroone.app.staff_dash.waiter_screens.order.viewModel.OrderDetailViewModel
 import com.restroone.app.staff_dash.waiter_screens.table.views.WaiterOrderTakingFragment
+import com.restroone.app.utils.ManagerPinVerificationDialog
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -95,7 +97,12 @@ class OrderDetailExpansionFragment : Fragment() {
         val toolbar = binding.orderDetailToolbar
         toolbar.tvToolbarTitle.text = getString(R.string.order_details)
         toolbar.llSubtitleContainer.visibility = View.GONE
-        toolbar.toolbarImgNotification.visibility = View.GONE
+        
+        // Top-right Red Delete / Cancel Order Icon
+        toolbar.toolbarImgNotification.setImageResource(R.drawable.ic_delete_24dp)
+        toolbar.toolbarImgNotification.setColorFilter(ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark))
+        toolbar.toolbarImgNotification.visibility = View.VISIBLE
+
         toolbar.toolbarImgMenu.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
@@ -245,6 +252,12 @@ class OrderDetailExpansionFragment : Fragment() {
                                 parentFragmentManager.popBackStack()
                             }
                         }
+
+                        // Top Right Cancel Order Toolbar Icon
+                        binding.orderDetailToolbar.toolbarImgNotification.setOnClickListener {
+                            Log.d(TAG, "📱 [FRAGMENT] Toolbar 'Cancel Order' icon clicked for OrderId: '${state.orderId}'")
+                            showManagerPinVerificationDialog(state)
+                        }
                     }
 
                     state.errorMessage?.let { error ->
@@ -255,6 +268,34 @@ class OrderDetailExpansionFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun showManagerPinVerificationDialog(state: com.restroone.app.staff_dash.waiter_screens.order.models.OrderDetailExpansionUiState) {
+        ManagerPinVerificationDialog(
+            context = requireContext(),
+            title = "Manager PIN Required",
+            subtitle = "Enter 4-digit Manager PIN to cancel Order ${state.orderId} (${state.tableName})",
+            confirmButtonText = "Verify & Cancel",
+            onVerified = { reason ->
+                val managerId = SessionManager(requireContext()).getUid() ?: ""
+                Toast.makeText(requireContext(), "Cancelling order...", Toast.LENGTH_SHORT).show()
+
+                viewModel.cancelActiveOrder(
+                    managerId = managerId,
+                    floorId = state.floorId,
+                    tableId = state.tableId,
+                    orderDocId = state.documentId,
+                    reason = reason
+                ) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Order cancelled successfully!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    parentFragmentManager.popBackStack()
+                }
+            }
+        ).show()
     }
 
     override fun onDestroyView() {

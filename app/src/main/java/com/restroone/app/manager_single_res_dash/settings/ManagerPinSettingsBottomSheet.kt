@@ -33,14 +33,24 @@ class ManagerPinSettingsBottomSheet : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
         sessionManager = SessionManager(requireContext())
 
-        val currentPin = sessionManager.getStaffDocId().takeLast(4).ifEmpty { "1234" }
+        val currentPin = sessionManager.getManagerPin()
         binding.etManagerPin.setText(currentPin)
 
         binding.btnSavePin.setOnClickListener {
             val pin = binding.etManagerPin.text?.toString()?.trim() ?: ""
-            if (pin.length != 4) {
-                Toast.makeText(requireContext(), "PIN must be 4 digits", Toast.LENGTH_SHORT).show()
+            if (pin.length != 4 || !pin.all { it.isDigit() }) {
+                Toast.makeText(requireContext(), "PIN must be exactly 4 digits", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
+            }
+
+            // Save to SessionManager
+            sessionManager.saveManagerPin(pin)
+
+            // Save to Firestore for manager/owner account
+            val ownerUid = sessionManager.getUid()
+            if (ownerUid.isNotEmpty()) {
+                val docRef = com.restroone.app.utils.RestaurantPathHelper.getRestaurantDocRef(ownerUid)
+                docRef.set(mapOf("managerPin" to pin), com.google.firebase.firestore.SetOptions.merge())
             }
 
             Toast.makeText(requireContext(), "Manager Security PIN saved successfully!", Toast.LENGTH_SHORT).show()
