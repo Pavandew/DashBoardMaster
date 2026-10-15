@@ -21,7 +21,6 @@ import com.restroone.app.manager_single_res_dash.models.ReportKpiModel
 import com.restroone.app.manager_single_res_dash.settings.repo.ReportsRepository
 import com.restroone.app.manager_single_res_dash.utils.DateFilterBottomSheet
 import com.restroone.app.manager_single_res_dash.settings.viewModel.ReportsViewModel
-import com.restroone.app.staff_dash.billing_screens.views.CashierBillSummaryFragment
 import com.restroone.app.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.restroone.app.utils.SessionManager
 import kotlinx.coroutines.launch

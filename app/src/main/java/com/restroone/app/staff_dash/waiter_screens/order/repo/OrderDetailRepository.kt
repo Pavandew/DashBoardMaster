@@ -375,4 +375,67 @@ class OrderDetailRepository {
             emptyList()
         }
     }
+
+    fun cancelOrderAndReleaseTable(
+        managerId: String,
+        floorId: String,
+        tableId: String,
+        orderDocId: String,
+        cancellationReason: String = ""
+    ): Flow<ResourceUiState<Boolean>> = flow {
+        Log.d(TAG, "📦 [REPO] Cancelling Order '$orderDocId' and releasing table '$tableId'...")
+        emit(ResourceUiState.Loading)
+
+        try {
+            val isCounterOrder = tableId.isEmpty() || tableId == "COUNTER_ORDER" || tableId == "N/A" || floorId.isEmpty() || floorId == "N/A"
+            val batch = firestore.batch()
+
+            var orderRef = if (orderDocId.contains("${AppConstants.COLLECTION_RESTAURANTS}/")) {
+                firestore.document(orderDocId)
+            } else if (isCounterOrder) {
+                RestaurantPathHelper.getOutletDocRef(managerId)
+                    .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                    .document(orderDocId)
+            } else {
+                RestaurantPathHelper.getOutletDocRef(managerId)
+                    .collection(AppConstants.COLLECTION_RES_FLOORS)
+                    .document(floorId)
+                    .collection(AppConstants.COLLECTION_TABLES)
+                    .document(tableId)
+                    .collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
+                    .document(orderDocId)
+            }
+
+            val updates = mutableMapOf<String, Any>(
+                AppConstants.FIELD_ORDER_STATUS to AppConstants.STATUS_REJECTED
+            )
+            if (cancellationReason.isNotEmpty()) {
+                updates[AppConstants.FIELD_REJECTION_REASON] = cancellationReason
+            }
+
+            batch.set(orderRef, updates, com.google.firebase.firestore.SetOptions.merge())
+
+            // Release table status to FREE
+            if (!isCounterOrder) {
+                val tableRef = RestaurantPathHelper.getOutletDocRef(managerId)
+                    .collection(AppConstants.COLLECTION_RES_FLOORS)
+                    .document(floorId)
+                    .collection(AppConstants.COLLECTION_TABLES)
+                    .document(tableId)
+
+                batch.set(tableRef, mapOf(
+                    AppConstants.FIELD_STATUS to AppConstants.STATUS_FREE,
+                    AppConstants.FIELD_CUSTOMER_NAME_TABLE to "",
+                    AppConstants.FIELD_CURRENT_BILL to ""
+                ), com.google.firebase.firestore.SetOptions.merge())
+            }
+
+            batch.commit().await()
+            Log.i(TAG, "📦 [REPO] Successfully cancelled Order '$orderDocId' and released Table '$tableId'")
+            emit(ResourceUiState.Success(true))
+        } catch (e: Exception) {
+            Log.e(TAG, "📦 [REPO] Failed cancelling order", e)
+            emit(ResourceUiState.Error(e.message ?: "Failed to cancel order"))
+        }
+    }.flowOn(Dispatchers.IO)
 }

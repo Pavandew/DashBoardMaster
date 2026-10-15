@@ -157,6 +157,20 @@ class OrderDetailViewModel(
         }
     }
 
+    fun cancelActiveOrder(
+        managerId: String,
+        floorId: String,
+        tableId: String,
+        orderDocId: String,
+        reason: String = "",
+        onCompletionSuccess: () -> Unit
+    ) {
+        Log.d(TAG, "cancelActiveOrder called for orderDocId: $orderDocId, reason: $reason")
+        updateStatus(repository.cancelOrderAndReleaseTable(managerId, floorId, tableId, orderDocId, reason)) {
+            onCompletionSuccess()
+        }
+    }
+
     private fun updateStatus(
         flow: kotlinx.coroutines.flow.Flow<ResourceUiState<Boolean>>,
         onCompletionSuccess: () -> Unit
