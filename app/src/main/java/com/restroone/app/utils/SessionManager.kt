@@ -265,6 +265,16 @@ class SessionManager(context: Context) {
     fun getTaxLabel(): String = prefs.getString(AppConstants.KEY_TAX_LABEL, "GST") ?: "GST"
     fun isPriceIncludesTax(): Boolean = prefs.getBoolean(AppConstants.KEY_TAX_PRICE_INCLUSIVE, false)
 
+    // Manager Security PIN
+    fun saveManagerPin(pin: String) {
+        Log.d(TAG, "saveManagerPin: Saving new 4-digit manager PIN")
+        prefs.edit { putString("key_manager_pin", pin) }
+    }
+
+    fun getManagerPin(): String {
+        return prefs.getString("key_manager_pin", "1234") ?: "1234"
+    }
+
     // 🛡️ NEW: DYNAMIC PERMISSIONS ARRAY LIST CACHE CONTROL LOGIC
     /**
      * Serializes employee custom permissions string arrays into JSON formatting
