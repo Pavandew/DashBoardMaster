@@ -903,9 +903,9 @@ exports.authenticateUser = onAppCheckCall(async (request) => {
         && userSnapshot.get("status") === "Active"
         && userSnapshot.get("isVerified") === true;
 
-    if (!mappedUid || !mappingDoc.exists || !credentialSnapshot.exists || !storedHash
+    if (!mappedUid || !credentialSnapshot.exists || !storedHash
         || !passwordMatches || !activeUser) {
-        console.warn("❌ [Auth] Authentication failed for mobile:", cleanMobile, "| MappedExists:", mappingDoc.exists, "| CredExists:", credentialSnapshot?.exists, "| PasswordMatches:", passwordMatches, "| ActiveUser:", activeUser);
+        console.warn("❌ [Auth] Authentication failed for mobile:", cleanMobile, "| MappedUid:", mappedUid, "| CredExists:", credentialSnapshot?.exists, "| PasswordMatches:", passwordMatches, "| ActiveUser:", activeUser);
         await recordFailedAttempt(cleanMobile);
         throw genericError();
     }
