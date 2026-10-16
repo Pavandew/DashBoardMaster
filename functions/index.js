@@ -11,8 +11,13 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync(crypto.randomBytes(32).toString("hex"), 10);
-const razorpayKeyId = defineSecret("RAZORPAY_KEY_ID");
-const razorpayKeySecret = defineSecret("RAZORPAY_KEY_SECRET");
+
+function getRazorpayKeyId() {
+    return process.env.RAZORPAY_KEY_ID || "";
+}
+function getRazorpayKeySecret() {
+    return process.env.RAZORPAY_KEY_SECRET || "";
+}
 
 function onAppCheckCall(optionsOrHandler, maybeHandler) {
     if (typeof optionsOrHandler === "function") {
@@ -2235,7 +2240,6 @@ exports.updateStaffNotificationStatus = onAppCheckCall(async (request) => {
 });
 
 exports.createSubscriptionPaymentOrder = onAppCheckCall(
-    { secrets: [razorpayKeyId, razorpayKeySecret] },
     async (request) => {
         const { planId, restaurantId } = request.data || {};
         const plans = {
@@ -2257,10 +2261,12 @@ exports.createSubscriptionPaymentOrder = onAppCheckCall(
             || restaurant.get("ownerUid") !== request.auth.uid) {
             throw new HttpsError("permission-denied", "Only the verified restaurant owner can subscribe.");
         }
-        if (!razorpayKeyId.value() || !razorpayKeySecret.value()) {
+        const keyId = getRazorpayKeyId();
+        const keySecret = getRazorpayKeySecret();
+        if (!keyId || !keySecret) {
             throw new HttpsError("failed-precondition", "Razorpay server credentials are not configured.");
         }
-        const basic = Buffer.from(`${razorpayKeyId.value()}:${razorpayKeySecret.value()}`).toString("base64");
+        const basic = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
         const response = await fetch("https://api.razorpay.com/v1/orders", {
             method: "POST",
             headers: { Authorization: `Basic ${basic}`, "Content-Type": "application/json" },
@@ -2286,7 +2292,7 @@ exports.createSubscriptionPaymentOrder = onAppCheckCall(
         });
         return {
             orderId: gatewayOrder.id,
-            keyId: razorpayKeyId.value(),
+            keyId: keyId,
             planId,
             restaurantId,
             numericPrice: plan.amountRupees,
@@ -2296,13 +2302,14 @@ exports.createSubscriptionPaymentOrder = onAppCheckCall(
 );
 
 exports.verifyAndActivateSubscription = onAppCheckCall(
-    { secrets: [razorpayKeyId, razorpayKeySecret] },
     async (request) => {
         const { paymentId, orderId, signature, gateway, planId: requestedPlanId, restaurantId: requestedRestaurantId } = request.data || {};
         if (gateway !== "RAZORPAY" || !paymentId || !orderId || !signature) {
             throw new HttpsError("failed-precondition", "Only server-verifiable Razorpay payments are supported.");
         }
-        if (!request.auth?.uid || !razorpayKeyId.value() || !razorpayKeySecret.value()) {
+        const keyId = getRazorpayKeyId();
+        const keySecret = getRazorpayKeySecret();
+        if (!request.auth?.uid || !keyId || !keySecret) {
             throw new HttpsError("failed-precondition", "Payment verification is not configured.");
         }
         const paymentOrderRef = db.collection("subscriptionPaymentOrders").doc(orderId);
@@ -2315,7 +2322,7 @@ exports.verifyAndActivateSubscription = onAppCheckCall(
             throw new HttpsError("permission-denied", "Payment order is invalid or already consumed.");
         }
         const crypto = require("crypto");
-        const expected = crypto.createHmac("sha256", razorpayKeySecret.value())
+        const expected = crypto.createHmac("sha256", keySecret)
             .update(`${orderId}|${paymentId}`).digest("hex");
         const providedBytes = Buffer.from(String(signature));
         const expectedBytes = Buffer.from(expected);
@@ -2323,7 +2330,7 @@ exports.verifyAndActivateSubscription = onAppCheckCall(
             || !crypto.timingSafeEqual(providedBytes, expectedBytes)) {
             throw new HttpsError("permission-denied", "Razorpay signature verification failed.");
         }
-        const basic = Buffer.from(`${razorpayKeyId.value()}:${razorpayKeySecret.value()}`).toString("base64");
+        const basic = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
         const response = await fetch(
             `https://api.razorpay.com/v1/payments/${encodeURIComponent(paymentId)}`,
             { headers: { Authorization: `Basic ${basic}` } }
