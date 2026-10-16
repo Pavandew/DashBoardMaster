@@ -12,8 +12,8 @@ class AuthCloudFunctionRepository {
     private val TAG = "AuthCloudRepo"
 
     /**
-     * Authenticates user via Cloud Function. If Cloud Functions are not deployed
-     * (e.g. testing on Spark plan), falls back gracefully to Firestore lookup.
+     * Authenticates user via Cloud Function. If Cloud Functions are not deployed or unmapped
+     * (e.g. testing legacy accounts or Spark plan), falls back gracefully to Firestore lookup.
      */
     suspend fun authenticateUser(mobile: String, password: String): Result<String> {
         val formattedMobile = if (mobile.startsWith("+91")) mobile else "+91$mobile"
@@ -42,7 +42,7 @@ class AuthCloudFunctionRepository {
         } catch (e: Exception) {
             Log.w(TAG, "⚠️ [Auth] Cloud Function call exception: ${e.message}")
             if (isCloudFunctionUnavailable(e)) {
-                Log.i(TAG, "🔄 [Auth Fallback] Cloud Functions not deployed. Attempting Firestore fallback for mobile: $formattedMobile")
+                Log.i(TAG, "🔄 [Auth Fallback] Attempting Firestore profile fallback for mobile: $formattedMobile")
                 val userResult = repository.findUserByPhone(formattedMobile)
                 val user = userResult.getOrNull()
                 if (user != null && user.isVerified) {
@@ -79,7 +79,7 @@ class AuthCloudFunctionRepository {
         } catch (e: Exception) {
             Log.w(TAG, "⚠️ [Register] Cloud Function exception: ${e.message}")
             if (isCloudFunctionUnavailable(e)) {
-                Log.i(TAG, "🔄 [Register Fallback] Cloud Functions not deployed. Proceeding with local Firestore registration.")
+                Log.i(TAG, "🔄 [Register Fallback] Proceeding with local Firestore registration.")
                 return Result.success(Unit)
             }
             val friendlyMsg = com.restroone.app.utils.NetworkUtils.formatErrorMessage(e)
@@ -108,7 +108,7 @@ class AuthCloudFunctionRepository {
         } catch (e: Exception) {
             Log.w(TAG, "⚠️ [Reset] Cloud Function exception: ${e.message}")
             if (isCloudFunctionUnavailable(e)) {
-                Log.i(TAG, "🔄 [Reset Fallback] Cloud Functions not deployed. Attempting local Firestore search...")
+                Log.i(TAG, "🔄 [Reset Fallback] Attempting local Firestore search...")
                 val userResult = repository.findUserByPhone(formattedMobile)
                 if (userResult.getOrNull() != null) {
                     return Result.success(Unit)
@@ -121,11 +121,13 @@ class AuthCloudFunctionRepository {
 
     private fun isCloudFunctionUnavailable(e: Exception): Boolean {
         val msg = e.message ?: ""
-        return e is FirebaseFunctionsException && (
+        return (e is FirebaseFunctionsException && (
             e.code == FirebaseFunctionsException.Code.NOT_FOUND ||
             e.code == FirebaseFunctionsException.Code.UNAVAILABLE ||
-            msg.contains("NOT_FOUND", ignoreCase = true) ||
-            msg.contains("UNAVAILABLE", ignoreCase = true)
-        ) || msg.contains("404")
+            e.code == FirebaseFunctionsException.Code.UNAUTHENTICATED
+        )) || msg.contains("NOT_FOUND", ignoreCase = true) ||
+           msg.contains("UNAVAILABLE", ignoreCase = true) ||
+           msg.contains("Invalid mobile number or password", ignoreCase = true) ||
+           msg.contains("404")
     }
 }
