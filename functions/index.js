@@ -865,9 +865,27 @@ exports.authenticateUser = onAppCheckCall(async (request) => {
     }
 
     const mappingDoc = await db.collection("mobileMappings").doc(cleanMobile).get();
-    const mappedUid = mappingDoc.exists && typeof mappingDoc.get("uid") === "string"
+    let mappedUid = mappingDoc.exists && typeof mappingDoc.get("uid") === "string"
         ? mappingDoc.get("uid")
         : "";
+
+    // Legacy auto-heal lookup: if mobileMappings is missing, search users collection by mobile/phone
+    if (!mappedUid) {
+        console.log("🔍 [Auth] Mobile mapping missing for:", cleanMobile, ". Searching users collection...");
+        let userQuery = await db.collection("users").where("mobile", "==", cleanMobile).get();
+        if (userQuery.empty) {
+            userQuery = await db.collection("users").where("phone", "==", cleanMobile).get();
+        }
+        if (!userQuery.empty) {
+            mappedUid = userQuery.docs[0].id;
+            console.log("🟢 [Auth] Found user in users collection! UID:", mappedUid, ". Auto-healing mobileMappings...");
+            await db.collection("mobileMappings").doc(cleanMobile).set({
+                uid: mappedUid,
+                createdAt: Date.now()
+            }, { merge: true });
+        }
+    }
+
     const uid = mappedUid || "invalid-login-lookup-placeholder";
     const [credentialSnapshot, userSnapshot] = await Promise.all([
         db.collection("authCredentials").doc(uid).get(),
@@ -970,6 +988,20 @@ exports.resetPassword = onAppCheckCall(async (request) => {
         throw new HttpsError("invalid-argument", "Password must be between 6 and 128 characters.");
     }
 
+    // Auto-heal mobile mapping during password reset
+    const userSnapshot = await db.collection("users").doc(uid).get();
+    if (userSnapshot.exists) {
+        const user = userSnapshot.data();
+        const mobile = normalizeMobile(user.mobile || user.phone);
+        if (mobile && /^\+\d{7,15}$/.test(mobile)) {
+            console.log("🟢 [ResetPassword] Auto-healing mobileMappings for:", mobile, "UID:", uid);
+            await db.collection("mobileMappings").doc(mobile).set({
+                uid: uid,
+                createdAt: Date.now()
+            }, { merge: true });
+        }
+    }
+
     const passwordHash = await bcrypt.hash(newPassword, await bcrypt.genSalt(10));
     await db.collection("authCredentials").doc(uid).set({
         uid: uid,
@@ -977,7 +1009,7 @@ exports.resetPassword = onAppCheckCall(async (request) => {
         updatedAt: Date.now()
     }, { merge: true });
 
-    console.log("🟢 [ResetPassword] Password successfully updated for UID:", uid);
+    console.log("🟢 [ResetPassword] Password & Credentials successfully updated for UID:", uid);
     return { success: true };
 });
 
