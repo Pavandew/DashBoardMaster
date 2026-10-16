@@ -1,5 +1,6 @@
 package com.restroone.app.login.models
 
+import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 
@@ -41,6 +42,7 @@ data class UserModelData(
      * Helper to get the correct number regardless of which field name is used in the database.
      * Use this in your code instead of accessing 'mobile' or 'phone' directly.
      */
+    @Exclude
     fun getUnifiedMobile(): String {
         return if (mobile.isNotEmpty()) mobile else phone
     }
@@ -49,6 +51,7 @@ data class UserModelData(
      * Robust check for setup completion.
      * Considers both the explicit flag and the presence of a restaurant ID.
      */
+    @Exclude
     fun isActuallySetup(): Boolean {
         return isSetupComplete || restaurantId.isNotEmpty()
     }

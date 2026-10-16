@@ -176,23 +176,9 @@ service cloud.firestore {
     }
 
     function validOwnerProfile(data, userId) {
-      return data.keys().hasOnly([
-          'uid',
-          'fullName',
-          'mobile',
-          'phone',
-          'role',
-          'portalType',
-          'isSetupComplete',
-          'restaurantId',
-          'isVerified',
-          'status'
-        ])
-        && data.uid == userId
+      return data.uid == userId
         && data.role in ['owner_single', 'owner_multi']
-        && data.portalType == (
-          data.role == 'owner_multi' ? 'multi_restaurant' : 'restaurant_portal'
-        )
+        && data.portalType in ['multi_restaurant', 'restaurant_portal']
         && data.restaurantId == ''
         && data.isSetupComplete == false
         && data.isVerified == true
