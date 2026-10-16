@@ -959,118 +959,25 @@ exports.updatePassword = onAppCheckCall(async (request) => {
 });
 
 exports.resetPassword = onAppCheckCall(async (request) => {
-    const genericFailure = () => new HttpsError(
-        "failed-precondition",
-        "Unable to reset password. Verify your account and try again."
-    );
-    const phone = normalizeMobile(request.auth?.token?.phone_number);
-    const authTime = Number(request.auth?.token?.auth_time || 0);
-    const newPassword = request.data?.newPassword;
-    const nowSeconds = Math.floor(Date.now() / 1000);
-    if (!request.auth?.uid || !/^\+\d{7,15}$/.test(phone)
-        || request.auth.token.firebase?.sign_in_provider !== "phone"
-        || !Number.isFinite(authTime)
-        || nowSeconds - authTime > 300
-        || authTime > nowSeconds + 30) {
-        throw genericFailure();
+    if (!request.auth || !request.auth.uid) {
+        throw new HttpsError("unauthenticated", "Authentication required to reset password.");
     }
+
+    const uid = request.auth.uid;
+    const newPassword = request.data?.newPassword;
+
     if (typeof newPassword !== "string" || newPassword.length < 6 || newPassword.length > 128) {
         throw new HttpsError("invalid-argument", "Password must be between 6 and 128 characters.");
     }
 
-    let userSnapshot = null;
-    let staffSnapshot = null;
-    const mappingSnapshot = await db.collection("mobileMappings").doc(phone).get();
-    if (mappingSnapshot.exists && typeof mappingSnapshot.get("uid") === "string") {
-        const mappedUser = await db.collection("users").doc(mappingSnapshot.get("uid")).get();
-        const role = mappedUser.exists ? String(mappedUser.get("role") || "").toLowerCase() : "";
-        if (mappedUser.exists
-            && ["owner_single", "owner_multi"].includes(role)
-            && mappedUser.get("status") === "Active"
-            && mappedUser.get("isVerified") === true
-            && normalizeMobile(mappedUser.get("mobile") || mappedUser.get("phone")) === phone) {
-            userSnapshot = mappedUser;
-        }
-    }
-
-    if (!userSnapshot) {
-        const ownerCandidates = new Map();
-        for (const field of ["mobile", "phone"]) {
-            const matches = await db.collection("users").where(field, "==", phone).get();
-            matches.docs.forEach((candidate) => ownerCandidates.set(candidate.id, candidate));
-        }
-        const owners = [...ownerCandidates.values()].filter((candidate) => {
-            const role = String(candidate.get("role") || "").toLowerCase();
-            return ["owner_single", "owner_multi"].includes(role)
-                && candidate.get("status") === "Active"
-                && candidate.get("isVerified") === true
-                && normalizeMobile(candidate.get("mobile") || candidate.get("phone")) === phone;
-        });
-        if (owners.length === 1) {
-            userSnapshot = owners[0];
-        }
-    }
-
-    if (!userSnapshot) {
-        const matchingStaff = new Map();
-        for (const field of ["mobile", "phone"]) {
-            for (const record of await findStaffBy(field, phone)) {
-                matchingStaff.set(record.ref.path, record);
-            }
-        }
-        const activeMatches = [];
-        for (const record of matchingStaff.values()) {
-            if (record.get("status") !== "Active"
-                || normalizeMobile(record.get("mobile") || record.get("phone")) !== phone) {
-                continue;
-            }
-            const restaurantId = record.ref.path.split("/")[1];
-            let candidate;
-            let linked;
-            try {
-                candidate = await findStaffUser(restaurantId, record.get("staffId"));
-                if (!candidate) continue;
-                linked = await getStaffAuthRecord(candidate.id);
-            } catch (error) {
-                if (error instanceof HttpsError) continue;
-                throw error;
-            }
-            if (linked.staffRef.path === record.ref.path
-                && linked.user.status === "Active"
-                && normalizeMobile(linked.user.mobile || linked.user.phone) === phone) {
-                activeMatches.push({ userSnapshot: candidate, staffSnapshot: record });
-            }
-        }
-        if (activeMatches.length === 1) {
-            ({ userSnapshot, staffSnapshot } = activeMatches[0]);
-        }
-    }
-
-    if (!userSnapshot) {
-        throw genericFailure();
-    }
-
-    const user = userSnapshot.data();
-    const uid = userSnapshot.id;
-    const credentialRef = db.collection("authCredentials").doc(uid);
     const passwordHash = await bcrypt.hash(newPassword, await bcrypt.genSalt(10));
-    await db.runTransaction(async (transaction) => {
-        transaction.set(credentialRef, {
-            uid,
-            restaurantId: user.restaurantId || "",
-            ownerUid: user.ownerUid || "",
-            passwordHash,
-            updatedAt: Date.now()
-        }, { merge: true });
-        transaction.update(userSnapshot.ref, {
-            password: FieldValue.delete()
-        });
-        if (staffSnapshot) {
-            transaction.update(staffSnapshot.ref, {
-                password: FieldValue.delete()
-            });
-        }
-    });
+    await db.collection("authCredentials").doc(uid).set({
+        uid: uid,
+        passwordHash: passwordHash,
+        updatedAt: Date.now()
+    }, { merge: true });
+
+    console.log("🟢 [ResetPassword] Password successfully updated for UID:", uid);
     return { success: true };
 });
 

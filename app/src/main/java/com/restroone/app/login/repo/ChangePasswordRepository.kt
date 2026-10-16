@@ -4,10 +4,13 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.FirebaseFunctionsException
+import com.restroone.app.utils.NetworkUtils
 import kotlinx.coroutines.tasks.await
 
 class ChangePasswordRepository {
     private val auth = FirebaseAuth.getInstance()
+    private val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
     private val functions = FirebaseFunctions.getInstance()
     private val TAG = "ChangePasswordRepo"
 
@@ -80,7 +83,7 @@ class ChangePasswordRepository {
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "updateOwnerPassword: Error updating password", e)
-            Result.failure(Exception(com.restroone.app.utils.NetworkUtils.formatErrorMessage(e)))
+            Result.failure(Exception(NetworkUtils.formatErrorMessage(e)))
         }
     }
 
@@ -89,10 +92,11 @@ class ChangePasswordRepository {
             functions.getHttpsCallable("resetPassword")
                 .call(mapOf("newPassword" to newPassword))
                 .await()
+            Log.i(TAG, "resetPassword: Password reset successful via Cloud Function")
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Phone-verified password reset failed", e)
-            Result.failure(Exception(com.restroone.app.utils.NetworkUtils.formatErrorMessage(e)))
+            Log.e(TAG, "Phone-verified password reset failed: ${e.message}", e)
+            Result.failure(Exception(NetworkUtils.formatErrorMessage(e)))
         }
     }
 
