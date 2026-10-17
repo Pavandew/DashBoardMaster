@@ -6,22 +6,22 @@ import com.restroone.app.staff_dash.billing_screens.model.CashierBillingOrderMod
 import com.restroone.app.staff_dash.waiter_screens.table.models.OrderItemModel
 import com.restroone.app.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.restroone.app.utils.RestaurantPathHelper
+import com.restroone.app.utils.RestaurantActiveOrders
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.SetOptions
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class CashierBillingRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
+    private val functions = FirebaseFunctions.getInstance()
     companion object {
         private const val TAG = "CashierBillingRepo"
     }
@@ -57,19 +57,10 @@ class CashierBillingRepository(
         val targetPrefix = "restaurants/$managerId/"
 
         // 1. Listen to active_orders across table subcollections for this manager
-        val activeRegistration = firestore.collectionGroup(AppConstants.COLLECTION_ACTIVE_ORDERS)
-            .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
-            .orderBy(AppConstants.FIELD_TIMESTAMP, Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    Log.e(TAG, "Error fetching active billing orders snapshot", error)
-                    return@addSnapshotListener
-                }
-
-                val allDocs = snapshot?.documents ?: emptyList()
-                val documents = allDocs.filter { it.reference.path.contains(targetPrefix) }
-
-                launch(Dispatchers.IO) {
+        val activeJob = launch {
+            RestaurantActiveOrders.observe(firestore, managerId).collect { allDocs ->
+                val documents = allDocs.filter { it.reference.path.startsWith(targetPrefix) }
+                CoroutineScope(Dispatchers.IO).launch {
                     activeOrdersList = documents.map { doc ->
                         async { parseOrderDocument(doc) }
                     }.awaitAll()
@@ -77,6 +68,7 @@ class CashierBillingRepository(
                     emitCombinedList()
                 }
             }
+        }
 
         // 2. Listen to completed_orders collection for this manager (last 24 hours)
         val twentyFourHoursAgo = Timestamp(
@@ -96,7 +88,7 @@ class CashierBillingRepository(
 
                 val documents = snapshot?.documents ?: emptyList()
 
-                launch(Dispatchers.IO) {
+                CoroutineScope(Dispatchers.IO).launch {
                     completedOrdersList = documents.map { doc ->
                         async { parseOrderDocument(doc) }
                     }.awaitAll()
@@ -107,7 +99,7 @@ class CashierBillingRepository(
 
         awaitClose {
             Log.d(TAG, "Dismantling billing orders snapshot listeners")
-            activeRegistration.remove()
+            activeJob.cancel()
             completedRegistration.remove()
         }
     }
@@ -255,129 +247,34 @@ class CashierBillingRepository(
     ): Flow<ResourceUiState<String>> = callbackFlow {
         trySend(ResourceUiState.Loading)
 
-        if (order.docPath.isEmpty()) {
-            trySend(ResourceUiState.Error("Invalid order path"))
-            close()
-            return@callbackFlow
-        }
+        try {
+            val restaurantId = order.docPath.split("/").getOrNull(1)
+                ?.takeIf { order.docPath.startsWith("restaurants/$it/") }
+                ?: throw IllegalArgumentException("Invalid active-order path")
+            val result = functions.getHttpsCallable("settleRestaurantOrder").call(
 
-        val batch = firestore.batch()
-        val orderRef = firestore.document(order.docPath)
-        Log.d(TAG, "settleOrder: Settling active order at path: '${orderRef.path}' with mode: $paymentMode")
-        
-        // 1. Prepare Payment & Reporting Data
-        val currentTime = Timestamp.now()
-        val sdfMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault())
-        val sdfDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val monthYear = sdfMonth.format(currentTime.toDate())
-        val exactDate = sdfDate.format(currentTime.toDate())
-
-        val finalGrandTotal = (order.subtotal + order.serviceChargeAmount + order.taxAmount - discount)
-
-        val resolvedWaiterName = if (order.waiterName.isNotEmpty()) order.waiterName else "Staff"
-        val resolvedCashierName = if (cashierName.isNotEmpty()) cashierName else if (order.cashierName.isNotEmpty()) order.cashierName else "Cashier"
-
-        val fullCompletedOrderData = mapOf(
-            AppConstants.FIELD_ORDER_ID to order.orderId,
-            AppConstants.FIELD_TABLE_ID to order.tableId,
-            AppConstants.FIELD_TABLE_NAME to order.tableName,
-            AppConstants.FIELD_CUSTOMER_NAME to order.customerName,
-            AppConstants.FIELD_CUSTOMER_MOBILE to order.customerPhone,
-            AppConstants.FIELD_ORDER_TYPE to order.orderType,
-            AppConstants.FIELD_ORDER_STATUS to AppConstants.STATUS_PAID,
-            AppConstants.FIELD_ORDER_ITEMS to order.items.map { item ->
                 mapOf(
-                    AppConstants.FIELD_ITEM_ID to item.itemId,
-                    AppConstants.FIELD_ITEM_NAME to item.itemName,
-                    AppConstants.FIELD_VARIANT_NAME to item.variantName,
-                    AppConstants.FIELD_ITEM_PRICE to item.price,
-                    AppConstants.FIELD_QUANTITY to item.quantity,
-                    AppConstants.FIELD_ROW_TOTAL to item.rowTotal,
-                    AppConstants.FIELD_ORDERED_QTY to item.orderedQuantity
+                    "restaurantId" to restaurantId,
+                    "docPath" to order.docPath,
+                    "paymentMethod" to paymentMode,
+                    "discountAmount" to discount,
+                    "applyServiceCharge" to (order.serviceChargeAmount > 0.0)
                 )
-            },
-            AppConstants.FIELD_SUBTOTAL to order.subtotal,
-            AppConstants.FIELD_SERVICE_CHARGE to order.serviceChargeAmount,
-            AppConstants.FIELD_GST to order.taxAmount,
-            AppConstants.FIELD_DISCOUNT_AMOUNT to discount,
-            AppConstants.FIELD_GRAND_TOTAL to finalGrandTotal,
-            AppConstants.FIELD_TIMESTAMP to order.timestamp,
-            AppConstants.FIELD_PAID_AT to currentTime,
-            AppConstants.FIELD_PAYMENT_METHOD to paymentMode,
-            AppConstants.FIELD_WAITER_ID to order.waiterId,
-            AppConstants.FIELD_WAITER_NAME to resolvedWaiterName,
-            AppConstants.FIELD_CASHIER_NAME to resolvedCashierName,
-            AppConstants.FIELD_BILLING_MONTH to monthYear,
-            AppConstants.FIELD_BILLING_DATE to exactDate
-        )
 
-        val pathSegments = order.docPath.split("/")
-        val managerId = if (pathSegments.size >= 2) pathSegments[1] else ""
+            ).await()
+            val response = result.data as? Map<*, *>
+            val completedOrderId = response?.get("completedOrderId") as? String
+                ?: throw IllegalStateException("Settlement service returned no completed-order ID")
+            trySend(ResourceUiState.Success(
+                "restaurants/$restaurantId/${AppConstants.COLLECTION_COMPLETED_ORDERS}/$completedOrderId"
+            ))
+            close()
+        } catch (e: Exception) {
+            Log.e(TAG, "Settlement callable failed for order ${order.orderId}", e)
+            trySend(ResourceUiState.Error(e.message ?: "Settlement failed"))
+            close()
 
-        // 2. Store full copy in a central 'completed_orders' collection
-        if (managerId.isNotEmpty()) {
-            val completedOrderRef = RestaurantPathHelper.getOutletDocRef(managerId)
-                .collection(AppConstants.COLLECTION_COMPLETED_ORDERS)
-                .document(order.orderId)
-            
-            batch.set(completedOrderRef, fullCompletedOrderData, com.google.firebase.firestore.SetOptions.merge())
         }
-
-        // 3. Reset the table status to FREE
-        if (pathSegments.contains(AppConstants.COLLECTION_TABLES) && pathSegments.size >= 6) {
-            try {
-                val tableRef = firestore.collection(pathSegments[0])
-                    .document(pathSegments[1])
-                    .collection(pathSegments[2])
-                    .document(pathSegments[3])
-                    .collection(pathSegments[4])
-                    .document(pathSegments[5])
-
-                Log.d(TAG, "settleOrder: Releasing table. Path: ${tableRef.path}")
-                
-                // Use set with merge instead of update so it won't fail with NOT_FOUND if table doc doesn't exist
-                batch.set(tableRef, mapOf(
-                    AppConstants.FIELD_STATUS to AppConstants.STATUS_FREE,
-                    AppConstants.FIELD_CUSTOMER_NAME_TABLE to "",
-                    AppConstants.FIELD_CURRENT_BILL to ""
-                ), com.google.firebase.firestore.SetOptions.merge())
-            } catch (e: Exception) {
-                Log.e(TAG, "settleOrder: Error reconstructing table path", e)
-            }
-        }
-
-        // 4. Delete the active order document
-        batch.delete(orderRef)
-
-        // 5. Update CRM (Customer Relationship Management)
-        if (order.customerPhone.isNotEmpty() && managerId.isNotEmpty()) {
-            val customerRef = RestaurantPathHelper.getOutletDocRef(managerId)
-                .collection(AppConstants.COLLECTION_CUSTOMERS)
-                .document(order.customerPhone)
-                
-            val customerData = mapOf(
-                "customerId" to order.customerPhone,
-                "customerName" to order.customerName,
-                "customerMobile" to order.customerPhone,
-                "lastVisit" to currentTime,
-                "visitCount" to com.google.firebase.firestore.FieldValue.increment(1),
-                "totalSpent" to com.google.firebase.firestore.FieldValue.increment(finalGrandTotal)
-            )
-            batch.set(customerRef, customerData, SetOptions.merge())
-        }
-
-        batch.commit()
-            .addOnSuccessListener {
-                Log.i(TAG, "💰 [REPO] Order ${order.orderId} settled. Revenue: ₹$finalGrandTotal. Reporting indexed for $monthYear.")
-                trySend(ResourceUiState.Success("Bill Settled Successfully"))
-                close()
-            }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "❌ [REPO] Settlement failed for order ${order.orderId}", e)
-                trySend(ResourceUiState.Error(e.message ?: "Update failed"))
-                close(e)
-            }
-
         awaitClose { }
     }
 
@@ -393,19 +290,25 @@ class CashierBillingRepository(
             return@callbackFlow
         }
 
-        val orderRef = firestore.document(order.docPath)
-        orderRef.set(mapOf(AppConstants.FIELD_ORDER_STATUS to AppConstants.STATUS_COMPLETED), com.google.firebase.firestore.SetOptions.merge())
-            .addOnSuccessListener {
-                Log.i(TAG, "📦 [REPO] Takeaway order ${order.orderId} marked as COMPLETED (Handed Over).")
-                trySend(ResourceUiState.Success("Order Handed Over"))
-                close()
-            }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "❌ [REPO] Failed to mark order ${order.orderId} as completed", e)
-                trySend(ResourceUiState.Error(e.message ?: "Update failed"))
-                close(e)
-            }
+        val restaurantId = order.docPath.split("/").getOrNull(1)
+            ?.takeIf { order.docPath.startsWith("restaurants/$it/completed_orders/") }
+        if (restaurantId.isNullOrBlank()) {
+            trySend(ResourceUiState.Error("Invalid completed-order path"))
+            close()
+            return@callbackFlow
+        }
 
+        try {
+            functions.getHttpsCallable("completeTakeawayOrder").call(
+                mapOf("restaurantId" to restaurantId, "docPath" to order.docPath)
+            ).await()
+            trySend(ResourceUiState.Success("Order Handed Over"))
+            close()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to complete takeaway order ${order.orderId}", e)
+            trySend(ResourceUiState.Error(e.message ?: "Update failed"))
+            close(e)
+        }
         awaitClose { }
     }
 }

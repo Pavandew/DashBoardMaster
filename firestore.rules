@@ -1,0 +1,375 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userExists() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function ownerRole() {
+      return userExists()
+        && userData().role in ['owner_single', 'owner_multi']
+        && userData().status == 'Active'
+        && userData().isVerified == true;
+    }
+
+    function restaurantExists(restaurantId) {
+      return exists(/databases/$(database)/documents/restaurants/$(restaurantId));
+    }
+
+    function isRestaurantOwner(restaurantId) {
+      return signedIn()
+        && ownerRole()
+        && restaurantExists(restaurantId)
+        && get(/databases/$(database)/documents/restaurants/$(restaurantId)).data.ownerUid == request.auth.uid;
+    }
+
+    function hasActiveRestaurantRole(restaurantId, allowedRoles) {
+      return isTrustedStaff(restaurantId)
+        && userData().role.lower() in allowedRoles;
+    }
+
+    function hasMatchingStaffRoster(restaurantId) {
+      return userData().staffDocId is string
+        && userData().staffDocId != ''
+        && exists(/databases/$(database)/documents/restaurants/$(restaurantId)/staff/$(userData().staffDocId))
+        && get(/databases/$(database)/documents/restaurants/$(restaurantId)/staff/$(userData().staffDocId)).data.staffId == userData().staffId
+        && get(/databases/$(database)/documents/restaurants/$(restaurantId)/staff/$(userData().staffDocId)).data.role.lower() == userData().role.lower()
+        && get(/databases/$(database)/documents/restaurants/$(restaurantId)/staff/$(userData().staffDocId)).data.status == 'Active';
+    }
+
+    function isTrustedStaff(restaurantId) {
+      return userExists()
+        && userData().restaurantId == restaurantId
+        && userData().status == 'Active'
+        && userData().role is string
+        && userData().staffId is string
+        && hasMatchingStaffRoster(restaurantId)
+        && userData().role.lower() in [
+          'manager',
+          'waiter',
+          'head waiter',
+          'waiter_staff',
+          'chef',
+          'master chef',
+          'kitchen',
+          'chef_staff',
+          'cashier',
+          'billing'
+        ];
+    }
+
+    function isManager(restaurantId) {
+      return isTrustedStaff(restaurantId)
+        && userData().role.lower() == 'manager';
+    }
+
+    function isStaffMember(restaurantId) {
+      return hasActiveRestaurantRole(restaurantId, [
+        'waiter',
+        'head waiter',
+        'waiter_staff',
+        'chef',
+        'master chef',
+        'kitchen',
+        'chef_staff',
+        'cashier',
+        'billing'
+        ]);
+    }
+
+    function isTenantMember(restaurantId) {
+      return isRestaurantOwner(restaurantId)
+        || isManager(restaurantId)
+        || isStaffMember(restaurantId);
+    }
+
+    function isOwnerOrManager(restaurantId) {
+      return isRestaurantOwner(restaurantId) || isManager(restaurantId);
+    }
+
+    function unchangedRestaurantId(restaurantId) {
+      return request.resource.data.restaurantId == restaurantId
+        && resource.data.restaurantId == restaurantId;
+    }
+
+    function orderStatusIs(statuses) {
+      return request.resource.data.orderStatus in statuses;
+    }
+
+    function changedOnly(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+    function canUpdateActiveOrder(restaurantId) {
+      return isOwnerOrManager(restaurantId)
+        || isTrustedStaff(restaurantId)
+          && (
+            userData().role.lower() in ['chef', 'master chef', 'kitchen', 'chef_staff']
+              && changedOnly(['orderStatus', 'rejectionReason'])
+              && (
+                resource.data.orderStatus == 'PENDING'
+                  && orderStatusIs(['PREPARING', 'REJECTED'])
+                || resource.data.orderStatus == 'PREPARING'
+                  && orderStatusIs(['READY', 'REJECTED'])
+              )
+            || userData().role.lower() in ['waiter', 'head waiter', 'waiter_staff']
+              && changedOnly(['orderStatus'])
+              && (
+                resource.data.orderStatus == 'READY'
+                  && orderStatusIs(['SERVED'])
+                || resource.data.orderStatus == 'SERVED'
+                  && orderStatusIs(['BILLING'])
+              )
+          );
+    }
+
+    function isOwnStaffRosterRecord(restaurantId, staffDocId) {
+      return isTrustedStaff(restaurantId)
+        && userData().staffDocId == staffDocId
+        && resource.data.staffId is string
+        && resource.data.staffId == userData().staffId
+        && resource.data.role is string
+        && resource.data.role.lower() == userData().role.lower()
+        && resource.data.status == 'Active';
+    }
+
+    function canReadNotification(restaurantId) {
+      return isOwnerOrManager(restaurantId)
+        || isTrustedStaff(restaurantId)
+          && (
+            resource.data.targetRole == 'all'
+              && resource.data.targetStaffId == ''
+            || userData().role.lower() in ['waiter', 'head waiter', 'waiter_staff']
+              && resource.data.targetRole in ['waiter', 'head waiter', 'waiter_staff']
+              && (
+                resource.data.targetStaffId == ''
+                || resource.data.targetStaffId == userData().staffDocId
+              )
+            || userData().role.lower() in ['chef', 'master chef', 'kitchen', 'chef_staff']
+              && resource.data.targetRole in ['chef', 'master chef', 'kitchen', 'chef_staff']
+              && (
+                resource.data.targetStaffId == ''
+                || resource.data.targetStaffId == userData().staffDocId
+              )
+            || userData().role.lower() in ['cashier', 'billing']
+              && resource.data.targetRole in ['cashier', 'billing']
+              && (
+                resource.data.targetStaffId == ''
+                || resource.data.targetStaffId == userData().staffDocId
+              )
+          );
+    }
+
+    function canUpdateNotification(restaurantId) {
+      return canReadNotification(restaurantId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead'])
+        && request.resource.data.isRead == true;
+    }
+
+    function validOwnerProfile(data, userId) {
+      return data.uid == userId
+        && data.role in ['owner_single', 'owner_multi']
+        && data.portalType in ['multi_restaurant', 'restaurant_portal']
+        && data.restaurantId == ''
+        && data.isSetupComplete == false
+        && data.isVerified == true
+        && data.status == 'Active';
+    }
+
+    match /users/{userId} {
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.auth.token.firebase.sign_in_provider == 'phone'
+        && request.resource.data.mobile == request.auth.token.phone_number
+        && validOwnerProfile(request.resource.data, userId);
+
+      allow get: if signedIn()
+        && (
+          request.auth.uid == userId
+          || resource.data.restaurantId is string
+            && isOwnerOrManager(resource.data.restaurantId)
+        );
+      allow list: if signedIn()
+        && resource.data.restaurantId is string
+        && isOwnerOrManager(resource.data.restaurantId);
+
+      allow update: if signedIn()
+        && (
+          request.auth.uid == userId
+          && resource.data.status == 'Active'
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['fcmToken'])
+          && request.resource.data.fcmToken is string
+          || request.auth.uid == userId
+          && resource.data.role in ['owner_single', 'owner_multi']
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.portalType == resource.data.portalType
+          && request.resource.data.isVerified == resource.data.isVerified
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['restaurantId', 'restaurantName', 'isSetupComplete'])
+          && request.resource.data.isSetupComplete == true
+          && request.resource.data.restaurantId is string
+          && isRestaurantOwner(request.resource.data.restaurantId)
+        );
+      allow delete: if false;
+
+      match /staff/{staffId} {
+        allow get, list: if resource.data.restaurantId is string
+          && userId == resource.data.restaurantId
+          && isTenantMember(userId);
+        allow write: if false;
+      }
+
+      match /notifications/{notificationId} {
+        allow read, write: if false;
+      }
+    }
+
+    match /restaurants/{restaurantId} {
+      allow get, list: if isTenantMember(restaurantId);
+      allow create: if ownerRole()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.restaurantId == restaurantId
+        && !request.resource.data.keys().hasAny([
+          'subscriptionId',
+          'subscriptionStatus',
+          'subscriptionExpiry',
+          'subscription'
+        ]);
+      allow update: if isRestaurantOwner(restaurantId)
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.restaurantId == restaurantId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'subscriptionId',
+          'subscriptionStatus',
+          'subscriptionExpiry',
+          'subscription'
+        ]);
+      allow delete: if false;
+    }
+
+    match /subscriptions/{subscriptionId} {
+      allow read, write: if false;
+    }
+
+    match /payments/{paymentId} {
+      allow read, write: if false;
+    }
+
+    match /restaurants/{restaurantId}/staff/{staffId} {
+      allow get: if isOwnerOrManager(restaurantId)
+        || isOwnStaffRosterRecord(restaurantId, staffId);
+      allow list: if isOwnerOrManager(restaurantId);
+      allow write: if false;
+    }
+
+    match /restaurants/{restaurantId}/menu_categories/{categoryId} {
+      allow read: if isTenantMember(restaurantId);
+      allow write: if isOwnerOrManager(restaurantId);
+
+      match /menu_food_items/{itemId} {
+        allow read: if isTenantMember(restaurantId);
+        allow write: if isOwnerOrManager(restaurantId);
+
+        match /addons/{addonId} {
+          allow read: if isTenantMember(restaurantId);
+          allow write: if isOwnerOrManager(restaurantId);
+        }
+      }
+    }
+
+    match /restaurants/{restaurantId}/inventory/{inventoryId} {
+      allow read: if isTenantMember(restaurantId);
+      allow create, update, delete: if isOwnerOrManager(restaurantId)
+        || hasActiveRestaurantRole(restaurantId, [
+          'chef',
+          'master chef',
+          'kitchen',
+          'chef_staff'
+        ]);
+    }
+
+    match /restaurants/{restaurantId}/customers/{customerId} {
+      allow read: if isOwnerOrManager(restaurantId);
+      allow create, update: if isOwnerOrManager(restaurantId);
+      allow delete: if isOwnerOrManager(restaurantId);
+    }
+
+    match /restaurants/{restaurantId}/res_floors/{floorId} {
+      allow read: if isTenantMember(restaurantId);
+      allow write: if isOwnerOrManager(restaurantId);
+
+      match /floor_tables/{tableId} {
+        allow read: if isTenantMember(restaurantId);
+        allow create, delete: if isOwnerOrManager(restaurantId);
+        allow update: if isOwnerOrManager(restaurantId)
+          || (
+            hasActiveRestaurantRole(restaurantId, [
+              'waiter',
+              'head waiter',
+              'waiter_staff'
+            ])
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'currentBillAmount', 'customerName'])
+          )
+          || (
+            hasActiveRestaurantRole(restaurantId, ['cashier', 'billing'])
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'currentBillAmount', 'customerName'])
+          );
+      }
+    }
+
+    match /restaurants/{restaurantId}/{path=**}/active_orders/{orderId} {
+      allow read: if resource.data.restaurantId == restaurantId
+        && isTenantMember(restaurantId);
+      allow create: if false;
+      allow update: if unchangedRestaurantId(restaurantId)
+        && canUpdateActiveOrder(restaurantId);
+      allow delete: if isOwnerOrManager(restaurantId);
+    }
+
+    match /restaurants/{restaurantId}/completed_orders/{orderId} {
+      allow read: if isTenantMember(restaurantId);
+      allow write: if false;
+    }
+
+    match /restaurants/{restaurantId}/notifications/{notificationId} {
+      allow get: if canReadNotification(restaurantId);
+      allow list: if canReadNotification(restaurantId);
+      allow create: if false;
+      allow update: if canUpdateNotification(restaurantId);
+      allow delete: if isOwnerOrManager(restaurantId);
+    }
+
+    match /authCredentials/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /mobileMappings/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /authRateLimits/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /subscriptionPaymentOrders/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

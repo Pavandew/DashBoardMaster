@@ -51,7 +51,7 @@ class CustomerManagementFragment : Fragment() {
         setupSearch()
         observeViewModel()
 
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         if (managerId.isNotEmpty()) {
             viewModel.observeCustomers(managerId)
         }

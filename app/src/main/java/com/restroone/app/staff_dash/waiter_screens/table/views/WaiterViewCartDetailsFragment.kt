@@ -26,7 +26,7 @@ class WaiterViewCartDetailsFragment : BaseViewCartFragment() {
     override fun setupBottomButton() {
         binding.btnSendToKitchen.text = "Send to Kitchen"
         binding.btnSendToKitchen.setOnClickListener {
-            val managerId = sessionManager.getUid()
+            val managerId = sessionManager.getRestaurantId()
             val waiterId = sessionManager.getStaffDocId() 
             val tableId = arguments?.getString("tableId") ?: "N/A"
             val floorId = arguments?.getString("floorId") ?: "N/A"

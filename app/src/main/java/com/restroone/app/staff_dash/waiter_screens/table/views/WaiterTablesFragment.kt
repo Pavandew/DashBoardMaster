@@ -69,7 +69,7 @@ class WaiterTablesFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Log.i(TAG, "📱 WaiterTablesFragment onViewCreated lifecycle hook reached.")
 
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         val managerName = sessionManager.getUserName() ?: "Unknown Manager"
         Log.d(TAG, "WaiterTablesFragment Session Context: [ManagerName: $managerName | ID: $managerId]")
 
@@ -218,7 +218,7 @@ class WaiterTablesFragment : Fragment() {
     }
 
     private fun showCustomerInfoDialog(table: TableCardData) {
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         TableDialogHelper.showCustomerInfoDialog(
             context = requireContext(),
             inflater = layoutInflater,
@@ -237,7 +237,7 @@ class WaiterTablesFragment : Fragment() {
     }
 
     private fun showReservedTableDialog(table: TableCardData) {
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         TableDialogHelper.showReservedTableActionsDialog(
             context = requireContext(),
             inflater = layoutInflater,

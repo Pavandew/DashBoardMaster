@@ -26,24 +26,16 @@
 
             <ImageView
                 android:id="@+id/staff_login_img"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                android:src="@drawable/app_logo_without_bg" />
-
-            <TextView
-                android:id="@+id/tvLabel2"
-                style="@style/TextAppearance.MyApp.ToolbarTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Staff Login"
-                android:textColor="#262626" />
+                android:layout_width="140dp"
+                android:layout_height="140dp"
+                android:src="@drawable/app_logo_with_name" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/staff_login_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="28dp"
                 app:cardBackgroundColor="@color/white"
                 app:cardElevation="8dp"
                 app:strokeWidth="0dp">
@@ -52,40 +44,78 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="20dp">
+                    android:padding="24dp">
+
+                    <!-- Portal Badge -->
+                    <TextView
+                        android:id="@+id/tv_staff_portal_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Staff Portal"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="4dp"
+                        android:background="@drawable/bg_portal_badge"
+                        android:backgroundTint="@color/portal_staff_primary"
+                        android:layout_marginBottom="12dp" />
+
+                    <!-- Title -->
+                    <TextView
+                        android:id="@+id/tvLabel2"
+                        style="@style/TextAppearance.MyApp.ToolbarTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Staff Login"
+                        android:textColor="#111111" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Sign in with your Staff ID and Password"
+                        style="@style/TextAppearance.MyApp.Subtitle" />
 
                     <TextView
                         android:id="@+id/staff_enter_id_tv"
                         style="@style/TextAppearance.MyApp.TitleSmall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="ID Number" />
+                        android:layout_marginTop="20dp"
+                        android:text="Staff ID" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputLayout"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="4dp"
                         app:boxBackgroundColor="@android:color/white"
                         app:boxBackgroundMode="outline"
-                        app:boxCornerRadiusBottomEnd="8dp"
-                        app:boxCornerRadiusBottomStart="8dp"
-                        app:boxCornerRadiusTopEnd="8dp"
-                        app:boxCornerRadiusTopStart="8dp"
-                        app:boxStrokeColor="#E3E5EF"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxStrokeWidth="1dp"
+                        app:boxStrokeWidthFocused="2dp"
+                        app:boxStrokeColor="@color/portal_staff_primary"
+                        app:startIconDrawable="@drawable/ic_badge_24dp"
+                        app:startIconTint="@color/black"
                         app:hintEnabled="false">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/staff_etInput"
                             style="@style/TextAppearance.MyApp.TitleMedium"
                             android:layout_width="match_parent"
-                            android:layout_height="60dp"
+                            android:layout_height="wrap_content"
                             android:gravity="center_vertical"
-                            android:hint="Enter ID"
+                            android:hint="Enter Staff ID"
                             android:inputType="text"
-                            android:paddingTop="0dp"
-                            android:paddingBottom="0dp"
+                            android:paddingTop="12dp"
+                            android:paddingBottom="12dp"
+                            android:textColor="#111111"
+                            android:textSize="18sp"
                             android:textAllCaps="false" />
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -94,7 +124,7 @@
                         style="@style/TextAppearance.MyApp.TitleSmall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
+                        android:layout_marginTop="14dp"
                         android:text="Password" />
 
                     <!-- Password Field -->
@@ -103,14 +133,16 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="4dp"
                         app:boxBackgroundColor="@android:color/white"
                         app:boxBackgroundMode="outline"
-                        app:boxCornerRadiusBottomEnd="8dp"
-                        app:boxCornerRadiusBottomStart="8dp"
-                        app:boxCornerRadiusTopEnd="8dp"
-                        app:boxCornerRadiusTopStart="8dp"
-                        app:boxStrokeColor="#E3E5EF"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxStrokeWidth="1dp"
+                        app:boxStrokeWidthFocused="2dp"
+                        app:boxStrokeColor="@color/portal_staff_primary"
                         app:hintEnabled="false"
                         app:endIconMode="password_toggle"
                         app:endIconTint="@color/black"
@@ -121,22 +153,25 @@
                             android:id="@+id/staff_password_et"
                             style="@style/TextAppearance.MyApp.TitleMedium"
                             android:layout_width="match_parent"
-                            android:layout_height="60dp"
+                            android:layout_height="wrap_content"
                             android:gravity="center_vertical"
                             android:hint="Enter password"
                             android:inputType="textPassword"
-                            android:paddingTop="0dp"
-                            android:paddingBottom="0dp"
+                            android:paddingTop="12dp"
+                            android:paddingBottom="12dp"
+                            android:textColor="#111111"
+                            android:textSize="18sp"
                             android:textAllCaps="false" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <TextView
                         android:id="@+id/staff_forgot_pass"
-                        style="@style/TextAppearance.MyApp.TitleSmall"
+                        style="@style/TextAppearance.MyApp.CaptionSmall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="8dp"
+                        android:textColor="@color/portal_staff_primary"
                         android:text="Forgot Password?" />
 
                     <!-- Login Button -->
@@ -145,8 +180,10 @@
                         style="@style/Button.MyApp.Large"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="30dp"
+                        android:layout_marginTop="24dp"
                         android:text="Login"
+                        app:cornerRadius="14dp"
+                        app:backgroundTint="@color/portal_staff_primary"
                         app:iconGravity="textStart"
                         app:iconPadding="10dp"
                         app:iconTint="@android:color/white" />

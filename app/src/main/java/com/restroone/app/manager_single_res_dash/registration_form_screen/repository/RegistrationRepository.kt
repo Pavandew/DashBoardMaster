@@ -5,6 +5,7 @@ import com.restroone.app.manager_single_res_dash.registration_form_screen.model.
 import com.restroone.app.utils.AppConstants
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
 
 class RegistrationRepository {
@@ -31,28 +32,15 @@ class RegistrationRepository {
 
             outletDocRef.set(outletData, SetOptions.merge()).await()
 
-            // 2. Save user profile link & initial subscription in users/{ownerUid}
-            val userDocRef = firestore.collection(AppConstants.COLLECTION_USERS).document(ownerUid)
-            val now = System.currentTimeMillis()
-            val thirtyDaysExpiry = now + (30L * 24 * 60 * 60 * 1000)
-
-            val initialSubscriptionMap = mapOf(
-                "status" to "TRIAL",
-                "planId" to "single_res_trial",
-                "startDateTimestamp" to now,
-                "expiryDateTimestamp" to thirtyDaysExpiry,
-                "autoRenew" to true
-            )
-
-            val userData = mutableMapOf<String, Any>(
-                AppConstants.FIELD_IS_SETUP_COMPLETE to true,
-                AppConstants.FIELD_RESTAURANT_ID to restaurantId,
-                AppConstants.FIELD_RESTAURANT_NAME to data.restaurantName,
-                AppConstants.FIELD_ROLE to AppConstants.ROLE_OWNER_SINGLE,
-                "subscription" to initialSubscriptionMap
-            )
-
-            userDocRef.set(userData, SetOptions.merge()).await()
+            // The callable verifies ownership and provisions the initial trial server-side.
+            FirebaseFunctions.getInstance().getHttpsCallable("completeRestaurantSetup")
+                .call(
+                    mapOf(
+                        AppConstants.FIELD_RESTAURANT_ID to restaurantId,
+                        AppConstants.FIELD_RESTAURANT_NAME to data.restaurantName
+                    )
+                )
+                .await()
 
             Log.i("RegistrationRepo", "Firebase Success: Outlet saved to 'restaurants/$restaurantId' & User linked.")
             Result.success(restaurantId)

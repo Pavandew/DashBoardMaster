@@ -16,11 +16,23 @@ data class OwnerProfile(
     @get:PropertyName("ownerMobile") @set:PropertyName("ownerMobile")
     var ownerMobile: String = ""
 ) : Serializable {
+
+    fun getCleaned(): OwnerProfile {
+        val cleanDigits = ownerMobile.replace("[^0-9+]".toRegex(), "")
+        val formattedMobile = if (cleanDigits.length == 10) "+91$cleanDigits" else if (cleanDigits.startsWith("91") && cleanDigits.length == 12) "+$cleanDigits" else cleanDigits.trim()
+        return OwnerProfile(
+            ownerFullName = ownerFullName.trim(),
+            ownerEmail = ownerEmail.trim().lowercase(),
+            ownerMobile = formattedMobile
+        )
+    }
+
     fun toMap(): Map<String, Any> {
+        val clean = getCleaned()
         return mapOf(
-            "ownerFullName" to ownerFullName,
-            "ownerEmail" to ownerEmail,
-            "ownerMobile" to ownerMobile
+            "ownerFullName" to clean.ownerFullName,
+            "ownerEmail" to clean.ownerEmail,
+            "ownerMobile" to clean.ownerMobile
         )
     }
 }
@@ -48,15 +60,29 @@ data class RestaurantProfile(
     @get:PropertyName("timezone") @set:PropertyName("timezone")
     var timezone: String = "Asia/Kolkata"
 ) : Serializable {
+
+    fun getCleaned(): RestaurantProfile {
+        return RestaurantProfile(
+            restaurantName = restaurantName.trim(),
+            businessType = businessType.trim(),
+            legalName = legalName.trim(),
+            displayName = displayName.trim(),
+            seatingCapacity = seatingCapacity.trim().ifEmpty { "—" },
+            openDays = openDays.trim().ifEmpty { "7 / 7" },
+            timezone = timezone.trim().ifEmpty { "Asia/Kolkata" }
+        )
+    }
+
     fun toMap(): Map<String, Any> {
+        val clean = getCleaned()
         return mapOf(
-            AppConstants.FIELD_RESTAURANT_NAME to restaurantName,
-            "businessType" to businessType,
-            "legalName" to legalName,
-            "displayName" to displayName,
-            "seatingCapacity" to seatingCapacity,
-            "openDays" to openDays,
-            "timezone" to timezone
+            AppConstants.FIELD_RESTAURANT_NAME to clean.restaurantName,
+            "businessType" to clean.businessType,
+            "legalName" to clean.legalName,
+            "displayName" to clean.displayName,
+            "seatingCapacity" to clean.seatingCapacity,
+            "openDays" to clean.openDays,
+            "timezone" to clean.timezone
         )
     }
 }
@@ -93,18 +119,41 @@ data class AddressInfo(
     @get:PropertyName("website") @set:PropertyName("website")
     var website: String = ""
 ) : Serializable {
+
+    fun getCleaned(): AddressInfo {
+        val cleanDigits = contactNumber.replace("[^0-9+]".toRegex(), "")
+        val formattedContact = if (cleanDigits.length == 10) "+91$cleanDigits" else if (cleanDigits.startsWith("91") && cleanDigits.length == 12) "+$cleanDigits" else cleanDigits.trim()
+
+        val waDigits = whatsappNumber.replace("[^0-9+]".toRegex(), "")
+        val formattedWhatsapp = if (waDigits.length == 10) "+91$waDigits" else if (waDigits.startsWith("91") && waDigits.length == 12) "+$waDigits" else waDigits.trim()
+
+        return AddressInfo(
+            address = address.trim(),
+            landmark = landmark.trim(),
+            pinCode = pinCode.trim(),
+            city = city.trim(),
+            state = state.trim(),
+            country = country.trim().ifEmpty { "India" },
+            contactNumber = formattedContact,
+            contactEmail = contactEmail.trim().lowercase(),
+            whatsappNumber = formattedWhatsapp,
+            website = website.trim()
+        )
+    }
+
     fun toMap(): Map<String, Any> {
+        val clean = getCleaned()
         return mapOf(
-            "address" to address,
-            "landmark" to landmark,
-            "pinCode" to pinCode,
-            "city" to city,
-            "state" to state,
-            "country" to country,
-            "contactNumber" to contactNumber,
-            "contactEmail" to contactEmail,
-            "whatsappNumber" to whatsappNumber,
-            "website" to website
+            "address" to clean.address,
+            "landmark" to clean.landmark,
+            "pinCode" to clean.pinCode,
+            "city" to clean.city,
+            "state" to clean.state,
+            "country" to clean.country,
+            "contactNumber" to clean.contactNumber,
+            "contactEmail" to clean.contactEmail,
+            "whatsappNumber" to clean.whatsappNumber,
+            "website" to clean.website
         )
     }
 }
@@ -135,16 +184,31 @@ data class TaxSettings(
     @get:PropertyName("priceIncludesTax") @set:PropertyName("priceIncludesTax")
     var priceIncludesTax: Boolean = false
 ) : Serializable {
+
+    fun getCleaned(): TaxSettings {
+        return TaxSettings(
+            chargeTaxOnBills = chargeTaxOnBills,
+            defaultTaxRate = defaultTaxRate,
+            gstNumber = gstNumber.trim().uppercase(),
+            panNumber = panNumber.trim().uppercase(),
+            fssaiNumber = fssaiNumber.trim(),
+            fssaiExpiryDate = fssaiExpiryDate.trim(),
+            taxLabel = taxLabel.trim().ifEmpty { "GST" },
+            priceIncludesTax = priceIncludesTax
+        )
+    }
+
     fun toMap(): Map<String, Any> {
+        val clean = getCleaned()
         return mapOf(
-            "chargeTaxOnBills" to chargeTaxOnBills,
-            "defaultTaxRate" to defaultTaxRate,
-            "gstNumber" to gstNumber,
-            "panNumber" to panNumber,
-            "fssaiNumber" to fssaiNumber,
-            "fssaiExpiryDate" to fssaiExpiryDate,
-            "taxLabel" to taxLabel,
-            "priceIncludesTax" to priceIncludesTax
+            "chargeTaxOnBills" to clean.chargeTaxOnBills,
+            "defaultTaxRate" to clean.defaultTaxRate,
+            "gstNumber" to clean.gstNumber,
+            "panNumber" to clean.panNumber,
+            "fssaiNumber" to clean.fssaiNumber,
+            "fssaiExpiryDate" to clean.fssaiExpiryDate,
+            "taxLabel" to clean.taxLabel,
+            "priceIncludesTax" to clean.priceIncludesTax
         )
     }
 }
@@ -190,21 +254,41 @@ data class BillingPrinterSettings(
     @get:PropertyName("showCustomerInfo") @set:PropertyName("showCustomerInfo")
     var showCustomerInfo: Boolean = true
 ) : Serializable {
+
+    fun getCleaned(): BillingPrinterSettings {
+        return BillingPrinterSettings(
+            currency = currency.trim(),
+            currencySymbol = currencySymbol.trim(),
+            language = language.trim(),
+            invoicePrefix = invoicePrefix.trim().ifEmpty { "INV-" },
+            startingInvoiceNumber = startingInvoiceNumber.trim().ifEmpty { "1" },
+            printSize = printSize.trim(),
+            restaurantLogoUri = restaurantLogoUri?.trim(),
+            showLogoOnReceipts = showLogoOnReceipts,
+            customHeaderTagline = customHeaderTagline.trim(),
+            customFooterMessage = customFooterMessage.trim(),
+            showGstin = showGstin,
+            showFssai = showFssai,
+            showCustomerInfo = showCustomerInfo
+        )
+    }
+
     fun toMap(): Map<String, Any?> {
+        val clean = getCleaned()
         return mapOf(
-            "currency" to currency,
-            "currencySymbol" to currencySymbol,
-            "language" to language,
-            "invoicePrefix" to invoicePrefix,
-            "startingInvoiceNumber" to startingInvoiceNumber,
-            "printSize" to printSize,
-            "restaurantLogoUri" to restaurantLogoUri,
-            "showLogoOnReceipts" to showLogoOnReceipts,
-            "customHeaderTagline" to customHeaderTagline,
-            "customFooterMessage" to customFooterMessage,
-            "showGstin" to showGstin,
-            "showFssai" to showFssai,
-            "showCustomerInfo" to showCustomerInfo
+            "currency" to clean.currency,
+            "currencySymbol" to clean.currencySymbol,
+            "language" to clean.language,
+            "invoicePrefix" to clean.invoicePrefix,
+            "startingInvoiceNumber" to clean.startingInvoiceNumber,
+            "printSize" to clean.printSize,
+            "restaurantLogoUri" to clean.restaurantLogoUri,
+            "showLogoOnReceipts" to clean.showLogoOnReceipts,
+            "customHeaderTagline" to clean.customHeaderTagline,
+            "customFooterMessage" to clean.customFooterMessage,
+            "showGstin" to clean.showGstin,
+            "showFssai" to clean.showFssai,
+            "showCustomerInfo" to clean.showCustomerInfo
         )
     }
 }
@@ -226,13 +310,25 @@ data class ServiceChargeSettings(
     @get:PropertyName("applyTax") @set:PropertyName("applyTax")
     var applyTax: Boolean = false
 ) : Serializable {
+
+    fun getCleaned(): ServiceChargeSettings {
+        return ServiceChargeSettings(
+            enabled = enabled,
+            percent = percent,
+            label = label.trim().ifEmpty { "Service Charge" },
+            dineInOnly = dineInOnly,
+            applyTax = applyTax
+        )
+    }
+
     fun toMap(): Map<String, Any> {
+        val clean = getCleaned()
         return mapOf(
-            "enabled" to enabled,
-            "percent" to percent,
-            "label" to label,
-            "dineInOnly" to dineInOnly,
-            "applyTax" to applyTax
+            "enabled" to clean.enabled,
+            "percent" to clean.percent,
+            "label" to clean.label,
+            "dineInOnly" to clean.dineInOnly,
+            "applyTax" to clean.applyTax
         )
     }
 }
@@ -245,10 +341,19 @@ data class UpiSettings(
     @get:PropertyName("upiQrUrl") @set:PropertyName("upiQrUrl")
     var upiQrUrl: String = ""
 ) : Serializable {
+
+    fun getCleaned(): UpiSettings {
+        return UpiSettings(
+            upiId = upiId.trim(),
+            upiQrUrl = upiQrUrl.trim()
+        )
+    }
+
     fun toMap(): Map<String, Any> {
+        val clean = getCleaned()
         return mapOf(
-            "upiId" to upiId,
-            "upiQrUrl" to upiQrUrl
+            "upiId" to clean.upiId,
+            "upiQrUrl" to clean.upiQrUrl
         )
     }
 }
@@ -340,18 +445,18 @@ data class RegistrationDataModel(
 
     fun getEffectiveOwnerProfile(): OwnerProfile {
         if (ownerProfile.ownerFullName.isNotEmpty() || ownerProfile.ownerEmail.isNotEmpty()) {
-            return ownerProfile
+            return ownerProfile.getCleaned()
         }
         return OwnerProfile(
             ownerFullName = getUnifiedFullName(),
             ownerEmail = getUnifiedEmail(),
             ownerMobile = getUnifiedMobile()
-        )
+        ).getCleaned()
     }
 
     fun getEffectiveRestaurantProfile(): RestaurantProfile {
         if (restaurantProfile.restaurantName.isNotEmpty()) {
-            return restaurantProfile
+            return restaurantProfile.getCleaned()
         }
         return RestaurantProfile(
             restaurantName = restaurantName,
@@ -361,12 +466,12 @@ data class RegistrationDataModel(
             seatingCapacity = seatingCapacity,
             openDays = openDays,
             timezone = timezone
-        )
+        ).getCleaned()
     }
 
     fun getEffectiveAddressInfo(): AddressInfo {
         if (addressInfo.address.isNotEmpty() || addressInfo.city.isNotEmpty() || addressInfo.state.isNotEmpty()) {
-            return addressInfo
+            return addressInfo.getCleaned()
         }
         return AddressInfo(
             address = address,
@@ -379,12 +484,12 @@ data class RegistrationDataModel(
             contactEmail = contactEmail,
             whatsappNumber = whatsappNumber,
             website = website
-        )
+        ).getCleaned()
     }
 
     fun getEffectiveTaxSettings(): TaxSettings {
         if (taxSettings.gstNumber.isNotEmpty() || taxSettings.defaultTaxRate > 0) {
-            return taxSettings
+            return taxSettings.getCleaned()
         }
         val parsedRate = defaultTaxRate.toDoubleOrNull() ?: 5.0
         return TaxSettings(
@@ -396,12 +501,12 @@ data class RegistrationDataModel(
             fssaiExpiryDate = fssaiExpiryDate,
             taxLabel = "GST",
             priceIncludesTax = priceIncludesTax
-        )
+        ).getCleaned()
     }
 
     fun getEffectiveBillingPrinterSettings(): BillingPrinterSettings {
         if (billingPrinterSettings.invoicePrefix.isNotEmpty()) {
-            return billingPrinterSettings
+            return billingPrinterSettings.getCleaned()
         }
         return BillingPrinterSettings(
             currency = currency,
@@ -412,12 +517,16 @@ data class RegistrationDataModel(
             printSize = printSize,
             restaurantLogoUri = restaurantLogoUri,
             showLogoOnReceipts = showLogoOnReceipts
-        )
+        ).getCleaned()
     }
 
-    fun getUnifiedFullName(): String = ownerFullName.ifEmpty { fullName }
-    fun getUnifiedEmail(): String = ownerEmail.ifEmpty { email }
-    fun getUnifiedMobile(): String = ownerMobile.ifEmpty { mobile.ifEmpty { phone } }
+    fun getUnifiedFullName(): String = ownerFullName.ifEmpty { fullName }.trim()
+    fun getUnifiedEmail(): String = ownerEmail.ifEmpty { email }.trim().lowercase()
+    fun getUnifiedMobile(): String {
+        val raw = ownerMobile.ifEmpty { mobile.ifEmpty { phone } }
+        val cleanDigits = raw.replace("[^0-9+]".toRegex(), "")
+        return if (cleanDigits.length == 10) "+91$cleanDigits" else if (cleanDigits.startsWith("91") && cleanDigits.length == 12) "+$cleanDigits" else cleanDigits.trim()
+    }
 
     fun toMap(): Map<String, Any?> {
         val effectiveOwner = getEffectiveOwnerProfile()
@@ -425,13 +534,18 @@ data class RegistrationDataModel(
         val effectiveAddress = getEffectiveAddressInfo()
         val effectiveTax = getEffectiveTaxSettings()
         val effectiveBilling = getEffectiveBillingPrinterSettings()
+        val effectiveService = serviceChargeSettings.getCleaned()
+        val effectiveUpi = upiSettings.getCleaned()
+
+        val cleanUid = ownerUid.trim()
+        val cleanResId = if (restaurantId.trim().isNotEmpty()) restaurantId.trim() else cleanUid
 
         return mapOf(
             // Top-Level Restaurant Identifiers
             AppConstants.FIELD_RESTAURANT_NAME to effectiveRestaurant.restaurantName,
             "ownerName" to effectiveOwner.ownerFullName,
-            AppConstants.FIELD_UID to ownerUid,
-            "restaurantId" to if (restaurantId.isNotEmpty()) restaurantId else ownerUid,
+            AppConstants.FIELD_UID to cleanUid,
+            "restaurantId" to cleanResId,
             "updatedAt" to System.currentTimeMillis(),
 
             // --- CLEAN GROUPED NESTED MAPS IN FIRESTORE ---
@@ -440,8 +554,8 @@ data class RegistrationDataModel(
             "addressInfo" to effectiveAddress.toMap(),
             "taxSettings" to effectiveTax.toMap(),
             "billingPrinterSettings" to effectiveBilling.toMap(),
-            "serviceChargeSettings" to serviceChargeSettings.toMap(),
-            "upiSettings" to upiSettings.toMap()
+            "serviceChargeSettings" to effectiveService.toMap(),
+            "upiSettings" to effectiveUpi.toMap()
         )
     }
 }

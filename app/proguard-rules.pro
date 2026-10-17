@@ -19,3 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Razorpay Rules
+-keep class com.razorpay.** {*;}
+-dontwarn com.razorpay.**
+-dontwarn com.google.android.apps.nbu.paisa.inapp.client.api.**
+-dontwarn proguard.annotation.**

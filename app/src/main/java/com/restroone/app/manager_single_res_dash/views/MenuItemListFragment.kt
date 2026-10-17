@@ -66,7 +66,7 @@ class MenuItemListFragment : Fragment() {
         setupRoleBasedAccess()
         setupOnClickActions()
 
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
         if (ownerUid.isNotEmpty() && categoryId.isNotEmpty()) {
             Log.d(TAG, "Streaming food subcollection path elements inside: $categoryName")
             viewModel.observeFoodItems(ownerUid, categoryId)
@@ -209,7 +209,7 @@ class MenuItemListFragment : Fragment() {
     }
 
     private fun showDeleteConfirmationPopup(item: MenuFoodItemsData) {
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
 
         // Clean & Reusable Utility Call!
         MenuDialogHelper.showDeleteConfirmation(
@@ -242,4 +242,3 @@ class MenuItemListFragment : Fragment() {
         _binding = null
     }
 }
-

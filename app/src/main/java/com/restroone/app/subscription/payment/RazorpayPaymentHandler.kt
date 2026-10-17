@@ -5,7 +5,6 @@ import android.util.Log
 import com.restroone.app.subscription.models.PaymentGateway
 import com.restroone.app.subscription.models.PaymentOrderDetails
 import com.restroone.app.subscription.models.PaymentResultPayload
-import com.restroone.app.utils.AppConstants
 import com.razorpay.Checkout
 import com.razorpay.PaymentData
 import com.razorpay.PaymentResultWithDataListener
@@ -18,7 +17,6 @@ class RazorpayPaymentHandler(
 
     companion object {
         private const val TAG = "RazorpayPaymentHandler"
-        private const val RAZORPAY_KEY_ID = AppConstants.RAZORPAY_TEST_KEY_ID
     }
 
     fun startPayment(orderDetails: PaymentOrderDetails, userPhone: String = "", userEmail: String = "") {
@@ -27,7 +25,10 @@ class RazorpayPaymentHandler(
             Checkout.preload(activity.applicationContext)
 
             val checkout = Checkout()
-            checkout.setKeyID(RAZORPAY_KEY_ID)
+            if (orderDetails.gatewayKeyId.isBlank()) {
+                throw IllegalStateException("Server did not provide a Razorpay key ID")
+            }
+            checkout.setKeyID(orderDetails.gatewayKeyId)
 
             val options = JSONObject().apply {
                 put("name", "RestroOne")

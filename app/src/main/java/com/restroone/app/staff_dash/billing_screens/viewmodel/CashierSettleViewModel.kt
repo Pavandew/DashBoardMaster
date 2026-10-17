@@ -76,14 +76,11 @@ class CashierSettleViewModel(
                 
                 if (status is ResourceUiState.Success) {
                     try {
-                        val completedDocPath = "users/$managerId/completed_orders/${order.orderId}"
+                        val completedDocPath = (status as? ResourceUiState.Success)?.data
+                            ?: throw IllegalStateException("Settlement did not return its completed-order path")
                         // Notify Manager (Revenue), Waiter (Table Free), and Billing (Log)
                         AppNotificationHelper.notifyPaymentSuccess(
                             managerId = managerId,
-                            tableName = order.tableName,
-                            orderId = order.orderId,
-                            amount = order.grandTotal,
-                            waiterId = order.waiterId,
                             orderDocPath = completedDocPath
                         )
                     } catch (e: Exception) {

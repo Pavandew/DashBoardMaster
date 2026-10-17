@@ -244,7 +244,7 @@ class AddMenuItemFragment : Fragment() {
         val hasVariants = binding.switchHasVariants.isChecked
         val description = binding.etMenuFoodDescription.text.toString().trim()
         val status = binding.spinnerMenuFoodStatus.selectedItem.toString()
-        val ownerUid = SessionManager(requireContext()).getUid()
+        val ownerUid = SessionManager(requireContext()).getRestaurantId()
 
         if (name.isEmpty()) {
             Toast.makeText(requireContext(), "Please enter item name", Toast.LENGTH_SHORT).show()

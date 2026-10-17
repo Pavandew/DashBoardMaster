@@ -65,8 +65,6 @@ class OTPVerificationActivity : AppCompatActivity() {
         portalType =
             intent.getStringExtra("portalType") ?: ""
 
-        Log.d(TAG, "onCreate: Received data from intent: phone=$phone, fullName=$fullName, role=$role, portalType=$portalType")
-
         binding.tvPhone.text =
             "OTP sent to +91 $phone"
 

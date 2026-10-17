@@ -10,7 +10,7 @@ import com.restroone.app.staff_dash.waiter_screens.table.uistate.ResourceUiState
 import com.restroone.app.manager_single_res_dash.models.ItemVariant
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.SetOptions
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +26,7 @@ class OrderTakingRepository {
     }
 
     private val firestore = FirebaseFirestore.getInstance()
+    private val functions = FirebaseFunctions.getInstance()
 
     // 1. Live stream of categories from restaurants/{managerId}/menu_categories
     fun getMenuCategories(managerId: String?): Flow<List<MenuCategoryData>> = callbackFlow {
@@ -258,54 +259,39 @@ class OrderTakingRepository {
         }
 
         try {
-            val tableRef = RestaurantPathHelper.getOutletDocRef(managerId)
-                .collection(AppConstants.COLLECTION_RES_FLOORS)
-                .document(floorId)
-                .collection(AppConstants.COLLECTION_TABLES)
-                .document(tableId)
-
-            val activeOrdersRef = tableRef.collection(AppConstants.COLLECTION_ACTIVE_ORDERS)
-
-            val orderDocRef = if (!existingOrderDocId.isNullOrEmpty()) {
-                activeOrdersRef.document(existingOrderDocId)
-            } else {
-                activeOrdersRef.document()
-            }
-
-            val finalMap = mutableMapOf<String, Any?>(
+            val orderMap = mapOf(
                 AppConstants.FIELD_ORDER_ID to orderData.orderId,
-                AppConstants.FIELD_TABLE_ID to orderData.tableId,
-                AppConstants.FIELD_FLOOR_ID to orderData.floorId,
                 AppConstants.FIELD_TABLE_NAME to orderData.tableName,
                 AppConstants.FIELD_CUSTOMER_NAME to orderData.customerName,
                 AppConstants.FIELD_CUSTOMER_MOBILE to orderData.customerMobile,
                 AppConstants.FIELD_ORDER_TYPE to orderData.orderType,
-                AppConstants.FIELD_ORDER_ITEMS to orderData.items,
                 AppConstants.FIELD_SPECIAL_NOTES to orderData.specialNotes,
-                AppConstants.FIELD_SUBTOTAL to orderData.subtotal,
-                AppConstants.FIELD_GST to orderData.gst,
-                AppConstants.FIELD_GRAND_TOTAL to orderData.grandTotal,
-                AppConstants.FIELD_ORDER_STATUS to orderData.orderStatus,
-                AppConstants.FIELD_PAYMENT_METHOD to orderData.paymentMethod,
-                AppConstants.FIELD_RESTAURANT_ID to managerId,
                 AppConstants.FIELD_WAITER_ID to orderData.waiterId,
-                AppConstants.FIELD_TIMESTAMP to orderData.timestamp,
-                AppConstants.FIELD_ORDER_DOC_PATH to orderDocRef.path
+                "items" to orderData.items.map { item ->
+                    mapOf(
+                        "itemId" to item.itemId,
+                        "catalogItemId" to item.catalogItemId,
+                        "categoryId" to item.categoryId,
+                        "addonIds" to item.addonIds,
+                        "variantName" to item.variantName,
+                        "quantity" to item.quantity
+                    )
+                }
             )
-
-            // Save order document
-            orderDocRef.set(finalMap, SetOptions.merge()).await()
-
-            // Update parent table status to OCCUPIED and current bill amount
-            val tableUpdates = mapOf<String, Any>(
-                AppConstants.FIELD_STATUS to AppConstants.STATUS_OCCUPIED,
-                AppConstants.FIELD_CURRENT_BILL to "₹${orderData.grandTotal.toInt()}",
-                AppConstants.FIELD_CUSTOMER_NAME_TABLE to orderData.customerName
-            )
-            tableRef.update(tableUpdates).await()
-
-            Log.i(TAG, "✅ sendOrderToFirebaseKitchen: Order saved at ${orderDocRef.path}")
-            emit(ResourceUiState.Success(orderDocRef.path))
+            val result = functions.getHttpsCallable("submitRestaurantOrder").call(
+                mapOf(
+                    "restaurantId" to managerId,
+                    "floorId" to floorId,
+                    "tableId" to tableId,
+                    "existingOrderDocId" to existingOrderDocId,
+                    "order" to orderMap
+                )
+            ).await()
+            val response = result.data as? Map<*, *>
+            val orderPath = response?.get("orderDocPath") as? String
+                ?: throw IllegalStateException("Order service returned no document path")
+            Log.i(TAG, "✅ sendOrderToFirebaseKitchen: Order saved at $orderPath")
+            emit(ResourceUiState.Success(orderPath))
         } catch (e: Exception) {
             Log.e(TAG, "❌ sendOrderToFirebaseKitchen: Upload failed", e)
             emit(ResourceUiState.Error(e.localizedMessage ?: "Failed to save order"))
@@ -317,9 +303,14 @@ class OrderTakingRepository {
      */
     suspend fun getChefTokens(managerId: String): List<String> {
         return try {
-            val snapshot = RestaurantPathHelper.getOutletDocRef(managerId)
+            val snapshot = firestore.collection(AppConstants.COLLECTION_USERS)
+                .document(managerId)
                 .collection(AppConstants.COLLECTION_STAFF)
-                .whereIn(AppConstants.FIELD_ROLE, listOf("chef", "kitchen", "chef_staff"))
+                .whereEqualTo(AppConstants.FIELD_RESTAURANT_ID, managerId)
+                .whereIn(
+                    AppConstants.FIELD_ROLE,
+                    listOf("chef", "Chef", "Master Chef", "kitchen", "Kitchen", "chef_staff")
+                )
                 .get()
                 .await()
 

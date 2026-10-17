@@ -67,7 +67,7 @@ class MenuManagementViewModel : ViewModel(){
 
             // Generate a clean Firestore ID path entry reference pointer
             val firestore = FirebaseFirestore.getInstance()
-            val newDocRef = firestore.collection(AppConstants.COLLECTION_USERS)
+            val newDocRef = firestore.collection(AppConstants.COLLECTION_RESTAURANTS)
                 .document(ownerUid)
                 .collection(AppConstants.COLLECTION_MENU_CATEGORIES)
                 .document()  // Generate unique document ID automatically
@@ -113,4 +113,3 @@ class MenuManagementViewModel : ViewModel(){
         }
     }
 }
-

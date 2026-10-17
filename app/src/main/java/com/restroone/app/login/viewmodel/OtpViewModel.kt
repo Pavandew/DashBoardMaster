@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.restroone.app.login.models.UserModelData
+import com.restroone.app.login.repo.AuthCloudFunctionRepository
 import com.restroone.app.login.repo.AuthRepository
 import com.restroone.app.login.uistate.OtpUiState
 import com.google.firebase.FirebaseException
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 class OtpViewModel : ViewModel() {
 
     private val repository = AuthRepository()
+    private val cloudFunctionRepo = AuthCloudFunctionRepository()
     private val TAG = "OtpViewModel"
 
     private val _otpState =
@@ -41,8 +43,6 @@ class OtpViewModel : ViewModel() {
         role: String,
         portalType: String
     ) {
-        Log.i(TAG, "sendOtp: Initiating OTP request for phone: $phone")
-
         tempPhone = phone
         tempFullName = fullName
         tempPassword = password
@@ -89,28 +89,36 @@ class OtpViewModel : ViewModel() {
         signInWithCredential(credential)
     }
 
-    // STEP 3: FIREBASE AUTH + FIRESTORE SAVE
+    // STEP 3: FIREBASE AUTH + SECURE CLOUD FUNCTION CREDENTIAL SAVE + FIRESTORE PROFILE
     private fun signInWithCredential(credential: PhoneAuthCredential) {
         viewModelScope.launch {
             repository.signInWithCredential(credential).fold(
                 onSuccess = { uid ->
-                    val user = UserModelData(
-                        uid = uid,
-                        fullName = tempFullName,
-                        mobile = if (tempPhone.startsWith("+91")) tempPhone else "+91$tempPhone",
-                        passwordHash = repository.hashPassword(tempPassword),
-                        role = tempRole,
-                        portalType = tempPortal,
-                        isVerified = true,
-                        status = "Active"
-                    )
-
-                    repository.saveUserProfile(user).fold(
+                    // 1. Save secure credentials server-side via Cloud Function (bcrypt hashed in authCredentials)
+                    cloudFunctionRepo.registerUserCredentials(tempPhone, tempPassword).fold(
                         onSuccess = {
-                            _otpState.value = OtpUiState.Verified(uid)
+                            // 2. Save user profile (without password!) in users/{uid}
+                            val user = UserModelData(
+                                uid = uid,
+                                fullName = tempFullName,
+                                mobile = if (tempPhone.startsWith("+91")) tempPhone else "+91$tempPhone",
+                                role = tempRole,
+                                portalType = tempPortal,
+                                isVerified = true,
+                                status = "Active"
+                            )
+
+                            repository.saveUserProfile(user).fold(
+                                onSuccess = {
+                                    _otpState.value = OtpUiState.Verified(uid)
+                                },
+                                onFailure = { e ->
+                                    _otpState.value = OtpUiState.Error("Failed to create profile: ${e.message}")
+                                }
+                            )
                         },
                         onFailure = { e ->
-                            _otpState.value = OtpUiState.Error("Failed to create profile: ${e.message}")
+                            _otpState.value = OtpUiState.Error("Failed to secure credentials: ${e.message}")
                         }
                     )
                 },

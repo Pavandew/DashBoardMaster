@@ -58,12 +58,7 @@ class KitchenOrderDetailViewModel(
             try {
                 val currentState = _detailUiState.value
                 if (currentState is KitchenOrderDetailUiState.Success && targetStatus.equals("Preparing", ignoreCase = true)) {
-                    val currentData = currentState.orderDetails
-                    // Sync orderedQuantity = quantity for all items when kitchen accepts the ticket
-                    val updatedItems = currentData.items.map { item ->
-                        item.copy(orderedQuantity = item.quantity)
-                    }
-                    repository.updateOrderItemsAndStatus(docPath, updatedItems, targetStatus, reason)
+                    repository.updateOrderItemsAndStatus(docPath, targetStatus, reason)
                 } else {
                     repository.updateOrderStatus(docPath, targetStatus, reason)
                 }
@@ -81,39 +76,13 @@ class KitchenOrderDetailViewModel(
     fun rejectSpecificItems(
         docPath: String,
         remainingItems: List<com.restroone.app.staff_dash.kitchen_screens.model.OrderDetailItem>,
-        reason: String,
-        taxRate: Double = 5.0
+        reason: String
     ) {
         viewModelScope.launch {
             try {
-                // Recalculate totals using configured tax rate
-                val newSubtotal = remainingItems.sumOf { it.price.toDouble() * it.quantity }
-                val newGst = newSubtotal * (taxRate / 100.0)
-                val newGrandTotal = newSubtotal + newGst
-
-                // Convert items to Map for Firestore (Preserving ALL item fields)
-                val itemsMap = remainingItems.map { item ->
-                    mapOf(
-                        "itemId" to item.itemId,
-                        "itemName" to item.itemName,
-                        "variantName" to item.variantName,
-                        "price" to item.price,
-                        "quantity" to item.quantity,
-                        "orderedQuantity" to item.orderedQuantity,
-                        "readyQuantity" to item.readyQuantity,
-                        "rowTotal" to (item.price * item.quantity),
-                        "category" to item.category,
-                        "itemNote" to item.itemNote,
-                        "itemStatus" to item.itemStatus
-                    )
-                }
-
                 repository.updateOrderWithRejectedItems(
                     docPath,
-                    itemsMap,
-                    newSubtotal,
-                    newGst,
-                    newGrandTotal,
+                    remainingItems.map { it.itemId },
                     reason
                 )
 

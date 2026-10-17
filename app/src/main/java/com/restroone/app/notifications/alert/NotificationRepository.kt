@@ -4,7 +4,9 @@ import android.util.Log
 import com.restroone.app.staff_dash.utils.TimeUtils
 import com.restroone.app.utils.AppConstants
 import com.restroone.app.utils.RestaurantPathHelper
+import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +22,7 @@ class NotificationRepository {
     }
 
     private val db = FirebaseFirestore.getInstance()
+    private val functions = FirebaseFunctions.getInstance()
 
     /**
      * Streams real-time notifications for a specific manager/outlet, filtered by role for efficiency.
@@ -29,13 +32,14 @@ class NotificationRepository {
         val isManager = userRole == "manager" || userRole == "owner_single" || userRole == "owner_multi"
         Log.d(TAG, "Starting notifications stream for managerId=$managerId role=$userRole staffId=$staffId isManager=$isManager")
 
-        val roleTargets = mutableListOf("all", userRole)
-        when (userRole) {
-            "waiter", "waiter_staff" -> roleTargets.addAll(listOf("waiter", "waiter_staff"))
-            "chef", "kitchen" -> roleTargets.addAll(listOf("chef", "kitchen"))
-            "cashier", "billing" -> roleTargets.addAll(listOf("cashier", "billing"))
+        val roleTargets = when (userRole) {
+            "waiter", "head waiter", "waiter_staff" ->
+                listOf("all", "waiter", "head waiter", "waiter_staff")
+            "chef", "master chef", "kitchen", "chef_staff" ->
+                listOf("all", "chef", "master chef", "kitchen", "chef_staff")
+            "cashier", "billing" -> listOf("all", "cashier", "billing")
+            else -> listOf("all", userRole)
         }
-        val distinctRoleTargets = roleTargets.distinct()
 
         val query = RestaurantPathHelper.getOutletDocRef(managerId)
             .collection(AppConstants.COLLECTION_NOTIFICATIONS)
@@ -44,31 +48,17 @@ class NotificationRepository {
         val targets = if (isManager) {
             listOf("all", "manager")
         } else {
-            distinctRoleTargets
+            roleTargets.distinct()
         }
 
         Log.d(TAG, "Applying server-side filter for targets: $targets")
         val finalQuery = query.whereIn(AppConstants.FIELD_TARGET_ROLE, targets).limit(50)
-
-        val listener = finalQuery.addSnapshotListener { snapshots, error ->
-            if (error != null) {
-                Log.e(TAG, "Notification stream error for managerId=$managerId", error)
-                close(error)
-                return@addSnapshotListener
-            }
-
-            val alerts = snapshots?.mapNotNull { doc ->
+        var broadcastDocs: List<DocumentSnapshot> = emptyList()
+        var targetedDocs: List<DocumentSnapshot> = emptyList()
+        fun emitAlerts() {
+            val alerts = (broadcastDocs + targetedDocs).distinctBy { it.id }.mapNotNull { doc ->
                 val target = doc.getString(AppConstants.FIELD_TARGET_ROLE)?.lowercase()?.trim() ?: ""
                 val tStaffId = doc.getString(AppConstants.FIELD_TARGET_STAFF_ID) ?: ""
-
-                val shouldShow = when {
-                    isManager -> true
-                    tStaffId.isNotEmpty() -> tStaffId == staffId
-                    else -> true
-                }
-
-                if (!shouldShow) return@mapNotNull null
-
                 val ts = doc.getTimestamp(AppConstants.FIELD_TIMESTAMP)
                 val timeStr = TimeUtils.getRelativeTime(ts)
 
@@ -86,15 +76,53 @@ class NotificationRepository {
                     orderId = doc.getString(AppConstants.FIELD_ORDER_ID) ?: "",
                     orderDocPath = doc.getString(AppConstants.FIELD_ORDER_DOC_PATH) ?: ""
                 )
-            } ?: emptyList()
+            }
 
             Log.d(TAG, "Notification snapshot received. Valid alerts after filtering: ${alerts.size} for managerId=$managerId")
             trySend(alerts)
         }
 
+        val listeners = if (isManager) {
+            listOf(finalQuery.addSnapshotListener { snapshots, error ->
+                if (error != null) {
+                    Log.e(TAG, "Notification stream error for managerId=$managerId", error)
+                    close(error)
+                    return@addSnapshotListener
+                }
+                broadcastDocs = snapshots?.documents.orEmpty()
+                emitAlerts()
+            })
+        } else {
+            listOf(
+                finalQuery.whereEqualTo(AppConstants.FIELD_TARGET_STAFF_ID, "")
+                    .addSnapshotListener { snapshots, error ->
+                        if (error != null) {
+                            Log.e(TAG, "Broadcast notification stream error for managerId=$managerId", error)
+                            close(error)
+                            return@addSnapshotListener
+                        }
+                        broadcastDocs = snapshots?.documents.orEmpty()
+                        emitAlerts()
+                    },
+                query.whereIn(AppConstants.FIELD_TARGET_ROLE, targets.filter { it != "all" })
+                    .orderBy(AppConstants.FIELD_TIMESTAMP, Query.Direction.DESCENDING)
+                    .limit(50)
+                    .whereEqualTo(AppConstants.FIELD_TARGET_STAFF_ID, staffId)
+                    .addSnapshotListener { snapshots, error ->
+                        if (error != null) {
+                            Log.e(TAG, "Targeted notification stream error for managerId=$managerId", error)
+                            close(error)
+                            return@addSnapshotListener
+                        }
+                        targetedDocs = snapshots?.documents.orEmpty()
+                        emitAlerts()
+                    }
+            )
+        }
+
         awaitClose {
             Log.d(TAG, "Stopping notifications stream for managerId=$managerId")
-            listener.remove()
+            listeners.forEach { it.remove() }
         }
     }
 
@@ -104,11 +132,13 @@ class NotificationRepository {
     suspend fun updateNotificationStatus(managerId: String, alertId: String, status: RequestStatus) {
        Log.d(TAG, "Updating notification status: managerId=$managerId alertId=$alertId status=${status.name}")
        try {
-           RestaurantPathHelper.getOutletDocRef(managerId)
-               .collection(AppConstants.COLLECTION_NOTIFICATIONS)
-               .document(alertId)
-               .update(AppConstants.FIELD_STATUS, status.name, AppConstants.FIELD_IS_READ, true)
-               .await()
+           functions.getHttpsCallable("updateStaffNotificationStatus").call(
+               mapOf(
+                   "restaurantId" to managerId,
+                   "notificationId" to alertId,
+                   "status" to status.name
+               )
+           ).await()
            Log.d(TAG, "Notification status updated successfully: alertId=$alertId")
        } catch (e: Exception) {
            Log.e(TAG, "Failed to update notification status: alertId=$alertId", e)

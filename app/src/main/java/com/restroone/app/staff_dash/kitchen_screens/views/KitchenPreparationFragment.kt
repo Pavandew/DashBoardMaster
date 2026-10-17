@@ -45,7 +45,7 @@ class KitchenPreparationFragment : Fragment(R.layout.fragment_kitchen_preparatio
         setupOrdersRecyclerView()
         setupSearch()
         
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         setupSwipeRefreshAndRetry(managerId)
         observeUiState()
 

@@ -65,7 +65,7 @@ class ManagerDashboardFragment : Fragment() {
         navigationHelper.initDrawerMenu()
         
         // 3. Start real-time tracking for status badges, today's sales overview, top selling dishes, and shift sales trend
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         viewModel.startRealTimeOrderStatusTracking(managerId)
         viewModel.loadRestaurantDetails(managerId, sessionManager)
         
@@ -200,7 +200,7 @@ class ManagerDashboardFragment : Fragment() {
         // 2. Set up click listeners for the Bottom Sheet
         val clickListener = View.OnClickListener {
             Log.i("ManagerDashboard", "Action: Restaurant Name/Profile clicked - Opening Bottom Sheet")
-            val ownerUid = sessionManager.getUid() 
+            val ownerUid = sessionManager.getRestaurantId()
             if (ownerUid.isNotEmpty()) {
                 if (childFragmentManager.findFragmentByTag("ResDetails") == null) {
                     RestaurantDetailsBottomSheet.newInstance(ownerUid).show(childFragmentManager, "ResDetails")

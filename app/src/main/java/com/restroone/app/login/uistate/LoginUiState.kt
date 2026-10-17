@@ -16,11 +16,8 @@ sealed class LoginUiState{
         val fullName: String = ""
     ): LoginUiState()
 
-    data class ResetUserFound(
-        val uid: String,
-        val role: String,
-        val phone: String,
-        val fullName: String = ""
+    data class ResetRequested(
+        val phone: String
     ) : LoginUiState()
 
     data class Error(

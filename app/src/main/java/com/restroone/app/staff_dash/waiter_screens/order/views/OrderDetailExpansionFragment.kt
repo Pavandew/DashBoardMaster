@@ -61,7 +61,7 @@ class OrderDetailExpansionFragment : Fragment() {
         Log.i(TAG, "📱 [FRAGMENT] OrderDetailExpansionFragment Opened")
 
         val sessionManager = SessionManager(requireContext())
-        val managerId = sessionManager.getUid() ?: ""
+        val managerId = sessionManager.getRestaurantId()
 
         // Unpack arguments passed from previous list fragment
         currentOrderId = arguments?.getString("orderId") ?: "N/A"
@@ -191,7 +191,7 @@ class OrderDetailExpansionFragment : Fragment() {
 
                         // Mark as Served Action
                         binding.btnMarkAsServed.setOnClickListener {
-                            val managerId = SessionManager(requireContext()).getUid() ?: ""
+                            val managerId = SessionManager(requireContext()).getRestaurantId()
                             
                             // 1. Button feedback state: Change text and disable to acknowledge tap
                             binding.btnMarkAsServed.isEnabled = false
@@ -239,7 +239,7 @@ class OrderDetailExpansionFragment : Fragment() {
 
                         // Generate Bill Action
                         binding.btnGenerateBill.setOnClickListener {
-                            val managerId = SessionManager(requireContext()).getUid() ?: ""
+                            val managerId = SessionManager(requireContext()).getRestaurantId()
                             Log.d(TAG, "📱 [FRAGMENT] 'Generate Bill' clicked for DocId: '${state.documentId}'")
 
                             viewModel.finalizeOrderAsBilling(

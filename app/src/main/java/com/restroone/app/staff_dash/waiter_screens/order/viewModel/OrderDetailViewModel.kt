@@ -134,20 +134,16 @@ class OrderDetailViewModel(
             
             val isCounter = tableId.isEmpty() || tableId == "COUNTER_ORDER" || tableId == "N/A" || floorId.isEmpty() || floorId == "N/A"
             val docPath = if (isCounter) {
-                "users/$managerId/active_orders/$orderDocId"
+                "restaurants/$managerId/active_orders/$orderDocId"
             } else {
-                "users/$managerId/res_floors/$floorId/floor_tables/$tableId/active_orders/$orderDocId"
+                "restaurants/$managerId/res_floors/$floorId/floor_tables/$tableId/active_orders/$orderDocId"
             }
 
             // CRITICAL: Use a separate launch to ensure notification is attempted
             // before we potentially destroy the ViewModel/Fragment scope.
             viewModelScope.launch {
                 try {
-                    val tokens = repository.getCashierTokens(managerId)
-                    Log.d(TAG, "finalizeOrderAsBilling: Found ${tokens.size} cashier tokens. Triggering notification.")
-                    
-                    // ALWAYS call dispatcher to save to history, even if tokens are empty.
-                    AppNotificationHelper.notifyCashierOfBillRequest(tokens, tableName, orderId, managerId, docPath)
+                    AppNotificationHelper.notifyCashierOfBillRequest(managerId, docPath)
                 } catch (e: Exception) {
                     Log.e(TAG, "finalizeOrderAsBilling: Notification failed", e)
                 } finally {

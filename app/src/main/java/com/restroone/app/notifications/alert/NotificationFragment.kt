@@ -216,10 +216,10 @@ class NotificationFragment : Fragment() {
                     return
                 }
                 Log.i(TAG, "Navigating to billing detail for orderId=${notification.orderId}")
-                val managerId = sessionManager.getUid()
+                val managerId = sessionManager.getRestaurantId()
                 val isPaidAlert = notification.title.contains("Payment", true) || notification.message.contains("paid", true) || notification.title.contains("Free", true)
                 val targetPath = if (isPaidAlert && notification.orderDocPath.isNotEmpty()) {
-                    if (notification.orderDocPath.contains("completed_orders")) notification.orderDocPath else "users/$managerId/completed_orders/${notification.orderId}"
+                    if (notification.orderDocPath.contains("completed_orders")) notification.orderDocPath else "restaurants/$managerId/completed_orders/${notification.orderId}"
                 } else notification.orderDocPath
 
                 val cashierOrder = CashierBillingOrderModel(
@@ -260,10 +260,10 @@ class NotificationFragment : Fragment() {
                     }
                     notification.orderId.isNotEmpty() -> {
                         Log.i(TAG, "Manager navigating to billing summary for orderId=${notification.orderId}")
-                        val managerId = sessionManager.getUid()
+                        val managerId = sessionManager.getRestaurantId()
                         val isPaidAlert = notification.title.contains("Payment", true) || notification.message.contains("paid", true) || notification.title.contains("Free", true)
                         val targetPath = if (isPaidAlert && notification.orderDocPath.isNotEmpty()) {
-                            if (notification.orderDocPath.contains("completed_orders")) notification.orderDocPath else "users/$managerId/completed_orders/${notification.orderId}"
+                            if (notification.orderDocPath.contains("completed_orders")) notification.orderDocPath else "restaurants/$managerId/completed_orders/${notification.orderId}"
                         } else notification.orderDocPath
 
                         val cashierOrder = CashierBillingOrderModel(

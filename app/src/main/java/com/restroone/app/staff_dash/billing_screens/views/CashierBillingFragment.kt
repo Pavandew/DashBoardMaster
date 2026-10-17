@@ -54,7 +54,7 @@ class CashierBillingFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Log.i(TAG, "onViewCreated: Initializing Billing dashboard")
 
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
 
         setupToolbar()
         setupAdapters()

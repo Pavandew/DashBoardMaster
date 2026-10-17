@@ -5,6 +5,7 @@ import com.restroone.app.utils.AppConstants
 import com.restroone.app.staff_dash.kitchen_screens.model.KitchenOrderDetailData
 import com.restroone.app.staff_dash.kitchen_screens.model.OrderDetailItem
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -13,6 +14,8 @@ import kotlinx.coroutines.tasks.await
 class KitchenPreparationDetailRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
+    private val functions = FirebaseFunctions.getInstance()
+
     companion object {
         private const val TAG = "KitchenWorkstationRepo"
     }
@@ -122,9 +125,16 @@ class KitchenPreparationDetailRepository(
     suspend fun updateOrderStatusToReady(docPath: String) {
         if (docPath.isEmpty()) return
         Log.i(TAG, "updateOrderStatusToReady: Setting status field to 'Ready' for path: $docPath")
-        firestore.document(docPath)
-            .update(AppConstants.FIELD_ORDER_STATUS, AppConstants.STATUS_READY)
-            .await()
+        val restaurantId = docPath.split("/").getOrNull(1)
+            ?: throw IllegalArgumentException("Invalid order path")
+        functions.getHttpsCallable("updateKitchenOrder").call(
+            mapOf(
+                "restaurantId" to restaurantId,
+                "docPath" to docPath,
+                "action" to "status",
+                "orderStatus" to AppConstants.STATUS_READY
+            )
+        ).await()
     }
 
     /**
@@ -133,9 +143,22 @@ class KitchenPreparationDetailRepository(
     suspend fun updateItemsAsReady(docPath: String, updatedItems: List<Map<String, Any>>) {
         if (docPath.isEmpty()) return
         Log.i(TAG, "updateItemsAsReady: Updating items at path: $docPath")
-        firestore.document(docPath)
-            .update(AppConstants.FIELD_ORDER_ITEMS, updatedItems)
-            .await()
+        val restaurantId = docPath.split("/").getOrNull(1)
+            ?: throw IllegalArgumentException("Invalid order path")
+        val readyItems = updatedItems.map { item ->
+            mapOf(
+                AppConstants.FIELD_ITEM_ID to item[AppConstants.FIELD_ITEM_ID],
+                AppConstants.FIELD_READY_QTY to item[AppConstants.FIELD_READY_QTY]
+            )
+        }
+        functions.getHttpsCallable("updateKitchenOrder").call(
+            mapOf(
+                "restaurantId" to restaurantId,
+                "docPath" to docPath,
+                "action" to "ready",
+                "items" to readyItems
+            )
+        ).await()
     }
 
     suspend fun getWaiterToken(restaurantId: String, waiterId: String): String? {

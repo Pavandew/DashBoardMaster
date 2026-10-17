@@ -58,7 +58,7 @@ class TableManagementFragment : Fragment() {
         setupRoleBasedAccess()
         setupPermissionAndAction()
 
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
         if (ownerUid.isNotEmpty()) {
             viewModel.observeFloors(ownerUid)
         }
@@ -132,7 +132,7 @@ class TableManagementFragment : Fragment() {
 
         binding.btnAddFloor.setOnClickListener {
             Log.d(TAG, "🔘 '+ Add New Floor' button clicked.")
-            val ownerUid = sessionManager.getUid()
+            val ownerUid = sessionManager.getRestaurantId()
 
             if (ownerUid.isEmpty()) {
                 Log.e(TAG, "Access Denied: Empty owner UID token string.")
@@ -193,7 +193,7 @@ class TableManagementFragment : Fragment() {
     }
 
     private fun showFloorDeletePopup(floor: FloorDataModel) {
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
 
         MenuDialogHelper.showDeleteConfirmation(
             context = requireContext(),
@@ -224,4 +224,3 @@ class TableManagementFragment : Fragment() {
         _binding = null
     }
 }
-

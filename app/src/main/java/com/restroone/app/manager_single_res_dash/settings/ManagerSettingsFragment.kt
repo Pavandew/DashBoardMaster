@@ -147,7 +147,7 @@ class ManagerSettingsFragment : Fragment() {
 
     private fun openRegistrationEditStep(step: Int) {
         Log.i(TAG, "Action: Navigating to Registration Edit Mode at Step $step")
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
 
         if (ownerUid.isEmpty()) {
             Toast.makeText(requireContext(), "User ID not found", Toast.LENGTH_SHORT).show()

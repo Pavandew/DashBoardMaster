@@ -30,6 +30,9 @@ data class OrderDataModel(
 
 data class OrderItemModel(
     val itemId: String = "",
+    val catalogItemId: String = "",
+    val categoryId: String = "",
+    val addonIds: List<String> = emptyList(),
     val itemName: String = "",
     val variantName: String = "", // Added for sizes (Small, Big, etc.)
     val price: Int = 0,

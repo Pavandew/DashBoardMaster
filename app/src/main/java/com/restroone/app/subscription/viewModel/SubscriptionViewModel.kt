@@ -154,12 +154,12 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
             _paymentState.value = PaymentState.VerifyingPayment
             try {
                 Log.i(TAG, "processPaymentResult: Verifying payment '${payload.paymentId}' via Gateway ${payload.gateway.name}...")
-                val success = repository.verifyAndActivateSubscription(plan, payload)
-                if (success) {
+                val subscriptionId = repository.verifyAndActivateSubscription(plan, payload)
+                if (!subscriptionId.isNullOrBlank()) {
                     Log.i(TAG, "processPaymentResult: Payment verified and subscription activated successfully!")
                     _paymentState.value = PaymentState.Success(
                         message = "🎉 🎉 Congratulations! Your ${plan.title} is now active!",
-                        subscriptionId = payload.paymentId
+                        subscriptionId = subscriptionId
                     )
                     loadSubscriptionData() // Refresh status from Firestore
                 } else {

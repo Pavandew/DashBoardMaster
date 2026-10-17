@@ -47,7 +47,7 @@ class ReceiptSettingsBottomSheet : BottomSheetDialogFragment() {
         setupUI()
         observeViewModel()
 
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
         if (ownerUid.isNotEmpty()) {
             viewModel.loadReceiptSettings(ownerUid)
         } else {
@@ -146,7 +146,7 @@ class ReceiptSettingsBottomSheet : BottomSheetDialogFragment() {
             else -> "80 mm thermal"
         }
 
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
         val currentSettings = viewModel.receiptSettings.value
         val newSettings = currentSettings.copy(
             invoicePrefix = invoicePrefix.ifEmpty { "INV-" },

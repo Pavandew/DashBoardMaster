@@ -102,7 +102,7 @@ class ServiceChargeSettingsBottomSheet : BottomSheetDialogFragment() {
             label = "Service Charge"
         }
 
-        val ownerUid = sessionManager.getUid()
+        val ownerUid = sessionManager.getRestaurantId()
         if (ownerUid.isEmpty()) {
             Toast.makeText(requireContext(), "User session not found", Toast.LENGTH_SHORT).show()
             return

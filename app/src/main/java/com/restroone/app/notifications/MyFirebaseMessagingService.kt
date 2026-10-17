@@ -4,6 +4,7 @@ import android.util.Log
 import com.restroone.app.utils.AppConstants
 import com.restroone.app.utils.SessionManager
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
@@ -46,7 +47,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         if (uid.isNotEmpty()) {
             if (staffDocId.isNotEmpty()) {
-                // If staffDocId exists, it's a staff member (stored under users/{ownerUid}/staff/{staffDocId})
+                // Staff tokens are written by a callable so the client cannot edit the roster.
                 updateStaffToken(uid, staffDocId, token)
             } else {
                 // If only uid exists, it's a manager/owner (stored under users/{uid})
@@ -65,13 +66,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     private fun updateStaffToken(ownerUid: String, staffDocId: String, token: String) {
-        FirebaseFirestore.getInstance()
-            .collection(AppConstants.COLLECTION_USERS)
-            .document(ownerUid)
-            .collection(AppConstants.COLLECTION_STAFF)
-            .document(staffDocId)
-            .update(AppConstants.FIELD_FCM_TOKEN, token)
-            .addOnSuccessListener { Log.d("FCM_SERVICE", "Staff token updated: $staffDocId") }
+        FirebaseFunctions.getInstance()
+            .getHttpsCallable("updateStaffFcmToken")
+            .call(mapOf("fcmToken" to token))
+            .addOnSuccessListener { Log.d("FCM_SERVICE", "Staff token updated: $staffDocId in $ownerUid") }
             .addOnFailureListener { e -> Log.e("FCM_SERVICE", "Error updating staff token", e) }
     }
 }

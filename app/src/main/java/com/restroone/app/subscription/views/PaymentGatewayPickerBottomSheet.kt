@@ -54,6 +54,7 @@ class PaymentGatewayPickerBottomSheet : BottomSheetDialogFragment() {
 
         binding.tvPlanSummary.text = "$planTitle • $planPrice"
         binding.btnProceedPayment.text = "PROCEED TO PAY $planPrice"
+        binding.cardOptionPhonePe.visibility = View.GONE
 
         setupSelectionListeners()
         updateUiState()

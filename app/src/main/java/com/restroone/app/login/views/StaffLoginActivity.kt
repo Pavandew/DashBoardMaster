@@ -18,9 +18,8 @@ import com.restroone.app.login.viewmodel.StaffLoginViewModel
 import com.restroone.app.staff_dash.billing_screens.CashierHomeActivity
 import com.restroone.app.staff_dash.kitchen_screens.KitchenHomeActivity
 import com.restroone.app.staff_dash.waiter_screens.WaiterHomeActivity
-import com.restroone.app.utils.AppConstants
 import com.restroone.app.utils.SessionManager
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.messaging.FirebaseMessaging
 import com.restroone.app.utils.NetworkUtils
 import kotlinx.coroutines.launch
@@ -137,22 +136,23 @@ class StaffLoginActivity : AppCompatActivity() {
 
                             val authenticatedRole = state.role
                             sessionManager.setLogin(
-                                uid = state.restaurantOwnerUid,
+                                uid = state.restaurantId,
                                 role = authenticatedRole,
                                 mobile = state.mobile,
                                 name = state.staffName,
                                 staffId = state.staffId,
                                 staffDocId = state.staffDocId
                             )
+                            sessionManager.saveRestaurantId(state.restaurantId)
 
                             sessionManager.savePermissions(state.permissions)
 
-                            saveFcmToken(state.restaurantOwnerUid, state.staffDocId)
+                            saveFcmToken(state.staffDocId)
 
                             Toast.makeText(this@StaffLoginActivity, "Welcome, ${state.staffName}!", Toast.LENGTH_SHORT).show()
 
                             val targetActivityClass = when(authenticatedRole.lowercase().trim()) {
-                                "kitchen", "chef" -> KitchenHomeActivity::class.java
+                                "kitchen", "chef", "master chef", "chef_staff" -> KitchenHomeActivity::class.java
                                 "billing", "cashier" -> CashierHomeActivity::class.java
                                 else -> WaiterHomeActivity::class.java
                             }
@@ -184,18 +184,18 @@ class StaffLoginActivity : AppCompatActivity() {
             .commit()
     }
 
-    private fun saveFcmToken(ownerUid: String, staffDocId: String) {
+    private fun saveFcmToken(staffDocId: String) {
         try {
             FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
                 if (!task.isSuccessful) return@addOnCompleteListener
 
                 val token = task.result ?: return@addOnCompleteListener
-                val db = FirebaseFirestore.getInstance()
-                db.collection(AppConstants.COLLECTION_USERS)
-                    .document(ownerUid)
-                    .collection(AppConstants.COLLECTION_STAFF)
-                    .document(staffDocId)
-                    .update(AppConstants.FIELD_FCM_TOKEN, token)
+                FirebaseFunctions.getInstance()
+                    .getHttpsCallable("updateStaffFcmToken")
+                    .call(mapOf("fcmToken" to token))
+                    .addOnFailureListener { error ->
+                        Log.e(TAG, "Unable to update staff FCM token for $staffDocId", error)
+                    }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Safe staff FCM token handling exception", e)

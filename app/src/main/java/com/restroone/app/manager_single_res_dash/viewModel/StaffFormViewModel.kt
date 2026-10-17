@@ -97,7 +97,7 @@ class StaffFormViewModel(
             permissions = permission
         )
 
-        Log.d(TAG, "FINAL SUBMISSION PAYLOAD: ID=$generatedStaffId, Pass=$generatedPassword")
+        Log.d(TAG, "FINAL SUBMISSION PAYLOAD: ID=$generatedStaffId")
 
         viewModelScope.launch {
             _uiState.value = FirebaseUiState.Loading
@@ -182,4 +182,3 @@ class StaffFormViewModel(
         Log.d(TAG, "Staff form data cleared")
     }
 }
-

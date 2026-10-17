@@ -171,7 +171,7 @@ class PermissionsAndDocumentsFragment : Fragment() {
             .setMessage(dialogMsg)
             .setPositiveButton(if (isEditMode) "Update" else "Yes, Register") { dialog, _ ->
                 dialog.dismiss()
-                val ownerUid = SessionManager(requireContext()).getUid()
+                val ownerUid = SessionManager(requireContext()).getRestaurantId()
                 sharedViewModel.submitFinalStaffData(
                     ownerUid = ownerUid,
                     documentType = if (isEditMode) sharedViewModel.currentStaffData.value.documentType else "National Identity Card Bundle",
@@ -252,4 +252,3 @@ class PermissionsAndDocumentsFragment : Fragment() {
         _binding = null
     }
 }
-

@@ -29,7 +29,7 @@ class DrawerViewModel(application: Application) : AndroidViewModel(application) 
     private val _uiState = MutableStateFlow(DrawerUiState())
     val uiState: StateFlow<DrawerUiState> = _uiState.asStateFlow()
 
-    private var unreadListener: ListenerRegistration? = null
+    private val unreadListeners = mutableListOf<ListenerRegistration>()
 
     init {
         Log.d(TAG, "DrawerViewModel initialized")
@@ -74,7 +74,7 @@ class DrawerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private fun startUnreadCountListener() {
-        val managerId = sessionManager.getUid()
+        val managerId = sessionManager.getRestaurantId()
         val userRole = sessionManager.getRole().lowercase().trim()
         val staffId = sessionManager.getStaffDocId()
 
@@ -84,42 +84,64 @@ class DrawerViewModel(application: Application) : AndroidViewModel(application) 
         }
 
         val isManager = userRole == "manager" || userRole == "owner_single" || userRole == "owner_multi"
-        val roleTargets = mutableListOf("all", userRole)
-        when (userRole) {
-            "waiter", "waiter_staff" -> roleTargets.addAll(listOf("waiter", "waiter_staff"))
-            "chef", "kitchen" -> roleTargets.addAll(listOf("chef", "kitchen"))
-            "cashier", "billing" -> roleTargets.addAll(listOf("cashier", "billing"))
+        val roleTargets = when (userRole) {
+            "waiter", "head waiter", "waiter_staff" ->
+                listOf("all", "waiter", "head waiter", "waiter_staff")
+            "chef", "master chef", "kitchen", "chef_staff" ->
+                listOf("all", "chef", "master chef", "kitchen", "chef_staff")
+            "cashier", "billing" -> listOf("all", "cashier", "billing")
+            else -> listOf("all", userRole)
         }
         val targets = if (isManager) listOf("all", "manager") else roleTargets.distinct()
 
-        unreadListener?.remove()
+        unreadListeners.forEach { it.remove() }
+        unreadListeners.clear()
 
-        val query = db.collection(AppConstants.COLLECTION_USERS)
+        val query = db.collection(AppConstants.COLLECTION_RESTAURANTS)
             .document(managerId)
             .collection(AppConstants.COLLECTION_NOTIFICATIONS)
             .whereEqualTo(AppConstants.FIELD_IS_READ, false)
             .whereIn(AppConstants.FIELD_TARGET_ROLE, targets)
 
-        unreadListener = query.addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                Log.e(TAG, "Error in unread badge listener", error)
-                return@addSnapshotListener
-            }
-
-            val unreadCount = snapshot?.mapNotNull { doc ->
-                val tStaffId = doc.getString(AppConstants.FIELD_TARGET_STAFF_ID) ?: ""
-                val isRelevant = when {
-                    isManager -> true
-                    tStaffId.isNotEmpty() -> tStaffId == staffId
-                    else -> true
+        var broadcastUnreadCount = 0
+        var targetedUnreadCount = 0
+        fun listenForUnread(queryFilter: com.google.firebase.firestore.Query, targetIndex: Int) {
+            unreadListeners += queryFilter.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e(TAG, "Error in unread badge listener", error)
+                    return@addSnapshotListener
                 }
-                if (isRelevant) 1 else null
-            }?.size ?: 0
 
-            Log.d(TAG, "Unread count update: $unreadCount")
-            _uiState.value = _uiState.value.copy(
-                unreadNotificationsCount = unreadCount,
-                menuItems = DrawerMenuFactory.getMenuItems(unreadCount)
+                if (isManager) {
+                    broadcastUnreadCount = snapshot?.documents?.size ?: 0
+                } else if (targetIndex == 0) {
+                    broadcastUnreadCount = snapshot?.documents?.size ?: 0
+                } else {
+                    targetedUnreadCount = snapshot?.documents?.size ?: 0
+                }
+                val unreadCount = if (isManager) {
+                    broadcastUnreadCount
+                } else {
+                    broadcastUnreadCount + targetedUnreadCount
+                }
+
+                Log.d(TAG, "Unread count update: $unreadCount")
+                _uiState.value = _uiState.value.copy(
+                    unreadNotificationsCount = unreadCount,
+                    menuItems = DrawerMenuFactory.getMenuItems(unreadCount)
+                )
+            }
+        }
+        if (isManager) {
+            listenForUnread(query, 0)
+        } else {
+            listenForUnread(query.whereEqualTo(AppConstants.FIELD_TARGET_STAFF_ID, ""), 0)
+            listenForUnread(
+                query.whereIn(
+                    AppConstants.FIELD_TARGET_ROLE,
+                    targets.filter { it != "all" }
+                ).whereEqualTo(AppConstants.FIELD_TARGET_STAFF_ID, staffId),
+                1
             )
         }
     }
@@ -127,7 +149,6 @@ class DrawerViewModel(application: Application) : AndroidViewModel(application) 
     override fun onCleared() {
         super.onCleared()
         Log.d(TAG, "DrawerViewModel cleared, removing notification listener")
-        unreadListener?.remove()
-        unreadListener = null
+        unreadListeners.forEach { it.remove() }
     }
 }
