@@ -96,7 +96,8 @@ class LoginViewModel: ViewModel() {
                                 )
                             },
                             onFailure = { e ->
-                                _loginState.value = LoginUiState.Error(message = "Invalid mobile number or password")
+                                Log.e("LoginVM", "Error fetching user profile", e)
+                                _loginState.value = LoginUiState.Error(message = e.message ?: "Failed to fetch user profile")
                             }
                         )
                     } catch (e: Exception) {
@@ -104,10 +105,16 @@ class LoginViewModel: ViewModel() {
                         _loginState.value = LoginUiState.Error(message = e.message ?: "Authentication failed")
                     }
                 },
-                onFailure = { _ ->
+                onFailure = { error ->
+                    Log.e("LoginVM", "Authentication Cloud Function failed", error)
+                    val errMsg = error.message ?: "Invalid mobile number or password"
+                    val field = if (errMsg.contains("register", ignoreCase = true) ||
+                        errMsg.contains("mobile", ignoreCase = true) ||
+                        errMsg.contains("phone", ignoreCase = true) ||
+                        errMsg.contains("sign up", ignoreCase = true)) "PHONE" else "PASSWORD"
                     _loginState.value = LoginUiState.Error(
-                        field = "PASSWORD",
-                        message = "Invalid mobile number or password"
+                        field = field,
+                        message = errMsg
                     )
                 }
             )
