@@ -123,16 +123,46 @@ class FormStep2Fragment : Fragment() {
     private fun updateBank(key: String, value: String) {
         val data = dataViewModel.registrationData
         when (key) {
-            "address" -> data.address = value
-            "landmark" -> data.landmark = value
-            "pin_code" -> data.pinCode = value
-            "city" -> data.city = value
-            "state" -> data.state = value
-            "country" -> data.country = value
-            "contact_number" -> data.contactNumber = value
-            "contact_email" -> data.contactEmail = value
-            "whatsapp" -> data.whatsappNumber = value
-            "website" -> data.website = value
+            "address" -> {
+                data.address = value
+                data.addressInfo.address = value
+            }
+            "landmark" -> {
+                data.landmark = value
+                data.addressInfo.landmark = value
+            }
+            "pin_code" -> {
+                data.pinCode = value
+                data.addressInfo.pinCode = value
+            }
+            "city" -> {
+                data.city = value
+                data.addressInfo.city = value
+            }
+            "state" -> {
+                data.state = value
+                data.addressInfo.state = value
+            }
+            "country" -> {
+                data.country = value
+                data.addressInfo.country = value
+            }
+            "contact_number" -> {
+                data.contactNumber = value
+                data.addressInfo.contactNumber = value
+            }
+            "contact_email" -> {
+                data.contactEmail = value
+                data.addressInfo.contactEmail = value
+            }
+            "whatsapp" -> {
+                data.whatsappNumber = value
+                data.addressInfo.whatsappNumber = value
+            }
+            "website" -> {
+                data.website = value
+                data.addressInfo.website = value
+            }
         }
     }
 

@@ -32,9 +32,7 @@ class FormStep4Fragment : Fragment() {
     private var formAdapter: FormAdapter? = null
     private lateinit var sessionManager: SessionManager
 
-    private val documentUploadManager by lazy {
-        DocumentUploadManager(this)
-    }
+    private val documentUploadManager = DocumentUploadManager(this)
 
     override fun onCreateView(
         inflater: LayoutInflater,

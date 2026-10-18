@@ -123,13 +123,41 @@ class FormStep3Fragment : Fragment() {
     private fun updateBank(key: String, value: Any) {
         val data = dataViewModel.registrationData
         when (key) {
-            "gst_number" -> data.gstNumber = value as String
-            "pan_number" -> data.panNumber = value as String
-            "charge_tax" -> data.chargeTaxOnBills = value as Boolean
-            "tax_rate" -> data.defaultTaxRate = value as String
-            "includes_tax" -> data.priceIncludesTax = value as Boolean
-            "fssai_number" -> data.fssaiNumber = value as String
-            "fssai_expiry" -> data.fssaiExpiryDate = value as String
+            "gst_number" -> {
+                val v = value as String
+                data.gstNumber = v
+                data.taxSettings.gstNumber = v
+            }
+            "pan_number" -> {
+                val v = value as String
+                data.panNumber = v
+                data.taxSettings.panNumber = v
+            }
+            "charge_tax" -> {
+                val v = value as Boolean
+                data.chargeTaxOnBills = v
+                data.taxSettings.chargeTaxOnBills = v
+            }
+            "tax_rate" -> {
+                val v = value as String
+                data.defaultTaxRate = v
+                data.taxSettings.defaultTaxRate = v.toDoubleOrNull() ?: 5.0
+            }
+            "includes_tax" -> {
+                val v = value as Boolean
+                data.priceIncludesTax = v
+                data.taxSettings.priceIncludesTax = v
+            }
+            "fssai_number" -> {
+                val v = value as String
+                data.fssaiNumber = v
+                data.taxSettings.fssaiNumber = v
+            }
+            "fssai_expiry" -> {
+                val v = value as String
+                data.fssaiExpiryDate = v
+                data.taxSettings.fssaiExpiryDate = v
+            }
         }
     }
 

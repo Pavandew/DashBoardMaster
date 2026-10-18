@@ -106,7 +106,7 @@ class FormStep5Fragment : Fragment() {
 
             lifecycleScope.launch {
                 val repository = RegistrationRepository()
-                val result = repository.saveFinalRegistration(finalData)
+                val result = repository.saveFinalRegistration(requireContext(), finalData)
 
                 result.fold(
                     onSuccess = { restaurantId ->
@@ -114,6 +114,8 @@ class FormStep5Fragment : Fragment() {
                         sessionManager.setRestaurantSetup(true)
                         sessionManager.saveRestaurantId(restaurantId)
                         sessionManager.saveRestaurantName(finalData.restaurantName)
+                        val finalLogo = finalData.restaurantLogoUri ?: finalData.billingPrinterSettings.restaurantLogoUri ?: ""
+                        sessionManager.saveRestaurantLogoUrl(finalLogo)
                         sessionManager.saveRestaurantDetails(finalData)
                         sessionManager.clearRegistrationDraft()
 

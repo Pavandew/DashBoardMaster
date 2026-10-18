@@ -121,13 +121,38 @@ class FormStep1Fragment : Fragment() {
     private fun updateBank(key: String, value: String) {
         val data = dataViewModel.registrationData
         when (key) {
-            "owner_name" -> data.ownerFullName = value
-            "owner_email" -> data.ownerEmail = value
-            "owner_mobile" -> data.ownerMobile = value
-            "res_name" -> data.restaurantName = value
-            "business_type" -> data.businessType = value
-            "legal_name" -> data.legalName = value
-            "display_name" -> data.displayName = value
+            "owner_name" -> {
+                data.ownerFullName = value
+                data.fullName = value
+                data.ownerProfile.ownerFullName = value
+            }
+            "owner_email" -> {
+                data.ownerEmail = value
+                data.email = value
+                data.ownerProfile.ownerEmail = value
+            }
+            "owner_mobile" -> {
+                data.ownerMobile = value
+                data.mobile = value
+                data.phone = value
+                data.ownerProfile.ownerMobile = value
+            }
+            "res_name" -> {
+                data.restaurantName = value
+                data.restaurantProfile.restaurantName = value
+            }
+            "business_type" -> {
+                data.businessType = value
+                data.restaurantProfile.businessType = value
+            }
+            "legal_name" -> {
+                data.legalName = value
+                data.restaurantProfile.legalName = value
+            }
+            "display_name" -> {
+                data.displayName = value
+                data.restaurantProfile.displayName = value
+            }
         }
     }
 

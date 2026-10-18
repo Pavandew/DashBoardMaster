@@ -13,6 +13,7 @@ import com.restroone.app.R
 import com.restroone.app.databinding.*
 import com.restroone.app.manager_single_res_dash.registration_form_screen.model.FormItem
 import com.google.android.material.textfield.TextInputLayout
+import coil.load
 import java.util.Calendar
 
 class FormAdapter(
@@ -109,8 +110,16 @@ class FormAdapter(
             binding.tvLabel.text = item.label
             binding.codeAutoComplete.setText(item.selectedCode, false)
             
-            val codeAdapter = ArrayAdapter(itemView.context, android.R.layout.simple_dropdown_item_1line, item.codes)
+            val codeAdapter = ArrayAdapter(
+                itemView.context,
+                R.layout.item_form_dropdown_option,
+                R.id.dropdownOptionText,
+                item.codes
+            ).apply {
+                setDropDownViewResource(R.layout.item_form_dropdown_option)
+            }
             binding.codeAutoComplete.setAdapter(codeAdapter)
+            binding.codeAutoComplete.setDropDownBackgroundResource(R.drawable.bg_form_dropdown_popup)
 
             binding.codeAutoComplete.setOnItemClickListener { _, _, position, _ ->
                 val selected = item.codes[position]
@@ -215,8 +224,16 @@ class FormAdapter(
             binding.textInputLayout.error = item.error
             binding.textInputLayout.isErrorEnabled = item.error != null
 
-            val adapter = ArrayAdapter(itemView.context, android.R.layout.simple_dropdown_item_1line, item.options)
+            val adapter = ArrayAdapter(
+                itemView.context,
+                R.layout.item_form_dropdown_option,
+                R.id.dropdownOptionText,
+                item.options
+            ).apply {
+                setDropDownViewResource(R.layout.item_form_dropdown_option)
+            }
             binding.autoCompleteTextView.setAdapter(adapter)
+            binding.autoCompleteTextView.setDropDownBackgroundResource(R.drawable.bg_form_dropdown_popup)
             
             binding.autoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
                 val selected = item.options[position]
@@ -247,10 +264,10 @@ class FormAdapter(
             
             if (!item.imageUri.isNullOrEmpty()) {
                 binding.viewPlaceholderIcon.visibility = View.GONE
-                try {
-                    binding.ivLogoPreview.setImageURI(Uri.parse(item.imageUri))
-                } catch (e: Exception) {
-                    binding.ivLogoPreview.setImageResource(R.drawable.app_logo)
+                binding.ivLogoPreview.load(item.imageUri) {
+                    crossfade(true)
+                    placeholder(R.drawable.app_logo)
+                    error(R.drawable.app_logo)
                 }
             } else {
                 binding.viewPlaceholderIcon.visibility = View.VISIBLE
