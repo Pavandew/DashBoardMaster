@@ -73,23 +73,28 @@ class ChangePasswordFragment : Fragment() {
         observeViewModel()
 
         val isForgotPassword = arguments?.getBoolean("is_forgot_password", false) == true
+        val argPhone = arguments?.getString(AppConstants.KEY_MOBILE)
+        val phone = argPhone ?: sessionManager.getPhone() ?: ""
+
         if (isForgotPassword) {
             binding.settingsToolbar.toolbarTvTitle.text = "Reset Password"
             binding.sectionCurrentPassword.visibility = View.GONE
             binding.sectionOtp.visibility = View.VISIBLE
             binding.btnUseCurrentPassword.visibility = View.GONE
-        }
 
-        // Get phone from arguments (Forgot Password flow) or Session (Change Password flow)
-        val argPhone = arguments?.getString(AppConstants.KEY_MOBILE)
-        val phone = argPhone ?: sessionManager.getPhone() ?: ""
+            // Auto-send OTP for forgot password flow if valid phone is provided
+            if (!phone.isNullOrEmpty()) {
+                Log.i(TAG, "Auto-triggering sendOtp for phone: $phone")
+                viewModel.sendOtp(phone, requireActivity())
+            }
+        }
 
         if (phone.isNotEmpty()) {
             val maskedPhone = if (phone.length > 5) {
                 "${phone.substring(0, 3)}XXXXXX${phone.substring(phone.length - 2)}"
             } else phone
             Log.d(TAG, "onViewCreated: Masked phone for UI: $maskedPhone")
-            binding.tvOtpMessage.text = "We will send an OTP to $maskedPhone"
+            binding.tvOtpMessage.text = "Sending OTP to $maskedPhone"
         } else {
             Log.w(TAG, "onViewCreated: Phone number missing")
         }

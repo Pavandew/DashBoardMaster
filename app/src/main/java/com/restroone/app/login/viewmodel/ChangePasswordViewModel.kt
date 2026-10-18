@@ -79,7 +79,17 @@ class ChangePasswordViewModel(private val repository: ChangePasswordRepository) 
     }
 
     fun sendOtp(phone: String, activity: Activity) {
-        val formattedPhone = if (phone.startsWith("+91")) phone else "+91$phone"
+        val cleanDigits = phone.replace("[^0-9]".toRegex(), "")
+        val tenDigits = if (cleanDigits.length >= 10) cleanDigits.takeLast(10) else cleanDigits
+
+        if (tenDigits.length != 10) {
+            Log.e(TAG, "sendOtp: Phone number is invalid/too short ($phone)")
+            _uiState.value = ChangePasswordState.Error("Please enter a valid 10-digit mobile number")
+            return
+        }
+
+        val formattedPhone = "+91$tenDigits"
+        Log.i(TAG, "sendOtp: Requesting OTP for formatted phone: $formattedPhone")
         _uiState.value = ChangePasswordState.Loading
 
         val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
@@ -90,7 +100,13 @@ class ChangePasswordViewModel(private val repository: ChangePasswordRepository) 
 
             override fun onVerificationFailed(e: FirebaseException) {
                 Log.e(TAG, "onVerificationFailed: OTP request failed", e)
-                _uiState.value = ChangePasswordState.Error(e.message ?: "OTP Verification Failed")
+                val errMsg = if (e.message?.contains("TOO_SHORT", ignoreCase = true) == true ||
+                    e.message?.contains("E.164", ignoreCase = true) == true) {
+                    "Please enter a valid 10-digit mobile number."
+                } else {
+                    e.message ?: "OTP Verification Failed"
+                }
+                _uiState.value = ChangePasswordState.Error(errMsg)
             }
 
             override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
