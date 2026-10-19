@@ -32,22 +32,23 @@ class Step3ViewModel : ViewModel() {
      */
     fun initFields(data: RegistrationDataModel) {
         try {
-            Log.d(TAG, "Initializing fields for Step 3. Current GST: ${data.gstNumber}")
+            val taxSettings = data.getEffectiveTaxSettings()
+            Log.d(TAG, "Initializing fields for Step 3. Current GST: ${taxSettings.gstNumber}")
             _formFields.value = listOf(
                 FormItem.StepProgress("STEP 3 OF 5", "Tax & Compliance", "GST, PAN, FSSAI and bill tax."),
                 
                 FormItem.SectionHeader("TAX REGISTRATION", isOptional = true, sectionNumber = "1"),
-                FormItem.InputField("gst_number", "GST number", "e.g. 29ABCDE1234F1Z5", InputType.TYPE_CLASS_TEXT, value = data.gstNumber),
-                FormItem.InputField("pan_number", "PAN number", "e.g. ABCDE1234F", InputType.TYPE_CLASS_TEXT, value = data.panNumber),
+                FormItem.InputField("gst_number", "GST number", "e.g. 29ABCDE1234F1Z5", InputType.TYPE_CLASS_TEXT, value = taxSettings.gstNumber),
+                FormItem.InputField("pan_number", "PAN number", "e.g. ABCDE1234F", InputType.TYPE_CLASS_TEXT, value = taxSettings.panNumber),
 
                 FormItem.SectionHeader("TAX ON BILLS", sectionNumber = "2"),
-                FormItem.SwitchField("charge_tax", "Charge tax on bills", "Adds a tax line to every order automatically.", isChecked = data.chargeTaxOnBills),
-                FormItem.InputField("tax_rate", "Default tax rate (%)", "5", InputType.TYPE_CLASS_NUMBER, value = data.defaultTaxRate),
-                FormItem.SwitchField("includes_tax", "Price includes tax", "Tax added on top", isChecked = data.priceIncludesTax),
+                FormItem.SwitchField("charge_tax", "Charge tax on bills", "Adds a tax line to every order automatically.", isChecked = taxSettings.chargeTaxOnBills),
+                FormItem.InputField("tax_rate", "Default tax rate (%)", "5", InputType.TYPE_CLASS_NUMBER, value = if (taxSettings.defaultTaxRate > 0) taxSettings.defaultTaxRate.toString() else "5"),
+                FormItem.SwitchField("includes_tax", "Price includes tax", "Tax added on top", isChecked = taxSettings.priceIncludesTax),
 
                 FormItem.SectionHeader("FSSAI LICENCE", isOptional = true, sectionNumber = "3"),
-                FormItem.InputField("fssai_number", "FSSAI number", "e.g. 12345678901234", InputType.TYPE_CLASS_NUMBER, helperText = "14-digit food licence number.", value = data.fssaiNumber),
-                FormItem.DatePickerField("fssai_expiry", "Expiry date", "dd-mm-yyyy", value = data.fssaiExpiryDate)
+                FormItem.InputField("fssai_number", "FSSAI number", "e.g. 12345678901234", InputType.TYPE_CLASS_NUMBER, helperText = "14-digit food licence number.", value = taxSettings.fssaiNumber),
+                FormItem.DatePickerField("fssai_expiry", "Expiry date", "dd-mm-yyyy", value = taxSettings.fssaiExpiryDate)
             )
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing Step 3 fields", e)

@@ -23,6 +23,8 @@ class Step4ViewModel : ViewModel() {
 
     fun initFields(data: RegistrationDataModel) {
         try {
+            val effectiveBilling = data.getEffectiveBillingPrinterSettings()
+            val effectiveRestaurant = data.getEffectiveRestaurantProfile()
             Log.d(TAG, "Initializing fields for Step 4 (Branding & Operations).")
             _formFields.value = listOf(
                 FormItem.StepProgress("STEP 4 OF 5", "Branding & Operations", "Logo, schedule and operating preferences."),
@@ -31,25 +33,25 @@ class Step4ViewModel : ViewModel() {
                     "logo", 
                     "RESTAURANT LOGO", 
                     "PNG or JPG - up to 2 MB - resized automatically.",
-                    imageUri = data.restaurantLogoUri
+                    imageUri = effectiveBilling.restaurantLogoUri
                 ),
                 
                 FormItem.SwitchField(
                     "show_logo", 
                     "Show logo on paper receipts", 
                     "Prints your logo at the top of thermal bills.",
-                    isChecked = data.showLogoOnReceipts
+                    isChecked = effectiveBilling.showLogoOnReceipts
                 ),
 
                 FormItem.SectionHeader("OPERATING HOURS & SEATING", sectionNumber = "1"),
-                FormItem.InputField("seating", "Seating capacity", "e.g. 40", android.text.InputType.TYPE_CLASS_NUMBER, value = data.seatingCapacity),
-                FormItem.InputField("open_days", "Open days / week", "7 / 7", android.text.InputType.TYPE_CLASS_TEXT, value = data.openDays),
+                FormItem.InputField("seating", "Seating capacity", "e.g. 40", android.text.InputType.TYPE_CLASS_NUMBER, value = effectiveRestaurant.seatingCapacity),
+                FormItem.InputField("open_days", "Open days / week", "7 / 7", android.text.InputType.TYPE_CLASS_TEXT, value = effectiveRestaurant.openDays),
                 FormItem.DropdownField(
                     "timezone", 
                     "Timezone", 
                     "Select timezone", 
                     listOf("Asia/Kolkata", "Asia/Dubai", "America/New_York"),
-                    selectedValue = data.timezone
+                    selectedValue = effectiveRestaurant.timezone
                 )
             )
         } catch (e: Exception) {

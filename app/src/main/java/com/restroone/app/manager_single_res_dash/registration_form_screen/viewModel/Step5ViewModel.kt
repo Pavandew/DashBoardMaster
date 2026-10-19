@@ -25,6 +25,12 @@ class Step5ViewModel : ViewModel() {
         try {
             Log.i(TAG, "Step 5: Compiling summary (isEditMode: $isEditMode)...")
 
+            val effectiveOwner = data.getEffectiveOwnerProfile()
+            val effectiveRestaurant = data.getEffectiveRestaurantProfile()
+            val effectiveAddress = data.getEffectiveAddressInfo()
+            val effectiveTax = data.getEffectiveTaxSettings()
+            val effectiveBilling = data.getEffectiveBillingPrinterSettings()
+
             val progressStep = if (isEditMode) "REVIEW CHANGES" else "STEP 5 OF 5"
             val progressTitle = if (isEditMode) "Update Business Profile" else "Review & Launch"
             val progressSub = if (isEditMode) "Review changes before saving back to Settings." else "Verify everything, then go live."
@@ -33,16 +39,17 @@ class Step5ViewModel : ViewModel() {
                 FormItem.StepProgress(progressStep, progressTitle, progressSub),
 
                 FormItem.ReviewHeader(
-                    name = data.restaurantName,
-                    type = data.businessType
+                    name = effectiveRestaurant.restaurantName,
+                    type = effectiveRestaurant.businessType
                 ),
 
                 FormItem.ReviewCard(
                     title = "OWNER & RESTAURANT",
                     details = listOf(
-                        "Owner" to "${data.ownerFullName} (${data.ownerMobile})",
-                        "Restaurant" to data.restaurantName,
-                        "Type" to data.businessType
+                        "Owner" to "${effectiveOwner.ownerFullName} (${effectiveOwner.ownerMobile})",
+                        "Email" to effectiveOwner.ownerEmail,
+                        "Restaurant" to effectiveRestaurant.restaurantName,
+                        "Type" to effectiveRestaurant.businessType
                     ),
                     onEditClick = {
                         Log.d(TAG, "Review: Edit Owner/Restaurant clicked")
@@ -53,8 +60,8 @@ class Step5ViewModel : ViewModel() {
                 FormItem.ReviewCard(
                     title = "LOCATION & CONTACT",
                     details = listOf(
-                        "Address" to "${data.address}, ${data.city}, ${data.state}, ${data.pinCode}",
-                        "Contact" to data.contactNumber
+                        "Address" to "${effectiveAddress.address}, ${effectiveAddress.city}, ${effectiveAddress.state}, ${effectiveAddress.pinCode}",
+                        "Contact" to effectiveAddress.contactNumber
                     ),
                     onEditClick = {
                         Log.d(TAG, "Review: Edit Location clicked")
@@ -65,9 +72,9 @@ class Step5ViewModel : ViewModel() {
                 FormItem.ReviewCard(
                     title = "TAX & COMPLIANCE",
                     details = listOf(
-                        "GST" to data.gstNumber.ifEmpty { "Not Added" },
-                        "FSSAI" to data.fssaiNumber.ifEmpty { "Not Added" },
-                        "Tax" to "${data.defaultTaxRate}% (${if (data.chargeTaxOnBills) "added" else "none"})"
+                        "GST" to effectiveTax.gstNumber.ifEmpty { "Not Added" },
+                        "FSSAI" to effectiveTax.fssaiNumber.ifEmpty { "Not Added" },
+                        "Tax" to "${effectiveTax.defaultTaxRate}% (${if (effectiveTax.chargeTaxOnBills) "added" else "none"})"
                     ),
                     onEditClick = {
                         Log.d(TAG, "Review: Edit Tax clicked")
@@ -78,9 +85,9 @@ class Step5ViewModel : ViewModel() {
                 FormItem.ReviewCard(
                     title = "BRANDING & OPERATIONS",
                     details = listOf(
-                        "Logo" to if (data.restaurantLogoUri != null) "Uploaded" else "Default",
-                        "Seating" to data.seatingCapacity,
-                        "Open days" to data.openDays
+                        "Logo" to if (effectiveBilling.restaurantLogoUri != null) "Uploaded" else "Default",
+                        "Seating" to effectiveRestaurant.seatingCapacity,
+                        "Open days" to effectiveRestaurant.openDays
                     ),
                     onEditClick = {
                         Log.d(TAG, "Review: Edit Operations clicked")

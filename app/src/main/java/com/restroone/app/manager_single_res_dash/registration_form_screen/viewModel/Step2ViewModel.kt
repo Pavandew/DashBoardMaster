@@ -51,30 +51,31 @@ class Step2ViewModel : ViewModel() {
      */
     fun initFields(data: RegistrationDataModel) {
         try {
-            Log.d(TAG, "Initializing fields for Step 2 with current address: ${data.address}")
+            val addressInfo = data.getEffectiveAddressInfo()
+            Log.d(TAG, "Initializing fields for Step 2 with current address: ${addressInfo.address}")
             
             // Logic to split country code from phone number if they exist
-            val (contactCode, contactNum) = splitPhone(data.contactNumber, "+91 (IN)")
-            val (whatsappCode, whatsappNum) = splitPhone(data.whatsappNumber, "+91 (IN)")
+            val (contactCode, contactNum) = splitPhone(addressInfo.contactNumber, "+91 (IN)")
+            val (whatsappCode, whatsappNum) = splitPhone(addressInfo.whatsappNumber, "+91 (IN)")
             
-            val selectedCountry = if (data.country.isEmpty()) "India" else data.country
+            val selectedCountry = if (addressInfo.country.isEmpty()) "India" else addressInfo.country
 
             _formFields.value = listOf(
                 FormItem.StepProgress("STEP 2 OF 5", "Address & Contact", "Where you are and how to reach you."),
                 
                 FormItem.SectionHeader("RESTAURANT ADDRESS", sectionNumber = "1"),
-                FormItem.InputField("address", "Address *", "e.g. Street, Area, Building", InputType.TYPE_CLASS_TEXT, value = data.address),
-                FormItem.InputField("landmark", "Landmark", "Nearby landmark", InputType.TYPE_CLASS_TEXT, value = data.landmark),
-                FormItem.InputField("pin_code", "PIN code *", "6-digit code", InputType.TYPE_CLASS_NUMBER, helperText = "We'll use this for tax calculations.", value = data.pinCode),
+                FormItem.InputField("address", "Address *", "e.g. Street, Area, Building", InputType.TYPE_CLASS_TEXT, value = addressInfo.address),
+                FormItem.InputField("landmark", "Landmark", "Nearby landmark", InputType.TYPE_CLASS_TEXT, value = addressInfo.landmark),
+                FormItem.InputField("pin_code", "PIN code *", "6-digit code", InputType.TYPE_CLASS_NUMBER, helperText = "We'll use this for tax calculations.", value = addressInfo.pinCode),
                 
-                FormItem.InputField("city", "City *", "e.g. Bangalore", InputType.TYPE_CLASS_TEXT, value = data.city),
+                FormItem.InputField("city", "City *", "e.g. Bangalore", InputType.TYPE_CLASS_TEXT, value = addressInfo.city),
                 
                 FormItem.DropdownField(
                     "state", 
                     "State *", 
                     "Select state", 
                     INDIAN_STATES, 
-                    selectedValue = data.state
+                    selectedValue = addressInfo.state
                 ),
                 
                 FormItem.DropdownField(
@@ -99,7 +100,7 @@ class Step2ViewModel : ViewModel() {
                     "Contact email *", 
                     "e.g. business@gmail.com", 
                     InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS, 
-                    value = data.contactEmail
+                    value = addressInfo.contactEmail
                 ),
                 FormItem.PhoneInputField(
                     "whatsapp", 
@@ -114,7 +115,7 @@ class Step2ViewModel : ViewModel() {
                     "Website", 
                     "https://www.your-restaurant.com", 
                     InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI, 
-                    value = data.website
+                    value = addressInfo.website
                 )
             )
         } catch (e: Exception) {
@@ -123,13 +124,24 @@ class Step2ViewModel : ViewModel() {
     }
 
     private fun splitPhone(fullNumber: String, defaultCode: String): Pair<String, String> {
-        if (fullNumber.isEmpty()) return Pair(defaultCode, "")
-        val parts = fullNumber.split(" ")
-        return if (parts.size >= 2) {
-            Pair(parts[0], parts.subList(1, parts.size).joinToString(" "))
-        } else {
-            Pair(defaultCode, fullNumber)
+        val cleanDigits = fullNumber.replace("[^0-9]".toRegex(), "")
+        if (cleanDigits.isEmpty()) return Pair(defaultCode, "")
+
+        val subscriberNum = if (cleanDigits.length >= 10) cleanDigits.takeLast(10) else cleanDigits
+        val countryDigits = if (cleanDigits.length > 10) cleanDigits.dropLast(10) else ""
+
+        val matchedCode = when (countryDigits) {
+            "91" -> "+91 (IN)"
+            "1" -> "+1 (US)"
+            "44" -> "+44 (UK)"
+            "971" -> "+971 (AE)"
+            "61" -> "+61 (AU)"
+            "65" -> "+65 (SG)"
+            "49" -> "+49 (DE)"
+            else -> defaultCode
         }
+
+        return Pair(matchedCode, subscriberNum)
     }
 
     /**

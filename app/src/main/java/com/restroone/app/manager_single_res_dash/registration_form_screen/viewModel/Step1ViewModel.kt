@@ -32,19 +32,20 @@ class Step1ViewModel : ViewModel() {
      */
     fun initFields(data: RegistrationDataModel) {
         try {
-            Log.d(TAG, "Initializing fields for Step 1 with current data: ${data.restaurantName}")
+            val effectiveRestaurant = data.getEffectiveRestaurantProfile()
+            Log.d(TAG, "Initializing fields for Step 1 with current data: ${effectiveRestaurant.restaurantName}")
             _formFields.value = listOf(
                 FormItem.StepProgress("STEP 1 OF 5", "Owner & Restaurant", "Who runs it and what it's called."),
                 FormItem.InfoCard("The owner is shown on invoices and internal reports — never to customers."),
                 FormItem.SectionHeader("OWNER INFORMATION", sectionNumber = "1"),
-                FormItem.InputField("owner_name", "Owner full name *", "e.g. John Doe", InputType.TYPE_CLASS_TEXT, value = data.ownerFullName),
-                FormItem.InputField("owner_email", "Owner email *", "e.g. owner@gmail.com", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS, value = data.ownerEmail),
-                FormItem.InputField("owner_mobile", "Owner mobile *", "e.g. 98765 43210", InputType.TYPE_CLASS_PHONE, helperText = "10-digit mobile — used for account recovery.", value = data.ownerMobile),
+                FormItem.InputField("owner_name", "Owner full name *", "e.g. John Doe", InputType.TYPE_CLASS_TEXT, value = data.getUnifiedFullName()),
+                FormItem.InputField("owner_email", "Owner email *", "e.g. owner@gmail.com", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS, value = data.getUnifiedEmail()),
+                FormItem.InputField("owner_mobile", "Owner mobile *", "e.g. 98765 43210", InputType.TYPE_CLASS_PHONE, helperText = "10-digit mobile — used for account recovery.", value = data.getUnifiedMobile10Digits()),
                 FormItem.SectionHeader("RESTAURANT INFORMATION", sectionNumber = "2"),
-                FormItem.InputField("res_name", "Restaurant name *", "e.g. The Grand Bistro", InputType.TYPE_CLASS_TEXT, helperText = "Shown to customers everywhere.", value = data.restaurantName),
-                FormItem.InputField("business_type", "Business type *", "e.g. Casual Dining", InputType.TYPE_CLASS_TEXT, value = data.businessType),
-                FormItem.InputField("legal_name", "Legal / registered name", "e.g. ABC Hospitality Pvt Ltd", InputType.TYPE_CLASS_TEXT, helperText = "As per legal documents.", value = data.legalName),
-                FormItem.InputField("display_name", "Display name (receipts)", "e.g. Grand Bistro", InputType.TYPE_CLASS_TEXT, helperText = "Short version printed on bills.", value = data.displayName)
+                FormItem.InputField("res_name", "Restaurant name *", "e.g. The Grand Bistro", InputType.TYPE_CLASS_TEXT, helperText = "Shown to customers everywhere.", value = effectiveRestaurant.restaurantName),
+                FormItem.InputField("business_type", "Business type *", "e.g. Casual Dining", InputType.TYPE_CLASS_TEXT, value = effectiveRestaurant.businessType),
+                FormItem.InputField("legal_name", "Legal / registered name", "e.g. ABC Hospitality Pvt Ltd", InputType.TYPE_CLASS_TEXT, helperText = "As per legal documents.", value = effectiveRestaurant.legalName),
+                FormItem.InputField("display_name", "Display name (receipts)", "e.g. Grand Bistro", InputType.TYPE_CLASS_TEXT, helperText = "Short version printed on bills.", value = effectiveRestaurant.displayName)
             )
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing Step 1 fields", e)
