@@ -85,6 +85,12 @@
                 tools:listitem="@layout/item_table_card" />
 
             <include
+                android:id="@+id/includeEmptyState"
+                layout="@layout/layout_empty_state"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <include
                 android:id="@+id/includeErrorState"
                 layout="@layout/layout_error_retry_state"
                 android:layout_width="match_parent"

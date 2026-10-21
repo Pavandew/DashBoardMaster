@@ -262,40 +262,64 @@
                 app:cardCornerRadius="12dp"
                 app:strokeWidth="0dp">
 
-                <TableLayout
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="16dp"
-                    android:stretchColumns="1">
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                    <TableRow android:paddingVertical="8dp">
-                        <TextView
-                            android:text="Document Type"
-                            android:textColor="#A0A0B0"
-                            android:paddingEnd="16dp"
-                            android:textSize="16sp"/>
-                        <TextView
-                            android:id="@+id/tvDetailDocType"
-                            android:textColor="@android:color/white"
-                            android:textSize="16sp"
-                            android:gravity="start"
-                            tools:text="Aadhar/PAN"/>
-                    </TableRow>
+                    <TableLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:stretchColumns="1">
 
-                    <TableRow android:paddingVertical="8dp">
-                        <TextView
-                            android:text="Document ID Number"
-                            android:textColor="#A0A0B0"
-                            android:paddingEnd="16dp"
-                            android:textSize="16sp"/>
-                        <TextView
-                            android:id="@+id/tvDetailDocNumber"
-                            android:textColor="@android:color/white"
-                            android:textSize="16sp"
-                            android:gravity="start"
-                            tools:text="0000 0000 0000"/>
-                    </TableRow>
-                </TableLayout>
+                        <TableRow android:paddingVertical="8dp">
+                            <TextView
+                                android:text="Document Type"
+                                android:textColor="#A0A0B0"
+                                android:paddingEnd="16dp"
+                                android:textSize="16sp"/>
+                            <TextView
+                                android:id="@+id/tvDetailDocType"
+                                android:textColor="@android:color/white"
+                                android:textSize="16sp"
+                                android:gravity="start"
+                                tools:text="Aadhar/PAN"/>
+                        </TableRow>
+
+                        <TableRow android:paddingVertical="8dp">
+                            <TextView
+                                android:text="Document ID Number"
+                                android:textColor="#A0A0B0"
+                                android:paddingEnd="16dp"
+                                android:textSize="16sp"/>
+                            <TextView
+                                android:id="@+id/tvDetailDocNumber"
+                                android:textColor="@android:color/white"
+                                android:textSize="16sp"
+                                android:gravity="start"
+                                tools:text="0000 0000 0000"/>
+                        </TableRow>
+                    </TableLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnViewDocProof"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="12dp"
+                        android:text="📄 View Document Proof"
+                        android:textAllCaps="false"
+                        android:textColor="#3554FF"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        app:cornerRadius="10dp"
+                        app:strokeColor="#3554FF"
+                        app:strokeWidth="1.5dp"
+                        tools:visibility="visible" />
+
+                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>

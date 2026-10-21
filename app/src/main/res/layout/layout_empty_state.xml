@@ -14,7 +14,7 @@
         android:layout_height="80dp"
         app:cardCornerRadius="40dp"
         app:cardElevation="0dp"
-        app:cardBackgroundColor="#FAF0E6"
+        app:cardBackgroundColor="#F0F4FF"
         app:strokeWidth="0dp">
 
         <ImageView
@@ -23,7 +23,7 @@
             android:layout_height="40dp"
             android:layout_gravity="center"
             android:src="@drawable/ic_restaurant_24dp"
-            app:tint="@color/golden_icon_tint" />
+            app:tint="#3554FF" />
 
     </com.google.android.material.card.MaterialCardView>
 
@@ -32,7 +32,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="No Orders Available"
+        android:text="No Tables or Floors Available"
         android:textColor="@color/dark_text"
         android:textSize="18sp"
         android:textStyle="bold" />
@@ -43,8 +43,21 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
         android:gravity="center"
-        android:text="There are no active orders in this section right now."
+        android:text="No dining tables have been created for this restaurant outlet yet."
         android:textColor="@color/gray_text"
-        android:textSize="13sp" />
+        android:textSize="14sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnEmptyAction"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginTop="20dp"
+        android:text="➕ Create Floors &amp; Tables"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:backgroundTint="#3554FF"
+        app:cornerRadius="12dp" />
 
 </LinearLayout>

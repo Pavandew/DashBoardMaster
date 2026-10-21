@@ -38,7 +38,6 @@ object AppNotificationHelper {
             Log.d(TAG, "Notification history event created: $event at restaurants/$managerId/notifications")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to create notification history event $event", e)
-            throw e
         }
     }
 

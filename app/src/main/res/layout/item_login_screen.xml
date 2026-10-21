@@ -6,15 +6,16 @@
     android:layout_margin="10dp"
     android:layout_gravity="center_horizontal"
     android:backgroundTint="@android:color/white"
-    app:cardCornerRadius="28dp"
-    app:cardElevation="8dp"
-    app:strokeWidth="0dp">
+    app:cardCornerRadius="24dp"
+    app:cardElevation="4dp"
+    app:strokeColor="#E8EAF0"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="22dp">
 
         <!-- Portal Badge -->
         <TextView
@@ -26,32 +27,37 @@
             android:textSize="12sp"
             android:textStyle="bold"
             android:paddingHorizontal="12dp"
-            android:paddingVertical="4dp"
+            android:paddingVertical="5dp"
             android:background="@drawable/bg_portal_badge"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="10dp"
             android:visibility="gone" />
 
         <!-- Title -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Welcome Back! 👋"
-            style="@style/TextAppearance.MyApp.ToolbarTitle" />
+            android:text="Welcome back"
+            android:textColor="@color/text_form_primary"
+            android:textStyle="bold"
+            android:textSize="23sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="2dp"
             android:text="Sign in to your account to continue"
-            style="@style/TextAppearance.MyApp.Subtitle" />
+            android:textColor="@color/text_form_secondary"
+            android:textSize="14sp" />
 
-        <!-- Username Label -->
+        <!-- Phone Number Label -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
+            android:layout_marginTop="18dp"
             android:text="Phone Number"
-            style="@style/TextAppearance.MyApp.TitleSmall" />
+            android:textColor="@color/text_form_primary"
+            android:textStyle="bold"
+            android:textSize="13sp" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/login_phone_layout"
@@ -67,21 +73,24 @@
             app:boxStrokeWidth="1dp"
             app:boxStrokeWidthFocused="2dp"
             app:boxStrokeColor="#E3E5EF"
-            app:errorEnabled="true"
             app:startIconDrawable="@drawable/ic_call_24dp"
-            app:startIconTint="@color/black"
-            app:hintTextColor="#8A8FA8">
+            app:startIconTint="#4B35FF"
+            app:prefixText="+91 "
+            app:prefixTextColor="#111111"
+            app:prefixTextAppearance="@style/TextAppearance.MyApp.PrefixText"
+            app:hintEnabled="false"
+            app:errorTextColor="@color/error_dark_red">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/login_Phone_et"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingTop="12dp"
-                android:paddingBottom="12dp"
+                android:minHeight="52dp"
                 android:gravity="center_vertical"
                 android:textColor="#111111"
-                android:textSize="18sp"
-                android:background="@null"
+                android:textColorHint="@color/text_form_secondary"
+                android:textSize="16sp"
+                android:hint="Enter phone number"
                 android:inputType="phone" />
 
         </com.google.android.material.textfield.TextInputLayout>
@@ -90,9 +99,11 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="12dp"
             android:text="Password"
-            style="@style/TextAppearance.MyApp.TitleSmall" />
+            android:textColor="@color/text_form_primary"
+            android:textStyle="bold"
+            android:textSize="13sp" />
 
         <!-- Password Field -->
         <com.google.android.material.textfield.TextInputLayout
@@ -110,21 +121,23 @@
             app:boxStrokeWidthFocused="2dp"
             app:boxStrokeColor="#E3E5EF"
             app:endIconMode="password_toggle"
-            app:errorEnabled="true"
-            app:startIconTint="@color/black"
-            app:endIconTint="@color/black"
-            app:startIconDrawable="@drawable/ic_passkey_24dp">
+            app:startIconDrawable="@drawable/ic_passkey_24dp"
+            app:startIconTint="#4B35FF"
+            app:endIconTint="#4B35FF"
+            app:hintEnabled="false"
+            app:errorTextColor="@color/error_dark_red">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/login_password_et"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#111111"
-                android:paddingTop="12dp"
-                android:paddingBottom="12dp"
+                android:minHeight="52dp"
                 android:gravity="center_vertical"
-                android:textSize="18sp"
+                android:textColor="#111111"
+                android:textColorHint="@color/text_form_secondary"
+                android:textSize="16sp"
                 android:textAllCaps="false"
+                android:hint="Enter your password"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -132,7 +145,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="4dp"
             android:layout_marginBottom="12dp"
             android:gravity="end"
             android:orientation="horizontal">
@@ -144,29 +157,31 @@
                 android:paddingTop="4dp"
                 android:paddingBottom="4dp"
                 android:text="Forgot Password?"
-                android:textColor="#5B67FF"
-                style="@style/TextAppearance.MyApp.CaptionSmall" />
+                android:textColor="#4B35FF"
+                android:textSize="13sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <!-- Login Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/login_btn"
-            style="@style/Button.MyApp.Large"
+            style="@style/Widget.MaterialComponents.Button"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="52dp"
             android:text="Login"
-            app:cornerRadius="14dp"
-            app:iconGravity="textStart"
-            app:backgroundTint="@color/purple_gradient_end"
-            app:iconPadding="10dp"
-            app:iconTint="@android:color/white" />
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="#4B35FF"
+            app:cornerRadius="12dp"
+            app:elevation="3dp" />
 
         <!-- Create Account -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="14dp"
             android:orientation="horizontal">
 
             <TextView
@@ -174,15 +189,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Don't have an account? "
-                style="@style/TextAppearance.MyApp.CaptionSmall" />
+                android:textColor="#6E738A"
+                android:textSize="13sp" />
 
             <TextView
                 android:id="@+id/login_create_acc_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:padding="2dp"
                 android:text="Create Account"
-                android:textColor="#5B67FF"
-                style="@style/TextAppearance.MyApp.CaptionSmall" />
+                android:textColor="#4B35FF"
+                android:textSize="13sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
     </LinearLayout>

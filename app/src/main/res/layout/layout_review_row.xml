@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:text="Value"
-        android:textColor="@color/white"
+        android:textColor="@color/text_form_primary"
         android:textSize="13sp"
         android:textStyle="bold"
         android:gravity="end" />
