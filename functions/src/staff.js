@@ -41,9 +41,6 @@ exports.createStaff = onAppCheckCall(async (request) => {
     const staffRef = staffCollection.doc();
     const userRef = db.collection("users").doc();
     const credentialRef = db.collection("authCredentials").doc(userRef.id);
-    const mirrorRef = db.collection("users").doc(ownerUid).collection("staff").doc(staffRef.id);
-    const restaurantMirrorRef = db.collection("users").doc(restaurantId)
-        .collection("staff").doc(staffRef.id);
     const passwordHash = await bcrypt.hash(password, await bcrypt.genSalt(10));
 
     const userData = {
@@ -68,22 +65,6 @@ exports.createStaff = onAppCheckCall(async (request) => {
         passwordHash: passwordHash,
         createdAt: Date.now()
     });
-    batch.create(mirrorRef, {
-        staffId: staff.staffId,
-        restaurantId: restaurantId,
-        role: staff.role,
-        status: staff.status,
-        fcmToken: ""
-    });
-    if (restaurantMirrorRef.path !== mirrorRef.path) {
-        batch.create(restaurantMirrorRef, {
-            staffId: staff.staffId,
-            restaurantId: restaurantId,
-            role: staff.role,
-            status: staff.status,
-            fcmToken: ""
-        });
-    }
     await batch.commit();
 
     return { staffDocId: staffRef.id };
@@ -129,20 +110,6 @@ exports.updateStaff = onAppCheckCall(async (request) => {
         ownerUid: ownerUid,
         status: staff.status
     });
-    batch.set(mirrorRef, {
-        staffId: staff.staffId,
-        restaurantId: restaurantId,
-        role: staff.role,
-        status: staff.status
-    }, { merge: true });
-    if (restaurantMirrorRef.path !== mirrorRef.path) {
-        batch.set(restaurantMirrorRef, {
-            staffId: staff.staffId,
-            restaurantId: restaurantId,
-            role: staff.role,
-            status: staff.status
-        }, { merge: true });
-    }
     await batch.commit();
     return { success: true };
 });
@@ -169,13 +136,6 @@ exports.deleteStaff = onAppCheckCall(async (request) => {
     batch.delete(userRef);
     batch.delete(db.collection("authCredentials").doc(userSnapshot.id));
     batch.delete(db.collection("passwordChangeVerifications").doc(userSnapshot.id));
-    batch.delete(db.collection("users").doc(ownerUid).collection("staff").doc(staffDocId));
-    const restaurantMirrorRef = db.collection("users").doc(restaurantId)
-        .collection("staff").doc(staffDocId);
-    if (restaurantMirrorRef.path !== db.collection("users").doc(ownerUid)
-        .collection("staff").doc(staffDocId).path) {
-        batch.delete(restaurantMirrorRef);
-    }
     await batch.commit();
     return { success: true };
 });
@@ -504,23 +464,14 @@ exports.updateStaffFcmToken = onAppCheckCall(async (request) => {
         throw new HttpsError("permission-denied", "Staff restaurant binding is invalid.");
     }
 
-    const refs = [
-        staffRef,
-        db.collection("users").doc(user.ownerUid).collection("staff").doc(staffRef.id),
-        db.collection("users").doc(restaurantId).collection("staff").doc(staffRef.id)
-    ];
-    const uniqueRefs = [...new Map(refs.map((ref) => [ref.path, ref])).values()];
-    const batch = db.batch();
-    for (const ref of uniqueRefs) {
-        batch.set(ref, {
-            staffId: user.staffId,
-            restaurantId: restaurantId,
-            role: user.role,
-            status: user.status,
-            fcmToken: token
-        }, { merge: true });
-    }
-    await batch.commit();
+    await staffRef.set({
+        staffId: user.staffId,
+        restaurantId: restaurantId,
+        role: user.role,
+        status: user.status,
+        fcmToken: token
+    }, { merge: true });
+
     return { success: true };
 });
 

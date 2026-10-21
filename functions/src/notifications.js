@@ -11,7 +11,7 @@ const {
 
 async function getNotificationTokens(restaurantId, spec) {
     if (spec.targetStaffId) {
-        const snapshot = await db.collection("users").doc(restaurantId)
+        const snapshot = await db.collection("restaurants").doc(restaurantId)
             .collection("staff").doc(spec.targetStaffId).get();
         return snapshot.exists && snapshot.get("status") === "Active"
             ? [snapshot.get("fcmToken")].filter((token) => typeof token === "string" && token)
@@ -21,8 +21,7 @@ async function getNotificationTokens(restaurantId, spec) {
     if (spec.targetRole === "manager") {
         const [restaurantSnapshot, staffSnapshot] = await Promise.all([
             db.collection("restaurants").doc(restaurantId).get(),
-            db.collection("users").doc(restaurantId).collection("staff")
-                .where("restaurantId", "==", restaurantId)
+            db.collection("restaurants").doc(restaurantId).collection("staff")
                 .where("role", "in", ["manager", "Manager"])
                 .get()
         ]);
@@ -48,8 +47,7 @@ async function getNotificationTokens(restaurantId, spec) {
     if (!roles) {
         throw new HttpsError("internal", "Notification target role is invalid.");
     }
-    const snapshot = await db.collection("users").doc(restaurantId).collection("staff")
-        .where("restaurantId", "==", restaurantId)
+    const snapshot = await db.collection("restaurants").doc(restaurantId).collection("staff")
         .where("role", "in", roles)
         .get();
     return snapshot.docs

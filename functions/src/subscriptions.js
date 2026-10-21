@@ -183,8 +183,9 @@ exports.verifyAndActivateSubscription = onAppCheckCall(
             }
             const now = Date.now();
             const durationDays = plan.billingCycle === "YEARLY" ? 365 : 30;
+            const activeStatus = plan.billingCycle === "YEARLY" ? "ACTIVE_YEARLY" : "ACTIVE_MONTHLY";
             const subscription = {
-                status: "ACTIVE",
+                status: activeStatus,
                 planId,
                 billingCycle: plan.billingCycle,
                 amountRupees: plan.amountRupees,
@@ -198,6 +199,6 @@ exports.verifyAndActivateSubscription = onAppCheckCall(
             transaction.set(userRef, { subscription }, { merge: true });
             transaction.set(paymentOrderRef, { status: "CONSUMED", consumedAt: now }, { merge: true });
         });
-        return { success: true };
+        return { success: true, subscriptionId: `sub_${requestedRestaurantId}` };
     }
 );

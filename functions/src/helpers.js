@@ -69,7 +69,9 @@ function staffProfileFromInput(input) {
         status: status,
         permissions: Array.isArray(input.permissions) ? input.permissions : [],
         documentType: String(input.documentType || "").trim(),
-        documentNumber: String(input.documentNumber || "").trim()
+        documentNumber: String(input.documentNumber || "").trim(),
+        profilePhotoUrl: String(input.profilePhotoUrl || "").trim(),
+        documentImageUrl: String(input.documentImageUrl || "").trim()
     };
 
     if (!profile.staffId || !profile.staffName || !profile.mobile) {
@@ -178,7 +180,9 @@ function safeStaffProfile(data, id) {
         status: data.status || "Active",
         permissions: Array.isArray(data.permissions) ? data.permissions : [],
         documentType: data.documentType || "",
-        documentNumber: data.documentNumber || ""
+        documentNumber: data.documentNumber || "",
+        profilePhotoUrl: data.profilePhotoUrl || "",
+        documentImageUrl: data.documentImageUrl || ""
     };
 }
 
