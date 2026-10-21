@@ -11,8 +11,8 @@
         android:id="@+id/imgProfile"
         android:layout_width="72dp"
         android:layout_height="72dp"
-        android:src="@drawable/person"
-        android:scaleType="centerCrop"/>
+        android:src="@drawable/app_logo"
+        android:scaleType="centerInside"/>
 
     <TextView
         android:id="@+id/tvAdminTitle"

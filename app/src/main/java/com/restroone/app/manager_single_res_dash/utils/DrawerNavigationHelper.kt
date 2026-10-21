@@ -3,6 +3,7 @@ package com.restroone.app.manager_single_res_dash.utils
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.GravityCompat
@@ -26,6 +27,7 @@ import com.restroone.app.utils.LogoutManager
 import com.restroone.app.utils.NavigationUtils
 import com.restroone.app.utils.SessionManager
 import coil.load
+import com.google.android.material.imageview.ShapeableImageView
 import kotlinx.coroutines.launch
 
 class DrawerNavigationHelper(private val fragment: Fragment) {
@@ -178,18 +180,18 @@ class DrawerNavigationHelper(private val fragment: Fragment) {
         val roleTv = navigationView.findViewById<TextView>(R.id.drawerProfileRole)
         val trialBadgeTv = navigationView.findViewById<TextView>(R.id.tvDrawerTrialBadge)
 
-        val profileImg = navigationView.findViewById<com.google.android.material.imageview.ShapeableImageView>(R.id.drawerProfileImage)
-            ?: navigationView.findViewById<android.widget.ImageView>(R.id.imgProfile)
+        val profileImg = navigationView.findViewById<ShapeableImageView>(R.id.drawerProfileImage)
+            ?: navigationView.findViewById<ImageView>(R.id.imgProfile)
 
         val logoUrl = sessionManager.getRestaurantLogoUrl()
         if (!logoUrl.isNullOrEmpty() && profileImg != null) {
             profileImg.load(logoUrl) {
                 crossfade(true)
-                placeholder(R.drawable.person)
-                error(R.drawable.person)
+                placeholder(R.drawable.app_logo)
+                error(R.drawable.app_logo)
             }
         } else {
-            profileImg?.setImageResource(R.drawable.person)
+            profileImg?.setImageResource(R.drawable.app_logo)
         }
 
         nameTv?.text = state.userName

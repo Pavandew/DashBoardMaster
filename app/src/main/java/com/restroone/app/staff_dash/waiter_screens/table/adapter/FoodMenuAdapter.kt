@@ -4,7 +4,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.bumptech.glide.Glide
+import coil.load
+import com.restroone.app.R
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -66,13 +67,16 @@ class FoodMenuAdapter(
 
             binding.tvQuantityText.text = foodItem.currentQuantity.toString()
 
-            // 2. Load food image using Glide
-            Glide.with(binding.ivFoodImg.context)
-                .load(foodItem.imageUrl)
-                .placeholder(android.R.drawable.ic_menu_gallery)
-                .error(android.R.drawable.ic_menu_report_image)
-                .centerCrop()
-                .into(binding.ivFoodImg)
+            // 2. Load food image using Coil
+            if (foodItem.imageUrl.isNotEmpty()) {
+                binding.ivFoodImg.load(foodItem.imageUrl) {
+                    crossfade(true)
+                    placeholder(R.drawable.ic_restaurant_24dp)
+                    error(R.drawable.ic_restaurant_24dp)
+                }
+            } else {
+                binding.ivFoodImg.setImageResource(R.drawable.ic_restaurant_24dp)
+            }
 
             // 3. Reactively swap stepper layouts
             if (foodItem.currentQuantity > 0) {

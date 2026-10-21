@@ -13,6 +13,7 @@ import com.restroone.app.databinding.ItemFormPersonalBinding
 import com.restroone.app.databinding.ItemFormWorkBinding
 import com.restroone.app.manager_single_res_dash.models.StaffDataModel
 import com.google.android.material.datepicker.MaterialDatePicker
+import coil.load
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -175,6 +176,15 @@ class AddStaffFormAdapter(
             }
             is PersonalViewHolder -> {
                 val b = holder.binding
+
+                // Pre-fill profile photo if available
+                initialData?.profilePhotoUrl?.takeIf { it.isNotEmpty() }?.let { photoUrl ->
+                    b.ivAvatar.load(photoUrl) {
+                        crossfade(true)
+                        placeholder(R.drawable.person)
+                        error(R.drawable.person)
+                    }
+                }
 
                 // Pre-fill text fields
                 b.etFullName.setText(inputName)

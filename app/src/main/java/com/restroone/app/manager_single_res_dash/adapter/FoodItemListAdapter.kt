@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.restroone.app.R
 import com.restroone.app.databinding.ItemFoodDishBinding // Double check this matches your row layout XML filename
 import com.restroone.app.manager_single_res_dash.models.MenuFoodItemsData
+import coil.load
 
 class FoodItemListAdapter(
     private val onItemClick: (MenuFoodItemsData) -> Unit,
@@ -68,7 +69,16 @@ class FoodItemListAdapter(
                 binding.viewStatusDot.setBackgroundResource(R.color.red)
                 binding.tvStatusText.setTextColor(ContextCompat.getColor(context, android.R.color.black))
             }
-            // example: Glide.with(context).load(item.imageUrl).placeholder(R.drawable.app_logo).into(binding.ivFoodImage)
+
+            if (item.imageUrl.isNotEmpty()) {
+                binding.ivFoodImage.load(item.imageUrl) {
+                    crossfade(true)
+                    placeholder(R.drawable.ic_restaurant_24dp)
+                    error(R.drawable.ic_restaurant_24dp)
+                }
+            } else {
+                binding.ivFoodImage.setImageResource(R.drawable.ic_restaurant_24dp)
+            }
 
             // FIXED: Correctly Resolve Colors for Veg / Non-Veg Indicators
             if (item.isVeg) {
