@@ -13,10 +13,6 @@ class StaffManagementRepository {
         runCatching {
             Log.d("StaffManagementRepo", "Fetching staff roster for Outlet: $ownerUid")
 
-            FirebaseFunctions.getInstance().getHttpsCallable("migrateStaffCredentials")
-                .call(mapOf("restaurantId" to ownerUid))
-                .await()
-
             val snapshot = RestaurantPathHelper.getOutletDocRef(ownerUid)
                 .collection(AppConstants.COLLECTION_STAFF)
                 .get()
@@ -46,23 +42,10 @@ class StaffManagementRepository {
                 throw Exception("Target employee profile document record does not exist on servers.")
             }
 
-            StaffDataModel(
-                id = documentSnapshot.id,
-                staffId = documentSnapshot.getString(AppConstants.FIELD_STAFF_ID) ?: documentSnapshot.getString("staffid") ?: "",
-                staffName = documentSnapshot.getString(AppConstants.FIELD_STAFF_NAME) ?: "",
-                mobile = documentSnapshot.getString(AppConstants.FIELD_MOBILE) ?: "",
-                email = documentSnapshot.getString(AppConstants.FIELD_EMAIL) ?: "",
-                gender = documentSnapshot.getString(AppConstants.FIELD_GENDER) ?: "",
-                role = documentSnapshot.getString(AppConstants.FIELD_ROLE) ?: "",
-                department = documentSnapshot.getString(AppConstants.FIELD_DEPARTMENT) ?: "",
-                joiningDate = documentSnapshot.getString(AppConstants.FIELD_JOINING_DATE) ?: "",
-                shift = documentSnapshot.getString(AppConstants.FIELD_SHIFT) ?: "",
-                salary = documentSnapshot.getString(AppConstants.FIELD_SALARY) ?: "",
-                status = documentSnapshot.getString(AppConstants.FIELD_STATUS) ?: "Active",
-                permissions = (documentSnapshot.get(AppConstants.FIELD_PERMISSIONS) as? List<*>)?.map { it.toString() } ?: emptyList(),
-                documentType = documentSnapshot.getString(AppConstants.FIELD_DOCUMENT_TYPE) ?: "",
-                documentNumber = documentSnapshot.getString(AppConstants.FIELD_DOCUMENT_NUMBER) ?: ""
-            )
+            val staffData = documentSnapshot.toObject(StaffDataModel::class.java)
+                ?: throw Exception("Failed to parse staff details.")
+
+            staffData.copy(id = documentSnapshot.id)
         }
 
     /**

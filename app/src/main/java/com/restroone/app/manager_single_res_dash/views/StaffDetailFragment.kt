@@ -1,5 +1,6 @@
 package com.restroone.app.manager_single_res_dash.views
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -21,6 +22,7 @@ import com.restroone.app.manager_single_res_dash.models.StaffDataModel
 import com.restroone.app.manager_single_res_dash.uistate.StaffDetailUiState
 import com.restroone.app.manager_single_res_dash.viewModel.StaffDetailViewModel
 import com.restroone.app.manager_single_res_dash.viewModel.StaffFormViewModel
+import coil.load
 import kotlinx.coroutines.launch
 
 class StaffDetailFragment : Fragment() {
@@ -53,11 +55,23 @@ class StaffDetailFragment : Fragment() {
         setupToolbar()
         observeDetailUiPipeline()
 
-        val staffDocId = arguments?.getString("STAFF_DOCUMENT_ID") ?: ""
+        // Fast-Load: If StaffDataModel was passed directly from list, render instantly at 0ms speed!
+        @Suppress("DEPRECATION")
+        val initialStaff = arguments?.getSerializable("STAFF_MODEL") as? StaffDataModel
+        if (initialStaff != null) {
+            Log.d(TAG, "Fast-Load: Instantly populating UI from passed staff model for '${initialStaff.staffName}'")
+            binding.detailProgressBar.visibility = View.GONE
+            binding.detailScrollView.visibility = View.VISIBLE
+            populateUI(initialStaff)
+        }
+
+        val staffDocId = arguments?.getString("STAFF_DOCUMENT_ID") ?: initialStaff?.id ?: ""
         val ownerUid = SessionManager(requireContext()).getRestaurantId()
 
-        Log.d(TAG, "Requesting details matching Staff ID: '$staffDocId' under Owner: '$ownerUid'")
-        viewModel.loadStaffProfile(ownerUid, staffDocId)
+        if (ownerUid.isNotEmpty() && staffDocId.isNotEmpty()) {
+            Log.d(TAG, "Background sync matching Staff ID: '$staffDocId' under Owner: '$ownerUid'")
+            viewModel.loadStaffProfile(ownerUid, staffDocId)
+        }
     }
 
     private fun setupToolbar() {
@@ -119,7 +133,17 @@ class StaffDetailFragment : Fragment() {
     }
 
     private fun populateUI(data: StaffDataModel) {
-        binding.tvDetailName.text = data.staffName
+        if (data.profilePhotoUrl.isNotEmpty()) {
+            binding.imgStaffAvatar.load(data.profilePhotoUrl) {
+                crossfade(true)
+                placeholder(R.drawable.person)
+                error(R.drawable.person)
+            }
+        } else {
+            binding.imgStaffAvatar.setImageResource(R.drawable.person)
+        }
+
+        binding.tvDetailName.text = data.staffName.ifEmpty { data.staffId }
         binding.tvDetailRoleAndId.text = "${data.role} • ID: ${data.staffId}"
         binding.tvDetailStatusTag.text = data.status
 
@@ -134,6 +158,34 @@ class StaffDetailFragment : Fragment() {
 
         binding.tvDetailDocType.text = data.documentType.ifEmpty { "Official ID Card" }
         binding.tvDetailDocNumber.text = data.documentNumber.ifEmpty { "Unverified/Missing" }
+
+        if (data.documentImageUrl.isNotEmpty()) {
+            binding.btnViewDocProof.visibility = View.VISIBLE
+            binding.btnViewDocProof.setOnClickListener {
+                showDocumentImagePopup(data.documentImageUrl)
+            }
+        } else {
+            binding.btnViewDocProof.visibility = View.GONE
+        }
+    }
+
+    private fun showDocumentImagePopup(imageUrl: String) {
+        val context = requireContext()
+        val popupBinding = com.restroone.app.databinding.DialogImagePreviewBinding.inflate(LayoutInflater.from(context))
+
+        popupBinding.ivPreview.load(imageUrl) {
+            crossfade(true)
+            placeholder(R.drawable.ic_badge_24dp)
+            error(R.drawable.ic_badge_24dp)
+        }
+
+        val dialog = AlertDialog.Builder(context)
+            .setView(popupBinding.root)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        popupBinding.btnClose.setOnClickListener { dialog.dismiss() }
+        dialog.show()
     }
 
     override fun onDestroyView() {

@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.restroone.app.R
 import com.restroone.app.databinding.ItemStaffCardsBinding
 import com.restroone.app.manager_single_res_dash.models.StaffDataModel
+import coil.load
 
 class StaffManagementAdapter(
     private val onCardLongClick: (StaffDataModel) -> Unit,
@@ -34,10 +35,19 @@ class StaffManagementAdapter(
 
         // Direct, type-safe access to your layout views through the binding object
         holder.binding.apply {
-            tvStaffName.text = staff.staffId
+            tvStaffName.text = staff.staffName.ifEmpty { staff.staffId }
             tvStaffRole.text = staff.role
             tvStatusBadge.text = staff.status
-            ivStaffAvatar.setImageResource(R.drawable.person)
+            
+            if (staff.profilePhotoUrl.isNotEmpty()) {
+                ivStaffAvatar.load(staff.profilePhotoUrl) {
+                    crossfade(true)
+                    placeholder(R.drawable.person)
+                    error(R.drawable.person)
+                }
+            } else {
+                ivStaffAvatar.setImageResource(R.drawable.person)
+            }
 
             // Dynamic status styling
             if (staff.status.equals("Active", ignoreCase = true)) {

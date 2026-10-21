@@ -53,31 +53,42 @@ class StaffFormViewModel(
         _currentStaffData.value = data
     }
 
+    fun updateDocumentUris(photoUri: String? = null, documentUri: String? = null) {
+        var current = _currentStaffData.value
+        if (photoUri != null) current = current.copy(profilePhotoUrl = photoUri)
+        if (documentUri != null) current = current.copy(documentImageUrl = documentUri)
+        _currentStaffData.value = current
+    }
+
     // ✅ UPDATED: Removed auto-generated credentials from Step 1
     fun updateStep1Data(
         staffName: String, mobile: String, email: String, gender: String,
-        role: String, department: String, joiningData: String, shift: String, salary: String
+        role: String, department: String, joiningData: String, shift: String, salary: String,
+        profilePhotoUrl: String = ""
     ) {
         Log.d(TAG, "➡ STEP 1 CACHED: [Name=$staffName, Mobile=$mobile, Role=$role]")
 
+        val currentPhoto = profilePhotoUrl.ifEmpty { _currentStaffData.value.profilePhotoUrl }
+
         _currentStaffData.value = _currentStaffData.value.copy(
             staffName = staffName, mobile = mobile, email = email, gender = gender,
-            role = role, department = department, joiningDate = joiningData, shift = shift, salary = salary
+            role = role, department = department, joiningDate = joiningData, shift = shift, salary = salary,
+            profilePhotoUrl = currentPhoto
         )
     }
 
     fun submitFinalStaffData(
-        ownerUid: String, documentType: String, documentNumber: String, permission: List<String>
+        context: android.content.Context, ownerUid: String, documentType: String, documentNumber: String, permission: List<String>
     ) {
         if (_isEditMode.value) {
-            handleUpdateStaff(ownerUid, documentType, documentNumber, permission)
+            handleUpdateStaff(context, ownerUid, documentType, documentNumber, permission)
         } else {
-            handleNewStaffRegistration(ownerUid, documentType, documentNumber, permission)
+            handleNewStaffRegistration(context, ownerUid, documentType, documentNumber, permission)
         }
     }
 
     private fun handleNewStaffRegistration(
-        ownerUid: String, documentType: String, documentNumber: String, permission: List<String>
+        context: android.content.Context, ownerUid: String, documentType: String, documentNumber: String, permission: List<String>
     ) {
         // ✅ GENERATE CREDENTIALS AT THE LAST MOMENT
         val name = _currentStaffData.value.staffName
@@ -102,13 +113,13 @@ class StaffFormViewModel(
         viewModelScope.launch {
             _uiState.value = FirebaseUiState.Loading
 
-            val result = repo.saveStaffToFirestore(finalData, ownerUid)
+            val result = repo.saveStaffToFirestore(context, finalData, ownerUid)
             processResult(result, finalData)
         }
     }
 
     private fun handleUpdateStaff(
-        ownerUid: String, documentType: String, documentNumber: String, permission: List<String>
+        context: android.content.Context, ownerUid: String, documentType: String, documentNumber: String, permission: List<String>
     ) {
         val finalData = _currentStaffData.value.copy(
             documentType = documentType,
@@ -121,7 +132,7 @@ class StaffFormViewModel(
         viewModelScope.launch {
             _uiState.value = FirebaseUiState.Loading
 
-            val result = repo.updateStaffInFirestore(finalData, ownerUid)
+            val result = repo.updateStaffInFirestore(context, finalData, ownerUid)
             processResult(result, finalData)
         }
     }

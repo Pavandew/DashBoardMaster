@@ -170,6 +170,7 @@ class StaffManagementFragment : Fragment() {
         val detailFragment = StaffDetailFragment().apply {
             arguments = Bundle().apply {
                 putString("STAFF_DOCUMENT_ID", staff.id)
+                putSerializable("STAFF_MODEL", staff)
             }
         }
         parentFragmentManager.beginTransaction()

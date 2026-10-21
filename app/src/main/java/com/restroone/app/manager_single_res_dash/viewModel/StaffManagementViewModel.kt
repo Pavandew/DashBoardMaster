@@ -22,7 +22,9 @@ class StaffManagementViewModel: ViewModel() {
 
     fun loadStaffMembers(ownerUid: String) {
         viewModelScope.launch {
-            _staffListState.value = StaffListUiState.Loading
+            if (_staffListState.value !is StaffListUiState.Success) {
+                _staffListState.value = StaffListUiState.Loading
+            }
 
             repository.getStaffList(ownerUid).fold(
                 onSuccess = { profiles ->
@@ -33,7 +35,9 @@ class StaffManagementViewModel: ViewModel() {
                     }
                 },
                 onFailure = { exception ->
-                    _staffListState.value = StaffListUiState.Error(exception.message ?: "Unknown collection retrieval exception error")
+                    if (_staffListState.value !is StaffListUiState.Success) {
+                        _staffListState.value = StaffListUiState.Error(exception.message ?: "Unknown collection retrieval exception error")
+                    }
                 }
             )
         }

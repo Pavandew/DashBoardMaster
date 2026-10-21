@@ -23,6 +23,8 @@ data class StaffDataModel(
     val permissions: List<String> = emptyList(),
     val documentType: String = "",
     val documentNumber: String = "",
+    val profilePhotoUrl: String = "",
+    val documentImageUrl: String = ""
 ): Serializable {
     /**
      * Helper to get the correct number regardless of which field name is used in the database.
@@ -47,7 +49,9 @@ data class StaffDataModel(
             AppConstants.FIELD_STATUS to status,
             AppConstants.FIELD_PERMISSIONS to permissions,
             AppConstants.FIELD_DOCUMENT_TYPE to documentType,
-            AppConstants.FIELD_DOCUMENT_NUMBER to documentNumber
+            AppConstants.FIELD_DOCUMENT_NUMBER to documentNumber,
+            "profilePhotoUrl" to profilePhotoUrl,
+            "documentImageUrl" to documentImageUrl
         )
     }
 }
