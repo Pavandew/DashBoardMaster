@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingVertical="10dp"
+    android:paddingVertical="7dp"
     android:paddingHorizontal="4dp">
 
     <TextView
@@ -35,11 +35,13 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etInput"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:hint="Enter details"
             android:inputType="text"
-            android:paddingVertical="16dp"
-            android:textColor="@android:color/black"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:textColor="@color/text_form_primary"
             android:textColorHint="@color/text_form_secondary"
             android:textSize="15sp" />
 

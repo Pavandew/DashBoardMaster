@@ -14,7 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.appcompat.app.AlertDialog
 import com.restroone.app.databinding.ActivityLoginBinding
-import com.restroone.app.databinding.DialogForgotPasswordStaffBinding
+import com.restroone.app.databinding.DialogForgotPasswordCustomBinding
 import com.restroone.app.master_dash.MasterHomeActivity
 import com.restroone.app.login.uistate.LoginUiState
 import com.restroone.app.login.viewmodel.LoginViewModel
@@ -57,6 +57,8 @@ class LoginActivity : AppCompatActivity() {
         // Future-proof country prefix handling (default: "+91 ")
         val countryPrefix = "+91 "
         binding.loginItem.loginPhoneLayout.prefixText = countryPrefix
+        val darkTextColor = androidx.core.content.ContextCompat.getColor(this, R.color.black)
+        binding.loginItem.loginPhoneLayout.setPrefixTextColor(android.content.res.ColorStateList.valueOf(darkTextColor))
 
         when (selectedPortal) {
             AppConstants.PORTAL_MULTI_RESTAURANT -> {
@@ -68,6 +70,10 @@ class LoginActivity : AppCompatActivity() {
                 binding.loginItem.loginCreateAccTv.setTextColor(blueColor)
                 binding.loginItem.loginPhoneLayout.boxStrokeColor = blueColor
                 binding.loginItem.loginPasswordLayout.boxStrokeColor = blueColor
+                val accentTint = android.content.res.ColorStateList.valueOf(blueColor)
+                binding.loginItem.loginPhoneLayout.setStartIconTintList(accentTint)
+                binding.loginItem.loginPasswordLayout.setStartIconTintList(accentTint)
+                binding.loginItem.loginPasswordLayout.setEndIconTintList(accentTint)
             }
             AppConstants.PORTAL_STAFF -> {
                 portalBadge.text = "Staff Portal"
@@ -77,6 +83,10 @@ class LoginActivity : AppCompatActivity() {
                 binding.loginItem.loginTvForgotPassword.setTextColor(orangeColor)
                 binding.loginItem.loginPhoneLayout.boxStrokeColor = orangeColor
                 binding.loginItem.loginPasswordLayout.boxStrokeColor = orangeColor
+                val accentTint = android.content.res.ColorStateList.valueOf(orangeColor)
+                binding.loginItem.loginPhoneLayout.setStartIconTintList(accentTint)
+                binding.loginItem.loginPasswordLayout.setStartIconTintList(accentTint)
+                binding.loginItem.loginPasswordLayout.setEndIconTintList(accentTint)
 
                 binding.loginItem.loginCreateAccTv.visibility = View.GONE
                 binding.loginItem.loginDontHaveCreateAccTv.visibility = View.GONE
@@ -90,6 +100,10 @@ class LoginActivity : AppCompatActivity() {
                 binding.loginItem.loginCreateAccTv.setTextColor(purpleColor)
                 binding.loginItem.loginPhoneLayout.boxStrokeColor = purpleColor
                 binding.loginItem.loginPasswordLayout.boxStrokeColor = purpleColor
+                val accentTint = android.content.res.ColorStateList.valueOf(purpleColor)
+                binding.loginItem.loginPhoneLayout.setStartIconTintList(accentTint)
+                binding.loginItem.loginPasswordLayout.setStartIconTintList(accentTint)
+                binding.loginItem.loginPasswordLayout.setEndIconTintList(accentTint)
             }
         }
     }
@@ -106,7 +120,11 @@ class LoginActivity : AppCompatActivity() {
         binding.loginItem.loginCreateAccTv.setOnClickListener {
             val selectedPortal = sessionManager.getSelectedPortal()
             Log.d(TAG, "Navigating to SignUpActivity. Current portal in session: $selectedPortal")
-            startActivity(Intent(this, SignUpActivity::class.java))
+            val intent = Intent(this, SignUpActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            startActivity(intent)
+            finish()
         }
 
         binding.loginItem.loginBtn.setOnClickListener {
@@ -132,11 +150,14 @@ class LoginActivity : AppCompatActivity() {
                 Toast.makeText(this, "No internet connection. Please check your network and try again.", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
-            val phone = binding.loginItem.loginPhoneEt.text.toString().trim()
-            if (phone.isNotEmpty()) {
-                viewModel.findUserByPhoneForReset(phone)
+            val typedPhone = binding.loginItem.loginPhoneEt.text.toString().trim()
+            val cleanDigits = typedPhone.replace("[^0-9]".toRegex(), "")
+            if (cleanDigits.length == 10) {
+                val formattedPhone = "+91$cleanDigits"
+                Log.i(TAG, "Directly opening Reset Password for valid typed phone: $formattedPhone")
+                openResetPasswordFragment(phone = formattedPhone)
             } else {
-                showForgotPasswordDialog()
+                showForgotPasswordDialog(prefilledPhone = typedPhone)
             }
         }
     }
@@ -271,24 +292,43 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun showForgotPasswordDialog() {
-        val dialogBinding = DialogForgotPasswordStaffBinding.inflate(layoutInflater)
-        dialogBinding.etStaffId.hint = "Enter Registered Mobile Number"
+    private fun showForgotPasswordDialog(prefilledPhone: String = "") {
+        val dialogBinding = DialogForgotPasswordCustomBinding.inflate(layoutInflater)
 
-        AlertDialog.Builder(this)
-            .setTitle("Forgot Password")
-            .setMessage("Enter your registered mobile number to reset your password.")
+        if (prefilledPhone.isNotEmpty()) {
+            val cleanDigits = prefilledPhone.replace("[^0-9]".toRegex(), "")
+            val tenDigits = if (cleanDigits.length > 10) cleanDigits.takeLast(10) else cleanDigits
+            dialogBinding.dialogPhoneEt.setText(tenDigits)
+        }
+
+        val dialog = AlertDialog.Builder(this)
             .setView(dialogBinding.root)
-            .setPositiveButton("Verify Mobile") { _, _ ->
-                val mobileInput = dialogBinding.etStaffId.text.toString().trim()
-                if (mobileInput.isNotEmpty()) {
-                    viewModel.findUserByPhoneForReset(mobileInput)
-                } else {
-                    Toast.makeText(this, "Please enter mobile number", Toast.LENGTH_SHORT).show()
-                }
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        dialogBinding.dialogBtnCancel.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialogBinding.dialogBtnVerify.setOnClickListener {
+            val rawInput = dialogBinding.dialogPhoneEt.text?.toString()?.trim().orEmpty()
+            val cleanDigits = rawInput.replace("[^0-9]".toRegex(), "")
+
+            if (cleanDigits.length != 10) {
+                dialogBinding.dialogPhoneTil.error = "Please enter a valid 10-digit mobile number"
+                return@setOnClickListener
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+
+            dialogBinding.dialogPhoneTil.error = null
+            dialog.dismiss()
+
+            val formattedPhone = "+91$cleanDigits"
+            Log.i(TAG, "Opening Reset Password directly for phone: $formattedPhone")
+            openResetPasswordFragment(phone = formattedPhone)
+        }
+
+        dialog.show()
     }
 
     private fun openResetPasswordFragment(phone: String) {
