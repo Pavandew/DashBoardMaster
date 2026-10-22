@@ -50,27 +50,7 @@ class NotificationViewModel(
                 val cleanRole = userRole.lowercase().trim()
                 val isManagerScope = cleanRole == "manager" || cleanRole == "owner_single" || cleanRole == "owner_multi"
 
-                val finalDisplayList = if (isManagerScope) {
-                    filteredList.filter { alert ->
-                        val target = alert.targetRole.lowercase().trim()
-                        val title = alert.title.lowercase()
-                        val msg = alert.message.lowercase()
-
-                        // Managers see:
-                        // 1. Items specifically targeted to them
-                        // 2. Broadcasts (all)
-                        // 3. Business critical keywords (Stock, Payment, Rejections)
-                        target == "manager" ||
-                        target == "all" ||
-                        title.contains("stock") ||
-                        title.contains("payment") ||
-                        title.contains("received") && title.contains("payment") || // Specifically "Payment Received", not "Order Received"
-                        msg.contains("paid") ||
-                        msg.contains("rejected")
-                    }
-                } else {
-                    filteredList
-                }
+                val finalDisplayList = filteredList
 
                 Log.d(TAG, "Notification stream update received: raw=${filteredList.size} final=${finalDisplayList.size} managerScope=$isManagerScope")
 

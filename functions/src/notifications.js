@@ -62,6 +62,8 @@ exports.createStaffNotification = onAppCheckCall(async (request) => {
         throw new HttpsError("invalid-argument", "Restaurant ID is required.");
     }
 
+    console.log(`🔔 [createStaffNotification] Initiated: event=${event}, restaurantId=${restaurantId}, orderDocPath=${orderDocPath || "N/A"}`);
+
     const rolesByEvent = {
         KITCHEN_NEW_ORDER: ["waiter", "head waiter", "waiter_staff"],
         BILL_REQUEST: ["waiter", "head waiter", "waiter_staff"],
@@ -74,9 +76,7 @@ exports.createStaffNotification = onAppCheckCall(async (request) => {
         throw new HttpsError("invalid-argument", "Notification event is invalid.");
     }
     const actor = await assertRestaurantRole(request, restaurantId, allowedRoles);
-    if (actor.role === "owner" || actor.role === "manager") {
-        throw new HttpsError("permission-denied", "This notification event is reserved for its operational role.");
-    }
+    console.log(`👤 [createStaffNotification] Actor verified: role=${actor.role}, staffDocId=${actor.staffDocId || "N/A"}`);
 
     const notificationsRef = db.collection("restaurants").doc(restaurantId)
         .collection("notifications");
@@ -137,12 +137,15 @@ exports.createStaffNotification = onAppCheckCall(async (request) => {
         const order = orderSnapshot.data();
         const orderId = String(order.orderId || orderRef.id);
         const tableName = String(order.tableName || "Order");
-        const notificationId = `order_${Buffer.from(`${event}:${orderId}`).toString("base64url")}`;
+        const notificationId = `order_${Date.now()}_${orderId.slice(-6)}`;
         if (event === "KITCHEN_NEW_ORDER" || event === "BILL_REQUEST") {
             const validStatus = event === "KITCHEN_NEW_ORDER"
                 ? ["PENDING", "PREPARING", "READY"].includes(String(order.orderStatus || "").toUpperCase())
                 : String(order.orderStatus || "").toUpperCase() === "BILLING";
-            if (order.waiterId !== request.auth.uid || !validStatus) {
+            const isAuthorizedUser = actor.role === "owner"
+                || actor.role === "manager"
+                || order.waiterId === request.auth.uid;
+            if (!isAuthorizedUser || !validStatus) {
                 throw new HttpsError("failed-precondition", "Order state does not authorize this notification.");
             }
             notificationSpecs = [{
@@ -241,6 +244,8 @@ exports.createStaffNotification = onAppCheckCall(async (request) => {
         });
     });
 
+    console.log(`📄 [createStaffNotification] Created ${createdSpecs.length} notification record(s) in Firestore for event=${event}`);
+
     const pushType = {
         KITCHEN_NEW_ORDER: "NEW_ORDER",
         BILL_REQUEST: "BILL_REQUESTED",
@@ -250,6 +255,7 @@ exports.createStaffNotification = onAppCheckCall(async (request) => {
     }[event];
     await Promise.all(createdSpecs.map(async (spec) => {
         const tokens = [...new Set(await getNotificationTokens(restaurantId, spec))].slice(0, 500);
+        console.log(`📱 [createStaffNotification] Sending FCM push for event=${event} (targetRole=${spec.targetRole}) to ${tokens.length} device token(s)`);
         if (tokens.length === 0) {
             return;
         }
