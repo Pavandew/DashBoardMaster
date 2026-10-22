@@ -1,14 +1,18 @@
 package com.restroone.app.login.views
 
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.restroone.app.R
 import com.restroone.app.databinding.ActivitySignUpBinding
 import com.restroone.app.login.uistate.SignUpUiState
 import com.restroone.app.login.viewmodel.SignUpViewModel
@@ -36,19 +40,49 @@ class SignUpActivity : AppCompatActivity() {
 
         sessionManager = SessionManager(this)
 
+        setupPortalTheme()
         clickListeners()
         observeState()
+    }
+
+    private fun setupPortalTheme() {
+        val (label, colorRes) = when (sessionManager.getSelectedPortal()) {
+            AppConstants.PORTAL_MULTI_RESTAURANT ->
+                "Multi-Restaurant Portal" to R.color.blue_gradient_start
+            else ->
+                "Restaurant Portal" to R.color.portal_restaurant_primary
+        }
+        val accentColor = ContextCompat.getColor(this, colorRes)
+        val accentTint = ColorStateList.valueOf(accentColor)
+        binding.loginItem.signupPortalBadge.apply {
+            text = label
+            backgroundTintList = accentTint
+            visibility = View.VISIBLE
+        }
+        binding.loginItem.signupCreateAccBtn.backgroundTintList = accentTint
+        binding.loginItem.signupLoginTv.setTextColor(accentTint)
+        binding.loginItem.signupTermCond.setTextColor(accentTint)
+        binding.loginItem.signupCb.buttonTintList = accentTint
+        listOf(
+            binding.loginItem.signupNameTil,
+            binding.loginItem.signupPhoneTil,
+            binding.loginItem.signupPasswordTil,
+            binding.loginItem.signupRePasswordTil
+        ).forEach { layout ->
+            layout.boxStrokeColor = accentColor
+            layout.setStartIconTintList(accentTint)
+            layout.setEndIconTintList(accentTint)
+        }
     }
 
     private fun clickListeners() {
 
         binding.loginItem.signupLoginTv.setOnClickListener {
-            startActivity(
-                Intent(
-                    this,
-                    LoginActivity::class.java
-                )
-            )
+            val intent = Intent(this, LoginActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            startActivity(intent)
+            finish()
         }
 
         binding.loginItem.signupCreateAccBtn.setOnClickListener {

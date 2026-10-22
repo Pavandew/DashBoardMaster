@@ -130,15 +130,20 @@ class SessionManager(context: Context) {
 
     fun saveRestaurantLogoUrl(logoUrl: String) {
         Log.d(TAG, "saveRestaurantLogoUrl: $logoUrl")
-        prefs.edit { putString("restaurantLogoUrl", logoUrl) }
+        if (logoUrl.startsWith("http://") || logoUrl.startsWith("https://")) {
+            prefs.edit { putString("restaurantLogoUrl", logoUrl) }
+        } else {
+            prefs.edit { remove("restaurantLogoUrl") }
+        }
     }
 
     fun getRestaurantLogoUrl(): String {
         val url = prefs.getString("restaurantLogoUrl", "") ?: ""
-        if (url.isNotEmpty()) return url
+        if (url.startsWith("http://") || url.startsWith("https://")) return url
 
         val cachedDetails = getCachedRestaurantDetails()
-        return cachedDetails?.restaurantLogoUri ?: cachedDetails?.billingPrinterSettings?.restaurantLogoUri ?: ""
+        val logo = cachedDetails?.restaurantLogoUri ?: cachedDetails?.billingPrinterSettings?.restaurantLogoUri ?: ""
+        return if (logo.startsWith("http://") || logo.startsWith("https://")) logo else ""
     }
 
     fun saveRestaurantDetails(data: RegistrationDataModel) {
@@ -147,8 +152,10 @@ class SessionManager(context: Context) {
         val logo = data.restaurantLogoUri ?: data.billingPrinterSettings.restaurantLogoUri ?: ""
         prefs.edit {
             putString(AppConstants.KEY_RESTAURANT_DETAILS, json)
-            if (logo.isNotEmpty()) {
+            if (logo.startsWith("http://") || logo.startsWith("https://")) {
                 putString("restaurantLogoUrl", logo)
+            } else {
+                remove("restaurantLogoUrl")
             }
         }
     }

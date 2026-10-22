@@ -114,13 +114,17 @@ class RestaurantDetailsBottomSheet : BottomSheetDialogFragment() {
             dismiss()
         }
 
-        // 1. OWNER CARD - Using unified getters to handle old and new data formats
+        val ownerName = data.getUnifiedFullName().ifEmpty { sessionManager.getUserName().orEmpty() }
+        val ownerEmail = data.getUnifiedEmail()
+        val ownerMobile = data.getUnifiedMobile().ifEmpty { sessionManager.getPhone().orEmpty() }
+
+        // 1. OWNER CARD - Using unified getters to handle old and new data formats with session fallback
         reviewItems.add(FormItem.ReviewCard(
             title = "OWNER INFORMATION",
             details = listOf(
-                "Name" to data.getUnifiedFullName(),
-                "Email" to data.getUnifiedEmail(),
-                "Mobile" to data.getUnifiedMobile()
+                "Name" to ownerName,
+                "Email" to ownerEmail,
+                "Mobile" to ownerMobile
             ),
             onEditClick = { startEditAction(1) }
         ))
