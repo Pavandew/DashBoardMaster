@@ -4,76 +4,78 @@
     <!-- Base TextAppearance style (required by Android) -->
     <style name="TextAppearance">
         <item name="android:textColor">@color/black</item>
-        <item name="android:fontFamily">@font/poppins_regular</item>
     </style>
 
     <!-- Base TextAppearance style -->
     <style name="TextAppearance.MyApp">
         <item name="android:textColor">@color/black</item>
-        <item name="android:fontFamily">@font/poppins_regular</item>
     </style>
 
     <!-- Main Screen Title -->
     <style name="TextAppearance.MyApp.Title">
         <item name="android:textSize">26sp</item>
         <item name="android:textColor">@color/black</item>
-        <item name="android:fontFamily">@font/poppins_bold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Toolbar Title -->
     <style name="TextAppearance.MyApp.ToolbarTitle">
         <item name="android:textSize">20sp</item>
         <item name="android:textColor">@color/black</item>
-        <item name="android:fontFamily">@font/poppins_semibold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Small Title / Card Heading -->
     <style name="TextAppearance.MyApp.TitleSmall">
         <item name="android:textSize">14sp</item>
         <item name="android:textColor">#181818</item>
-        <item name="android:fontFamily">@font/poppins_semibold</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Prefix Text Appearance -->
+    <style name="TextAppearance.MyApp.PrefixText">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">#111111</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Small Title / Card Heading -->
     <style name="TextAppearance.MyApp.TitleMedium">
         <item name="android:textSize">18sp</item>
         <item name="android:textColor">@color/black</item>
-        <item name="android:fontFamily">@font/poppins_bold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Subtitle -->
     <style name="TextAppearance.MyApp.Subtitle">
         <item name="android:textSize">13sp</item>
         <item name="android:textColor">@color/black</item>
-        <item name="android:fontFamily">@font/poppins_light</item>
     </style>
 
     <!-- Dashboard Number -->
     <style name="TextAppearance.MyApp.CardNumber">
         <item name="android:textSize">23sp</item>
         <item name="android:textColor">@color/black</item>
-        <item name="android:fontFamily">@font/poppins_bold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Card Label -->
     <style name="TextAppearance.MyApp.CardLabel">
         <item name="android:textSize">14sp</item>
         <item name="android:textColor">@color/black</item>
-        <item name="android:fontFamily">@font/poppins_medium</item>
     </style>
 
     <!-- Card SubTitle -->
     <style name="TextAppearance.MyApp.CardSubTitle">
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">#777777</item>
-        <item name="android:fontFamily">@font/poppins_light</item>
     </style>
 
     <!-- Button -->
     <style name="TextAppearance.MyApp.Button">
         <item name="android:textSize">14sp</item>
         <item name="android:textColor">@android:color/white</item>
-        <item name="android:fontFamily">@font/poppins_semibold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Base Button Style -->
@@ -81,7 +83,6 @@
         <item name="android:textAllCaps">false</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textColor">@android:color/white</item>
-        <item name="android:fontFamily">@font/poppins_semibold</item>
         <item name="backgroundTint">#4F2FFF</item>
         <item name="cornerRadius">12dp</item>
         <item name="android:minHeight">48dp</item>
@@ -122,109 +123,100 @@
     </style>
 
 
-    <!-- Activity Item Title (Poppins) -->
+    <!-- Activity Item Title -->
     <style name="TextAppearance.MyApp.ActivityTitle">
         <item name="android:textSize">15sp</item>
         <item name="android:textColor">#1A1C1E</item>
-        <item name="android:fontFamily">@font/poppins_medium</item>
     </style>
 
     <!-- Activity Metadata - For Dates -->
     <style name="TextAppearance.MyApp.ActivityMeta">
         <item name="android:textSize">13sp</item>
         <item name="android:textColor">#1A1C1E</item>
-        <item name="android:fontFamily">@font/poppins_medium</item>
     </style>
 
     <!-- Activity Subtext - For Restaurant Names -->
     <style name="TextAppearance.MyApp.ActivitySubtext">
         <item name="android:textSize">15sp</item>
         <item name="android:textColor">@color/black</item>
-        <item name="android:fontFamily">@font/poppins_bold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Small Captions - For AM/PM timestamps -->
     <style name="TextAppearance.MyApp.CaptionSmall">
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">#717171</item>
-        <item name="android:fontFamily">@font/poppins_regular</item>
     </style>
 
     <!-- Section Title (for "All Restaurants") -->
     <style name="TextAppearance.MyApp.SectionTitle">
         <item name="android:textSize">22sp</item>
         <item name="android:textColor">#111111</item>
-        <item name="android:fontFamily">@font/poppins_bold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Section Subtitle -->
     <style name="TextAppearance.MyApp.SectionSubtitle">
         <item name="android:textSize">13sp</item>
         <item name="android:textColor">#7A7F91</item>
-        <item name="android:fontFamily">@font/poppins_regular</item>
     </style>
 
     <!-- Table Header Text -->
     <style name="TextAppearance.MyApp.TableHeader">
         <item name="android:textSize">13sp</item>
         <item name="android:textColor">#5F667A</item>
-        <item name="android:fontFamily">@font/poppins_semibold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Search Input Text -->
     <style name="TextAppearance.MyApp.SearchInput">
         <item name="android:textSize">15sp</item>
         <item name="android:textColor">@color/search_bar_text</item>
-        <item name="android:fontFamily">@font/poppins_regular</item>
     </style>
 
     <!-- Empty State Title -->
     <style name="TextAppearance.MyApp.EmptyStateTitle">
         <item name="android:textSize">16sp</item>
         <item name="android:textColor">@color/black</item>
-        <item name="android:fontFamily">@font/poppins_bold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Table Row ID -->
     <style name="TextAppearance.MyApp.TableRowId">
         <item name="android:textSize">13sp</item>
         <item name="android:textColor">#111111</item>
-        <item name="android:fontFamily">@font/poppins_regular</item>
     </style>
 
     <!-- Table Row Name (Restaurant Name - Bold) -->
     <style name="TextAppearance.MyApp.TableRowName">
         <item name="android:textSize">14sp</item>
         <item name="android:textColor">#111111</item>
-        <item name="android:fontFamily">@font/poppins_semibold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Table Row Username -->
     <style name="TextAppearance.MyApp.TableRowUsername">
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">#7A7F91</item>
-        <item name="android:fontFamily">@font/poppins_regular</item>
     </style>
 
     <!-- Table Row Owner -->
     <style name="TextAppearance.MyApp.TableRowOwner">
         <item name="android:textSize">13sp</item>
         <item name="android:textColor">#111111</item>
-        <item name="android:fontFamily">@font/poppins_regular</item>
     </style>
 
     <!-- Table Row Status Badge -->
     <style name="TextAppearance.MyApp.TableRowStatus">
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">#4A69FF</item>
-        <item name="android:fontFamily">@font/poppins_semibold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- Table Row Date/Created -->
     <style name="TextAppearance.MyApp.TableRowDate">
         <item name="android:textSize">13sp</item>
         <item name="android:textColor">#111111</item>
-        <item name="android:fontFamily">@font/poppins_regular</item>
     </style>
 
     <style name="CustomBottomNavigation" parent="Widget.MaterialComponents.BottomNavigationView">
@@ -233,15 +225,10 @@
         <item name="itemTextAppearanceActive">@style/BottomNavText</item>
         <item name="itemTextAppearanceInactive">@style/BottomNavText</item>
 
-<!--        &lt;!&ndash; Remove extra top padding &ndash;&gt;-->
-<!--        <item name="itemPaddingTop">2dp</item>-->
-<!--        <item name="itemPaddingBottom">2dp</item>-->
-
     </style>
 
     <style name="BottomNavText" parent="TextAppearance.MaterialComponents.Caption">
         <item name="android:textSize">11sp</item>
-        <item name="android:fontFamily">@font/poppins_medium</item>
     </style>
 
     <style name="ShapeAppearance.MyApp.Squircle" parent="">
@@ -287,41 +274,38 @@
     <style name="TextAppearance.MyApp.TableId">
         <item name="android:textSize">18sp</item>
         <item name="android:textColor">@color/table_id_text</item>
-        <item name="android:fontFamily">@font/poppins_bold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="TextAppearance.MyApp.TableFloor">
         <item name="android:textSize">11sp</item>
         <item name="android:textColor">#777777</item>
-        <item name="android:fontFamily">@font/poppins_medium</item>
     </style>
 
     <style name="TextAppearance.MyApp.TableCustomer">
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">#16A34A</item>
-        <item name="android:fontFamily">@font/poppins_semibold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="TextAppearance.MyApp.TableSeats">
         <item name="android:textSize">13sp</item>
         <item name="android:textColor">@color/table_seat_text</item>
-        <item name="android:fontFamily">@font/poppins_regular</item>
     </style>
 
     <style name="TextAppearance.MyApp.TableStatus">
         <item name="android:textSize">11sp</item>
-        <item name="android:fontFamily">@font/poppins_bold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="TextAppearance.MyApp.TablePrice">
         <item name="android:textSize">14sp</item>
         <item name="android:textColor">@color/table_id_text</item>
-        <item name="android:fontFamily">@font/poppins_bold</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="TextAppearance.MyApp.FloorChip">
         <item name="android:textSize">14sp</item>
-        <item name="android:fontFamily">@font/poppins_medium</item>
     </style>
 
 </resources>

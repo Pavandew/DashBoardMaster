@@ -170,7 +170,7 @@ class SubscriptionRepository(private val context: Context) {
         val resId = sessionManager.getRestaurantId().ifEmpty { sessionManager.getUid() }
         val ownerUid = sessionManager.getUid().ifEmpty { resId }
         require(gateway == PaymentGateway.RAZORPAY) {
-            "PhonePe activation is disabled until merchant-side payment verification is configured."
+            "PhonePe direct payment is disabled. Please pay via PhonePe inside Razorpay Checkout."
         }
         val result = functions.getHttpsCallable("createSubscriptionPaymentOrder").call(
             mapOf("planId" to plan.id, "restaurantId" to resId)
@@ -214,7 +214,9 @@ class SubscriptionRepository(private val context: Context) {
                 )
             ).await()
             val response = result.data as? Map<*, *>
-            if (response?.get("success") == true) response["subscriptionId"] as? String else null
+            if (response?.get("success") == true) {
+                (response["subscriptionId"] as? String) ?: "sub_$resId"
+            } else null
         } catch (e: Exception) {
             Log.e(TAG, "verifyAndActivateSubscription: Server verification failed", e)
             null
@@ -222,10 +224,18 @@ class SubscriptionRepository(private val context: Context) {
     }
 
     private fun parseSubscriptionStatus(statusStr: String, daysLeft: Int): SubscriptionStatus {
-        return try {
-            SubscriptionStatus.valueOf(statusStr)
-        } catch (e: Exception) {
-            if (daysLeft > 0) SubscriptionStatus.TRIAL else SubscriptionStatus.EXPIRED
+        if (daysLeft <= 0) return SubscriptionStatus.EXPIRED
+
+        return when {
+            statusStr.equals("ACTIVE_YEARLY", ignoreCase = true) -> SubscriptionStatus.ACTIVE_YEARLY
+            statusStr.equals("ACTIVE_MONTHLY", ignoreCase = true) -> SubscriptionStatus.ACTIVE_MONTHLY
+            statusStr.equals("ACTIVE", ignoreCase = true) -> SubscriptionStatus.ACTIVE_YEARLY
+            statusStr.equals("TRIAL", ignoreCase = true) -> SubscriptionStatus.TRIAL
+            else -> try {
+                SubscriptionStatus.valueOf(statusStr)
+            } catch (_: Exception) {
+                SubscriptionStatus.TRIAL
+            }
         }
     }
 }

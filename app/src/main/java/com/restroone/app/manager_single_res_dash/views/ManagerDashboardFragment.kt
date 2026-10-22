@@ -166,11 +166,11 @@ class ManagerDashboardFragment : Fragment() {
                             Log.d("ManagerDashboard", "UI Update: Loading logo into header profile: $logoUrl")
                             binding.masterDashHeader.imgProfile.load(logoUrl) {
                                 crossfade(true)
-                                placeholder(R.drawable.person)
-                                error(R.drawable.person)
+                                placeholder(R.drawable.app_logo)
+                                error(R.drawable.app_logo)
                             }
                         } else {
-                            binding.masterDashHeader.imgProfile.setImageResource(R.drawable.person)
+                            binding.masterDashHeader.imgProfile.setImageResource(R.drawable.app_logo)
                         }
                     }
                 }

@@ -160,6 +160,7 @@ class ManagerDashboardViewModel(
 
     /**
      * Loads the restaurant name and logo URL, prioritizing local cache in SessionManager.
+     * Uses memory & local cache first to prevent redundant Firestore network reads during backstack navigation.
      */
     fun loadRestaurantDetails(ownerUid: String, sessionManager: SessionManager) {
         val cachedName = sessionManager.getRestaurantName()
@@ -173,6 +174,13 @@ class ManagerDashboardViewModel(
         }
 
         if (ownerUid.isEmpty()) return
+
+        // Production Optimization:
+        // If restaurant name & logo are already present in memory/session cache, skip redundant Firestore network calls
+        if (_restaurantName.value.isNotEmpty() && _restaurantLogoUrl.value.isNotEmpty()) {
+            Log.d(TAG, "Fast-Load: Restaurant details already available in memory/session. Skipping redundant Firestore fetch.")
+            return
+        }
 
         viewModelScope.launch {
             Log.d(TAG, "Fetching restaurant details from Firestore for UID: $ownerUid")

@@ -17,6 +17,7 @@ import com.restroone.app.utils.SessionManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
+import com.restroone.app.utils.ImageUtils
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -30,7 +31,7 @@ class UpiPaymentSettingsBottomSheet : BottomSheetDialogFragment() {
     private val binding get() = _binding!!
 
     private lateinit var sessionManager: SessionManager
-    private val storage = FirebaseStorage.getInstance("gs://masterdashboard-836dd.firebasestorage.app")
+    private val storage = FirebaseStorage.getInstance()
 
     private var selectedImageUri: Uri? = null
     private var currentQrUrl: String = ""
@@ -106,9 +107,14 @@ class UpiPaymentSettingsBottomSheet : BottomSheetDialogFragment() {
                 var updatedQrUrl = currentQrUrl
 
                 if (selectedImageUri != null) {
-                    Log.d(TAG, "Uploading new QR image to Firebase Storage...")
+                    Log.d(TAG, "Uploading compressed QR image to Firebase Storage...")
                     val storageRef = storage.reference.child("upi_qr/$ownerUid.jpg")
-                    storageRef.putFile(selectedImageUri!!).await()
+                    val compressedBytes = ImageUtils.compressImage(requireContext(), selectedImageUri!!)
+                    if (compressedBytes != null) {
+                        storageRef.putBytes(compressedBytes).await()
+                    } else {
+                        storageRef.putFile(selectedImageUri!!).await()
+                    }
                     updatedQrUrl = storageRef.downloadUrl.await().toString()
                     Log.i(TAG, "Uploaded QR image URL: $updatedQrUrl")
                 }

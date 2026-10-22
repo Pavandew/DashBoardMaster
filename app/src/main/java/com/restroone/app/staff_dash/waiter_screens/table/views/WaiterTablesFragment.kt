@@ -132,9 +132,10 @@ class WaiterTablesFragment : Fragment() {
         floorAdapter = FloorChipsAdapter { selectedChip ->
             Log.d(TAG, "📱 WaiterTablesFragment Floor chip clicked: Title = '${selectedChip.name}', ID = '${selectedChip.id}'")
             viewModel.setFloorFilter(selectedChip.id)
-            binding.rvTableCards.post {
-                binding.rvTableCards.scrollToPosition(0)
-                binding.appBarLayout.setExpanded(true, true)
+            _binding?.rvTableCards?.post {
+                val b = _binding ?: return@post
+                b.rvTableCards.scrollToPosition(0)
+                b.appBarLayout.setExpanded(true, true)
             }
         }
         binding.rvFloorChips.adapter = floorAdapter
@@ -147,30 +148,55 @@ class WaiterTablesFragment : Fragment() {
                 var lastAutoScrolledFloorId: String? = null
 
                 viewModel.uiState.collect { state ->
+                    val b = _binding ?: return@collect
+
                     // 1. Loading & Swipe Refresh indicators
-                    binding.pbLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
-                    binding.swipeRefresh.isRefreshing = state.isRefreshing
+                    b.pbLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+                    b.swipeRefresh.isRefreshing = state.isRefreshing
 
-                    // 2. Error vs Content visibility
+                    // 2. Error vs Content vs Empty state visibility
                     if (state.errorMessage != null) {
-                        binding.rvTableCards.visibility = View.GONE
-                        binding.includeErrorState.layoutErrorContainer.visibility = View.VISIBLE
-                        binding.includeErrorState.tvErrorStateMessage.text = state.errorMessage
+                        b.rvTableCards.visibility = View.GONE
+                        b.includeEmptyState.layoutEmptyContainer.visibility = View.GONE
+                        b.includeErrorState.layoutErrorContainer.visibility = View.VISIBLE
+                        b.includeErrorState.tvErrorStateMessage.text = state.errorMessage
                     } else {
-                        binding.includeErrorState.layoutErrorContainer.visibility = View.GONE
-                        binding.rvTableCards.visibility = View.VISIBLE
+                        b.includeErrorState.layoutErrorContainer.visibility = View.GONE
 
-                        tableAdapter.updateList(state.tables) {
-                            binding.rvTableCards.post {
-                                binding.rvTableCards.scrollToPosition(0)
-                                binding.appBarLayout.setExpanded(true, false)
+                        if (state.tables.isEmpty() && !state.isLoading) {
+                            b.rvTableCards.visibility = View.GONE
+                            b.includeEmptyState.layoutEmptyContainer.visibility = View.VISIBLE
+
+                            val role = sessionManager.getRole()
+                            if (role.contains("owner") || role.contains("manager")) {
+                                b.includeEmptyState.btnEmptyAction.visibility = View.VISIBLE
+                                b.includeEmptyState.btnEmptyAction.text = "➕ Manage Floors & Tables"
+                                b.includeEmptyState.btnEmptyAction.setOnClickListener {
+                                    parentFragmentManager.beginTransaction()
+                                        .replace(R.id.manager_fragmentContainer, com.restroone.app.manager_single_res_dash.views.TableManagementFragment())
+                                        .addToBackStack("table_management")
+                                        .commit()
+                                }
+                            } else {
+                                b.includeEmptyState.btnEmptyAction.visibility = View.GONE
                             }
-                        }
-                        currentSearchList.clear()
-                        currentSearchList.addAll(state.tables)
+                        } else {
+                            b.includeEmptyState.layoutEmptyContainer.visibility = View.GONE
+                            b.rvTableCards.visibility = View.VISIBLE
 
-                        if (binding.searchBar.etSearchOrder.text.isNotEmpty()) {
-                            searchManager?.refreshSearch()
+                            tableAdapter.updateList(state.tables) {
+                                _binding?.rvTableCards?.post {
+                                    val currentBinding = _binding ?: return@post
+                                    currentBinding.rvTableCards.scrollToPosition(0)
+                                    currentBinding.appBarLayout.setExpanded(true, false)
+                                }
+                            }
+                            currentSearchList.clear()
+                            currentSearchList.addAll(state.tables)
+
+                            if (b.searchBar.etSearchOrder.text.isNotEmpty()) {
+                                searchManager?.refreshSearch()
+                            }
                         }
                     }
 
@@ -182,8 +208,9 @@ class WaiterTablesFragment : Fragment() {
                         if (currentSelectedId != null && currentSelectedId != lastAutoScrolledFloorId) {
                             val selectedPos = state.floors.indexOfFirst { it.id == currentSelectedId }
                             if (selectedPos != -1) {
-                                binding.rvFloorChips.post {
-                                    binding.rvFloorChips.smoothScrollToPosition(selectedPos)
+                                _binding?.rvFloorChips?.post {
+                                    val currentBinding = _binding ?: return@post
+                                    currentBinding.rvFloorChips.smoothScrollToPosition(selectedPos)
                                 }
                             }
                             lastAutoScrolledFloorId = currentSelectedId
