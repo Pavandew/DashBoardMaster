@@ -28,10 +28,18 @@ class KitchenOrderViewModel(private val repository: KitchenOrderRepository = Kit
     private val _isWorkstationContext = MutableStateFlow(false)
     private val _error = MutableStateFlow<Throwable?>(null)
     private val _isLoading = MutableStateFlow(false)
+    private val _isRefreshing = MutableStateFlow(false)
     private var collectionJob: kotlinx.coroutines.Job? = null
 
     val selectedStatusFilter: StateFlow<String> = _selectedStatusFilter.asStateFlow()
     val selectedTypeFilter: StateFlow<String> = _selectedTypeFilter.asStateFlow()
+
+    private data class EngineState(
+        val isWorkstation: Boolean,
+        val isLoading: Boolean,
+        val isRefreshing: Boolean,
+        val error: Throwable?
+    )
 
     /**
      * Reactive pipeline that fuses the raw Firestore stream with local UI filters (Search, Status, Role).
@@ -41,18 +49,18 @@ class KitchenOrderViewModel(private val repository: KitchenOrderRepository = Kit
         _selectedStatusFilter,
         _selectedTypeFilter,
         _searchQuery,
-        combine(_isWorkstationContext, _isLoading, _error) { workstation, loading, error ->
-            Triple(workstation, loading, error)
+        combine(_isWorkstationContext, _isLoading, _isRefreshing, _error) { workstation, loading, refreshing, error ->
+            EngineState(workstation, loading, refreshing, error)
         }
-    ) { rawList, statusFilter, typeFilter, query, triple ->
-        val (isWorkstation, loading, error) = triple
+    ) { rawList, statusFilter, typeFilter, query, engine ->
+        val (isWorkstation, loading, refreshing, error) = engine
 
         if (error != null) {
             return@combine KitchenOrderUiState(isLoading = false, isRefreshing = false, errorMessage = error.message ?: "Unknown error")
         }
 
         if (loading && rawList.isEmpty() && collectionJob?.isActive != true) {
-            return@combine KitchenOrderUiState(isLoading = true, isRefreshing = false)
+            return@combine KitchenOrderUiState(isLoading = true, isRefreshing = refreshing)
         }
 
         // 1. Pre-filter rejected or cancelled orders
@@ -139,7 +147,7 @@ class KitchenOrderViewModel(private val repository: KitchenOrderRepository = Kit
 
         KitchenOrderUiState(
             isLoading = false,
-            isRefreshing = false,
+            isRefreshing = refreshing,
             orders = baseOrders,
             filters = computedFilters,
             errorMessage = null
@@ -153,8 +161,9 @@ class KitchenOrderViewModel(private val repository: KitchenOrderRepository = Kit
     fun forceRefresh(managerId: String) {
         if (managerId.isEmpty()) return
         Log.d(TAG, "forceRefresh: Re-triggering real-time stream for manager: $managerId")
+        _isRefreshing.value = true
         collectionJob?.cancel()
-        _isLoading.value = true
+        collectionJob = null
         _error.value = null
         startListeningOrders(managerId)
     }
@@ -174,18 +183,19 @@ class KitchenOrderViewModel(private val repository: KitchenOrderRepository = Kit
         }
 
         Log.i(TAG, "startListeningOrders: Opening real-time stream for manager: $managerId")
-        _isLoading.value = true
         _error.value = null
         collectionJob = viewModelScope.launch {
             repository.getRealtimeKitchenOrderDetailDatas(managerId)
                 .catch { exception ->
                     Log.e(TAG, "Firestore Stream: Error encountered", exception)
                     _isLoading.value = false
+                    _isRefreshing.value = false
                     _error.value = exception
                 }
                 .collect { incomingList ->
                     Log.d(TAG, "Firestore Stream: Received update with ${incomingList.size} documents.")
                     _isLoading.value = false
+                    _isRefreshing.value = false
                     _error.value = null
                     _rawOrders.value = incomingList
                 }

@@ -113,8 +113,6 @@ class KitchenOrderFragment : Fragment(R.layout.fragment_kitchen_order) {
         }
     }
 
-    private var lastAutoScrolledFilterId: String? = null
-
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -127,18 +125,6 @@ class KitchenOrderFragment : Fragment(R.layout.fragment_kitchen_order) {
                     } else {
                         orderAdapter.submitList(state.orders)
                         filterAdapter.submitList(state.filters)
-
-                        // AUTO-SCROLL: Only scroll to the selected chip if it's different from the last scrolled one
-                        val currentSelectedId = state.filters.find { it.isSelected }?.id
-                        if (currentSelectedId != null && currentSelectedId != lastAutoScrolledFilterId) {
-                            val selectedPos = state.filters.indexOfFirst { it.id == currentSelectedId }
-                            if (selectedPos != -1) {
-                                binding.rvOrderFilterChips.post {
-                                    binding.rvOrderFilterChips.smoothScrollToPosition(selectedPos)
-                                }
-                            }
-                            lastAutoScrolledFilterId = currentSelectedId
-                        }
 
                         // Show or hide empty state based on list size
                         if (state.orders.isEmpty()) {

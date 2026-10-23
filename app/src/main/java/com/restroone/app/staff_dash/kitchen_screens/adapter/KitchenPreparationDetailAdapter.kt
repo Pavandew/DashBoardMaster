@@ -129,7 +129,8 @@ class KitchenPreparationDetailAdapter(
 
     private object PrepItemDiffCallback : DiffUtil.ItemCallback<OrderDetailItem>() {
         override fun areItemsTheSame(oldItem: OrderDetailItem, newItem: OrderDetailItem): Boolean =
-            oldItem.itemName == newItem.itemName
+            (if (oldItem.itemId.isNotEmpty()) oldItem.itemId else "${oldItem.itemName}_${oldItem.variantName}") == 
+            (if (newItem.itemId.isNotEmpty()) newItem.itemId else "${newItem.itemName}_${newItem.variantName}")
 
         override fun areContentsTheSame(oldItem: OrderDetailItem, newItem: OrderDetailItem): Boolean =
             oldItem == newItem

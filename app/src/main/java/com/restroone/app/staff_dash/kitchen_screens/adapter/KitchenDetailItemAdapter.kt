@@ -32,23 +32,21 @@ class KitchenDetailItemAdapter : ListAdapter<OrderDetailItem, KitchenDetailItemA
             }
             binding.tvItemName.text = displayName
             
-            // Format price as Integer for display (e.g. 200 instead of 200.0)
-            val unitPrice = item.price.toInt()
-            
             val totalQuantity = item.quantity
             val previouslyOrdered = item.orderedQuantity
             val newDeltaQuantity = maxOf(0, totalQuantity - previouslyOrdered)
 
             if (newDeltaQuantity > 0) {
-                // This item has NEW quantities to be prepared in this KOT
+                // NEW item or additional quantity needing kitchen preparation
+                binding.tvNewItemBadge.text = if (newDeltaQuantity > 1) "+$newDeltaQuantity NEW ITEMS ADDED" else "+1 NEW ITEM ADDED"
                 binding.tvNewItemBadge.visibility = android.view.View.VISIBLE
                 binding.tvServedItemBadge.visibility = android.view.View.GONE
                 
-                // Emphasize the new quantity to prepare
-                binding.tvQuantity.text = "$newDeltaQuantity x $unitPrice"
+                binding.tvQuantity.text = "$newDeltaQuantity to Prepare"
                 binding.tvQuantity.setBackgroundColor(android.graphics.Color.parseColor("#FEE2E2"))
-                binding.tvQuantity.setTextColor(android.graphics.Color.parseColor("#EF4444"))
+                binding.tvQuantity.setTextColor(android.graphics.Color.parseColor("#DC2626"))
                 
+                binding.layoutItemContent.setBackgroundColor(android.graphics.Color.parseColor("#FFF5F5"))
                 binding.tvItemName.alpha = 1.0f
 
                 if (previouslyOrdered > 0) {
@@ -57,22 +55,28 @@ class KitchenDetailItemAdapter : ListAdapter<OrderDetailItem, KitchenDetailItemA
                     binding.tvItemName.text = displayName
                 }
             } else {
-                // This item was already accepted / ordered
+                // Previously prepared or served items
                 binding.tvNewItemBadge.visibility = android.view.View.GONE
+                
+                val statusText = if (item.itemStatus.equals("SERVED", true)) "PREVIOUSLY SERVED" else "PREVIOUSLY PREPARED"
+                binding.tvServedItemBadge.text = statusText
                 binding.tvServedItemBadge.visibility = android.view.View.VISIBLE
                 
-                binding.tvQuantity.text = "$totalQuantity x $unitPrice"
+                binding.tvQuantity.text = "$totalQuantity x Prepared"
                 binding.tvQuantity.setBackgroundColor(android.graphics.Color.parseColor("#F3F4F6"))
                 binding.tvQuantity.setTextColor(android.graphics.Color.parseColor("#6B7280"))
+                
+                binding.layoutItemContent.setBackgroundColor(android.graphics.Color.parseColor("#FAFAFA"))
                 binding.tvItemName.text = displayName
-                binding.tvItemName.alpha = 0.5f
+                binding.tvItemName.alpha = 0.55f
             }
         }
     }
 
     private object ItemDiffCallback : DiffUtil.ItemCallback<OrderDetailItem>() {
         override fun areItemsTheSame(oldItem: OrderDetailItem, newItem: OrderDetailItem): Boolean = 
-            oldItem.itemName == newItem.itemName
+            (if (oldItem.itemId.isNotEmpty()) oldItem.itemId else "${oldItem.itemName}_${oldItem.variantName}") == 
+            (if (newItem.itemId.isNotEmpty()) newItem.itemId else "${newItem.itemName}_${newItem.variantName}")
         override fun areContentsTheSame(oldItem: OrderDetailItem, newItem: OrderDetailItem): Boolean = 
             oldItem == newItem
     }
