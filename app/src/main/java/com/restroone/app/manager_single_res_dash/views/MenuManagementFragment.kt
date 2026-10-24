@@ -146,11 +146,11 @@ private val userRole by lazy{ sessionManager.getRole() }
 
             Log.d(TAG, "Session verified. Displaying AddCategoryBottomSheet dialog view interface wrapper.")
 
-            val addCategorySheet = AddCategoryBottomSheet { enteredCategoryName ->
+            val addCategorySheet = AddCategoryBottomSheet { enteredCategoryName, selectedImageUri ->
                 Log.i(TAG, "Bottom sheet callback fired! User submitted Category Name: '$enteredCategoryName'")
 
                 // Trigger the viewModel to create the document and update it to firestore
-                viewModel.addNewCategory(ownerUid, enteredCategoryName)
+                viewModel.addNewCategory(requireContext(), ownerUid, enteredCategoryName, selectedImageUri)
 
                 Toast.makeText(requireContext(), "Adding category: $enteredCategoryName", Toast.LENGTH_SHORT).show()
             }

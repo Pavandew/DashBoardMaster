@@ -23,7 +23,7 @@ class MenuManagementRepository {
     }
 
     private val firestore = FirebaseFirestore.getInstance()
-    private val storage = FirebaseStorage.getInstance("gs://masterdashboard-836dd.firebasestorage.app")
+    private val storage = FirebaseStorage.getInstance()
 
     /**
      * Uploads a menu item image to Firebase Storage after compression.
@@ -55,6 +55,36 @@ class MenuManagementRepository {
             Result.success(downloadUrl)
         } catch (e: Exception) {
             Log.e(TAG, "Storage Upload Exception: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun uploadCategoryImage(context: Context, ownerUid: String, imageUri: Uri, categoryId: String): Result<String> {
+        if (ownerUid.isEmpty() || categoryId.isEmpty()) {
+            return Result.failure(Exception("OwnerUID or CategoryID is empty. Cannot generate path."))
+        }
+
+        return try {
+            val fullPath = "restaurants/$ownerUid/category_images/cat_${categoryId}.jpg"
+            Log.i(TAG, "Initiating compressed category image upload to path: $fullPath")
+
+            val compressedBytes = ImageUtils.compressImage(context, imageUri, quality = 70, maxDimension = 600)
+            if (compressedBytes == null) {
+                Log.e(TAG, "Compression failed for category image: $imageUri")
+                return Result.failure(Exception("Failed to process category image"))
+            }
+
+            val storageRef = storage.reference.child(fullPath)
+
+            Log.d(TAG, "Starting byte upload... (${compressedBytes.size / 1024} KB)")
+            storageRef.putBytes(compressedBytes).await()
+
+            val downloadUrl = storageRef.downloadUrl.await().toString()
+            Log.i(TAG, "Category Image Upload Successful! URL: $downloadUrl")
+
+            Result.success(downloadUrl)
+        } catch (e: Exception) {
+            Log.e(TAG, "Category Storage Upload Exception: ${e.message}", e)
             Result.failure(e)
         }
     }

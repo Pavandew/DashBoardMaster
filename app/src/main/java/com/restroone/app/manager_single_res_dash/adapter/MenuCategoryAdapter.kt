@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.restroone.app.R
 import com.restroone.app.databinding.ItemMenuCategoryBinding
 import com.restroone.app.manager_single_res_dash.models.MenuCategory
+import coil.load
 
 class MenuCategoryAdapter(
     private val onItemClick: (MenuCategory) -> Unit,
@@ -41,18 +42,26 @@ class MenuCategoryAdapter(
             binding.tvCategoryName.text = category.menuCategoryName
             binding.tvItemCount.text = String.format("%02d items", category.itemCount)
 
-            // Dynamic Reflection Identifier Lookup: Converts String keys back to real Drawables safely
-            val resourceId = context.resources.getIdentifier(
-                category.imageResId,
-                "drawable",
-                context.packageName
-            )
-
-            // Fallback gracefully to app_logo if the database string is misconfigured or asset is missing
-            if (resourceId != 0) {
-                binding.ivCategoryIcon.setImageResource(resourceId)
+            if (category.categoryImageUrl.isNotEmpty()) {
+                binding.ivCategoryIcon.load(category.categoryImageUrl) {
+                    crossfade(true)
+                    placeholder(R.drawable.ic_restaurant_24dp)
+                    error(R.drawable.ic_restaurant_24dp)
+                }
             } else {
-                binding.ivCategoryIcon.setImageResource(R.drawable.app_logo)
+                val resourceId = if (category.imageResId.isNotEmpty()) {
+                    context.resources.getIdentifier(
+                        category.imageResId,
+                        "drawable",
+                        context.packageName
+                    )
+                } else 0
+
+                if (resourceId != 0) {
+                    binding.ivCategoryIcon.setImageResource(resourceId)
+                } else {
+                    binding.ivCategoryIcon.setImageResource(R.drawable.ic_restaurant_24dp)
+                }
             }
 
             binding.root.setOnClickListener { onItemClick(category) }

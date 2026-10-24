@@ -52,32 +52,35 @@ class MenuManagementViewModel : ViewModel(){
 
     // Adding new Categories
     fun addNewCategory(
+        context: android.content.Context,
         ownerUid: String,
-        categoryName: String
+        categoryName: String,
+        imageUri: android.net.Uri? = null
     ) {
         Log.i(TAG, "➕ Attempting to add new category: '$categoryName' for Owner: $ownerUid")
         viewModelScope.launch {
-            // determine a matching drawable asset string key based on what they typed
-            val lowCaseName = categoryName.lowercase()
-            val mappedIconAsset = when {
-                lowCaseName.contains("pizza") || lowCaseName.contains("burger") || lowCaseName.contains("pasta") -> "ic_restaurant_24dp"
-                lowCaseName.contains("drink") || lowCaseName.contains("beverage") || lowCaseName.contains("juice") -> "ic_restaurant_24dp"
-                else -> "ic_restaurant_24dp"
-            }
-
-            // Generate a clean Firestore ID path entry reference pointer
             val firestore = FirebaseFirestore.getInstance()
             val newDocRef = firestore.collection(AppConstants.COLLECTION_RESTAURANTS)
                 .document(ownerUid)
                 .collection(AppConstants.COLLECTION_MENU_CATEGORIES)
-                .document()  // Generate unique document ID automatically
+                .document()
 
+            var categoryImageUrl = ""
+
+            if (imageUri != null) {
+                Log.d(TAG, "Category image selected. Uploading to Storage...")
+                val uploadResult = repository.uploadCategoryImage(context, ownerUid, imageUri, newDocRef.id)
+                if (uploadResult.isSuccess) {
+                    categoryImageUrl = uploadResult.getOrDefault("")
+                }
+            }
 
             val newCategory = MenuCategory(
                 menuCategoryId = newDocRef.id,
                 menuCategoryName = categoryName,
-                itemCount = 0, // Starts fresh with zero linked food items
-                imageResId = mappedIconAsset
+                itemCount = 0,
+                imageResId = "ic_restaurant_24dp",
+                categoryImageUrl = categoryImageUrl
             )
 
             // Save directly to the cloud
