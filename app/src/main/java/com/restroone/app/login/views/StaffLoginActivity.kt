@@ -12,7 +12,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.restroone.app.databinding.ActivityStaffLoginBinding
-import com.restroone.app.databinding.DialogForgotPasswordStaffBinding
+import com.restroone.app.databinding.DialogForgotPasswordCustomBinding
 import com.restroone.app.login.uistate.StaffLoginUiState
 import com.restroone.app.login.viewmodel.StaffLoginViewModel
 import com.restroone.app.staff_dash.billing_screens.CashierHomeActivity
@@ -63,28 +63,51 @@ class StaffLoginActivity : AppCompatActivity() {
         }
 
         binding.staffForgotPass.setOnClickListener {
-            showForgotPasswordDialog()
+            if (!NetworkUtils.isNetworkAvailable(this)) {
+                Toast.makeText(this, "No internet connection. Please check your network and try again.", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+            val typedInput = binding.staffEtInput.text.toString().trim()
+            showForgotPasswordDialog(prefilledPhone = typedInput)
         }
     }
 
-    private fun showForgotPasswordDialog() {
-        val dialogBinding = DialogForgotPasswordStaffBinding.inflate(layoutInflater)
+    private fun showForgotPasswordDialog(prefilledPhone: String = "") {
+        val dialogBinding = DialogForgotPasswordCustomBinding.inflate(layoutInflater)
 
-        AlertDialog.Builder(this)
-            .setTitle("Forgot Password")
-            .setMessage("Enter your registered mobile number to reset your password.")
+        if (prefilledPhone.isNotEmpty()) {
+            val cleanDigits = prefilledPhone.replace("[^0-9]".toRegex(), "")
+            val tenDigits = if (cleanDigits.length > 10) cleanDigits.takeLast(10) else cleanDigits
+            dialogBinding.dialogPhoneEt.setText(tenDigits)
+        }
+
+        val dialog = AlertDialog.Builder(this)
             .setView(dialogBinding.root)
-            .setPositiveButton("Verify Mobile") { _, _ ->
-                val mobileInput = dialogBinding.etStaffId.text.toString().trim()
-                if (mobileInput.isNotEmpty()) {
-                    isForgotFlow = true
-                    viewModel.findStaffByPhoneForReset(mobileInput)
-                } else {
-                    Toast.makeText(this, "Please enter mobile number", Toast.LENGTH_SHORT).show()
-                }
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        dialogBinding.dialogBtnCancel.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialogBinding.dialogBtnVerify.setOnClickListener {
+            val rawInput = dialogBinding.dialogPhoneEt.text?.toString()?.trim().orEmpty()
+            val cleanDigits = rawInput.replace("[^0-9]".toRegex(), "")
+
+            if (cleanDigits.length != 10) {
+                dialogBinding.dialogPhoneTil.error = "Please enter a valid 10-digit mobile number"
+                return@setOnClickListener
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+
+            dialogBinding.dialogPhoneTil.error = null
+            dialog.dismiss()
+
+            isForgotFlow = true
+            viewModel.findStaffByPhoneForReset(cleanDigits)
+        }
+
+        dialog.show()
     }
 
     private fun observeLoginUiPipeline() {
@@ -94,17 +117,17 @@ class StaffLoginActivity : AppCompatActivity() {
 
                     when(state) {
                         is StaffLoginUiState.Idle -> {
-                            binding.staffLoginBtn.isEnabled = true
+                            setInputsEnabled(true)
                             binding.staffLoginBtn.text = "Login"
                         }
 
                         is StaffLoginUiState.Loading -> {
-                            binding.staffLoginBtn.isEnabled = false
+                            setInputsEnabled(false)
                             binding.staffLoginBtn.text = "Verifying..."
                         }
 
                         is StaffLoginUiState.ValidationError -> {
-                            binding.staffLoginBtn.isEnabled = true
+                            setInputsEnabled(true)
                             binding.staffLoginBtn.text = "Login"
 
                             if (state.message.contains("ID")) {
@@ -115,7 +138,7 @@ class StaffLoginActivity : AppCompatActivity() {
                         }
 
                         is StaffLoginUiState.AuthError -> {
-                            binding.staffLoginBtn.isEnabled = true
+                            setInputsEnabled(true)
                             binding.staffLoginBtn.text = "Login"
 
                             if (state.message.contains("Password")) {
@@ -182,6 +205,13 @@ class StaffLoginActivity : AppCompatActivity() {
             .replace(android.R.id.content, fragment)
             .addToBackStack(null)
             .commit()
+    }
+
+    private fun setInputsEnabled(enabled: Boolean) {
+        binding.staffLoginBtn.isEnabled = enabled
+        binding.staffEtInput.isEnabled = enabled
+        binding.staffPasswordEt.isEnabled = enabled
+        binding.staffForgotPass.isEnabled = enabled
     }
 
     private fun saveFcmToken(staffDocId: String) {

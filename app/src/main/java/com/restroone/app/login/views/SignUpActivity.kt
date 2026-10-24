@@ -171,7 +171,7 @@ class SignUpActivity : AppCompatActivity() {
 
                         is SignUpUiState.Loading -> {
 
-                            binding.loginItem.signupCreateAccBtn.isEnabled = false
+                            setInputsEnabled(false)
                             binding.loginItem.signupCreateAccBtn.text = "Creating..."
                         }
 
@@ -262,9 +262,20 @@ class SignUpActivity : AppCompatActivity() {
         binding.loginItem.signupRePasswordTil.error = null
     }
 
+    private fun setInputsEnabled(enabled: Boolean) {
+        binding.loginItem.signupCreateAccBtn.isEnabled = enabled
+        binding.loginItem.signupNameEt.isEnabled = enabled
+        binding.loginItem.signupPhoneEt.isEnabled = enabled
+        binding.loginItem.signupPasswordEt.isEnabled = enabled
+        binding.loginItem.signupRePassEt.isEnabled = enabled
+        binding.loginItem.signupCb.isEnabled = enabled
+        binding.loginItem.signupTermCond.isEnabled = enabled
+        binding.loginItem.signupLoginTv.isEnabled = enabled
+    }
+
     private fun resetButton() {
 
-        binding.loginItem.signupCreateAccBtn.isEnabled = true
+        setInputsEnabled(true)
         binding.loginItem.signupCreateAccBtn.text = "Create Account"
     }
 }

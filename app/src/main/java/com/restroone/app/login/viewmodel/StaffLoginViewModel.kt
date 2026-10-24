@@ -73,16 +73,32 @@ class StaffLoginViewModel(
             return
         }
 
-        val phone = if (cleanPhone.startsWith("+91")) cleanPhone else "+91$cleanPhone"
-        _loginState.value = StaffLoginUiState.Success(
-            staffName = "",
-            restaurantOwnerUid = "",
-            restaurantId = "",
-            staffDocId = "",
-            staffId = "",
-            role = "waiter_staff",
-            mobile = phone,
-            permissions = emptyList()
-        )
+        val formattedPhone = if (cleanPhone.startsWith("+91")) cleanPhone else "+91$cleanPhone"
+        _loginState.value = StaffLoginUiState.Loading
+
+        viewModelScope.launch {
+            val authRepo = com.restroone.app.login.repo.AuthRepository()
+            authRepo.isPhoneRegistered(cleanPhone).fold(
+                onSuccess = { registered ->
+                    if (registered) {
+                        _loginState.value = StaffLoginUiState.Success(
+                            staffName = "",
+                            restaurantOwnerUid = "",
+                            restaurantId = "",
+                            staffDocId = "",
+                            staffId = "",
+                            role = "waiter_staff",
+                            mobile = formattedPhone,
+                            permissions = emptyList()
+                        )
+                    } else {
+                        _loginState.value = StaffLoginUiState.AuthError("No staff account found with this mobile number.")
+                    }
+                },
+                onFailure = { error ->
+                    _loginState.value = StaffLoginUiState.AuthError(error.message ?: "Failed to verify mobile number.")
+                }
+            )
+        }
     }
 }
