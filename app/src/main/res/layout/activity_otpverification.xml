@@ -46,4 +46,15 @@
         android:text="Verify OTP"
         style="@style/Button.MyApp.Large" />
 
+    <TextView
+        android:id="@+id/tvResendOtp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:padding="8dp"
+        android:text="Didn't receive code? Resend OTP"
+        android:textColor="#4B35FF"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
 </LinearLayout>

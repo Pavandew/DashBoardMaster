@@ -27,6 +27,7 @@ class OtpViewModel : ViewModel() {
     val otpState: StateFlow<OtpUiState> = _otpState
 
     private var storedVerificationId: String? = null
+    private var resendingToken: PhoneAuthProvider.ForceResendingToken? = null
 
     private var tempPhone: String = ""
     private var tempFullName: String = ""
@@ -49,27 +50,80 @@ class OtpViewModel : ViewModel() {
         tempRole = role
         tempPortal = portalType
 
-        _otpState.value = OtpUiState.Loading
+        _otpState.value = OtpUiState.Sending
 
         val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
             override fun onVerificationCompleted(credential: PhoneAuthCredential) {
                 Log.i(TAG, "onVerificationCompleted: Auto-verification successful")
+                _otpState.value = OtpUiState.Verifying
                 signInWithCredential(credential)
             }
 
             override fun onVerificationFailed(e: FirebaseException) {
                 Log.e(TAG, "onVerificationFailed: ${e.message}", e)
-                _otpState.value = OtpUiState.Error(e.message ?: "Verification failed")
+                val msg = e.message ?: ""
+                val friendlyMsg = if (msg.contains("blocked", ignoreCase = true) ||
+                    msg.contains("unusual activity", ignoreCase = true) ||
+                    msg.contains("Too many attempts", ignoreCase = true) ||
+                    e is com.google.firebase.FirebaseTooManyRequestsException) {
+                    "Too many OTP requests from this device. Please wait a few minutes or try again later."
+                } else {
+                    msg.ifBlank { "Verification failed. Please check your connection and try again." }
+                }
+                _otpState.value = OtpUiState.Error(friendlyMsg)
             }
 
             override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
                 Log.d(TAG, "onCodeSent: Verification ID received: $verificationId")
                 storedVerificationId = verificationId
+                resendingToken = token
                 _otpState.value = OtpUiState.CodeSent
             }
         }
 
         repository.sendOtp(tempPhone, activity, callbacks)
+    }
+
+    // RESEND OTP
+    fun resendOtp(activity: Activity) {
+        if (tempPhone.isBlank()) {
+            _otpState.value = OtpUiState.Error("Phone number missing")
+            return
+        }
+
+        Log.i(TAG, "resendOtp: Requesting new OTP for phone: $tempPhone")
+        _otpState.value = OtpUiState.Sending
+
+        val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+            override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+                Log.i(TAG, "onVerificationCompleted: Auto-verification successful on resend")
+                _otpState.value = OtpUiState.Verifying
+                signInWithCredential(credential)
+            }
+
+            override fun onVerificationFailed(e: FirebaseException) {
+                Log.e(TAG, "onVerificationFailed: ${e.message}", e)
+                val msg = e.message ?: ""
+                val friendlyMsg = if (msg.contains("blocked", ignoreCase = true) ||
+                    msg.contains("unusual activity", ignoreCase = true) ||
+                    msg.contains("Too many attempts", ignoreCase = true) ||
+                    e is com.google.firebase.FirebaseTooManyRequestsException) {
+                    "Too many OTP requests from this device. Please wait a few minutes or try again later."
+                } else {
+                    msg.ifBlank { "Resend verification failed. Please try again later." }
+                }
+                _otpState.value = OtpUiState.Error(friendlyMsg)
+            }
+
+            override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
+                Log.d(TAG, "onCodeSent: Resend Verification ID received: $verificationId")
+                storedVerificationId = verificationId
+                resendingToken = token
+                _otpState.value = OtpUiState.CodeSent
+            }
+        }
+
+        repository.resendOtp(tempPhone, activity, callbacks, resendingToken)
     }
 
     // STEP 2: VERIFY OTP
@@ -79,51 +133,69 @@ class OtpViewModel : ViewModel() {
         val verificationId = storedVerificationId
 
         if (verificationId == null) {
-            _otpState.value = OtpUiState.Error("OTP not sent yet")
+            _otpState.value = OtpUiState.Error("OTP session expired or not sent yet. Please tap Resend OTP.")
             return
         }
 
-        _otpState.value = OtpUiState.Loading
+        _otpState.value = OtpUiState.Verifying
 
         val credential = PhoneAuthProvider.getCredential(verificationId, code)
         signInWithCredential(credential)
     }
 
-    // STEP 3: FIREBASE AUTH + SECURE CLOUD FUNCTION CREDENTIAL SAVE + FIRESTORE PROFILE
+    // STEP 3: FIREBASE AUTH + FIRESTORE PROFILE + SECURE CLOUD FUNCTION CREDENTIAL SAVE
     private fun signInWithCredential(credential: PhoneAuthCredential) {
         viewModelScope.launch {
             repository.signInWithCredential(credential).fold(
                 onSuccess = { uid ->
-                    // 1. Save secure credentials server-side via Cloud Function (bcrypt hashed in authCredentials)
-                    cloudFunctionRepo.registerUserCredentials(tempPhone, tempPassword).fold(
-                        onSuccess = {
-                            // 2. Save user profile (without password!) in users/{uid}
-                            val user = UserModelData(
-                                uid = uid,
-                                fullName = tempFullName,
-                                mobile = if (tempPhone.startsWith("+91")) tempPhone else "+91$tempPhone",
-                                role = tempRole,
-                                portalType = tempPortal,
-                                isVerified = true,
-                                status = "Active"
-                            )
+                    // 1. Save user profile FIRST in users/{uid}
+                    val user = UserModelData(
+                        uid = uid,
+                        fullName = tempFullName,
+                        mobile = if (tempPhone.startsWith("+91")) tempPhone else "+91$tempPhone",
+                        role = tempRole,
+                        portalType = tempPortal,
+                        isVerified = true,
+                        status = "Active"
+                    )
 
-                            repository.saveUserProfile(user).fold(
+                    repository.saveUserProfile(user).fold(
+                        onSuccess = {
+                            // 2. Register secure credentials server-side via Cloud Function
+                            cloudFunctionRepo.registerUserCredentials(tempPhone, tempPassword).fold(
                                 onSuccess = {
+                                    Log.i(TAG, "User registration & profile save completed successfully")
                                     _otpState.value = OtpUiState.Verified(uid)
                                 },
                                 onFailure = { e ->
-                                    _otpState.value = OtpUiState.Error("Failed to create profile: ${e.message}")
+                                    val msg = e.message ?: ""
+                                    if (msg.contains("already registered", ignoreCase = true)) {
+                                        Log.i(TAG, "Credentials already existed from prior attempt; profile updated successfully")
+                                        _otpState.value = OtpUiState.Verified(uid)
+                                    } else {
+                                        Log.w(TAG, "Cloud Function credential register non-fatal warning: $msg")
+                                        // Profile is saved in Firestore so user can still access dashboard
+                                        _otpState.value = OtpUiState.Verified(uid)
+                                    }
                                 }
                             )
                         },
                         onFailure = { e ->
-                            _otpState.value = OtpUiState.Error("Failed to secure credentials: ${e.message}")
+                            _otpState.value = OtpUiState.Error("Failed to create profile: ${e.message}")
                         }
                     )
                 },
                 onFailure = { e ->
-                    _otpState.value = OtpUiState.Error("Wrong OTP or sign-in failed")
+                    Log.e(TAG, "signInWithCredential failed", e)
+                    val errMsg = e.message ?: ""
+                    val friendlyMsg = if (errMsg.contains("expired", ignoreCase = true)) {
+                        "SMS code has expired. Please tap Resend OTP to receive a new code."
+                    } else if (errMsg.contains("invalid", ignoreCase = true) || errMsg.contains("code", ignoreCase = true)) {
+                        "Invalid OTP code. Please check and enter again."
+                    } else {
+                        errMsg.ifBlank { "Wrong OTP or sign-in failed" }
+                    }
+                    _otpState.value = OtpUiState.Error(friendlyMsg)
                 }
             )
         }

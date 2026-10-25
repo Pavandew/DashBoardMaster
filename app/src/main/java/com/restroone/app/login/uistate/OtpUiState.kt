@@ -4,6 +4,10 @@ sealed class OtpUiState {
 
     object Idle : OtpUiState()
 
+    object Sending : OtpUiState()
+
+    object Verifying : OtpUiState()
+
     object Loading : OtpUiState()
 
     object CodeSent : OtpUiState()

@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -37,10 +38,12 @@ class OTPVerificationActivity : AppCompatActivity() {
     private var fullName: String = ""
     private var password: String = ""
     private var role: String = ""
+
     private var portalType: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(TAG, "onCreate: OTPVerificationActivity initialized")
 
         binding =
             ActivityOtpverificationBinding.inflate(layoutInflater)
@@ -65,10 +68,13 @@ class OTPVerificationActivity : AppCompatActivity() {
         portalType =
             intent.getStringExtra("portalType") ?: ""
 
+        Log.i(TAG, "Received Intent Data: phone=$phone, fullName=$fullName, role=$role, portalType=$portalType")
+
         binding.tvPhone.text =
             "OTP sent to +91 $phone"
 
         // Send OTP
+        Log.d(TAG, "Initiating viewModel.sendOtp for phone: $phone")
         viewModel.sendOtp(
             phone = phone,
             activity = this,
@@ -87,7 +93,15 @@ class OTPVerificationActivity : AppCompatActivity() {
     private fun setupBackPress() {
 
         onBackPressedDispatcher.addCallback(this) {
-
+            Log.d(TAG, "Back button pressed. Navigating back to SignUpActivity.")
+            val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+            if (currentUser != null) {
+                currentUser.delete().addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Log.i(TAG, "Unverified temporary Auth user cleaned up on back press")
+                    }
+                }
+            }
             startActivity(
                 Intent(
                     this@OTPVerificationActivity,
@@ -101,23 +115,37 @@ class OTPVerificationActivity : AppCompatActivity() {
 
     private fun setupClick() {
 
+        binding.etOtp.doOnTextChanged { text, _, _, _ ->
+            if (text?.length == 6) {
+                val otp = text.toString().trim()
+                Log.i(TAG, "Auto-submitting 6-digit OTP code")
+                viewModel.verifyOtp(otp)
+            }
+        }
+
         binding.btnVerify.setOnClickListener {
 
             val otp =
                 binding.etOtp.text.toString().trim()
 
-            if (otp.isEmpty()) {
-
+            if (otp.length != 6) {
+                Log.w(TAG, "Manual verification failed: OTP length is ${otp.length}, expected 6 digits")
                 Toast.makeText(
                     this,
-                    "Enter OTP",
+                    "Enter valid 6-digit OTP",
                     Toast.LENGTH_SHORT
                 ).show()
 
                 return@setOnClickListener
             }
 
+            Log.i(TAG, "Manual OTP verification button clicked")
             viewModel.verifyOtp(otp)
+        }
+
+        binding.tvResendOtp.setOnClickListener {
+            Log.i(TAG, "Resend OTP clicked")
+            viewModel.resendOtp(this)
         }
     }
 
@@ -128,28 +156,41 @@ class OTPVerificationActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
 
                 viewModel.otpState.collect { state ->
+                    Log.d(TAG, "Observed OTP UI State: ${state::class.java.simpleName}")
 
                     when (state) {
 
-                        is OtpUiState.Idle -> {}
+                        is OtpUiState.Idle -> {
+                            setInputsEnabled(true)
+                            binding.btnVerify.text = "Verify OTP"
+                        }
 
-                        is OtpUiState.Loading -> {
+                        is OtpUiState.Sending -> {
+                            Log.i(TAG, "State -> Sending OTP to +91 $phone")
+                            setInputsEnabled(false)
+                            binding.btnVerify.text = "Sending OTP..."
+                        }
 
-                            binding.btnVerify.isEnabled = false
+                        is OtpUiState.Verifying, is OtpUiState.Loading -> {
+                            Log.i(TAG, "State -> Verifying OTP code...")
+                            setInputsEnabled(false)
 
                             binding.btnVerify.text =
                                 "Verifying..."
                         }
 
                         is OtpUiState.CodeSent -> {
-
-                            binding.btnVerify.isEnabled = true
+                            Log.i(TAG, "State -> OTP Code Sent successfully via SMS")
+                            setInputsEnabled(true)
 
                             binding.btnVerify.text =
                                 "Verify OTP"
                         }
 
                         is OtpUiState.Verified -> {
+                            Log.i(TAG, "State -> OTP Verified successfully for UID: ${state.uid}")
+                            setInputsEnabled(false)
+                            binding.btnVerify.text = "Verified!"
 
                             Toast.makeText(
                                 this@OTPVerificationActivity,
@@ -170,8 +211,8 @@ class OTPVerificationActivity : AppCompatActivity() {
                         }
 
                         is OtpUiState.Error -> {
-
-                            binding.btnVerify.isEnabled = true
+                            Log.e(TAG, "State -> OTP Error: ${state.message}")
+                            setInputsEnabled(true)
 
                             binding.btnVerify.text =
                                 "Verify OTP"
@@ -189,6 +230,7 @@ class OTPVerificationActivity : AppCompatActivity() {
     }
 
     private fun navigateToDashboard(role: String) {
+        Log.i(TAG, "Navigating to dashboard for role: $role")
 
         val intent = when(role) {
 
@@ -239,5 +281,11 @@ class OTPVerificationActivity : AppCompatActivity() {
             startActivity(it)
             finish()
         }
+    }
+
+    private fun setInputsEnabled(enabled: Boolean) {
+        binding.btnVerify.isEnabled = enabled
+        binding.etOtp.isEnabled = enabled
+        binding.tvResendOtp.isEnabled = enabled
     }
 }
