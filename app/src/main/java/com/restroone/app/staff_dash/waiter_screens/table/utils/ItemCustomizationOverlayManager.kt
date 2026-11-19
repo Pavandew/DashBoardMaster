@@ -2,13 +2,12 @@ package com.restroone.app.staff_dash.waiter_screens.table.utils
 
 import android.content.Context
 import android.view.View
-import com.bumptech.glide.Glide
+import coil.load
+import com.restroone.app.R
 import com.restroone.app.databinding.BottomSheetItemCustomizationBinding
 import com.restroone.app.staff_dash.waiter_screens.table.adapter.AddonsAdapter
 import com.restroone.app.staff_dash.waiter_screens.table.adapter.CustomizationItem
-import com.restroone.app.staff_dash.waiter_screens.table.models.AddonItem
 import com.restroone.app.staff_dash.waiter_screens.table.models.FoodItemData
-import com.restroone.app.manager_single_res_dash.models.ItemVariant
 
 /**
  * Manages the "Instant Overlay" for food item customization.
@@ -70,11 +69,15 @@ class ItemCustomizationOverlayManager(
         binding.etSpecialInstructions.text?.clear()
         updateQuantityText()
 
-        Glide.with(context)
-            .load(item.imageUrl)
-            .placeholder(android.R.drawable.ic_menu_gallery)
-            .centerCrop()
-            .into(binding.ivFoodHeroImage)
+        if (item.imageUrl.isNotEmpty()) {
+            binding.ivFoodHeroImage.load(item.imageUrl) {
+                crossfade(true)
+                placeholder(R.drawable.ic_restaurant_24dp)
+                error(R.drawable.ic_restaurant_24dp)
+            }
+        } else {
+            binding.ivFoodHeroImage.setImageResource(R.drawable.ic_restaurant_24dp)
+        }
 
         // Populate initial list (Variants + already loaded Addons)
         refreshList(item)

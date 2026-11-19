@@ -108,7 +108,9 @@ class LoginViewModel: ViewModel() {
                 onFailure = { error ->
                     Log.e("LoginVM", "Authentication Cloud Function failed", error)
                     val errMsg = error.message ?: "Invalid mobile number or password"
-                    val field = if (errMsg.contains("register", ignoreCase = true) ||
+                    val field = if (errMsg.contains("profile", ignoreCase = true) ||
+                        errMsg.contains("not found", ignoreCase = true) ||
+                        errMsg.contains("register", ignoreCase = true) ||
                         errMsg.contains("mobile", ignoreCase = true) ||
                         errMsg.contains("phone", ignoreCase = true) ||
                         errMsg.contains("sign up", ignoreCase = true)) "PHONE" else "PASSWORD"
@@ -124,21 +126,32 @@ class LoginViewModel: ViewModel() {
     fun findUserByPhoneForReset(phone: String) {
         val cleanPhone = phone.trim()
         if (cleanPhone.isBlank()) {
-            _loginState.value = LoginUiState.Error(message = "Enter Mobile Number")
+            _loginState.value = LoginUiState.Error(
+                field = "PHONE",
+                message = "Enter Mobile Number"
+            )
             return
         }
 
         _loginState.value = LoginUiState.Loading
 
         viewModelScope.launch {
-            cloudFunctionRepo.findUserForReset(cleanPhone).fold(
-                onSuccess = {
-                    val formattedPhone = if (cleanPhone.startsWith("+91")) cleanPhone else "+91$cleanPhone"
-                    _loginState.value = LoginUiState.ResetRequested(phone = formattedPhone)
+            repository.isPhoneRegistered(cleanPhone).fold(
+                onSuccess = { registered ->
+                    if (registered) {
+                        val formattedPhone = if (cleanPhone.startsWith("+91")) cleanPhone else "+91$cleanPhone"
+                        _loginState.value = LoginUiState.ResetRequested(phone = formattedPhone)
+                    } else {
+                        _loginState.value = LoginUiState.Error(
+                            field = "PHONE",
+                            message = "No account found with this mobile number. Please check or create an account."
+                        )
+                    }
                 },
-                onFailure = { _ ->
+                onFailure = { error ->
                     _loginState.value = LoginUiState.Error(
-                        message = "If an account exists, continue with the verification process."
+                        field = "PHONE",
+                        message = error.message ?: "Failed to verify mobile number."
                     )
                 }
             )

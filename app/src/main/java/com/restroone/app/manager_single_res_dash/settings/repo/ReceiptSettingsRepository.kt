@@ -42,13 +42,7 @@ class ReceiptSettingsRepository(
         return try {
             Log.d(TAG, "Saving billingPrinterSettings map to Firestore for restaurant/user: $ownerUid")
             val updates = mapOf(
-                "billingPrinterSettings" to settings.toMap(),
-                "invoicePrefix" to settings.invoicePrefix,
-                "startingInvoiceNumber" to settings.startingInvoiceNumber,
-                "printSize" to settings.printSize,
-                "currency" to settings.currency,
-                "currencySymbol" to settings.currencySymbol,
-                "showLogoOnReceipts" to settings.showLogoOnReceipts
+                "billingPrinterSettings" to settings.toMap()
             )
 
             val docRef = RestaurantPathHelper.getRestaurantDocRef(ownerUid)

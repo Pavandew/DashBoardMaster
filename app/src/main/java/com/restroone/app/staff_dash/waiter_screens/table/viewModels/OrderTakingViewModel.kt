@@ -204,33 +204,70 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
         customerMobile = existingOrder.customerMobile
         orderType = existingOrder.orderType
         currentTableName = existingOrder.tableName.ifEmpty { currentTableName }
-        
-        val existingItemsMap = existingOrder.items.associateBy { it.itemId }
-        _originalFoodList.value = _originalFoodList.value.map { item ->
-            val existing = existingItemsMap[item.id]
-            if (existing != null) {
-                val localQty = item.currentQuantity
-                val preservedQty = if (localQty > existing.quantity) localQty else existing.quantity
-                
-                item.copy(
-                    currentQuantity = preservedQty, 
-                    previousQuantity = existing.orderedQuantity.takeIf { it > 0 } ?: existing.quantity, 
-                    readyQuantity = existing.readyQuantity,
-                    itemStatus = existing.itemStatus, 
-                    variantName = existing.variantName,
-                    price = existing.price,
-                    selectedAddons = existing.addonIds,
-                    catalogItemId = existing.catalogItemId.ifEmpty { item.catalogItemId },
-                    categoryId = existing.categoryId.ifEmpty { item.categoryId }
+
+        val currentMasterList = _originalFoodList.value.toMutableList()
+
+        for (existingItem in existingOrder.items) {
+            val catalogId = existingItem.catalogItemId.ifEmpty { existingItem.itemId }
+            val variant = existingItem.variantName
+            val targetKey = if (variant.isNotEmpty() && !existingItem.itemId.contains(variant)) "${catalogId}_$variant" else existingItem.itemId
+
+            val matchIndex = currentMasterList.indexOfFirst {
+                it.id == existingItem.itemId || it.id == targetKey || (it.catalogItemId == catalogId && it.variantName == variant)
+            }
+
+            if (matchIndex != -1) {
+                val matched = currentMasterList[matchIndex]
+                currentMasterList[matchIndex] = matched.copy(
+                    id = targetKey,
+                    currentQuantity = maxOf(matched.currentQuantity, existingItem.quantity),
+                    previousQuantity = existingItem.orderedQuantity.takeIf { it > 0 } ?: existingItem.quantity,
+                    readyQuantity = existingItem.readyQuantity,
+                    itemStatus = existingItem.itemStatus,
+                    variantName = existingItem.variantName,
+                    price = existingItem.price,
+                    selectedAddons = existingItem.addonIds,
+                    catalogItemId = catalogId,
+                    categoryId = existingItem.categoryId.ifEmpty { matched.categoryId }
                 )
             } else {
-                if (item.currentQuantity > 0) {
-                    item
+                val baseIndex = currentMasterList.indexOfFirst { it.id == catalogId || it.catalogItemId == catalogId }
+                if (baseIndex != -1) {
+                    val baseItem = currentMasterList[baseIndex]
+                    val newVariantLine = baseItem.copy(
+                        id = targetKey,
+                        currentQuantity = existingItem.quantity,
+                        previousQuantity = existingItem.orderedQuantity.takeIf { it > 0 } ?: existingItem.quantity,
+                        readyQuantity = existingItem.readyQuantity,
+                        itemStatus = existingItem.itemStatus,
+                        variantName = existingItem.variantName,
+                        price = existingItem.price,
+                        selectedAddons = existingItem.addonIds,
+                        catalogItemId = catalogId,
+                        categoryId = existingItem.categoryId.ifEmpty { baseItem.categoryId }
+                    )
+                    currentMasterList.add(newVariantLine)
                 } else {
-                    item.copy(currentQuantity = 0, previousQuantity = 0, itemStatus = AppConstants.STATUS_PENDING)
+                    val standaloneItem = FoodItemData(
+                        id = targetKey,
+                        name = existingItem.itemName,
+                        price = existingItem.price,
+                        imageUrl = "",
+                        currentQuantity = existingItem.quantity,
+                        previousQuantity = existingItem.orderedQuantity.takeIf { it > 0 } ?: existingItem.quantity,
+                        readyQuantity = existingItem.readyQuantity,
+                        itemStatus = existingItem.itemStatus,
+                        variantName = existingItem.variantName,
+                        selectedAddons = existingItem.addonIds,
+                        catalogItemId = catalogId,
+                        categoryId = existingItem.categoryId
+                    )
+                    currentMasterList.add(standaloneItem)
                 }
             }
         }
+
+        _originalFoodList.value = currentMasterList
         updateTotals()
     }
 
@@ -250,25 +287,29 @@ class OrderTakingViewModel(private val repository: OrderTakingRepository) : View
             _originalFoodList.value = list
         } else {
             // Map new catalog items while injecting our current local state (quantities, variants, and CUSTOM prices)
-            val cartMap = _originalFoodList.value.associateBy({ it.id }, { it })
+            val cartByItemId = _originalFoodList.value.associateBy { it.id }
+            val cartByCatalogId = _originalFoodList.value.associateBy { it.catalogItemId.ifEmpty { it.id } }
+
             val syncedList = list.map { newItem ->
-                val local = cartMap[newItem.id]
+                val local = cartByItemId[newItem.id] ?: cartByCatalogId[newItem.id] ?: cartByCatalogId[newItem.catalogItemId]
                 if (local != null) {
                     // Preserve local state if item was already modified in cart
                     newItem.copy(
+                        id = local.id,
                         currentQuantity = local.currentQuantity, 
                         previousQuantity = local.previousQuantity,
                         readyQuantity = local.readyQuantity,
                         itemStatus = local.itemStatus,
                         variantName = local.variantName,
-                        price = local.price // CRITICAL: Preserve the price selected by user for this session
+                        price = local.price,
+                        selectedAddons = local.selectedAddons
                     )
                 } else newItem
             }
             
             // Safety Check: Also preserve items that might be in cart but somehow missing from the passed list
             val incomingIds = list.map { it.id }.toSet()
-            val missingFromIncoming = _originalFoodList.value.filter { it.id !in incomingIds }
+            val missingFromIncoming = _originalFoodList.value.filter { it.id !in incomingIds && it.catalogItemId !in incomingIds }
             
             _originalFoodList.value = syncedList + missingFromIncoming
         }

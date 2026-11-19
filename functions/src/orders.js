@@ -115,9 +115,20 @@ exports.submitRestaurantOrder = onAppCheckCall(async (request) => {
         for (const oldItem of oldItems) {
             const oldKey = `${oldItem.catalogItemId}|${oldItem.variantName || ""}|${[...(oldItem.addonIds || [])].sort().join(",")}`;
             if (!requestedKeys.has(oldKey)) {
-                throw new HttpsError("permission-denied", "Waiters cannot remove existing order lines.");
+                prepared.push(oldItem);
+                requestedKeys.add(oldKey);
             }
         }
+        const hasNewItems = prepared.some((item) => {
+            const previous = oldItems.find((old) =>
+                String(old.catalogItemId || "") === item.catalogItemId
+                && String(old.variantName || "") === item.variantName
+                && [...(old.addonIds || [])].sort().join(",") === [...(item.addonIds || [])].sort().join(",")
+            );
+            return !previous || Number(item.quantity) > Number(previous.quantity || 0);
+        });
+
+        const targetOrderStatus = hasNewItems ? "PENDING" : (oldItems.length ? String(existingSnapshot.get("orderStatus") || "PENDING") : "PENDING");
         const subtotal = prepared.reduce((total, item) => total + item.rowTotal, 0);
         const tax = calculateOrderTax(subtotal, restaurantSnapshot.data());
         const now = FieldValue.serverTimestamp();
@@ -136,7 +147,7 @@ exports.submitRestaurantOrder = onAppCheckCall(async (request) => {
             subtotal,
             gst: tax.gst,
             grandTotal: tax.grandTotal,
-            orderStatus: oldItems.length ? String(existingSnapshot.get("orderStatus") || "PENDING") : "PENDING",
+            orderStatus: targetOrderStatus,
             paymentMethod: "",
             restaurantId,
             waiterId: request.auth.uid,

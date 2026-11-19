@@ -128,8 +128,6 @@ class KitchenPreparationFragment : Fragment(R.layout.fragment_kitchen_preparatio
         }
     }
 
-    private var lastAutoScrolledStatusId: String? = null
-
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.uiState.collectLatest { state ->
@@ -146,18 +144,6 @@ class KitchenPreparationFragment : Fragment(R.layout.fragment_kitchen_preparatio
 
                     workstationAdapter.submitList(state.orders)
                     filterAdapter.submitList(state.filters)
-
-                    // AUTO-SCROLL: Only scroll to the selected chip if it's different from the last scrolled one
-                    val currentSelectedId = state.filters.find { it.isSelected }?.id
-                    if (currentSelectedId != null && currentSelectedId != lastAutoScrolledStatusId) {
-                        val selectedPos = state.filters.indexOfFirst { it.id == currentSelectedId }
-                        if (selectedPos != -1) {
-                            binding.rvOrderFilterChips.post {
-                                binding.rvOrderFilterChips.smoothScrollToPosition(selectedPos)
-                            }
-                        }
-                        lastAutoScrolledStatusId = currentSelectedId
-                    }
 
                     // Show or hide empty state based on list size
                     if (state.orders.isEmpty()) {

@@ -444,9 +444,6 @@ data class RegistrationDataModel(
 ) : Serializable {
 
     fun getEffectiveOwnerProfile(): OwnerProfile {
-        if (ownerProfile.ownerFullName.isNotEmpty() || ownerProfile.ownerEmail.isNotEmpty()) {
-            return ownerProfile.getCleaned()
-        }
         return OwnerProfile(
             ownerFullName = getUnifiedFullName(),
             ownerEmail = getUnifiedEmail(),
@@ -455,77 +452,83 @@ data class RegistrationDataModel(
     }
 
     fun getEffectiveRestaurantProfile(): RestaurantProfile {
-        if (restaurantProfile.restaurantName.isNotEmpty()) {
-            return restaurantProfile.getCleaned()
-        }
         return RestaurantProfile(
-            restaurantName = restaurantName,
-            businessType = businessType,
-            legalName = legalName,
-            displayName = displayName,
-            seatingCapacity = seatingCapacity,
-            openDays = openDays,
-            timezone = timezone
+            restaurantName = restaurantProfile.restaurantName.ifEmpty { restaurantName },
+            businessType = restaurantProfile.businessType.ifEmpty { businessType },
+            legalName = restaurantProfile.legalName.ifEmpty { legalName },
+            displayName = restaurantProfile.displayName.ifEmpty { displayName },
+            seatingCapacity = restaurantProfile.seatingCapacity.ifEmpty { seatingCapacity },
+            openDays = restaurantProfile.openDays.ifEmpty { openDays },
+            timezone = restaurantProfile.timezone.ifEmpty { timezone }
         ).getCleaned()
     }
 
     fun getEffectiveAddressInfo(): AddressInfo {
-        if (addressInfo.address.isNotEmpty() || addressInfo.city.isNotEmpty() || addressInfo.state.isNotEmpty()) {
-            return addressInfo.getCleaned()
-        }
         return AddressInfo(
-            address = address,
-            landmark = landmark,
-            pinCode = pinCode,
-            city = city,
-            state = state,
-            country = country.ifEmpty { "India" },
-            contactNumber = contactNumber,
-            contactEmail = contactEmail,
-            whatsappNumber = whatsappNumber,
-            website = website
+            address = addressInfo.address.ifEmpty { address },
+            landmark = addressInfo.landmark.ifEmpty { landmark },
+            pinCode = addressInfo.pinCode.ifEmpty { pinCode },
+            city = addressInfo.city.ifEmpty { city },
+            state = addressInfo.state.ifEmpty { state },
+            country = addressInfo.country.ifEmpty { country.ifEmpty { "India" } },
+            contactNumber = addressInfo.contactNumber.ifEmpty { contactNumber },
+            contactEmail = addressInfo.contactEmail.ifEmpty { contactEmail },
+            whatsappNumber = addressInfo.whatsappNumber.ifEmpty { whatsappNumber },
+            website = addressInfo.website.ifEmpty { website }
         ).getCleaned()
     }
 
     fun getEffectiveTaxSettings(): TaxSettings {
-        if (taxSettings.gstNumber.isNotEmpty() || taxSettings.defaultTaxRate > 0) {
-            return taxSettings.getCleaned()
-        }
-        val parsedRate = defaultTaxRate.toDoubleOrNull() ?: 5.0
+        val taxRateVal = if (taxSettings.defaultTaxRate > 0) taxSettings.defaultTaxRate else (defaultTaxRate.toDoubleOrNull() ?: 5.0)
         return TaxSettings(
-            chargeTaxOnBills = chargeTaxOnBills,
-            defaultTaxRate = parsedRate,
-            gstNumber = gstNumber,
-            panNumber = panNumber,
-            fssaiNumber = fssaiNumber,
-            fssaiExpiryDate = fssaiExpiryDate,
-            taxLabel = "GST",
-            priceIncludesTax = priceIncludesTax
+            chargeTaxOnBills = taxSettings.chargeTaxOnBills || chargeTaxOnBills,
+            defaultTaxRate = taxRateVal,
+            gstNumber = taxSettings.gstNumber.ifEmpty { gstNumber },
+            panNumber = taxSettings.panNumber.ifEmpty { panNumber },
+            fssaiNumber = taxSettings.fssaiNumber.ifEmpty { fssaiNumber },
+            fssaiExpiryDate = taxSettings.fssaiExpiryDate.ifEmpty { fssaiExpiryDate },
+            taxLabel = if (taxSettings.taxLabel.isNotEmpty()) taxSettings.taxLabel else "GST",
+            priceIncludesTax = taxSettings.priceIncludesTax || priceIncludesTax
         ).getCleaned()
     }
 
     fun getEffectiveBillingPrinterSettings(): BillingPrinterSettings {
-        if (billingPrinterSettings.invoicePrefix.isNotEmpty()) {
-            return billingPrinterSettings.getCleaned()
-        }
         return BillingPrinterSettings(
-            currency = currency,
-            currencySymbol = currencySymbol,
-            language = language,
-            invoicePrefix = invoicePrefix,
-            startingInvoiceNumber = startingInvoiceNumber,
-            printSize = printSize,
-            restaurantLogoUri = restaurantLogoUri,
-            showLogoOnReceipts = showLogoOnReceipts
+            currency = billingPrinterSettings.currency.ifEmpty { currency },
+            currencySymbol = billingPrinterSettings.currencySymbol.ifEmpty { currencySymbol },
+            language = billingPrinterSettings.language.ifEmpty { language },
+            invoicePrefix = billingPrinterSettings.invoicePrefix.ifEmpty { invoicePrefix },
+            startingInvoiceNumber = billingPrinterSettings.startingInvoiceNumber.ifEmpty { startingInvoiceNumber },
+            printSize = billingPrinterSettings.printSize.ifEmpty { printSize },
+            restaurantLogoUri = billingPrinterSettings.restaurantLogoUri ?: restaurantLogoUri,
+            showLogoOnReceipts = billingPrinterSettings.showLogoOnReceipts
         ).getCleaned()
     }
 
-    fun getUnifiedFullName(): String = ownerFullName.ifEmpty { fullName }.trim()
-    fun getUnifiedEmail(): String = ownerEmail.ifEmpty { email }.trim().lowercase()
+    fun getUnifiedFullName(): String {
+        return ownerProfile.ownerFullName
+            .ifEmpty { ownerFullName.ifEmpty { fullName } }
+            .trim()
+    }
+
+    fun getUnifiedEmail(): String {
+        return ownerProfile.ownerEmail
+            .ifEmpty { ownerEmail.ifEmpty { email } }
+            .trim().lowercase()
+    }
+
     fun getUnifiedMobile(): String {
-        val raw = ownerMobile.ifEmpty { mobile.ifEmpty { phone } }
+        val raw = ownerProfile.ownerMobile
+            .ifEmpty { ownerMobile.ifEmpty { mobile.ifEmpty { phone } } }
         val cleanDigits = raw.replace("[^0-9+]".toRegex(), "")
         return if (cleanDigits.length == 10) "+91$cleanDigits" else if (cleanDigits.startsWith("91") && cleanDigits.length == 12) "+$cleanDigits" else cleanDigits.trim()
+    }
+
+    fun getUnifiedMobile10Digits(): String {
+        val raw = ownerProfile.ownerMobile
+            .ifEmpty { ownerMobile.ifEmpty { mobile.ifEmpty { phone } } }
+        val cleanDigits = raw.replace("[^0-9]".toRegex(), "")
+        return if (cleanDigits.length >= 10) cleanDigits.takeLast(10) else cleanDigits
     }
 
     fun toMap(): Map<String, Any?> {
@@ -541,14 +544,17 @@ data class RegistrationDataModel(
         val cleanResId = if (restaurantId.trim().isNotEmpty()) restaurantId.trim() else cleanUid
 
         return mapOf(
-            // Top-Level Restaurant Identifiers
+            // Essential Top-Level Identifiers
             AppConstants.FIELD_RESTAURANT_NAME to effectiveRestaurant.restaurantName,
             "ownerName" to effectiveOwner.ownerFullName,
+            "ownerFullName" to effectiveOwner.ownerFullName,
+            "ownerEmail" to effectiveOwner.ownerEmail,
+            "ownerMobile" to effectiveOwner.ownerMobile,
             AppConstants.FIELD_UID to cleanUid,
             "restaurantId" to cleanResId,
             "updatedAt" to System.currentTimeMillis(),
 
-            // --- CLEAN GROUPED NESTED MAPS IN FIRESTORE ---
+            // Grouped Domain Maps in Firestore
             "ownerProfile" to effectiveOwner.toMap(),
             "restaurantProfile" to effectiveRestaurant.toMap(),
             "addressInfo" to effectiveAddress.toMap(),

@@ -151,14 +151,7 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             val typedPhone = binding.loginItem.loginPhoneEt.text.toString().trim()
-            val cleanDigits = typedPhone.replace("[^0-9]".toRegex(), "")
-            if (cleanDigits.length == 10) {
-                val formattedPhone = "+91$cleanDigits"
-                Log.i(TAG, "Directly opening Reset Password for valid typed phone: $formattedPhone")
-                openResetPasswordFragment(phone = formattedPhone)
-            } else {
-                showForgotPasswordDialog(prefilledPhone = typedPhone)
-            }
+            showForgotPasswordDialog(prefilledPhone = typedPhone)
         }
     }
 
@@ -173,11 +166,12 @@ class LoginActivity : AppCompatActivity() {
                     when(state) {
 
 
-                        is LoginUiState.Idle -> {}
+                        is LoginUiState.Idle -> {
+                            setInputsEnabled(true)
+                        }
 
                         is LoginUiState.Loading -> {
-
-                            binding.loginItem.loginBtn.isEnabled = false
+                            setInputsEnabled(false)
                             binding.loginItem.loginBtn.text = "Logging in... "
                         }
 
@@ -185,7 +179,7 @@ class LoginActivity : AppCompatActivity() {
 
                             Log.i(TAG, "Login Successful: ${state.message}")
 
-                            binding.loginItem.loginBtn.isEnabled = true
+                            setInputsEnabled(true)
                             binding.loginItem.loginBtn.text = "Login"
 
                             val selectedPortal =
@@ -242,7 +236,7 @@ class LoginActivity : AppCompatActivity() {
                         }
 
                         is LoginUiState.ResetRequested -> {
-                            binding.loginItem.loginBtn.isEnabled = true
+                            setInputsEnabled(true)
                             binding.loginItem.loginBtn.text = "Login"
 
                             viewModel.reset()
@@ -253,7 +247,7 @@ class LoginActivity : AppCompatActivity() {
                         is LoginUiState.Error -> {
                             Log.e(TAG, "Login Error: ${state.message}")
 
-                            binding.loginItem.loginBtn.isEnabled = true
+                            setInputsEnabled(true)
                             binding.loginItem.loginBtn.text = "Login"
 
                             binding.loginItem.loginPhoneLayout.error = null
@@ -323,9 +317,8 @@ class LoginActivity : AppCompatActivity() {
             dialogBinding.dialogPhoneTil.error = null
             dialog.dismiss()
 
-            val formattedPhone = "+91$cleanDigits"
-            Log.i(TAG, "Opening Reset Password directly for phone: $formattedPhone")
-            openResetPasswordFragment(phone = formattedPhone)
+            Log.i(TAG, "Checking if phone is registered for reset: $cleanDigits")
+            viewModel.findUserByPhoneForReset(cleanDigits)
         }
 
         dialog.show()
@@ -399,6 +392,14 @@ class LoginActivity : AppCompatActivity() {
             startActivity(it)
             finish()
         }
+    }
+
+    private fun setInputsEnabled(enabled: Boolean) {
+        binding.loginItem.loginBtn.isEnabled = enabled
+        binding.loginItem.loginPhoneEt.isEnabled = enabled
+        binding.loginItem.loginPasswordEt.isEnabled = enabled
+        binding.loginItem.loginTvForgotPassword.isEnabled = enabled
+        binding.loginItem.loginCreateAccTv.isEnabled = enabled
     }
 
     private fun saveFcmToken(uid: String) {

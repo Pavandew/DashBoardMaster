@@ -233,51 +233,56 @@ class ChangePasswordFragment : Fragment() {
                 Log.d(TAG, "New ViewModel State: ${state::class.java.simpleName}")
                 when (state) {
                     is ChangePasswordState.Idle -> {
-                        binding.btnVerifyCurrentPassword.isEnabled = true
-                        binding.btnSendOtp.isEnabled = true
-                        binding.btnVerifyOtp.isEnabled = true
-                        binding.btnChangePassword.isEnabled = true
+                        setInputsEnabled(true)
                     }
                     is ChangePasswordState.Loading -> {
                         Log.d(TAG, "State: Loading...")
-                        binding.btnVerifyCurrentPassword.isEnabled = false
-                        binding.btnSendOtp.isEnabled = false
-                        binding.btnVerifyOtp.isEnabled = false
-                        binding.btnChangePassword.isEnabled = false
+                        setInputsEnabled(false)
                     }
                     is ChangePasswordState.CurrentPasswordVerified,
                     is ChangePasswordState.OtpVerified -> {
                         Log.i(TAG, "State: Verified! Showing New Password Section.")
+                        setInputsEnabled(true)
                         binding.sectionCurrentPassword.visibility = View.GONE
                         binding.sectionOtp.visibility = View.GONE
                         binding.sectionNewPassword.visibility = View.VISIBLE
-                        binding.btnChangePassword.isEnabled = true
                         Toast.makeText(requireContext(), "Identity Verified Successfully", Toast.LENGTH_SHORT).show()
                     }
                     is ChangePasswordState.OtpSent -> {
                         Log.i(TAG, "State: OtpSent. Updating UI to Verification mode.")
+                        setInputsEnabled(true)
                         binding.btnSendOtp.visibility = View.GONE
                         binding.layoutOtp.visibility = View.VISIBLE
                         binding.btnVerifyOtp.visibility = View.VISIBLE
-                        binding.btnVerifyOtp.isEnabled = true
                         Toast.makeText(requireContext(), "OTP Sent Successfully", Toast.LENGTH_SHORT).show()
                     }
                     is ChangePasswordState.Success -> {
                         Log.i(TAG, "State: Success! Password updated. Closing fragment.")
+                        setInputsEnabled(true)
                         Toast.makeText(requireContext(), "Password Updated Successfully", Toast.LENGTH_LONG).show()
                         parentFragmentManager.popBackStack()
                     }
                     is ChangePasswordState.Error -> {
                         Log.e(TAG, "State: Error -> ${state.message}")
-                        binding.btnVerifyCurrentPassword.isEnabled = true
-                        binding.btnSendOtp.isEnabled = true
-                        binding.btnVerifyOtp.isEnabled = true
-                        binding.btnChangePassword.isEnabled = true
+                        setInputsEnabled(true)
                         Toast.makeText(requireContext(), state.message, Toast.LENGTH_LONG).show()
                     }
                 }
             }
         }
+    }
+
+    private fun setInputsEnabled(enabled: Boolean) {
+        binding.btnVerifyCurrentPassword.isEnabled = enabled
+        binding.btnSendOtp.isEnabled = enabled
+        binding.btnVerifyOtp.isEnabled = enabled
+        binding.btnChangePassword.isEnabled = enabled
+        binding.btnForgotCurrentPassword.isEnabled = enabled
+        binding.btnUseCurrentPassword.isEnabled = enabled
+        binding.etCurrentPassword.isEnabled = enabled
+        binding.etOtp.isEnabled = enabled
+        binding.etNewPassword.isEnabled = enabled
+        binding.etConfirmPassword.isEnabled = enabled
     }
 
     override fun onDestroyView() {

@@ -84,14 +84,17 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/login_Phone_et"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="52dp"
+                android:layout_height="56dp"
                 android:gravity="center_vertical"
                 android:textColor="#111111"
                 android:textColorHint="@color/text_form_secondary"
                 android:textSize="16sp"
                 android:hint="Enter phone number"
-                android:inputType="phone" />
+                android:inputType="phone"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:maxLength="10"
+                android:scrollHorizontally="true" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -130,15 +133,16 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/login_password_et"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="52dp"
+                android:layout_height="56dp"
                 android:gravity="center_vertical"
                 android:textColor="#111111"
                 android:textColorHint="@color/text_form_secondary"
                 android:textSize="16sp"
                 android:textAllCaps="false"
                 android:hint="Enter your password"
-                android:inputType="textPassword" />
+                android:inputType="textPassword"
+                android:singleLine="true"
+                android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Forgot Password -->

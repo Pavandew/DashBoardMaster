@@ -98,10 +98,10 @@ class OrderDetailExpansionFragment : Fragment() {
         toolbar.tvToolbarTitle.text = getString(R.string.order_details)
         toolbar.llSubtitleContainer.visibility = View.GONE
         
-        // Top-right Red Delete / Cancel Order Icon
+        // Top-right Red Delete / Cancel Order Icon (Default hidden until status is evaluated in observeSpecState)
         toolbar.toolbarImgNotification.setImageResource(R.drawable.ic_delete_24dp)
         toolbar.toolbarImgNotification.setColorFilter(ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark))
-        toolbar.toolbarImgNotification.visibility = View.VISIBLE
+        toolbar.toolbarImgNotification.visibility = View.GONE
 
         toolbar.toolbarImgMenu.setOnClickListener {
             parentFragmentManager.popBackStack()
@@ -254,9 +254,21 @@ class OrderDetailExpansionFragment : Fragment() {
                         }
 
                         // Top Right Cancel Order Toolbar Icon
-                        binding.orderDetailToolbar.toolbarImgNotification.setOnClickListener {
-                            Log.d(TAG, "📱 [FRAGMENT] Toolbar 'Cancel Order' icon clicked for OrderId: '${state.orderId}'")
-                            showManagerPinVerificationDialog(state)
+                        // Production Rule: Waiters/Staff can ONLY cancel an order when it is in PENDING state (before kitchen starts cooking).
+                        // Managers and Owners retain administrative PIN override capability.
+                        val sessionRole = SessionManager(requireContext()).getRole().lowercase().trim()
+                        val isManagerOrOwner = sessionRole == "manager" || sessionRole == "owner_single" || sessionRole == "owner_multi"
+                        val canCancelOrder = state.status == ActiveOrderStatus.PENDING || isManagerOrOwner
+
+                        if (canCancelOrder) {
+                            binding.orderDetailToolbar.toolbarImgNotification.visibility = View.VISIBLE
+                            binding.orderDetailToolbar.toolbarImgNotification.setOnClickListener {
+                                Log.d(TAG, "📱 [FRAGMENT] Toolbar 'Cancel Order' icon clicked for OrderId: '${state.orderId}'")
+                                showManagerPinVerificationDialog(state)
+                            }
+                        } else {
+                            binding.orderDetailToolbar.toolbarImgNotification.visibility = View.GONE
+                            binding.orderDetailToolbar.toolbarImgNotification.setOnClickListener(null)
                         }
                     }
 

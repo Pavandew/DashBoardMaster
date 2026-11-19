@@ -42,12 +42,7 @@ class TaxSettingsRepository(
         return try {
             Log.d(TAG, "Saving taxSettings map to Firestore for restaurant/user: $ownerUid")
             val updates = mapOf(
-                "taxSettings" to taxSettings.toMap(),
-                "chargeTaxOnBills" to taxSettings.chargeTaxOnBills,
-                "defaultTaxRate" to taxSettings.defaultTaxRate.toString(),
-                "gstNumber" to taxSettings.gstNumber,
-                "taxLabel" to taxSettings.taxLabel,
-                "priceIncludesTax" to taxSettings.priceIncludesTax
+                "taxSettings" to taxSettings.toMap()
             )
 
             val docRef = RestaurantPathHelper.getRestaurantDocRef(ownerUid)

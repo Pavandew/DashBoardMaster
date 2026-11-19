@@ -102,6 +102,8 @@ class PermissionsAndDocumentsFragment : Fragment() {
             }
         }
 
+        val currentStaff = sharedViewModel.currentStaffData.value
+
         formItems = listOf(
             Step2FormItem.Header,
             Step2FormItem.SectionTitle("Set Permissions", "Choose the access level for this staff member"),
@@ -123,13 +125,23 @@ class PermissionsAndDocumentsFragment : Fragment() {
 
             Step2FormItem.SectionTitle("Upload Documents", "Upload necessary documents for verification"),
             Step2FormItem.DocumentItem("aadhar", "Identity Verification Document *", "Upload Verification Copy", R.drawable.ic_badge_24dp).apply {
-                if (isEditMode) isUploaded = true
+                if (currentStaff.documentImageUrl.isNotEmpty()) {
+                    isUploaded = true
+                    fileUri = Uri.parse(currentStaff.documentImageUrl)
+                } else if (isEditMode) {
+                    isUploaded = true
+                }
             },
             Step2FormItem.DocumentItem("pan", "Tax Card (Optional)", "Upload Identification Copy", R.drawable.ic_logs_24dp).apply {
                 if (isEditMode) isUploaded = true
             },
             Step2FormItem.DocumentItem("photo", "Photo *", "Upload Profile Photo", R.drawable.ic_person_24dp).apply {
-                if (isEditMode) isUploaded = true
+                if (currentStaff.profilePhotoUrl.isNotEmpty()) {
+                    isUploaded = true
+                    fileUri = Uri.parse(currentStaff.profilePhotoUrl)
+                } else if (isEditMode) {
+                    isUploaded = true
+                }
             },
             Step2FormItem.DocumentItem("address", "Address Proof (Optional)", "Upload Address Proof", R.drawable.ic_inventory_24dp).apply {
                 if (isEditMode) isUploaded = true
@@ -141,6 +153,13 @@ class PermissionsAndDocumentsFragment : Fragment() {
                 item.isUploaded = true
                 item.fileUri = selectedUri
                 Log.d(TAG, "ATTACHMENT REGISTERED: [FieldID: ${item.id} | UriPath: $selectedUri]")
+
+                if (item.id == "photo") {
+                    sharedViewModel.updateDocumentUris(photoUri = selectedUri.toString(), documentUri = null)
+                } else if (item.id == "aadhar" || item.id == "pan" || item.id == "address") {
+                    sharedViewModel.updateDocumentUris(photoUri = null, documentUri = selectedUri.toString())
+                }
+
                 adapter.notifyItemChanged(position)
             }
         }
@@ -173,6 +192,7 @@ class PermissionsAndDocumentsFragment : Fragment() {
                 dialog.dismiss()
                 val ownerUid = SessionManager(requireContext()).getRestaurantId()
                 sharedViewModel.submitFinalStaffData(
+                    context = requireContext(),
                     ownerUid = ownerUid,
                     documentType = if (isEditMode) sharedViewModel.currentStaffData.value.documentType else "National Identity Card Bundle",
                     documentNumber = if (isEditMode) sharedViewModel.currentStaffData.value.documentNumber else "VERIFIED_AT_SUBMIT",

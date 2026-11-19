@@ -144,29 +144,7 @@ service cloud.firestore {
 
     function canReadNotification(restaurantId) {
       return isOwnerOrManager(restaurantId)
-        || isTrustedStaff(restaurantId)
-          && (
-            resource.data.targetRole == 'all'
-              && resource.data.targetStaffId == ''
-            || userData().role.lower() in ['waiter', 'head waiter', 'waiter_staff']
-              && resource.data.targetRole in ['waiter', 'head waiter', 'waiter_staff']
-              && (
-                resource.data.targetStaffId == ''
-                || resource.data.targetStaffId == userData().staffDocId
-              )
-            || userData().role.lower() in ['chef', 'master chef', 'kitchen', 'chef_staff']
-              && resource.data.targetRole in ['chef', 'master chef', 'kitchen', 'chef_staff']
-              && (
-                resource.data.targetStaffId == ''
-                || resource.data.targetStaffId == userData().staffDocId
-              )
-            || userData().role.lower() in ['cashier', 'billing']
-              && resource.data.targetRole in ['cashier', 'billing']
-              && (
-                resource.data.targetStaffId == ''
-                || resource.data.targetStaffId == userData().staffDocId
-              )
-          );
+        || isTrustedStaff(restaurantId);
     }
 
     function canUpdateNotification(restaurantId) {

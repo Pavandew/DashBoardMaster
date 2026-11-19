@@ -130,7 +130,11 @@ class OrderTakingRepository {
                                 else -> 0
                             }
 
-                            val imageUrl = doc.getString(AppConstants.FIELD_ITEM_IMAGE) ?: ""
+                            val imageUrl = doc.getString(AppConstants.FIELD_ITEM_IMAGE)
+                                ?: doc.getString("imageUrl")
+                                ?: doc.getString("image_url")
+                                ?: doc.getString("image")
+                                ?: ""
                             val isVeg = doc.getBoolean(AppConstants.FIELD_IS_VEG) ?: true
                             val hasVariants = doc.getBoolean(AppConstants.FIELD_HAS_VARIANTS) ?: false
                             

@@ -131,7 +131,11 @@
                 android:textColor="@color/text_form_primary"
                 android:textColorHint="@color/text_form_secondary"
                 android:textSize="16sp"
-                android:inputType="phone" />
+                android:inputType="phone"
+                android:singleLine="true"
+                android:maxLines="1"
+                android:maxLength="10"
+                android:scrollHorizontally="true" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Password Field -->
@@ -175,7 +179,9 @@
                 android:textColor="@color/text_form_primary"
                 android:textColorHint="@color/text_form_secondary"
                 android:textSize="16sp"
-                android:inputType="textPassword" />
+                android:inputType="textPassword"
+                android:singleLine="true"
+                android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Confirm Password Field -->

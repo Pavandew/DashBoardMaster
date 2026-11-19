@@ -55,27 +55,26 @@ class AuthRepository {
     }
 
     /**
-     * Checks if a phone number is registered. Falls back seamlessly if Cloud Functions are not deployed.
+     * Checks if a phone number is registered by looking up an active user profile in Firestore.
      */
     suspend fun isPhoneRegistered(phone: String): Result<Boolean> {
         return try {
-            val formattedPhone = if (phone.startsWith("+91")) phone else "+91$phone"
-            val response = FirebaseFunctions.getInstance()
-                .getHttpsCallable("isMobileRegistered")
-                .call(mapOf("mobile" to formattedPhone))
-                .await()
-                .data as? Map<*, *>
-                ?: throw IllegalStateException("Invalid mobile registration response")
-            Result.success(response["registered"] == true)
-        } catch (e: Exception) {
-            Log.w(TAG, "Cloud Function isMobileRegistered exception. Attempting local Firestore fallback: ${e.message}")
             val userResult = findUserByPhone(phone)
             if (userResult.isSuccess) {
-                Result.success(userResult.getOrNull() != null)
+                val user = userResult.getOrNull()
+                Result.success(user != null && user.isVerified)
             } else {
-                val formattedMsg = NetworkUtils.formatErrorMessage(e)
-                Result.failure(Exception(formattedMsg))
+                val formattedPhone = if (phone.startsWith("+91")) phone else "+91$phone"
+                val response = FirebaseFunctions.getInstance()
+                    .getHttpsCallable("isMobileRegistered")
+                    .call(mapOf("mobile" to formattedPhone))
+                    .await()
+                    .data as? Map<*, *>
+                Result.success(response?.get("registered") == true)
             }
+        } catch (e: Exception) {
+            Log.w(TAG, "isPhoneRegistered exception: ${e.message}")
+            Result.success(false)
         }
     }
 
@@ -111,6 +110,8 @@ class AuthRepository {
     ) {
         val formattedPhone = if (phone.startsWith("+91")) phone else "+91$phone"
         
+        auth.firebaseAuthSettings.forceRecaptchaFlowForTesting(false)
+
         val options = PhoneAuthOptions.newBuilder(auth)
             .setPhoneNumber(formattedPhone)
             .setTimeout(60L, TimeUnit.SECONDS)
@@ -119,6 +120,32 @@ class AuthRepository {
             .build()
 
         PhoneAuthProvider.verifyPhoneNumber(options)
+    }
+
+    /**
+     * Resends Firebase Phone Number verification with ForceResendingToken.
+     */
+    fun resendOtp(
+        phone: String,
+        activity: Activity,
+        callbacks: PhoneAuthProvider.OnVerificationStateChangedCallbacks,
+        token: PhoneAuthProvider.ForceResendingToken?
+    ) {
+        val formattedPhone = if (phone.startsWith("+91")) phone else "+91$phone"
+
+        auth.firebaseAuthSettings.forceRecaptchaFlowForTesting(false)
+
+        val builder = PhoneAuthOptions.newBuilder(auth)
+            .setPhoneNumber(formattedPhone)
+            .setTimeout(60L, TimeUnit.SECONDS)
+            .setActivity(activity)
+            .setCallbacks(callbacks)
+
+        if (token != null) {
+            builder.setForceResendingToken(token)
+        }
+
+        PhoneAuthProvider.verifyPhoneNumber(builder.build())
     }
 
     /**

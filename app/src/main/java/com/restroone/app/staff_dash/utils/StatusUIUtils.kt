@@ -100,7 +100,11 @@ object StatusUIUtils {
         
         // Handle custom cashier/kitchen statuses first
         when (normalized) {
-            "COMPLETED", "HANDED OVER" -> {
+            "COMPLETED" -> {
+                applyUI(context, textView, "COMPLETED", R.color.light_green, R.color.dark_green, cardView)
+                return
+            }
+            "HANDED_OVER", "HANDED OVER" -> {
                 applyUI(context, textView, "HANDED OVER", R.color.light_green, R.color.dark_green, cardView)
                 return
             }
@@ -113,7 +117,7 @@ object StatusUIUtils {
                 return
             }
             "SERVED" -> {
-                applyUI(context, textView, "EATING / SERVED", R.color.bg_light_purple, R.color.accent_purple, cardView)
+                applyUI(context, textView, "SERVED", R.color.bg_light_purple, R.color.accent_purple, cardView)
                 return
             }
             "RUNNING", "ACTIVE" -> {

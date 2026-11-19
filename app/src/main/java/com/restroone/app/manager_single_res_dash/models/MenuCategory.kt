@@ -1,11 +1,14 @@
 package com.restroone.app.manager_single_res_dash.models
 
+import java.io.Serializable
+
 data class MenuCategory(
     val menuCategoryId: String = "",
     val menuCategoryName: String = "",
     val itemCount: Int = 0,
-    val imageResId: String = "" // Stores resource name string (e.g., "app_logo")
-) {
+    val imageResId: String = "",
+    val categoryImageUrl: String = ""
+) : Serializable {
     /**
      * Helper to convert data models safely into Map blocks for Firestore writes
      */
@@ -14,7 +17,8 @@ data class MenuCategory(
             "menuCategoryId" to menuCategoryId,
             "menuCategoryName" to menuCategoryName,
             "itemCount" to itemCount,
-            "imageResId" to imageResId
+            "imageResId" to imageResId,
+            "categoryImageUrl" to categoryImageUrl
         )
     }
 }
