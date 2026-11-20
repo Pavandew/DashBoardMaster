@@ -117,13 +117,13 @@ class SplashActivity : AppCompatActivity() {
             }
 
             // Match Kitchen / Chef roles directly to full screen KDS activity
-            "kitchen", "chef" -> {
+            "kitchen", "chef", "master chef", "chef_staff" -> {
                 Log.d(TAG, "Routing to Kitchen Workspace KDS")
                 Intent(this, KitchenHomeActivity::class.java)
             }
 
             // Match Billing / Cashier roles directly to Checkout activity
-            "billing", "cashier" -> {
+            "billing", "cashier", "cashier_staff", "billing_staff", "cashier staff", "billing staff" -> {
                 Log.d(TAG, "Routing to Billing Checkout Workspace")
                 Intent(this, CashierHomeActivity::class.java)
             }

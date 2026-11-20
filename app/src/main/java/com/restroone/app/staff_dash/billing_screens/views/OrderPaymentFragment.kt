@@ -22,6 +22,7 @@ import com.restroone.app.staff_dash.billing_screens.model.CashierBillingOrderMod
 import com.restroone.app.staff_dash.waiter_screens.table.models.OrderItemModel
 import com.restroone.app.utils.SessionManager
 import com.restroone.app.staff_dash.waiter_screens.table.uistate.ResourceUiState
+import com.restroone.app.staff_dash.waiter_screens.table.repo.OrderTakingRepository
 import com.restroone.app.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
 import com.restroone.app.staff_dash.utils.PaymentDialogHelper
 import com.restroone.app.utils.TaxCalculator
@@ -43,7 +44,9 @@ class OrderPaymentFragment : Fragment() {
     private val binding get() = _binding!!
 
     // Uses activity-scoped ViewModel to finalize the cart and process the bill
-    private val viewModel: OrderTakingViewModel by activityViewModels()
+    private val viewModel: OrderTakingViewModel by activityViewModels {
+        OrderTakingViewModel.OrderViewModelFactory(OrderTakingRepository())
+    }
     private val sessionManager by lazy { SessionManager(requireContext()) }
 
     private var selectedMethod = "Cash"

@@ -210,7 +210,7 @@ class NotificationFragment : Fragment() {
             }
 
             // B. BILLING / CASHIER - Navigation to Settlement screen
-            role == "billing" || role == "cashier" -> {
+            role.contains("billing", ignoreCase = true) || role.contains("cashier", ignoreCase = true) -> {
                 if (notification.orderId.isEmpty()) {
                     Log.w(TAG, "Cannot navigate: orderId is empty for billing notification")
                     return

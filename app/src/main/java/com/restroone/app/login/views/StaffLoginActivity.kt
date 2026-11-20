@@ -174,9 +174,9 @@ class StaffLoginActivity : AppCompatActivity() {
 
                             Toast.makeText(this@StaffLoginActivity, "Welcome, ${state.staffName}!", Toast.LENGTH_SHORT).show()
 
-                            val targetActivityClass = when(authenticatedRole.lowercase().trim()) {
-                                "kitchen", "chef", "master chef", "chef_staff" -> KitchenHomeActivity::class.java
-                                "billing", "cashier" -> CashierHomeActivity::class.java
+                            val targetActivityClass = when {
+                                authenticatedRole.contains("kitchen", ignoreCase = true) || authenticatedRole.contains("chef", ignoreCase = true) -> KitchenHomeActivity::class.java
+                                authenticatedRole.contains("billing", ignoreCase = true) || authenticatedRole.contains("cashier", ignoreCase = true) -> CashierHomeActivity::class.java
                                 else -> WaiterHomeActivity::class.java
                             }
 

@@ -17,6 +17,7 @@ import com.restroone.app.utils.SessionManager
 import com.restroone.app.staff_dash.waiter_screens.table.adapter.ViewCartDetailAdapter
 import com.restroone.app.staff_dash.waiter_screens.table.models.FoodItemData
 import com.restroone.app.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
+import com.restroone.app.staff_dash.waiter_screens.table.repo.OrderTakingRepository
 import com.restroone.app.utils.TaxCalculator
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -34,7 +35,9 @@ abstract class BaseViewCartFragment : Fragment() {
     protected val sessionManager by lazy { SessionManager(requireContext()) }
     
     // Shared activity-scoped ViewModel to access the current session cart
-    protected val viewModel: OrderTakingViewModel by activityViewModels()
+    protected val viewModel: OrderTakingViewModel by activityViewModels {
+        OrderTakingViewModel.OrderViewModelFactory(OrderTakingRepository())
+    }
 
     private lateinit var cartAdapter: ViewCartDetailAdapter
 

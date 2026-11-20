@@ -17,6 +17,7 @@ import com.restroone.app.staff_dash.waiter_screens.order.views.OrderDetailExpans
 import com.restroone.app.staff_dash.waiter_screens.table.viewModels.OrderTakingViewModel
 import com.restroone.app.utils.NavigationUtils
 import java.text.SimpleDateFormat
+import com.restroone.app.staff_dash.waiter_screens.table.repo.OrderTakingRepository
 import java.util.Date
 import java.util.Locale
 
@@ -29,7 +30,9 @@ class OrderSuccessFragment : Fragment() {
     private var _binding: FragmentOrderSuccesBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: OrderTakingViewModel by activityViewModels()
+    private val viewModel: OrderTakingViewModel by activityViewModels {
+        OrderTakingViewModel.OrderViewModelFactory(OrderTakingRepository())
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
