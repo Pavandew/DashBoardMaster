@@ -228,13 +228,13 @@
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Terms and Conditions -->
+        <!-- Terms and Conditions & Privacy Policy -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:layout_marginBottom="10dp"
-            android:gravity="center_vertical"
+            android:gravity="top"
             android:orientation="horizontal">
 
             <com.google.android.material.checkbox.MaterialCheckBox
@@ -242,33 +242,20 @@
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:layout_marginEnd="8dp"
+                android:layout_marginTop="1dp"
                 app:useMaterialThemeColors="false"
                 app:buttonTint="#4B35FF"
                 android:minWidth="0dp"
                 android:minHeight="0dp" />
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/signup_terms_privacy_tv"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="I agree to the "
-                    android:textColor="#4A4E69"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:id="@+id/signup_term_cond"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="terms and conditions"
-                    android:textColor="#4B35FF"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                android:textColor="#4A4E69"
+                android:textSize="12sp"
+                android:lineSpacingExtra="2dp" />
         </LinearLayout>
 
         <!-- Create Account Button -->
