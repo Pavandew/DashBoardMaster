@@ -33,6 +33,15 @@ class Step3ViewModel : ViewModel() {
     fun initFields(data: RegistrationDataModel) {
         try {
             val taxSettings = data.getEffectiveTaxSettings()
+            val formattedTaxRate = if (taxSettings.defaultTaxRate > 0) {
+                if (taxSettings.defaultTaxRate % 1.0 == 0.0) {
+                    taxSettings.defaultTaxRate.toInt().toString()
+                } else {
+                    taxSettings.defaultTaxRate.toString()
+                }
+            } else {
+                "5"
+            }
             Log.d(TAG, "Initializing fields for Step 3. Current GST: ${taxSettings.gstNumber}")
             _formFields.value = listOf(
                 FormItem.StepProgress("STEP 3 OF 5", "Tax & Compliance", "GST, PAN, FSSAI and bill tax."),
@@ -43,7 +52,7 @@ class Step3ViewModel : ViewModel() {
 
                 FormItem.SectionHeader("TAX ON BILLS", sectionNumber = "2"),
                 FormItem.SwitchField("charge_tax", "Charge tax on bills", "Adds a tax line to every order automatically.", isChecked = taxSettings.chargeTaxOnBills),
-                FormItem.InputField("tax_rate", "Default tax rate (%)", "5", InputType.TYPE_CLASS_NUMBER, value = if (taxSettings.defaultTaxRate > 0) taxSettings.defaultTaxRate.toString() else "5"),
+                FormItem.InputField("tax_rate", "Default tax rate (%)", "5", InputType.TYPE_CLASS_NUMBER, value = formattedTaxRate),
                 FormItem.SwitchField("includes_tax", "Price includes tax", "Tax added on top", isChecked = taxSettings.priceIncludesTax),
 
                 FormItem.SectionHeader("FSSAI LICENCE", isOptional = true, sectionNumber = "3"),

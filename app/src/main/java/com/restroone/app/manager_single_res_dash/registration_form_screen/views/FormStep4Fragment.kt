@@ -58,6 +58,8 @@ class FormStep4Fragment : Fragment() {
 
     private fun setupRecyclerView() {
         binding.rvFormStep4.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvFormStep4.setHasFixedSize(true)
+        formAdapter?.let { binding.rvFormStep4.adapter = it }
     }
 
     private fun setupListeners() {
@@ -103,6 +105,7 @@ class FormStep4Fragment : Fragment() {
                     }
                     binding.rvFormStep4.adapter = formAdapter
                 } else {
+                    binding.rvFormStep4.adapter = formAdapter
                     formAdapter?.updateData(fields)
                 }
             }
