@@ -3,11 +3,10 @@ package com.restroone.app.login
 import android.animation.ObjectAnimator
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.restroone.app.databinding.ActivitySplashBinding
 import com.restroone.app.manager_single_res_dash.ManagerHomeActivity
 import com.restroone.app.master_dash.MasterHomeActivity
@@ -17,6 +16,8 @@ import com.restroone.app.staff_dash.waiter_screens.WaiterHomeActivity
 import com.restroone.app.utils.AppConstants
 import com.restroone.app.utils.SessionManager
 import com.restroone.app.manager_single_res_dash.SingleResOwnerHomeActivity
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlin.jvm.java
 
 class SplashActivity : AppCompatActivity() {
@@ -75,21 +76,39 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun checkLoginState() {
-        Handler(Looper.getMainLooper()).postDelayed({
-
+        lifecycleScope.launch {
             val isLoggedIn = sessionManager.isLoggedIn()
             val role = sessionManager.getRole()
 
             if (isLoggedIn) {
                 Log.d(TAG, "SESSION ACTIVE: User logged in")
+                val cleanRole = role.lowercase().trim()
+                if (cleanRole == AppConstants.ROLE_OWNER_SINGLE && sessionManager.isRestaurantSetup()) {
+                    val resId = sessionManager.getRestaurantId()
+                    if (resId.isNotEmpty()) {
+                        try {
+                            val doc = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                                .collection(AppConstants.COLLECTION_RESTAURANTS)
+                                .document(resId)
+                                .get()
+                                .await()
+
+                            if (!doc.exists()) {
+                                Log.w(TAG, "Restaurant document '$resId' missing from Firestore. Auto-healing session to setup mode.")
+                                sessionManager.setRestaurantSetup(false)
+                            }
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to verify restaurant existence: ${e.message}")
+                        }
+                    }
+                }
                 navigateToDashboard(role)
             } else {
                 Log.w(TAG, "NO SESSION: No user logged in. Redirecting to Visitor Portal.")
-                startActivity(Intent(this, ActivityVisitorPortal::class.java))
+                startActivity(Intent(this@SplashActivity, ActivityVisitorPortal::class.java))
                 finish()
             }
-
-        }, 800)
+        }
     }
     private fun navigateToDashboard(role: String) {
         // Normalizing the role string eliminates bugs caused by case mismatch (e.g., "Waiter" vs "waiter")

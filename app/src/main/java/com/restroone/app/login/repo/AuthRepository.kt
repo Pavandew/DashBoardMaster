@@ -80,6 +80,7 @@ class AuthRepository {
 
     /**
      * Gets a user profile directly by their Firebase Auth UID.
+     * Verifies that the underlying restaurant document exists to auto-heal setup status.
      */
     suspend fun getUserProfileByUid(uid: String): Result<UserModelData?> {
         return try {
@@ -90,6 +91,26 @@ class AuthRepository {
 
             if (doc.exists()) {
                 val user = doc.toObject(UserModelData::class.java)
+                if (user != null && (user.isSetupComplete || user.restaurantId.isNotEmpty())) {
+                    val targetResId = user.restaurantId.ifEmpty { uid }
+                    val resDoc = db.collection(AppConstants.COLLECTION_RESTAURANTS)
+                        .document(targetResId)
+                        .get()
+                        .await()
+
+                    if (!resDoc.exists()) {
+                        Log.w(TAG, "Restaurant document '$targetResId' missing for user '$uid'. Auto-healing setup status to false.")
+                        try {
+                            db.collection(AppConstants.COLLECTION_USERS)
+                                .document(uid)
+                                .update("isSetupComplete", false, "restaurantId", "")
+                                .await()
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to update Firestore user setup state: ${e.message}")
+                        }
+                        return Result.success(user.copy(isSetupComplete = false, restaurantId = ""))
+                    }
+                }
                 Result.success(user)
             } else {
                 Result.success(null)

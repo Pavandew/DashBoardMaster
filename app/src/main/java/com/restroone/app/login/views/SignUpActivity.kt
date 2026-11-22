@@ -2,7 +2,13 @@ package com.restroone.app.login.views
 
 import android.content.Intent
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.TextPaint
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -17,6 +23,7 @@ import com.restroone.app.databinding.ActivitySignUpBinding
 import com.restroone.app.login.uistate.SignUpUiState
 import com.restroone.app.login.viewmodel.SignUpViewModel
 import com.restroone.app.utils.AppConstants
+import com.restroone.app.utils.LegalNavigationUtils
 import com.restroone.app.utils.NetworkUtils
 import com.restroone.app.utils.SessionManager
 import kotlinx.coroutines.launch
@@ -61,7 +68,6 @@ class SignUpActivity : AppCompatActivity() {
         }
         binding.loginItem.signupCreateAccBtn.backgroundTintList = accentTint
         binding.loginItem.signupLoginTv.setTextColor(accentTint)
-        binding.loginItem.signupTermCond.setTextColor(accentTint)
         binding.loginItem.signupCb.buttonTintList = accentTint
         listOf(
             binding.loginItem.signupNameTil,
@@ -73,6 +79,59 @@ class SignUpActivity : AppCompatActivity() {
             layout.setStartIconTintList(accentTint)
             layout.setEndIconTintList(accentTint)
         }
+
+        setupTermsAndPrivacySpannable(accentColor)
+    }
+
+    private fun setupTermsAndPrivacySpannable(accentColor: Int) {
+        val fullText = "I agree to the Terms & Conditions and acknowledge the Privacy Policy"
+        val spannable = SpannableString(fullText)
+
+        val termsText = "Terms & Conditions"
+        val privacyText = "Privacy Policy"
+
+        val termsStart = fullText.indexOf(termsText)
+        val termsEnd = termsStart + termsText.length
+
+        val privacyStart = fullText.indexOf(privacyText)
+        val privacyEnd = privacyStart + privacyText.length
+
+        val termsClickSpan = object : ClickableSpan() {
+            override fun onClick(widget: View) {
+                LegalNavigationUtils.openTermsAndConditions(this@SignUpActivity)
+            }
+
+            override fun updateDrawState(ds: TextPaint) {
+                super.updateDrawState(ds)
+                ds.color = accentColor
+                ds.isUnderlineText = false
+                ds.isFakeBoldText = true
+            }
+        }
+
+        val privacyClickSpan = object : ClickableSpan() {
+            override fun onClick(widget: View) {
+                LegalNavigationUtils.openPrivacyPolicy(this@SignUpActivity)
+            }
+
+            override fun updateDrawState(ds: TextPaint) {
+                super.updateDrawState(ds)
+                ds.color = accentColor
+                ds.isUnderlineText = false
+                ds.isFakeBoldText = true
+            }
+        }
+
+        if (termsStart >= 0) {
+            spannable.setSpan(termsClickSpan, termsStart, termsEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+        if (privacyStart >= 0) {
+            spannable.setSpan(privacyClickSpan, privacyStart, privacyEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+
+        binding.loginItem.signupTermsPrivacyTv.text = spannable
+        binding.loginItem.signupTermsPrivacyTv.movementMethod = LinkMovementMethod.getInstance()
+        binding.loginItem.signupTermsPrivacyTv.highlightColor = Color.TRANSPARENT
     }
 
     private fun clickListeners() {
@@ -98,38 +157,23 @@ class SignUpActivity : AppCompatActivity() {
             if (!binding.loginItem.signupCb.isChecked) {
                 Toast.makeText(
                     this,
-                    "Accept terms and conditions",
+                    "Please accept the Terms & Conditions and Privacy Policy to continue.",
                     Toast.LENGTH_SHORT
                 ).show()
                 return@setOnClickListener
             }
 
-            // selectedPortal
-
-
-            val selectedPortal =
-                sessionManager.getSelectedPortal()
+            val selectedPortal = sessionManager.getSelectedPortal()
             Log.d(TAG, "Selected portal from session: $selectedPortal")
 
-            // Role Based on Portal
-            val role =
-                when(selectedPortal) {
-
-                    AppConstants.PORTAL_MULTI_RESTAURANT -> {
-                        AppConstants.ROLE_OWNER_MULTI
-                    }
-
-                    AppConstants.PORTAL_RESTAURANT -> {
-                        AppConstants.ROLE_OWNER_SINGLE
-                    }
-                     else -> {
-                         ""
-                     }
-                }
+            val role = when (selectedPortal) {
+                AppConstants.PORTAL_MULTI_RESTAURANT -> AppConstants.ROLE_OWNER_MULTI
+                AppConstants.PORTAL_RESTAURANT -> AppConstants.ROLE_OWNER_SINGLE
+                else -> ""
+            }
             Log.d(TAG, "Determined role: $role")
 
-            // Block Invalid Signup
-            if(role.isEmpty()) {
+            if (role.isEmpty()) {
                 Log.w(TAG, "Signup blocked: role is empty for portal $selectedPortal")
                 Toast.makeText(
                     this,
@@ -141,14 +185,10 @@ class SignUpActivity : AppCompatActivity() {
 
             Log.i(TAG, "Calling viewModel.signUpUser with role=$role, portal=$selectedPortal")
             viewModel.signUpUser(
-                fullName =
-                    binding.loginItem.signupNameEt.text.toString().trim(),
-                phone =
-                    binding.loginItem.signupPhoneEt.text.toString().trim(),
-                password =
-                    binding.loginItem.signupPasswordEt.text.toString().trim(),
-                confirmPassword =
-                    binding.loginItem.signupRePassEt.text.toString().trim(),
+                fullName = binding.loginItem.signupNameEt.text.toString().trim(),
+                phone = binding.loginItem.signupPhoneEt.text.toString().trim(),
+                password = binding.loginItem.signupPasswordEt.text.toString().trim(),
+                confirmPassword = binding.loginItem.signupRePassEt.text.toString().trim(),
                 role = role,
                 portalType = selectedPortal
             )
@@ -185,7 +225,6 @@ class SignUpActivity : AppCompatActivity() {
                                 Toast.LENGTH_SHORT
                             ).show()
 
-                            // IMPORTANT CHANGE (GO TO OTP SCREEN)
                             val intent = Intent(
                                 this@SignUpActivity,
                                 OTPVerificationActivity::class.java
@@ -196,7 +235,8 @@ class SignUpActivity : AppCompatActivity() {
                                 "fullName",
                                 binding.loginItem.signupNameEt.text.toString()
                             )
-                            intent.putExtra("password",
+                            intent.putExtra(
+                                "password",
                                 binding.loginItem.signupPasswordEt.text.toString()
                             )
                             intent.putExtra("role", state.role)
@@ -269,7 +309,7 @@ class SignUpActivity : AppCompatActivity() {
         binding.loginItem.signupPasswordEt.isEnabled = enabled
         binding.loginItem.signupRePassEt.isEnabled = enabled
         binding.loginItem.signupCb.isEnabled = enabled
-        binding.loginItem.signupTermCond.isEnabled = enabled
+        binding.loginItem.signupTermsPrivacyTv.isEnabled = enabled
         binding.loginItem.signupLoginTv.isEnabled = enabled
     }
 
