@@ -36,7 +36,8 @@ object RestaurantActiveOrders {
             if (registrations.containsKey(key)) return
             registrations[key] = query.addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("RestaurantActiveOrders", "Error listening for orders at $collectionPath: ${error.message}")
+                    trySend(emptyList())
                     return@addSnapshotListener
                 }
                 synchronized(lock) {
@@ -56,7 +57,8 @@ object RestaurantActiveOrders {
             if (!registrations.containsKey(key)) {
                 registrations[key] = tables.addSnapshotListener { snapshot, error ->
                     if (error != null) {
-                        close(error)
+                        android.util.Log.w("RestaurantActiveOrders", "Error listening for tables on floor $floorId: ${error.message}")
+                        trySend(emptyList())
                         return@addSnapshotListener
                     }
                     synchronized(lock) {
@@ -84,7 +86,8 @@ object RestaurantActiveOrders {
         registrations["root-floors"] = restaurant.collection(AppConstants.COLLECTION_RES_FLOORS)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("RestaurantActiveOrders", "Error listening for floors for $restaurantId: ${error.message}")
+                    trySend(emptyList())
                     return@addSnapshotListener
                 }
                 synchronized(lock) {

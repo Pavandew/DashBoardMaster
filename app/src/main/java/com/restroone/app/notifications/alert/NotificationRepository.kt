@@ -57,8 +57,8 @@ class NotificationRepository {
             .limit(50)
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
-                    Log.e(TAG, "Notification stream error for managerId=$managerId", error)
-                    close(error)
+                    Log.w(TAG, "Notification stream listener error for managerId=$managerId: ${error.message}")
+                    trySend(emptyList())
                     return@addSnapshotListener
                 }
 

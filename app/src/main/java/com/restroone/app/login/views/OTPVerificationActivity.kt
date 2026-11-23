@@ -206,6 +206,12 @@ class OTPVerificationActivity : AppCompatActivity() {
                                 name = fullName
                             )
 
+                            if (role == AppConstants.ROLE_OWNER_SINGLE || role == AppConstants.ROLE_OWNER_MULTI) {
+                                sessionManager.saveRestaurantId(state.uid)
+                            } else {
+                                sessionManager.saveRestaurantId("")
+                            }
+
                             // Navigate Dashboard
                             navigateToDashboard(role)
                         }

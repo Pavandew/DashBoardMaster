@@ -28,20 +28,22 @@ object FormValidator {
 
     fun validateGst(gst: String): String? {
         val cleanGst = gst.trim().uppercase()
-        if (cleanGst.isEmpty()) return null // Optional field
+        if (cleanGst.isEmpty()) return null // Optional field (turnover < 20L or un-registered)
         val gstPattern = "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$"
-        return if (!cleanGst.matches(Regex(gstPattern))) "Invalid GST format" else null
+        return if (!cleanGst.matches(Regex(gstPattern))) "Invalid 15-digit GSTIN format" else null
     }
 
     fun validatePan(pan: String): String? {
         val cleanPan = pan.trim().uppercase()
         if (cleanPan.isEmpty()) return null // Optional field
-        val panPattern = "[A-Z]{5}[0-9]{4}[A-Z]{1}"
-        return if (!cleanPan.matches(Regex(panPattern))) "Invalid PAN format" else null
+        val panPattern = "^[A-Z]{5}[0-9]{4}[A-Z]{1}$"
+        return if (!cleanPan.matches(Regex(panPattern))) "Invalid 10-character PAN format" else null
     }
 
     fun validateFssai(fssai: String): String? {
-        if (fssai.isEmpty()) return null // Optional field
-        return if (fssai.length != 14) "FSSAI must be 14 digits" else null
+        val cleanFssai = fssai.trim()
+        if (cleanFssai.isEmpty()) return null // Optional field (can be added later in Settings)
+        val fssaiPattern = "^[0-9]{14}$"
+        return if (!cleanFssai.matches(Regex(fssaiPattern))) "FSSAI must be 14 numeric digits" else null
     }
 }

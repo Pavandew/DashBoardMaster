@@ -220,6 +220,10 @@ class LoginActivity : AppCompatActivity() {
                             sessionManager.setRestaurantSetup(state.isRestaurantSetup)
                             if (state.restaurantId.isNotEmpty()) {
                                 sessionManager.saveRestaurantId(state.restaurantId)
+                            } else if (state.role == AppConstants.ROLE_OWNER_SINGLE || state.role == AppConstants.ROLE_OWNER_MULTI) {
+                                sessionManager.saveRestaurantId(state.uid)
+                            } else {
+                                sessionManager.saveRestaurantId("")
                             }
 
                             // NEW: Save FCM token to Firestore on login

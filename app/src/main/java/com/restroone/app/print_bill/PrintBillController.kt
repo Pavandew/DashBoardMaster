@@ -127,9 +127,11 @@ class PrintBillController(
         val footerMsg = receiptSettings.customFooterMessage.ifEmpty { "Thank You Visit Again" }
         val cashierName = sessionManager.getUserName() ?: "Cashier"
         val gstRate = sessionManager.getGstRate()
+        val printSize = receiptSettings.printSize
+        val lineWidth = if (printSize.contains("80", ignoreCase = true)) 48 else 32
 
         // Logcat Preview for debugging without physical printer
-        Log.i(TAG, "Generating Print Preview...")
+        Log.i(TAG, "Generating Print Preview (Paper Width: ${lineWidth} chars / $printSize)...")
         Log.d(TAG, printHelper.getLoggablePreview(
             restaurantName = restaurantName,
             address = addressStr,
@@ -138,6 +140,7 @@ class PrintBillController(
             cashierName = cashierName,
             headerTagline = tagline,
             footerMessage = footerMsg,
+            lineWidth = lineWidth,
             order = order
         ))
 
@@ -151,6 +154,7 @@ class PrintBillController(
             headerTagline = tagline,
             footerMessage = footerMsg,
             showCustomerInfo = receiptSettings.showCustomerInfo,
+            lineWidth = lineWidth,
             order = order
         )
 

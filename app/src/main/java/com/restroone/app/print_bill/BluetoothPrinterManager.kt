@@ -67,12 +67,21 @@ class BluetoothPrinterManager(private val context: Context) {
                 withContext(Dispatchers.Main) { listener.onPrintStarted() }
 
                 // 1. Create a socket to the device
-                socket = device.createRfcommSocketToServiceRecord(PRINTER_UUID)
+                try {
+                    socket = device.createRfcommSocketToServiceRecord(PRINTER_UUID)
+                    Log.d(TAG, "Attempting primary SPP connection to ${device.address}...")
+                    socket.connect()
+                } catch (primaryException: IOException) {
+                    Log.w(TAG, "Primary SPP socket failed (${primaryException.message}). Attempting fallback socket reflection...")
+                    socket?.close()
+                    
+                    // Fallback Method: Standard Reflection for older/cheaper thermal Bluetooth modules
+                    val method = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
+                    socket = method.invoke(device, 1) as BluetoothSocket
+                    socket.connect()
+                }
                 
-                // 2. Connect (this is blocking, hence IO thread)
-                Log.d(TAG, "Attempting to connect to ${device.address}...")
-                socket.connect()
-                Log.d(TAG, "Connected successfully!")
+                Log.d(TAG, "Connected successfully to Bluetooth printer!")
 
                 // 3. Send data
                 val outputStream = socket.outputStream

@@ -79,6 +79,25 @@ class HelpSupportFragment : Fragment() {
                 Toast.makeText(requireContext(), getString(R.string.err_email_client), Toast.LENGTH_SHORT).show()
             }
         }
+
+        binding.btnReadFullPrivacyPolicy.setOnClickListener {
+            com.restroone.app.utils.LegalNavigationUtils.openPrivacyPolicy(requireContext())
+        }
+
+        binding.btnRequestAccountDeletion.setOnClickListener {
+            showAccountDeletionDialog()
+        }
+    }
+
+    private fun showAccountDeletionDialog() {
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Account Deletion Request")
+            .setMessage("Under Google Play policy and DPDP guidelines, you can request full deletion of your account and personal data.\n\n• Staff Users: Credential & profile deletion.\n• Restaurant Owners: Account closure & subscription cancellation (financial records retained as per law).\n\nWould you like to open the official deletion portal?")
+            .setPositiveButton("Open Web Portal") { _, _ ->
+                com.restroone.app.utils.LegalNavigationUtils.openAccountDeletion(requireContext())
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun setupTermsRecyclerView() {

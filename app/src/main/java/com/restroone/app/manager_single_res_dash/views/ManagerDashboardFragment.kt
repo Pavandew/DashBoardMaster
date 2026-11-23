@@ -30,6 +30,7 @@ import com.restroone.app.staff_dash.kitchen_screens.views.KitchenOrderFragment
 import com.restroone.app.staff_dash.kitchen_screens.views.KitchenPreparationFragment
 import com.restroone.app.staff_dash.waiter_screens.order.views.WaiterActiveOrdersFragment
 import com.restroone.app.staff_dash.waiter_screens.table.views.WaiterTablesFragment
+import com.restroone.app.subscription.utils.SubscriptionExpiryUiHelper
 import kotlinx.coroutines.launch
 
 class ManagerDashboardFragment : Fragment() {
@@ -71,6 +72,23 @@ class ManagerDashboardFragment : Fragment() {
         
         // 4. Update Drawer Header immediately with available User Info
         navigationHelper.updateDrawerHeader()
+
+        // 5. Check subscription trial expiration status via modular UI Helper
+        SubscriptionExpiryUiHelper.checkAndBindExpiryBanner(
+            context = requireContext(),
+            lifecycleOwner = viewLifecycleOwner,
+            bannerBinding = binding.incSubscriptionExpiryBanner,
+            onUpgradeClicked = {
+                navigationHelper.handleNavigation(
+                    DrawerMenuItem(
+                        id = 17,
+                        title = "Subscription & Plans",
+                        iconRes = R.drawable.ic_card_payment_24dp,
+                        fragmentClass = com.restroone.app.subscription.views.SubscriptionPlansFragment::class.java
+                    )
+                )
+            }
+        )
     }
 
     /**

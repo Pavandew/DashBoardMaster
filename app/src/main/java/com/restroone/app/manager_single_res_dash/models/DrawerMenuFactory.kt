@@ -10,6 +10,7 @@ import com.restroone.app.manager_single_res_dash.views.StaffManagementFragment
 import com.restroone.app.manager_single_res_dash.views.TableManagementFragment
 import com.restroone.app.notifications.alert.NotificationFragment
 import com.restroone.app.staff_dash.billing_screens.views.CashierBillingFragment
+import com.restroone.app.staff_dash.billing_screens.views.CashierOrderFragment
 import com.restroone.app.staff_dash.kitchen_screens.views.KitchenInventoryFragment
 import com.restroone.app.staff_dash.kitchen_screens.views.KitchenOrderFragment
 import com.restroone.app.staff_dash.kitchen_screens.views.KitchenPreparationFragment
@@ -103,8 +104,8 @@ object DrawerMenuFactory {
                         id = 1,
                         title = "Quick Bill Counter",
                         iconRes = R.drawable.waiter,
-                        fragmentClass = WaiterTablesFragment::class.java,
-                        parentHeaderId = 100
+                        fragmentClass = CashierOrderFragment::class.java,
+                        parentHeaderId = 300
                     )
                 )
             ),

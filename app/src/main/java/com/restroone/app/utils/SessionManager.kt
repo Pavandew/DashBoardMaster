@@ -44,6 +44,17 @@ class SessionManager(context: Context) {
         staffDocId: String = ""
     ) {
         Log.d(TAG, "setLogin: uid=$uid, role=$role, mobile=$mobile, name=$name, staffId=$staffId, staffDocId=$staffDocId")
+        
+        // Purge any stale user/restaurant session cache keys before writing new session
+        prefs.edit {
+            remove(AppConstants.KEY_RESTAURANT_ID)
+            remove(AppConstants.KEY_RESTAURANT_NAME)
+            remove(AppConstants.KEY_RESTAURANT_DETAILS)
+            remove(AppConstants.KEY_PERMISSIONS)
+            remove(AppConstants.KEY_IS_RESTAURANT_SETUP)
+            remove("restaurantLogoUrl")
+        }
+
         prefs.edit {
             putBoolean(AppConstants.KEY_IS_LOGGED_IN, true)
                 .putString(AppConstants.KEY_UID, uid)
@@ -53,9 +64,13 @@ class SessionManager(context: Context) {
 
             if (staffId.isNotEmpty()) {
                 putString(AppConstants.KEY_STAFF_ID, staffId)
+            } else {
+                remove(AppConstants.KEY_STAFF_ID)
             }
             if (staffDocId.isNotEmpty()) {
                 putString(AppConstants.KEY_STAFF_DOC_ID, staffDocId)
+            } else {
+                remove(AppConstants.KEY_STAFF_DOC_ID)
             }
         }
     }
@@ -112,8 +127,13 @@ class SessionManager(context: Context) {
 
     fun getRestaurantId(): String {
         val id = prefs.getString(AppConstants.KEY_RESTAURANT_ID, "") ?: ""
-        val finalId = if (id.isNotEmpty()) id else getUid()
-        Log.d(TAG, "getRestaurantId: $finalId (cached: '$id', fallback uid: '${getUid()}')")
+        val uid = getUid()
+        val finalId = when {
+            id.isNotEmpty() -> id
+            uid.isNotEmpty() -> uid
+            else -> ""
+        }
+        Log.d(TAG, "getRestaurantId: $finalId (cached: '$id', fallback uid: '$uid')")
         return finalId
     }
 
@@ -325,19 +345,13 @@ class SessionManager(context: Context) {
 
     // 🗑️ SESSION TERMINATION CONTROL UTILITIES
     fun logout() {
-        Log.d(TAG, "logout: Clearing user session credentials but preserving portal theme settings")
-
-        // Remove only user-specific data so the portal background state stays active
+        Log.d(TAG, "logout: Wiping all local user and restaurant session credentials")
+        val selectedPortal = getSelectedPortal()
         prefs.edit {
-            remove(AppConstants.KEY_IS_LOGGED_IN)
-            remove(AppConstants.KEY_UID)
-            remove(AppConstants.KEY_ROLE)
-            remove(AppConstants.KEY_MOBILE)
-            remove(AppConstants.KEY_NAME)
-            remove(AppConstants.KEY_IS_RESTAURANT_SETUP)
-            remove(AppConstants.KEY_RESTAURANT_ID)
-            remove(AppConstants.KEY_RESTAURANT_NAME)
-            remove(AppConstants.KEY_RESTAURANT_DETAILS)
+            clear()
+        }
+        if (selectedPortal.isNotEmpty()) {
+            setSelectedPortal(selectedPortal)
         }
     }
 }

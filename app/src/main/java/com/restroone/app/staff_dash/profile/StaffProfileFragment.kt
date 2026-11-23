@@ -70,13 +70,27 @@ class StaffProfileFragment : Fragment() {
         binding.btnForgotPassword.setOnClickListener {
             Log.d(TAG, "📱 [FRAGMENT] Navigating to Change Password.")
             
-            // Handle navigation directly from fragment
             val containerId = (view?.parent as? View)?.id ?: return@setOnClickListener
             
             parentFragmentManager.beginTransaction()
                 .replace(containerId, ChangePasswordFragment())
                 .addToBackStack(null)
                 .commit()
+        }
+
+        binding.btnStaffLegalDocs.setOnClickListener {
+            com.restroone.app.utils.LegalNavigationUtils.openPrivacyPolicy(requireContext())
+        }
+
+        binding.btnStaffAccountDeletion.setOnClickListener {
+            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Account Deletion Request")
+                .setMessage("As a staff member, requesting account deletion will revoke your staff login credentials and remove your personal profile from Restroone.\n\nYour past completed order history will be retained in anonymized format for auditing.\n\nWould you like to open the official deletion portal?")
+                .setPositiveButton("Open Web Portal") { _, _ ->
+                    com.restroone.app.utils.LegalNavigationUtils.openAccountDeletion(requireContext())
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
         }
     }
 

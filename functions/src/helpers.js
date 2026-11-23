@@ -334,6 +334,19 @@ async function assertRestaurantRole(request, restaurantId, allowedRoles) {
     if ((!isOwner && !isStaff) || (!isOwner && !allowedRoles.includes(role))) {
         throw new HttpsError("permission-denied", "Your role cannot perform this restaurant operation.");
     }
+
+    // Server-side Subscription Expiration Enforcement
+    const sub = restaurantSnapshot.get("subscription");
+    if (sub && typeof sub === "object") {
+        const expiry = Number(sub.expiryDateTimestamp || 0);
+        if (expiry > 0 && expiry <= Date.now()) {
+            throw new HttpsError(
+                "permission-denied",
+                "Your restaurant subscription or free trial has expired. Please ask the restaurant manager or owner to renew the subscription to continue POS operations."
+            );
+        }
+    }
+
     return {
         role: isOwner ? "owner" : role,
         user,

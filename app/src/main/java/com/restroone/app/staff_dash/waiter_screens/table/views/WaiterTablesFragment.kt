@@ -157,30 +157,50 @@ class WaiterTablesFragment : Fragment() {
                     // 2. Error vs Content vs Empty state visibility
                     if (state.errorMessage != null) {
                         b.rvTableCards.visibility = View.GONE
-                        b.includeEmptyState.layoutEmptyContainer.visibility = View.GONE
-                        b.includeErrorState.layoutErrorContainer.visibility = View.VISIBLE
+                        b.includeEmptyState.root.visibility = View.GONE
+                        b.includeErrorState.root.visibility = View.VISIBLE
                         b.includeErrorState.tvErrorStateMessage.text = state.errorMessage
                     } else {
-                        b.includeErrorState.layoutErrorContainer.visibility = View.GONE
+                        b.includeErrorState.root.visibility = View.GONE
 
                         if (state.tables.isEmpty() && !state.isLoading) {
                             b.rvTableCards.visibility = View.GONE
+                            b.includeEmptyState.root.visibility = View.VISIBLE
                             b.includeEmptyState.layoutEmptyContainer.visibility = View.VISIBLE
 
-                            val role = sessionManager.getRole()
-                            if (role.contains("owner") || role.contains("manager")) {
+                            val searchActive = b.searchBar.etSearchOrder.text.isNotEmpty() || state.selectedFloorId != "ALL_FLOORS"
+
+                            if (searchActive) {
+                                b.includeEmptyState.tvEmptyStateTitle.text = "No Matching Tables Found"
+                                b.includeEmptyState.tvEmptyStateMessage.text = "No tables match your search query or floor filter. Try resetting the filter."
                                 b.includeEmptyState.btnEmptyAction.visibility = View.VISIBLE
-                                b.includeEmptyState.btnEmptyAction.text = "➕ Manage Floors & Tables"
+                                b.includeEmptyState.btnEmptyAction.text = "Clear Filter"
                                 b.includeEmptyState.btnEmptyAction.setOnClickListener {
-                                    parentFragmentManager.beginTransaction()
-                                        .replace(R.id.manager_fragmentContainer, com.restroone.app.manager_single_res_dash.views.TableManagementFragment())
-                                        .addToBackStack("table_management")
-                                        .commit()
+                                    b.searchBar.etSearchOrder.setText("")
+                                    viewModel.setFloorFilter("ALL_FLOORS")
                                 }
                             } else {
-                                b.includeEmptyState.btnEmptyAction.visibility = View.GONE
+                                b.includeEmptyState.tvEmptyStateTitle.text = "No Dining Tables Available"
+                                b.includeEmptyState.tvEmptyStateMessage.text = "No dining tables have been created for this restaurant outlet yet."
+
+                                val role = sessionManager.getRole().lowercase()
+                                if (role.contains("owner") || role.contains("manager")) {
+                                    b.includeEmptyState.btnEmptyAction.visibility = View.VISIBLE
+                                    b.includeEmptyState.btnEmptyAction.text = "➕ Create Floors & Tables"
+                                    b.includeEmptyState.btnEmptyAction.setOnClickListener {
+                                        val containerId = com.restroone.app.utils.NavigationUtils.getHostContainerId(activity)
+                                        val targetContainer = if (containerId != 0) containerId else R.id.manager_fragmentContainer
+                                        parentFragmentManager.beginTransaction()
+                                            .replace(targetContainer, com.restroone.app.manager_single_res_dash.views.TableManagementFragment())
+                                            .addToBackStack("table_management")
+                                            .commit()
+                                    }
+                                } else {
+                                    b.includeEmptyState.btnEmptyAction.visibility = View.GONE
+                                }
                             }
                         } else {
+                            b.includeEmptyState.root.visibility = View.GONE
                             b.includeEmptyState.layoutEmptyContainer.visibility = View.GONE
                             b.rvTableCards.visibility = View.VISIBLE
 

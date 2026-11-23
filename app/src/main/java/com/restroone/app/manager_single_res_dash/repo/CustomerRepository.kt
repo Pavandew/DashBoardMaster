@@ -24,8 +24,8 @@ class CustomerRepository {
 
         val listener = customersRef.addSnapshotListener { snapshot, e ->
             if (e != null) {
-                Log.e("CustomerRepo", "Error listening to customers", e)
-                close(e)
+                Log.w("CustomerRepo", "Error listening to customers for managerId=$managerId: ${e.message}")
+                trySend(emptyList())
                 return@addSnapshotListener
             }
 
