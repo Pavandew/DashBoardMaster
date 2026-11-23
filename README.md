@@ -1,113 +1,112 @@
-# RestroOne - Restaurant Management System
+# 🍽️ RestroOne - Smart Multi-Tenant Restaurant Management System
 
-A comprehensive Android application built to streamline and simplify daily restaurant operations. RestroOne provides dedicated, role-based interfaces for Managers, Waiters, Kitchen Staff, and Cashiers, ensuring each department has the exact tools they need to operate efficiently.
-
-The goal of this project is to simulate and digitize the complete lifecycle of a restaurant order—from table seating and kitchen prep to final billing and inventory management—all within a single, unified Android application.
-
-> 🚀 **Status:** Currently in final beta testing and preparing for official release on the Google Play Store.
+**RestroOne** is an enterprise-grade Android application and Cloud Functions backend built to digitize and streamline daily restaurant operations. It features secure, role-based workspaces for **Restaurant Owners, Managers, Waiters, Kitchen Staff (KDS), and Cashiers**, providing a real-time order execution engine from table seating to kitchen preparation, checkout, thermal printing, and reporting.
 
 ---
 
-## 🌟 Key Features by Role
+## 🌟 Core Highlights & Capabilities
 
-### 👔 Manager (Owner Dashboard)
-- **Centralized Dashboard:** Real-time overview of restaurant performance.
-- **Staff Management:** Add, edit, and assign roles to employees.
-- **Menu & Category Management:** Dynamically update items, prices, and availability.
-- **Floor & Table Management:** Visual layout configuration for different dining areas.
-- **Inventory Tracking:** (In Progress) Monitor stock levels and ingredients.
-- **Reporting & Analytics:** (In Progress) Daily sales and performance metrics.
-
-### 🍽️ Waiter
-- **Live Table Status:** Instantly see which tables are available, occupied, or waiting for food.
-- **Digital Order Taking:** Send orders directly to the Kitchen Display System (KDS).
-- **Order Management:** Add items to active orders or handle customer modifications.
-- **Push Notifications:** Receive real-time alerts when food is ready to serve.
-
-### 🧑‍🍳 Kitchen (KDS)
-- **Live Ticket Board:** View incoming orders sorted by time and priority.
-- **Order Status Tracking:** Mark individual items or whole tickets as "Preparing" or "Ready."
-- **Queue Management:** Separate views for Dine-In, Takeaway, and Delivery orders.
-
-### 💳 Billing (Cashier)
-- **Fast Checkout:** Generate final bills with calculated taxes and discounts.
-- **Split Payments:** Handle cash, card, and UPI transactions.
-- **Quick Takeaway:** Dedicated flow for walk-in orders without table assignments.
-- **Billing History:** Review past transactions and reprint receipts.
+* **🔒 Enterprise Multi-Tenancy & Data Isolation:** Built on strict tenant boundaries (`restaurants/{restaurantId}/...`) with automated session sanitization and custom Firebase Security Rules to ensure zero cross-restaurant data leakage.
+* **⚡ Serverless Cloud Backend:** Powered by **Firebase Cloud Functions** (Node.js) handling secure custom token authentication, staff credentials management, atomic order transactions, and subscription processing.
+* **🖨️ ESC/POS Thermal Printing:** Native Bluetooth thermal printer integration (`58mm` / `80mm`) for printing provisional bills, final receipts, and Kitchen Order Tickets (KOTs) via `PrintBillController` & `BluetoothPrinterManager`.
+* **💳 Subscriptions & Payments:** Integrated Razorpay payment gateway for single/multi-branch restaurant subscription plans, live expiry tracking, and feature access enforcement.
+* **📱 Real-Time Sync Engine:** Instant order pipeline between Waiters, Kitchen Display System (KDS), and Settlement Center using Firestore snapshot streams and Kotlin Coroutines/StateFlow.
 
 ---
 
-## 🛠️ Technical Stack & Architecture
+## 👔 Workspace Features by Role
 
-This project is built using modern Android development practices, strictly adhering to the **MVVM (Model-View-ViewModel)** architectural pattern to ensure separation of concerns and scalable code.
+### 👑 Owner & Manager Workspace
+- **Real-Time Operations Dashboard:** Total revenue, active tables, pending orders, and daily KPIs at a glance.
+- **Staff Roster Management:** Add, edit, assign roles (`Waiter`, `Chef`, `Cashier`, `Manager`), and configure granular permissions.
+- **Menu & Category Engine:** Dynamically manage categories, food items, variants (sizes, toppings), pricing, and availability tags (Veg/Non-Veg).
+- **Interactive Floor & Table Layout:** Create custom dining floors and define table capacities with live seating availability.
+- **Reports & Financial Analytics:** Comprehensive breakdown of daily sales, cashier settlements, order history, and customer metrics.
 
-*   **Language:** Kotlin
-*   **UI Toolkit:** XML (with Material Design 3 Components)
-*   **Architecture:** MVVM, Clean Architecture principles
-*   **Asynchronous Programming:** Kotlin Coroutines & Flow
-*   **Dependency Injection:** (Consider mentioning Hilt/Dagger here if you plan to add it, or remove this line)
-*   **View Binding:** Enabled for safe UI component interactions.
-*   **Image Loading:** Glide / Coil
+### 🍽️ Waiter Workspace
+- **Visual Floor & Table Map:** Instant status view (Free, Occupied, Billing) with customer details.
+- **Digital Order Taking & Cart System:** Instant item additions, variant selections, custom instructions, and KOT generation.
+- **Live Order Status Tracking:** Monitor active orders through `Preparing` ➔ `Ready` ➔ `Served` ➔ `Billing`.
+- **Alert System:** Push notifications when kitchen marks tickets as ready to serve.
 
-**Firebase Integration:**
-*   **Authentication:** Secure Phone Number/OTP and Password login.
-*   **Cloud Firestore:** Real-time NoSQL database for syncing orders between Waiter and Kitchen instantly.
-*   **Cloud Messaging (FCM):** Push notifications for staff communication.
-*   **Cloud Storage:** Hosting menu item images and user avatars.
+### 🧑‍🍳 Kitchen Display System (KDS)
+- **Live Ticket Board:** Prioritized preparation queue categorized by order type (Dine-In, Takeaway, Delivery).
+- **One-Tap Preparation Updates:** Transition item tickets from `Pending` ➔ `Preparing` ➔ `Ready` or specify rejection reasons.
+- **KDS Item Breakdown:** Detailed itemized list displaying custom variants and customer dietary tags.
+
+### 💳 Cashier & Settlement Center
+- **Settlement Center:** Process table bills with configurable discounts, Service Charge toggles, and GST/Tax calculation.
+- **Quick Bill Counter:** Fast checkout mode for walk-in takeaway and counter delivery orders without table assignments.
+- **Multi-Mode Payment Acceptance:** Settle bills via Cash, UPI (with QR generation), Card, or Digital Wallets.
+- **Receipt Printing & Handover:** Print provisional bills, final tax invoices, and confirm takeaway pickups.
 
 ---
 
-## 🏗️ Architecture Flow
+## 🛠️ Technical Architecture & Tech Stack
+
+The app follows **Clean Architecture** principles and the **MVVM (Model-View-ViewModel)** design pattern.
 
 ```text
-       ┌─────────────┐
-       │   UI (XML)  │
-       └──────┬──────┘
-              │ Observes State (LiveData/Flow)
-       ┌──────▼──────┐
-       │  ViewModel  │
-       └──────┬──────┘
-              │ Requests Data
-       ┌──────▼──────┐
-       │ Repository  │
-       └──────┬──────┘
-              │ Fetches/Syncs
-       ┌──────▼──────┐
-       │  Firestore  │
-       └─────────────┘
+               ┌──────────────────────────────┐
+               │    UI Layer (XML & M3)       │
+               └──────────────┬───────────────┘
+                              │ Observes StateFlow / LiveData
+               ┌──────────────▼───────────────┐
+               │         ViewModel            │
+               └──────────────┬───────────────┘
+                              │ Coroutines / Result Wrapper
+               ┌──────────────▼───────────────┐
+               │         Repository           │
+               └──────────────┬───────────────┘
+                              │ Live Snapshot Streams
+        ┌─────────────────────┴─────────────────────┐
+        │                                           │
+ ┌──────▼────────────┐                   ┌──────────▼───────────┐
+ │ Cloud Firestore   │                   │ Cloud Functions (Node)│
+ └───────────────────┘                   └──────────────────────┘
+```
+
+* **Client Stack:**
+  * **Language:** 100% Idiomatic Kotlin
+  * **Architecture:** MVVM, Clean Architecture, Repository Pattern
+  * **UI Framework:** XML Layouts, Material Design 3, View Binding, Custom Drawers
+  * **Asynchronous Execution:** Kotlin Coroutines, `StateFlow`, `SharedFlow`, `callbackFlow`
+  * **Image Processing:** Image compression pipeline, Glide
+  * **Hardware Interop:** Android Bluetooth Classic socket layer for ESC/POS Thermal Printers
+
+* **Cloud Backend Stack:**
+  * **Serverless Backend:** Node.js Firebase Cloud Functions v2
+  * **Authentication:** Firebase Auth Phone OTP + Custom Token Server Authentication
+  * **Database:** Cloud Firestore with strict multi-tenant Security Rules (`firestore.rules`)
+  * **Push Notifications:** Firebase Cloud Messaging (FCM)
+  * **Storage:** Firebase Cloud Storage for compressed menu & profile images
+
+---
+
+## 📁 Repository Structure
+
+```text
+Master Dashboard/
+├── app/src/main/java/com/restroone/app/
+│   ├── login/                     # Authentication & Splash Workspaces
+│   ├── manager_single_res_dash/   # Owner/Manager Dashboard, Staff & Menu Setup
+│   ├── staff_dash/
+│   │   ├── waiter_screens/        # Waiter Floor Layout & Order Taking
+│   │   ├── kitchen_screens/       # KDS Ticket Preparation Queue
+│   │   └── billing_screens/       # Cashier Settlement Center & Quick Counter
+│   ├── notifications/             # FCM Push Notification Handlers & Alert UI
+│   ├── print_bill/                # ESC/POS Bluetooth Thermal Printing Controller
+│   ├── subscription/              # Razorpay Payment & Plan Activation Engine
+│   └── utils/                     # SessionManager, TaxCalculator, NavigationUtils
+├── functions/                     # Firebase Cloud Functions Engine (Node.js)
+│   ├── index.js                   # Entry point exporting modular functions
+│   └── src/                       # Cloud function modules (auth, staff, orders, etc.)
+└── firestore.rules                # Tenant-isolated Firestore security rules
 ```
 
 ---
 
-## 📱 Screenshots
-
-*(Note: Replace these placeholder links with actual images of your app once uploaded to a `/images` folder in your repo)*
-
-| Login & Roles | Manager Dashboard | Waiter UI | Kitchen KDS | Billing / Checkout |
-| :---: | :---: | :---: | :---: | :---: |
-| `<img src="images/placeholder.png" width="200"/>` | `<img src="images/placeholder.png" width="200"/>` | `<img src="images/placeholder.png" width="200"/>` | `<img src="images/placeholder.png" width="200"/>` | `<img src="images/placeholder.png" width="200"/>` |
-
----
-
-## 🔮 Future Roadmap
-
-- [ ] **Bluetooth Thermal Printing:** Direct integration for KOTs and final receipts.
-- [ ] **QR Code Ordering:** Allow customers to scan a table QR and order from their phones.
-- [ ] **Advanced Analytics:** Charts and graphs for peak hour predictions.
-- [ ] **Multi-Branch Support:** Manage multiple restaurant locations from one admin account.
-- [ ] **Offline-First Mode:** Room Database caching for operation during internet outages.
-
----
-
-## 💡 Why I Built This Project
-
-I set out to build something significantly more complex than a standard CRUD application. I wanted to understand the challenges of real-time data synchronization across multiple devices (e.g., a Waiter taking an order and it instantly appearing on the Kitchen tablet).
-
-This project served as a deep dive into application architecture, handling complex role-based access control (RBAC), mastering Firebase real-time capabilities, and managing interconnected workflows within a single, cohesive Android application.
-
----
-
-## 👨‍💻 Author
+## 👨‍💻 Author & Maintainer
 
 **Pavan Dewangan**
 - [LinkedIn](https://www.linkedin.com/in/pavandewangan/)
