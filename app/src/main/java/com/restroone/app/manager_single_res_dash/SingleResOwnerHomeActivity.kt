@@ -57,9 +57,37 @@ class SingleResOwnerHomeActivity : AppCompatActivity() {
             dataViewModel.setEditMode(true)
         }
 
-        // RESTORE DRAFT IF EXISTS
-        sessionManager.getRegistrationDraft()?.let { draft ->
-            dataViewModel.restoreFromDraft(draft)
+        // RESTORE DRAFT ONLY IF BELONGS TO CURRENT LOGGED-IN USER
+        val currentUid = sessionManager.getUid()
+        val currentPhone = sessionManager.getPhone().orEmpty()
+        val currentName = sessionManager.getUserName().orEmpty()
+
+        val draft = sessionManager.getRegistrationDraft()
+        if (draft != null) {
+            val draftUid = draft.ownerUid
+            val draftPhone = draft.getUnifiedMobile10Digits()
+            val cleanCurrentPhone = currentPhone.replace("[^0-9]".toRegex(), "")
+
+            if ((currentUid.isNotEmpty() && draftUid == currentUid) ||
+                (cleanCurrentPhone.isNotEmpty() && draftPhone.contains(cleanCurrentPhone))) {
+                android.util.Log.i("SingleResOwnerHome", "Restoring valid draft belonging to current user: $currentUid")
+                dataViewModel.restoreFromDraft(draft)
+            } else {
+                android.util.Log.w("SingleResOwnerHome", "Purging stale draft from previous user session")
+                sessionManager.clearRegistrationDraft()
+                dataViewModel.initForNewUser(
+                    uid = currentUid,
+                    fullName = currentName,
+                    mobile = currentPhone
+                )
+            }
+        } else {
+            android.util.Log.i("SingleResOwnerHome", "No draft found. Initializing fresh form for user: $currentUid")
+            dataViewModel.initForNewUser(
+                uid = currentUid,
+                fullName = currentName,
+                mobile = currentPhone
+            )
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(activityBinding.mainContent) { v, insets ->

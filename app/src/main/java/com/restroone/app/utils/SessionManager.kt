@@ -50,6 +50,7 @@ class SessionManager(context: Context) {
             remove(AppConstants.KEY_RESTAURANT_ID)
             remove(AppConstants.KEY_RESTAURANT_NAME)
             remove(AppConstants.KEY_RESTAURANT_DETAILS)
+            remove(AppConstants.KEY_REGISTRATION_DRAFT)
             remove(AppConstants.KEY_PERMISSIONS)
             remove(AppConstants.KEY_IS_RESTAURANT_SETUP)
             remove("restaurantLogoUrl")

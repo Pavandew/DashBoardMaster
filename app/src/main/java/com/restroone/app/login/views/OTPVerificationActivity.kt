@@ -38,7 +38,6 @@ class OTPVerificationActivity : AppCompatActivity() {
     private var fullName: String = ""
     private var password: String = ""
     private var role: String = ""
-
     private var portalType: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {

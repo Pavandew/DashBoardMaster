@@ -1,7 +1,6 @@
 package com.restroone.app.manager_single_res_dash.registration_form_screen.adapter
 
 import android.app.DatePickerDialog
-import android.net.Uri
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater

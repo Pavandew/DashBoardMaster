@@ -21,32 +21,47 @@ class AuthRepository {
     private val TAG = "AuthRepository"
 
     /**
-     * Finds a user by their phone number, checking both 'mobile' and 'phone' fields in Firestore.
+     * Finds a user by their phone number across all formatting variations (+91, plain 10 digits, +91 with space).
      */
     suspend fun findUserByPhone(phone: String): Result<UserModelData?> {
         return try {
-            val formattedPhone = if (phone.startsWith("+91")) phone else "+91$phone"
-            
-            // Try querying by 'mobile' first
-            var snapshot = db.collection(AppConstants.COLLECTION_USERS)
-                .whereEqualTo(AppConstants.FIELD_MOBILE, formattedPhone)
-                .get()
-                .await()
+            val cleanDigits = phone.replace("[^0-9]".toRegex(), "")
+            val tenDigits = if (cleanDigits.length > 10) cleanDigits.takeLast(10) else cleanDigits
 
-            // Fallback: Try querying by 'phone'
-            if (snapshot.isEmpty) {
-                snapshot = db.collection(AppConstants.COLLECTION_USERS)
-                    .whereEqualTo("phone", formattedPhone)
+            if (tenDigits.length != 10) {
+                return Result.success(null)
+            }
+
+            val variations = listOf(
+                "+91$tenDigits",
+                tenDigits,
+                "+91 $tenDigits"
+            )
+
+            for (targetPhone in variations) {
+                // Try querying by 'mobile'
+                var snapshot = db.collection(AppConstants.COLLECTION_USERS)
+                    .whereEqualTo(AppConstants.FIELD_MOBILE, targetPhone)
                     .get()
                     .await()
+
+                // Fallback: Try querying by 'phone'
+                if (snapshot.isEmpty) {
+                    snapshot = db.collection(AppConstants.COLLECTION_USERS)
+                        .whereEqualTo("phone", targetPhone)
+                        .get()
+                        .await()
+                }
+
+                if (!snapshot.isEmpty) {
+                    val user = snapshot.documents[0].toObject(UserModelData::class.java)
+                    if (user != null) {
+                        return Result.success(user)
+                    }
+                }
             }
 
-            if (snapshot.isEmpty) {
-                Result.success(null)
-            } else {
-                val user = snapshot.documents[0].toObject(UserModelData::class.java)
-                Result.success(user)
-            }
+            Result.success(null)
         } catch (e: Exception) {
             Log.e(TAG, "Error finding user by phone", e)
             val formattedMsg = NetworkUtils.formatErrorMessage(e)
@@ -55,25 +70,42 @@ class AuthRepository {
     }
 
     /**
-     * Checks if a phone number is registered by looking up an active user profile in Firestore.
+     * Checks if a phone number is registered across server Cloud Functions and local Firestore.
+     * Uses Cloud Function first to bypass client-side Firestore security rules for unauthenticated users.
      */
     suspend fun isPhoneRegistered(phone: String): Result<Boolean> {
-        return try {
-            val userResult = findUserByPhone(phone)
-            if (userResult.isSuccess) {
-                val user = userResult.getOrNull()
-                Result.success(user != null && user.isVerified)
-            } else {
-                val formattedPhone = if (phone.startsWith("+91")) phone else "+91$phone"
-                val response = FirebaseFunctions.getInstance()
-                    .getHttpsCallable("isMobileRegistered")
-                    .call(mapOf("mobile" to formattedPhone))
-                    .await()
-                    .data as? Map<*, *>
-                Result.success(response?.get("registered") == true)
+        val cleanDigits = phone.replace("[^0-9]".toRegex(), "")
+        val tenDigits = if (cleanDigits.length > 10) cleanDigits.takeLast(10) else cleanDigits
+        val formattedPhone = "+91$tenDigits"
+
+        // 1. Try Cloud Function FIRST (Runs with admin privileges on server, bypasses client-side rules)
+        try {
+            val response = FirebaseFunctions.getInstance()
+                .getHttpsCallable("isMobileRegistered")
+                .call(mapOf("mobile" to formattedPhone))
+                .await()
+                .data as? Map<*, *>
+
+            val isReg = response?.get("registered") == true
+            Log.i(TAG, "isPhoneRegistered Cloud Function response for $formattedPhone: $isReg")
+            if (isReg) {
+                return Result.success(true)
             }
         } catch (e: Exception) {
-            Log.w(TAG, "isPhoneRegistered exception: ${e.message}")
+            Log.w(TAG, "isMobileRegistered Cloud Function exception: ${e.message}")
+        }
+
+        // 2. Fallback: Query local Firestore across all variations
+        return try {
+            val userResult = findUserByPhone(tenDigits)
+            if (userResult.isSuccess && userResult.getOrNull() != null) {
+                Log.i(TAG, "isPhoneRegistered: Found active user in Firestore for phone: $tenDigits")
+                Result.success(true)
+            } else {
+                Result.success(false)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "findUserByPhone fallback exception: ${e.message}")
             Result.success(false)
         }
     }

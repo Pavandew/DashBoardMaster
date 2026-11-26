@@ -37,6 +37,23 @@ class RegistrationDataViewModel : ViewModel() {
     }
 
     /**
+     * Initializes a fresh, blank registration model pre-populated ONLY with current user's name & mobile.
+     */
+    fun initForNewUser(uid: String, fullName: String, mobile: String) {
+        Log.i(TAG, "initForNewUser: Creating fresh blank registration model for UID: $uid")
+        _registrationData = RegistrationDataModel().apply {
+            this.ownerUid = uid
+            this.ownerFullName = fullName
+            this.fullName = fullName
+            this.ownerMobile = mobile
+            this.mobile = mobile
+            this.phone = mobile
+            this.ownerProfile.ownerFullName = fullName
+            this.ownerProfile.ownerMobile = mobile
+        }
+    }
+
+    /**
      * Logging helper to track the current state of the registration data.
      * Call this when moving between steps to verify data integrity.
      */
