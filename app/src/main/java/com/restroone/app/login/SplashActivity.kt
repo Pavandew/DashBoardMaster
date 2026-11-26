@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.restroone.app.R
 import com.restroone.app.databinding.ActivitySplashBinding
 import com.restroone.app.manager_single_res_dash.ManagerHomeActivity
 import com.restroone.app.master_dash.MasterHomeActivity
@@ -46,8 +47,19 @@ class SplashActivity : AppCompatActivity() {
 
         sessionManager = SessionManager(this)
 
+        setupVersionName()
         startAnimation()
         checkLoginState()
+    }
+
+    private fun setupVersionName() {
+        try {
+            val pInfo = packageManager.getPackageInfo(packageName, 0)
+            val versionName = pInfo.versionName ?: "1.0"
+            binding.tvAppVersion.text = getString(R.string.splash_version_format, versionName)
+        } catch (e: Exception) {
+            binding.tvAppVersion.text = getString(R.string.splash_version_format, "1.0")
+        }
     }
 
     private fun startAnimation() {

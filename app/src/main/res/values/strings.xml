@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">RestroOne</string>
+    <string name="splash_powered_by">RestroOne by Nikhil</string>
+    <string name="splash_version_format">v%1$s</string>
     <string name="title_activity_login">LoginActivity</string>
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>
@@ -273,7 +275,7 @@
     <string name="support_technical_title">Customer Support &amp; Technical Help</string>
     <string name="support_dedicated_sub">Dedicated support for restaurant operations</string>
     <string name="support_email_label">Official Support Email</string>
-    <string name="support_email_val">support@masterdashboard.com</string>
+    <string name="support_email_val">developer.nps@gmail.com</string>
     <string name="support_phone_label">Hotline / Priority Phone</string>
     <string name="support_phone_val">+91 98765 43210</string>
     <string name="support_hours_label">Operation Hours</string>

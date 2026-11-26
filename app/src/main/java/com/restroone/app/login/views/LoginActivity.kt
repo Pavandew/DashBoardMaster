@@ -54,12 +54,7 @@ class LoginActivity : AppCompatActivity() {
         val portalBadge = binding.loginItem.tvPortalBadge
         portalBadge.visibility = View.VISIBLE
 
-        // Future-proof country prefix handling (default: "+91 ")
-        val countryPrefix = "+91 "
-        binding.loginItem.loginPhoneLayout.prefixText = countryPrefix
-        val darkTextColor = androidx.core.content.ContextCompat.getColor(this, R.color.black)
-        binding.loginItem.loginPhoneLayout.setPrefixTextColor(android.content.res.ColorStateList.valueOf(darkTextColor))
-
+        // +91 is rendered separately in the XML layout for exact baseline alignment.
         when (selectedPortal) {
             AppConstants.PORTAL_MULTI_RESTAURANT -> {
                 portalBadge.text = "Multi-Restaurant Portal"
@@ -71,8 +66,6 @@ class LoginActivity : AppCompatActivity() {
                 binding.loginItem.loginPhoneLayout.boxStrokeColor = blueColor
                 binding.loginItem.loginPasswordLayout.boxStrokeColor = blueColor
                 val accentTint = android.content.res.ColorStateList.valueOf(blueColor)
-                binding.loginItem.loginPhoneLayout.setStartIconTintList(accentTint)
-                binding.loginItem.loginPasswordLayout.setStartIconTintList(accentTint)
                 binding.loginItem.loginPasswordLayout.setEndIconTintList(accentTint)
             }
             AppConstants.PORTAL_STAFF -> {
@@ -81,11 +74,10 @@ class LoginActivity : AppCompatActivity() {
                 portalBadge.backgroundTintList = android.content.res.ColorStateList.valueOf(orangeColor)
                 binding.loginItem.loginBtn.backgroundTintList = android.content.res.ColorStateList.valueOf(orangeColor)
                 binding.loginItem.loginTvForgotPassword.setTextColor(orangeColor)
+                binding.loginItem.loginCreateAccTv.setTextColor(orangeColor)
                 binding.loginItem.loginPhoneLayout.boxStrokeColor = orangeColor
                 binding.loginItem.loginPasswordLayout.boxStrokeColor = orangeColor
                 val accentTint = android.content.res.ColorStateList.valueOf(orangeColor)
-                binding.loginItem.loginPhoneLayout.setStartIconTintList(accentTint)
-                binding.loginItem.loginPasswordLayout.setStartIconTintList(accentTint)
                 binding.loginItem.loginPasswordLayout.setEndIconTintList(accentTint)
 
                 binding.loginItem.loginCreateAccTv.visibility = View.GONE
@@ -96,13 +88,11 @@ class LoginActivity : AppCompatActivity() {
                 val purpleColor = androidx.core.content.ContextCompat.getColor(this, R.color.portal_restaurant_primary)
                 portalBadge.backgroundTintList = android.content.res.ColorStateList.valueOf(purpleColor)
                 binding.loginItem.loginBtn.backgroundTintList = android.content.res.ColorStateList.valueOf(purpleColor)
-                binding.loginItem.loginTvForgotPassword.setTextColor(purpleColor)
                 binding.loginItem.loginCreateAccTv.setTextColor(purpleColor)
+                binding.loginItem.loginTvForgotPassword.setTextColor(purpleColor)
                 binding.loginItem.loginPhoneLayout.boxStrokeColor = purpleColor
                 binding.loginItem.loginPasswordLayout.boxStrokeColor = purpleColor
                 val accentTint = android.content.res.ColorStateList.valueOf(purpleColor)
-                binding.loginItem.loginPhoneLayout.setStartIconTintList(accentTint)
-                binding.loginItem.loginPasswordLayout.setStartIconTintList(accentTint)
                 binding.loginItem.loginPasswordLayout.setEndIconTintList(accentTint)
             }
         }
