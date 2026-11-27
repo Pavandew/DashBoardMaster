@@ -57,8 +57,7 @@ class ActivityVisitorPortal : AppCompatActivity() {
                 PortalFeature(R.drawable.ic_settings_24dp, "Settings", R.color.portal_multi_primary)
             )
         ) {
-            sessionManager.setSelectedPortal(AppConstants.PORTAL_MULTI_RESTAURANT)
-            startActivity(Intent(this, LoginActivity::class.java))
+            showComingSoonDialog()
         }
 
         // 2. Restaurant Portal (Muted Purple Theme)
@@ -117,5 +116,22 @@ class ActivityVisitorPortal : AppCompatActivity() {
         portalManager.bindCard(binding.cardMaster, master)
         portalManager.bindCard(binding.cardManager, manager)
         portalManager.bindCard(binding.cardWaiter, staff)
+    }
+
+    private fun showComingSoonDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_coming_soon, null)
+
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        val btnGotIt = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnGotIt)
+        btnGotIt?.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 }
