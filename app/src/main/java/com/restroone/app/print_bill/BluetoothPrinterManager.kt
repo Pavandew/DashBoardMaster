@@ -66,6 +66,13 @@ class BluetoothPrinterManager(private val context: Context) {
             try {
                 withContext(Dispatchers.Main) { listener.onPrintStarted() }
 
+                // Cancel discovery to maximize Bluetooth connection speed & reliability
+                try {
+                    bluetoothAdapter?.cancelDiscovery()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Could not cancel Bluetooth discovery: ${e.message}")
+                }
+
                 // 1. Create a socket to the device
                 try {
                     socket = device.createRfcommSocketToServiceRecord(PRINTER_UUID)

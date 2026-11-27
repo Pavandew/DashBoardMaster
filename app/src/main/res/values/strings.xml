@@ -288,6 +288,17 @@
     <string name="privacy_no_share_title">Zero Third-Party Data Sharing</string>
     <string name="privacy_no_share_desc">We never trade, sell, or disclose your customer details, staff records, or sales earnings to external advertisers.</string>
 
+    <!-- Subscription Expiry & Reminder Banner Strings -->
+    <string name="sub_reminder_warning_title">⏳ Subscription Expiring Soon (%1$d Days Left)</string>
+    <string name="sub_reminder_warning_desc">Your plan expires in %1$d days. Upgrade now to ensure uninterrupted live POS billing &amp; KDS services.</string>
+    <string name="sub_reminder_urgent_title">🚨 Last Day of Subscription!</string>
+    <string name="sub_reminder_urgent_desc">Your plan expires today! Renew your plan now to prevent POS &amp; KDS service disruption tomorrow.</string>
+    <string name="sub_reminder_expired_title">⛔ Subscription Has Expired</string>
+    <string name="sub_reminder_expired_desc">Your subscription has ended. Upgrade to Monthly or Yearly Owner Pass to restore full POS &amp; billing access.</string>
+    <string name="sub_reminder_btn_renew">Renew Plan</string>
+    <string name="sub_reminder_btn_renew_now">Renew Now</string>
+    <string name="sub_reminder_btn_upgrade">Upgrade</string>
+
     <string name="err_dialer">Unable to open phone dialer</string>
     <string name="err_email_client">Unable to open email client</string>
 
